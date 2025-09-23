@@ -1,0 +1,91 @@
+# .clinerules - PokeData Function Project
+
+## Critical Implementation Paths
+
+### Azure Functions TypeScript Patterns
+- Always use `InvocationContext` for logging with correlation IDs
+- Implement try/catch with structured error responses
+- Return `HttpResponseInit` with jsonBody and status
+- Use environment variables for configuration (CACHE_TTL_*, ENABLE_REDIS_CACHE)
+
+### Caching Implementation Requirements
+- Check Redis cache first before external API calls
+- Use structured cache keys with prefixes (getSetListCacheKey())
+- Implement formatCacheEntry/parseCacheEntry for consistent caching
+- Always set TTL values appropriate to data freshness needs
+
+### Pagination Standards
+```typescript
+// Standard pagination structure
+interface PaginatedResponse<T> {
+    data: T[];
+    pagination: {
+        page: number;
+        pageSize: number;
+        totalCount: number;
+        totalPages: number;
+    };
+}
+```
+
+### Error Handling Pattern
+- Use correlation IDs for request tracing: `[setlist-${Date.now()}]`
+- Log at key decision points with correlation ID
+- Use handleError utility for consistent error responses
+- Return structured ApiResponse<T> interface
+
+## User Workflow Preferences
+
+### Memory Bank Access Pattern
+1. Read all memory-bank files before making changes
+2. Update progress.md to reflect current status
+3. Update activeContext.md with new focus areas
+4. Document patterns in systemPatterns.md when discovered
+
+### Code Modification Approach
+- Always examine existing patterns before implementing changes
+- Maintain backward compatibility unless explicitly breaking change
+- Test against existing functionality first
+- Document performance implications
+
+## Tool Usage Patterns
+
+### File Operations
+- Use forward slashes in all file paths
+- Read files completely to understand context
+- Create directory structure before writing files
+- Always validate file existence before operations
+
+### TypeScript Development
+- Maintain strict typing with interfaces
+- Use async/await patterns consistently
+- Implement proper error boundaries
+- Follow existing service injection patterns
+
+## Project-Specific Decisions
+
+### GetSetList Function Architecture
+- Correlation ID pattern: `[setlist-${Date.now()}]`
+- Cache key pattern: `${getSetListCacheKey()}-pokedata-${language}`
+- Default pagination: page=1, pageSize=100
+- Language filtering: ENGLISH/JAPANESE/ALL support
+- Enhancement pipeline: add releaseYear, isRecent flags
+- Sorting: newest release date first
+
+### Service Dependencies
+- `cosmosDbService`: Database operations
+- `redisCacheService`: Caching layer  
+- `pokeDataApiService`: External API integration
+- Import from `../../index` for service instances
+
+### Response Structure Requirements
+- Always return ApiResponse<T> wrapper
+- Include cache metadata (cached, cacheAge)
+- Provide correlation ID in logs
+- Use consistent HTTP status codes
+
+### Current Issue Resolution Pattern
+- Identify root cause through log analysis
+- Design solution maintaining backward compatibility
+- Implement with existing patterns and services
+- Test thoroughly before deployment

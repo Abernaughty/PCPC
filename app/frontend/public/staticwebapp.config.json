@@ -1,0 +1,29 @@
+{
+  "routes": [
+    {
+      "route": "/livereload.js",
+      "statusCode": 404
+    },
+    {
+      "route": "/*.js",
+      "headers": {
+        "cache-control": "max-age=3600"
+      }
+    },
+    {
+      "route": "/livereload",
+      "statusCode": 404
+    },
+    {
+      "route": "/sockjs-node",
+      "statusCode": 404
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/images/*.{png,jpg,gif,ico}", "/*.css", "/*.js"]
+  },
+  "globalHeaders": {
+    "Cache-Control": "max-age=3600"
+  }
+}

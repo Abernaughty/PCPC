@@ -1,0 +1,61 @@
+services:
+  devcontainer:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ..:/workspace:cached
+      - /var/run/docker.sock:/var/run/docker-host.sock
+    command: sleep infinity
+    depends_on:
+      - azurite
+      - cosmosdb-emulator
+    environment:
+      # Local emulator connection strings
+      - AzureWebJobsStorage=${AzureWebJobsStorage}
+      - COSMOS_DB_CONNECTION_STRING=${COSMOS_DB_CONNECTION_STRING}
+      - BLOB_STORAGE_CONNECTION_STRING=${BLOB_STORAGE_CONNECTION_STRING}
+    networks:
+      - devcontainer-network
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:latest
+    hostname: azurite
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    volumes:
+      - azurite-data:/data
+    command: azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --loose --skipApiVersionCheck
+    environment:
+      - AZURITE_ACCOUNTS=devstoreaccount1:Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
+    networks:
+      - devcontainer-network
+    restart: unless-stopped
+
+  cosmosdb-emulator:
+    image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest
+    hostname: cosmosdb-emulator
+    ports:
+      - "8081:8081"
+      - "8900-8902:8900-8902"
+      - "10250-10256:10250-10256"
+      - "10350:10350"
+    environment:
+      - AZURE_COSMOS_EMULATOR_IP_ADDRESS_OVERRIDE=127.0.0.1   # ← from docs: override IP
+      - AZURE_COSMOS_EMULATOR_PARTITION_COUNT=10
+      - AZURE_COSMOS_EMULATOR_ENABLE_DATA_PERSISTENCE=true
+      - AZURE_COSMOS_EMULATOR_IP_ADDRESS_OVERRIDE=0.0.0.0
+    volumes:
+      - cosmos-data:/tmp/cosmos/appdata
+    networks:
+      - devcontainer-network
+
+volumes:
+  azurite-data:
+  cosmos-data:
+
+networks:
+  devcontainer-network:
+    driver: bridge

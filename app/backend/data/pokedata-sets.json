@@ -1,0 +1,3887 @@
+[
+    {
+        "code": null,
+        "id": 567,
+        "language": "ENGLISH",
+        "name": "Destined Rivals",
+        "release_date": "Fri, 30 May 2025 00:00:00 GMT"
+    },
+    {
+        "code": "sv10",
+        "id": 566,
+        "language": "JAPANESE",
+        "name": "Glory of Team Rocket",
+        "release_date": "Fri, 18 Apr 2025 00:00:00 GMT"
+    },
+    {
+        "code": "JTG",
+        "id": 562,
+        "language": "ENGLISH",
+        "name": "Journey Together",
+        "release_date": "Fri, 28 Mar 2025 00:00:00 GMT"
+    },
+    {
+        "code": "sv9a",
+        "id": 560,
+        "language": "JAPANESE",
+        "name": "Hot Air Arena",
+        "release_date": "Fri, 14 Mar 2025 00:00:00 GMT"
+    },
+    {
+        "code": "sv9",
+        "id": 558,
+        "language": "JAPANESE",
+        "name": "Battle Partners",
+        "release_date": "Fri, 24 Jan 2025 00:00:00 GMT"
+    },
+    {
+        "code": "M24",
+        "id": 559,
+        "language": "ENGLISH",
+        "name": "Mcdonald's Dragon Discovery",
+        "release_date": "Tue, 21 Jan 2025 00:00:00 GMT"
+    },
+    {
+        "code": "PRE",
+        "id": 557,
+        "language": "ENGLISH",
+        "name": "Prismatic Evolutions",
+        "release_date": "Fri, 17 Jan 2025 00:00:00 GMT"
+    },
+    {
+        "code": "sv8a",
+        "id": 556,
+        "language": "JAPANESE",
+        "name": "Terastal Festival ex",
+        "release_date": "Fri, 06 Dec 2024 00:00:00 GMT"
+    },
+    {
+        "code": "SSP",
+        "id": 555,
+        "language": "ENGLISH",
+        "name": "Surging Sparks",
+        "release_date": "Fri, 08 Nov 2024 00:00:00 GMT"
+    },
+    {
+        "code": "sv8",
+        "id": 552,
+        "language": "JAPANESE",
+        "name": "Super Electric Breaker",
+        "release_date": "Fri, 18 Oct 2024 00:00:00 GMT"
+    },
+    {
+        "code": "sv7a",
+        "id": 550,
+        "language": "JAPANESE",
+        "name": "Paradise Dragona",
+        "release_date": "Fri, 13 Sep 2024 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 549,
+        "language": "ENGLISH",
+        "name": "Stellar Crown",
+        "release_date": "Fri, 13 Sep 2024 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 554,
+        "language": "ENGLISH",
+        "name": "Trick or Trade 2024",
+        "release_date": "Fri, 30 Aug 2024 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 548,
+        "language": "ENGLISH",
+        "name": "Shrouded Fable",
+        "release_date": "Fri, 02 Aug 2024 00:00:00 GMT"
+    },
+    {
+        "code": "sv7",
+        "id": 547,
+        "language": "JAPANESE",
+        "name": "Stellar Miracle",
+        "release_date": "Fri, 19 Jul 2024 00:00:00 GMT"
+    },
+    {
+        "code": "sv6a",
+        "id": 546,
+        "language": "JAPANESE",
+        "name": "Night Wanderer",
+        "release_date": "Fri, 07 Jun 2024 00:00:00 GMT"
+    },
+    {
+        "code": "TWM",
+        "id": 545,
+        "language": "ENGLISH",
+        "name": "Twilight Masquerade",
+        "release_date": "Sat, 25 May 2024 00:00:00 GMT"
+    },
+    {
+        "code": "sv6",
+        "id": 544,
+        "language": "JAPANESE",
+        "name": "Mask of Change",
+        "release_date": "Fri, 26 Apr 2024 00:00:00 GMT"
+    },
+    {
+        "code": "sv5a",
+        "id": 543,
+        "language": "JAPANESE",
+        "name": "Crimson Haze",
+        "release_date": "Fri, 22 Mar 2024 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 542,
+        "language": "ENGLISH",
+        "name": "Temporal Forces",
+        "release_date": "Fri, 22 Mar 2024 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 539,
+        "language": "ENGLISH",
+        "name": "Paldean Fates",
+        "release_date": "Fri, 26 Jan 2024 00:00:00 GMT"
+    },
+    {
+        "code": "sv5M",
+        "id": 541,
+        "language": "JAPANESE",
+        "name": "Cyber Judge",
+        "release_date": "Fri, 26 Jan 2024 00:00:00 GMT"
+    },
+    {
+        "code": "sv5K",
+        "id": 540,
+        "language": "JAPANESE",
+        "name": "Wild Force",
+        "release_date": "Fri, 26 Jan 2024 00:00:00 GMT"
+    },
+    {
+        "code": "sv4a",
+        "id": 538,
+        "language": "JAPANESE",
+        "name": "Shiny Treasure ex",
+        "release_date": "Fri, 01 Dec 2023 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 561,
+        "language": "ENGLISH",
+        "name": "Trading Card Game Classic",
+        "release_date": "Fri, 17 Nov 2023 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 536,
+        "language": "ENGLISH",
+        "name": "Paradox Rift",
+        "release_date": "Fri, 03 Nov 2023 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 563,
+        "language": "JAPANESE",
+        "name": "Trading Card Game Classic Japanese Charizard",
+        "release_date": "Tue, 31 Oct 2023 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 565,
+        "language": "JAPANESE",
+        "name": "Trading Card Game Classic Japanese Venusaur",
+        "release_date": "Tue, 31 Oct 2023 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 564,
+        "language": "JAPANESE",
+        "name": "Trading Card Game Classic Japanese Blastoise",
+        "release_date": "Tue, 31 Oct 2023 00:00:00 GMT"
+    },
+    {
+        "code": "sv4K",
+        "id": 534,
+        "language": "JAPANESE",
+        "name": "Ancient Roar",
+        "release_date": "Fri, 27 Oct 2023 00:00:00 GMT"
+    },
+    {
+        "code": "sv4M",
+        "id": 535,
+        "language": "JAPANESE",
+        "name": "Future Flash",
+        "release_date": "Fri, 27 Oct 2023 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 532,
+        "language": "ENGLISH",
+        "name": "Pokemon Card 151",
+        "release_date": "Fri, 22 Sep 2023 00:00:00 GMT"
+    },
+    {
+        "code": "sv3a",
+        "id": 533,
+        "language": "JAPANESE",
+        "name": "Raging Surf",
+        "release_date": "Fri, 22 Sep 2023 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 531,
+        "language": "ENGLISH",
+        "name": "Trick or Trade 2023",
+        "release_date": "Fri, 01 Sep 2023 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 517,
+        "language": "ENGLISH",
+        "name": "Obsidian Flames",
+        "release_date": "Fri, 11 Aug 2023 00:00:00 GMT"
+    },
+    {
+        "code": "sv3",
+        "id": 516,
+        "language": "JAPANESE",
+        "name": "Ruler of the Black Flame",
+        "release_date": "Fri, 28 Jul 2023 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 530,
+        "language": "ENGLISH",
+        "name": "McDonald's Promos 2023",
+        "release_date": "Thu, 27 Jul 2023 00:00:00 GMT"
+    },
+    {
+        "code": "sv2a",
+        "id": 514,
+        "language": "JAPANESE",
+        "name": "Pokemon Card 151 Japanese",
+        "release_date": "Fri, 16 Jun 2023 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 513,
+        "language": "ENGLISH",
+        "name": "Paldea Evolved",
+        "release_date": "Fri, 09 Jun 2023 00:00:00 GMT"
+    },
+    {
+        "code": "sv2P",
+        "id": 511,
+        "language": "JAPANESE",
+        "name": "Snow Hazard",
+        "release_date": "Fri, 14 Apr 2023 00:00:00 GMT"
+    },
+    {
+        "code": "sv2D",
+        "id": 512,
+        "language": "JAPANESE",
+        "name": "Clay Burst",
+        "release_date": "Fri, 14 Apr 2023 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 510,
+        "language": "ENGLISH",
+        "name": "Scarlet & Violet Base",
+        "release_date": "Fri, 31 Mar 2023 00:00:00 GMT"
+    },
+    {
+        "code": "sv1a",
+        "id": 509,
+        "language": "JAPANESE",
+        "name": "Triplet Beat",
+        "release_date": "Fri, 10 Mar 2023 00:00:00 GMT"
+    },
+    {
+        "code": "sv1V",
+        "id": 508,
+        "language": "JAPANESE",
+        "name": "Violet ex",
+        "release_date": "Fri, 20 Jan 2023 00:00:00 GMT"
+    },
+    {
+        "code": "sv1S",
+        "id": 507,
+        "language": "JAPANESE",
+        "name": "Scarlet ex",
+        "release_date": "Fri, 20 Jan 2023 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 506,
+        "language": "ENGLISH",
+        "name": "Crown Zenith",
+        "release_date": "Fri, 20 Jan 2023 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 515,
+        "language": "ENGLISH",
+        "name": "Scarlet & Violet Promos",
+        "release_date": "Sun, 01 Jan 2023 00:00:00 GMT"
+    },
+    {
+        "code": "s12a",
+        "id": 505,
+        "language": "JAPANESE",
+        "name": "VSTAR Universe",
+        "release_date": "Fri, 02 Dec 2022 00:00:00 GMT"
+    },
+    {
+        "code": "PROMO",
+        "id": 537,
+        "language": "JAPANESE",
+        "name": "SV-P Promos",
+        "release_date": "Fri, 18 Nov 2022 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 503,
+        "language": "ENGLISH",
+        "name": "Silver Tempest",
+        "release_date": "Fri, 11 Nov 2022 00:00:00 GMT"
+    },
+    {
+        "code": "s12",
+        "id": 502,
+        "language": "JAPANESE",
+        "name": "Paradigm Trigger",
+        "release_date": "Fri, 21 Oct 2022 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 400,
+        "language": "ENGLISH",
+        "name": "Lost Origin",
+        "release_date": "Fri, 09 Sep 2022 00:00:00 GMT"
+    },
+    {
+        "code": "s11a",
+        "id": 401,
+        "language": "JAPANESE",
+        "name": "Incandescent Arcana",
+        "release_date": "Fri, 02 Sep 2022 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 504,
+        "language": "ENGLISH",
+        "name": "Trick or Trade 2022",
+        "release_date": "Thu, 01 Sep 2022 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 399,
+        "language": "ENGLISH",
+        "name": "Mcdonald's Promos 2022",
+        "release_date": "Tue, 16 Aug 2022 00:00:00 GMT"
+    },
+    {
+        "code": "sp6",
+        "id": 489,
+        "language": "JAPANESE",
+        "name": "VSTAR Special Set",
+        "release_date": "Fri, 05 Aug 2022 00:00:00 GMT"
+    },
+    {
+        "code": "sPD",
+        "id": 417,
+        "language": "JAPANESE",
+        "name": "Deoxys VSTAR & VMAX High-Class Deck",
+        "release_date": "Fri, 15 Jul 2022 00:00:00 GMT"
+    },
+    {
+        "code": "s11",
+        "id": 388,
+        "language": "JAPANESE",
+        "name": "Lost Abyss",
+        "release_date": "Fri, 15 Jul 2022 00:00:00 GMT"
+    },
+    {
+        "code": "sPZ",
+        "id": 492,
+        "language": "JAPANESE",
+        "name": "Zeraora VSTAR & VMAX High-Class Deck",
+        "release_date": "Fri, 15 Jul 2022 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 387,
+        "language": "ENGLISH",
+        "name": "Pokemon GO",
+        "release_date": "Fri, 01 Jul 2022 00:00:00 GMT"
+    },
+    {
+        "code": "s10B",
+        "id": 366,
+        "language": "JAPANESE",
+        "name": "Pokemon GO Japanese",
+        "release_date": "Fri, 17 Jun 2022 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 182,
+        "language": "ENGLISH",
+        "name": "Astral Radiance",
+        "release_date": "Fri, 27 May 2022 00:00:00 GMT"
+    },
+    {
+        "code": "s10A",
+        "id": 184,
+        "language": "JAPANESE",
+        "name": "Dark Phantasma",
+        "release_date": "Fri, 13 May 2022 00:00:00 GMT"
+    },
+    {
+        "code": "s10D",
+        "id": 180,
+        "language": "JAPANESE",
+        "name": "Time Gazer",
+        "release_date": "Sat, 09 Apr 2022 00:00:00 GMT"
+    },
+    {
+        "code": "s10P",
+        "id": 181,
+        "language": "JAPANESE",
+        "name": "Space Juggler",
+        "release_date": "Sat, 09 Apr 2022 00:00:00 GMT"
+    },
+    {
+        "code": "sLD",
+        "id": 416,
+        "language": "JAPANESE",
+        "name": "Darkrai VSTAR Starter Set",
+        "release_date": "Fri, 25 Feb 2022 00:00:00 GMT"
+    },
+    {
+        "code": "s9A",
+        "id": 179,
+        "language": "JAPANESE",
+        "name": "Battle Region",
+        "release_date": "Fri, 25 Feb 2022 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 178,
+        "language": "ENGLISH",
+        "name": "Brilliant Stars",
+        "release_date": "Fri, 25 Feb 2022 00:00:00 GMT"
+    },
+    {
+        "code": "sLL",
+        "id": 432,
+        "language": "JAPANESE",
+        "name": "Lucario VSTAR Starter Set",
+        "release_date": "Fri, 25 Feb 2022 00:00:00 GMT"
+    },
+    {
+        "code": "sN",
+        "id": 454,
+        "language": "JAPANESE",
+        "name": "Start Deck 100 CoroCoro Comic Version",
+        "release_date": "Sat, 15 Jan 2022 00:00:00 GMT"
+    },
+    {
+        "code": "s9",
+        "id": 177,
+        "language": "JAPANESE",
+        "name": "Star Birth",
+        "release_date": "Fri, 14 Jan 2022 00:00:00 GMT"
+    },
+    {
+        "code": "sK",
+        "id": 488,
+        "language": "JAPANESE",
+        "name": "VSTAR Premium Trainer Box",
+        "release_date": "Fri, 14 Jan 2022 00:00:00 GMT"
+    },
+    {
+        "code": "sI",
+        "id": 453,
+        "language": "JAPANESE",
+        "name": "Start Deck 100",
+        "release_date": "Fri, 17 Dec 2021 00:00:00 GMT"
+    },
+    {
+        "code": "s8B",
+        "id": 173,
+        "language": "JAPANESE",
+        "name": "VMAX Climax",
+        "release_date": "Fri, 03 Dec 2021 00:00:00 GMT"
+    },
+    {
+        "code": "sJ",
+        "id": 490,
+        "language": "JAPANESE",
+        "name": "Zacian & Zamazenta vs Eternatus Special Deck Set",
+        "release_date": "Fri, 05 Nov 2021 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 172,
+        "language": "ENGLISH",
+        "name": "Fusion Strike",
+        "release_date": "Sun, 31 Oct 2021 00:00:00 GMT"
+    },
+    {
+        "code": "s8A",
+        "id": 117,
+        "language": "JAPANESE",
+        "name": "25th Anniversary Collection",
+        "release_date": "Fri, 22 Oct 2021 00:00:00 GMT"
+    },
+    {
+        "code": "s8a-G",
+        "id": 402,
+        "language": "JAPANESE",
+        "name": "25th Anniversary Golden Box",
+        "release_date": "Fri, 22 Oct 2021 00:00:00 GMT"
+    },
+    {
+        "code": "s8a-P",
+        "id": 446,
+        "language": "JAPANESE",
+        "name": "Promo Card Pack 25th Anniversary Edition",
+        "release_date": "Fri, 22 Oct 2021 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 112,
+        "language": "ENGLISH",
+        "name": "Celebrations",
+        "release_date": "Fri, 08 Oct 2021 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 111,
+        "language": "ENGLISH",
+        "name": "Celebrations: Classic Collection",
+        "release_date": "Thu, 07 Oct 2021 00:00:00 GMT"
+    },
+    {
+        "code": "s8",
+        "id": 118,
+        "language": "JAPANESE",
+        "name": "Fusion Arts",
+        "release_date": "Fri, 24 Sep 2021 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 108,
+        "language": "ENGLISH",
+        "name": "Evolving Skies",
+        "release_date": "Fri, 27 Aug 2021 00:00:00 GMT"
+    },
+    {
+        "code": "sp5",
+        "id": 477,
+        "language": "JAPANESE",
+        "name": "V-UNION Special Card Sets",
+        "release_date": "Fri, 20 Aug 2021 00:00:00 GMT"
+    },
+    {
+        "code": "s7R",
+        "id": 119,
+        "language": "JAPANESE",
+        "name": "Blue Sky Stream",
+        "release_date": "Fri, 09 Jul 2021 00:00:00 GMT"
+    },
+    {
+        "code": "sH",
+        "id": 458,
+        "language": "JAPANESE",
+        "name": "Sword & Shield Family Pokémon Card Game",
+        "release_date": "Fri, 09 Jul 2021 00:00:00 GMT"
+    },
+    {
+        "code": "s7D",
+        "id": 120,
+        "language": "JAPANESE",
+        "name": "Towering Perfection",
+        "release_date": "Fri, 09 Jul 2021 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 26,
+        "language": "ENGLISH",
+        "name": "Chilling Reign",
+        "release_date": "Fri, 18 Jun 2021 00:00:00 GMT"
+    },
+    {
+        "code": "sp4",
+        "id": 420,
+        "language": "JAPANESE",
+        "name": "Eevee Heroes VMAX Special Set",
+        "release_date": "Tue, 15 Jun 2021 00:00:00 GMT"
+    },
+    {
+        "code": "sGI",
+        "id": 425,
+        "language": "JAPANESE",
+        "name": "Inteleon VMAX High-Class Deck",
+        "release_date": "Fri, 28 May 2021 00:00:00 GMT"
+    },
+    {
+        "code": "sGG",
+        "id": 423,
+        "language": "JAPANESE",
+        "name": "Gengar VMAX High-Class Deck",
+        "release_date": "Fri, 28 May 2021 00:00:00 GMT"
+    },
+    {
+        "code": "s6A",
+        "id": 115,
+        "language": "JAPANESE",
+        "name": "Eevee Heroes",
+        "release_date": "Fri, 28 May 2021 00:00:00 GMT"
+    },
+    {
+        "code": "s6H",
+        "id": 122,
+        "language": "JAPANESE",
+        "name": "Silver Lance",
+        "release_date": "Fri, 23 Apr 2021 00:00:00 GMT"
+    },
+    {
+        "code": "s6K",
+        "id": 121,
+        "language": "JAPANESE",
+        "name": "Jet Black Spirit",
+        "release_date": "Fri, 23 Apr 2021 00:00:00 GMT"
+    },
+    {
+        "code": "sp3",
+        "id": 449,
+        "language": "JAPANESE",
+        "name": "Silver Lance & Jet-Black Spirit Jumbo Pack Set",
+        "release_date": "Fri, 23 Apr 2021 00:00:00 GMT"
+    },
+    {
+        "code": "s5A",
+        "id": 116,
+        "language": "JAPANESE",
+        "name": "Matchless Fighter",
+        "release_date": "Fri, 19 Mar 2021 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 20,
+        "language": "ENGLISH",
+        "name": "Battle Styles",
+        "release_date": "Fri, 19 Mar 2021 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 21,
+        "language": "ENGLISH",
+        "name": "Shining Fates",
+        "release_date": "Fri, 19 Feb 2021 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 171,
+        "language": "ENGLISH",
+        "name": "Mcdonald's 25th Anniversary",
+        "release_date": "Tue, 09 Feb 2021 00:00:00 GMT"
+    },
+    {
+        "code": "sF",
+        "id": 450,
+        "language": "JAPANESE",
+        "name": "Single Strike & Rapid Strike Premium Trainer Boxes",
+        "release_date": "Fri, 22 Jan 2021 00:00:00 GMT"
+    },
+    {
+        "code": "s5I",
+        "id": 124,
+        "language": "JAPANESE",
+        "name": "Single Strike Master",
+        "release_date": "Fri, 22 Jan 2021 00:00:00 GMT"
+    },
+    {
+        "code": "s5R",
+        "id": 123,
+        "language": "JAPANESE",
+        "name": "Rapid Strike Master",
+        "release_date": "Fri, 22 Jan 2021 00:00:00 GMT"
+    },
+    {
+        "code": "sC2",
+        "id": 487,
+        "language": "JAPANESE",
+        "name": "VMAX Starter Set 2 (Charizard)",
+        "release_date": "Fri, 04 Dec 2020 00:00:00 GMT"
+    },
+    {
+        "code": "sEK",
+        "id": 483,
+        "language": "JAPANESE",
+        "name": "VMAX Starter Set (Blastoise)",
+        "release_date": "Fri, 04 Dec 2020 00:00:00 GMT"
+    },
+    {
+        "code": "sEF",
+        "id": 486,
+        "language": "JAPANESE",
+        "name": "VMAX Starter Set (Venusaur)",
+        "release_date": "Fri, 04 Dec 2020 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 3,
+        "language": "ENGLISH",
+        "name": "Vivid Voltage",
+        "release_date": "Fri, 13 Nov 2020 00:00:00 GMT"
+    },
+    {
+        "code": "sp2",
+        "id": 482,
+        "language": "JAPANESE",
+        "name": "VMAX Special Set",
+        "release_date": "Fri, 23 Oct 2020 00:00:00 GMT"
+    },
+    {
+        "code": "s4A",
+        "id": 114,
+        "language": "JAPANESE",
+        "name": "Shiny Star V s4A",
+        "release_date": "Tue, 20 Oct 2020 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 2,
+        "language": "ENGLISH",
+        "name": "Champion's Path",
+        "release_date": "Fri, 25 Sep 2020 00:00:00 GMT"
+    },
+    {
+        "code": "s4",
+        "id": 125,
+        "language": "JAPANESE",
+        "name": "Astonishing Volt Tackle",
+        "release_date": "Fri, 18 Sep 2020 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 4,
+        "language": "ENGLISH",
+        "name": "Darkness Ablaze",
+        "release_date": "Fri, 14 Aug 2020 00:00:00 GMT"
+    },
+    {
+        "code": "s3A",
+        "id": 126,
+        "language": "JAPANESE",
+        "name": "Legendary Heartbeat",
+        "release_date": "Fri, 10 Jul 2020 00:00:00 GMT"
+    },
+    {
+        "code": "sD",
+        "id": 471,
+        "language": "JAPANESE",
+        "name": "V Starter Decks",
+        "release_date": "Fri, 10 Jul 2020 00:00:00 GMT"
+    },
+    {
+        "code": "s3",
+        "id": 127,
+        "language": "JAPANESE",
+        "name": "Infinity Zone",
+        "release_date": "Fri, 05 Jun 2020 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 5,
+        "language": "ENGLISH",
+        "name": "Rebel Clash",
+        "release_date": "Fri, 01 May 2020 00:00:00 GMT"
+    },
+    {
+        "code": "s2A",
+        "id": 128,
+        "language": "JAPANESE",
+        "name": "Explosive Walker",
+        "release_date": "Fri, 24 Apr 2020 00:00:00 GMT"
+    },
+    {
+        "code": "sC",
+        "id": 485,
+        "language": "JAPANESE",
+        "name": "VMAX Starter Set (Grimmsnarl)",
+        "release_date": "Fri, 27 Mar 2020 00:00:00 GMT"
+    },
+    {
+        "code": "sC",
+        "id": 484,
+        "language": "JAPANESE",
+        "name": "VMAX Starter Set (Charizard)",
+        "release_date": "Fri, 27 Mar 2020 00:00:00 GMT"
+    },
+    {
+        "code": "s2",
+        "id": 129,
+        "language": "JAPANESE",
+        "name": "Rebellion Crash",
+        "release_date": "Fri, 06 Mar 2020 00:00:00 GMT"
+    },
+    {
+        "code": "s1A",
+        "id": 130,
+        "language": "JAPANESE",
+        "name": "VMAX Rising",
+        "release_date": "Fri, 07 Feb 2020 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 6,
+        "language": "ENGLISH",
+        "name": "Sword & Shield",
+        "release_date": "Fri, 07 Feb 2020 00:00:00 GMT"
+    },
+    {
+        "code": "sp1",
+        "id": 491,
+        "language": "JAPANESE",
+        "name": "Zacian Zamazenta Box",
+        "release_date": "Fri, 27 Dec 2019 00:00:00 GMT"
+    },
+    {
+        "code": "s1H",
+        "id": 131,
+        "language": "JAPANESE",
+        "name": "Shield",
+        "release_date": "Fri, 06 Dec 2019 00:00:00 GMT"
+    },
+    {
+        "code": "sB",
+        "id": 459,
+        "language": "JAPANESE",
+        "name": "Sword & Shield Premium Trainer Box",
+        "release_date": "Fri, 06 Dec 2019 00:00:00 GMT"
+    },
+    {
+        "code": "s1W",
+        "id": 132,
+        "language": "JAPANESE",
+        "name": "Sword",
+        "release_date": "Fri, 06 Dec 2019 00:00:00 GMT"
+    },
+    {
+        "code": "sA",
+        "id": 474,
+        "language": "JAPANESE",
+        "name": "V Starter Set (Grass)",
+        "release_date": "Fri, 29 Nov 2019 00:00:00 GMT"
+    },
+    {
+        "code": "sA",
+        "id": 472,
+        "language": "JAPANESE",
+        "name": "V Starter Set (Fighting)",
+        "release_date": "Fri, 29 Nov 2019 00:00:00 GMT"
+    },
+    {
+        "code": "sA",
+        "id": 476,
+        "language": "JAPANESE",
+        "name": "V Starter Set (Water)",
+        "release_date": "Fri, 29 Nov 2019 00:00:00 GMT"
+    },
+    {
+        "code": "sA",
+        "id": 475,
+        "language": "JAPANESE",
+        "name": "V Starter Set (Lightning)",
+        "release_date": "Fri, 29 Nov 2019 00:00:00 GMT"
+    },
+    {
+        "code": "sA",
+        "id": 473,
+        "language": "JAPANESE",
+        "name": "V Starter Set (Fire)",
+        "release_date": "Fri, 29 Nov 2019 00:00:00 GMT"
+    },
+    {
+        "code": "PROMO",
+        "id": 460,
+        "language": "JAPANESE",
+        "name": "S-P Promos",
+        "release_date": "Sun, 17 Nov 2019 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 7,
+        "language": "ENGLISH",
+        "name": "Cosmic Eclipse",
+        "release_date": "Fri, 01 Nov 2019 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 521,
+        "language": "ENGLISH",
+        "name": "McDonald's Promos 2019",
+        "release_date": "Tue, 15 Oct 2019 00:00:00 GMT"
+    },
+    {
+        "code": "sm12A",
+        "id": 133,
+        "language": "JAPANESE",
+        "name": "Tag Team GX All Stars",
+        "release_date": "Fri, 04 Oct 2019 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 109,
+        "language": "ENGLISH",
+        "name": "Sword & Shield Promo",
+        "release_date": "Tue, 01 Oct 2019 00:00:00 GMT"
+    },
+    {
+        "code": "sm12",
+        "id": 134,
+        "language": "JAPANESE",
+        "name": "Alter Genesis",
+        "release_date": "Fri, 06 Sep 2019 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 1,
+        "language": "ENGLISH",
+        "name": "Hidden Fates",
+        "release_date": "Fri, 23 Aug 2019 00:00:00 GMT"
+    },
+    {
+        "code": "sm11B",
+        "id": 135,
+        "language": "JAPANESE",
+        "name": "Dream League",
+        "release_date": "Fri, 02 Aug 2019 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 8,
+        "language": "ENGLISH",
+        "name": "Unified Minds",
+        "release_date": "Fri, 02 Aug 2019 00:00:00 GMT"
+    },
+    {
+        "code": "sm11A",
+        "id": 136,
+        "language": "JAPANESE",
+        "name": "Remix Bout",
+        "release_date": "Fri, 05 Jul 2019 00:00:00 GMT"
+    },
+    {
+        "code": "smM",
+        "id": 464,
+        "language": "JAPANESE",
+        "name": "Tag Team GX Starter Sets",
+        "release_date": "Fri, 31 May 2019 00:00:00 GMT"
+    },
+    {
+        "code": "sm11",
+        "id": 137,
+        "language": "JAPANESE",
+        "name": "Miracle Twin",
+        "release_date": "Fri, 31 May 2019 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 24,
+        "language": "ENGLISH",
+        "name": "Unbroken Bonds",
+        "release_date": "Fri, 03 May 2019 00:00:00 GMT"
+    },
+    {
+        "code": "sm10B",
+        "id": 139,
+        "language": "JAPANESE",
+        "name": "Sky Legend",
+        "release_date": "Fri, 26 Apr 2019 00:00:00 GMT"
+    },
+    {
+        "code": "smP2",
+        "id": 138,
+        "language": "JAPANESE",
+        "name": "Great Detective Pikachu",
+        "release_date": "Fri, 26 Apr 2019 00:00:00 GMT"
+    },
+    {
+        "code": "sm10A",
+        "id": 140,
+        "language": "JAPANESE",
+        "name": "GG End",
+        "release_date": "Fri, 05 Apr 2019 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 23,
+        "language": "ENGLISH",
+        "name": "Detective Pikachu",
+        "release_date": "Fri, 29 Mar 2019 00:00:00 GMT"
+    },
+    {
+        "code": "smL",
+        "id": 455,
+        "language": "JAPANESE",
+        "name": "Sun & Moon Family Box",
+        "release_date": "Fri, 15 Mar 2019 00:00:00 GMT"
+    },
+    {
+        "code": "sm10",
+        "id": 141,
+        "language": "JAPANESE",
+        "name": "Double Blaze",
+        "release_date": "Fri, 01 Mar 2019 00:00:00 GMT"
+    },
+    {
+        "code": "smN",
+        "id": 462,
+        "language": "JAPANESE",
+        "name": "Tag Team GX Deck Build Box",
+        "release_date": "Fri, 01 Mar 2019 00:00:00 GMT"
+    },
+    {
+        "code": "sm9B",
+        "id": 142,
+        "language": "JAPANESE",
+        "name": "Full Metal Wall",
+        "release_date": "Fri, 01 Feb 2019 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 9,
+        "language": "ENGLISH",
+        "name": "Team Up",
+        "release_date": "Fri, 01 Feb 2019 00:00:00 GMT"
+    },
+    {
+        "code": "smK",
+        "id": 467,
+        "language": "JAPANESE",
+        "name": "Trainer Battle Decks",
+        "release_date": "Fri, 25 Jan 2019 00:00:00 GMT"
+    },
+    {
+        "code": "sm9A",
+        "id": 143,
+        "language": "JAPANESE",
+        "name": "Night Unison",
+        "release_date": "Fri, 11 Jan 2019 00:00:00 GMT"
+    },
+    {
+        "code": "sm9",
+        "id": 144,
+        "language": "JAPANESE",
+        "name": "Tag Bolt",
+        "release_date": "Fri, 07 Dec 2018 00:00:00 GMT"
+    },
+    {
+        "code": "smJ",
+        "id": 463,
+        "language": "JAPANESE",
+        "name": "Tag Team GX Premium Trainer Box",
+        "release_date": "Fri, 07 Dec 2018 00:00:00 GMT"
+    },
+    {
+        "code": "smI",
+        "id": 422,
+        "language": "JAPANESE",
+        "name": "Flareon-GX, Vaporeon-GX & Jolteon-GX Starter Sets",
+        "release_date": "Fri, 23 Nov 2018 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 10,
+        "language": "ENGLISH",
+        "name": "Lost Thunder",
+        "release_date": "Fri, 02 Nov 2018 00:00:00 GMT"
+    },
+    {
+        "code": "sm8B",
+        "id": 145,
+        "language": "JAPANESE",
+        "name": "GX Ultra Shiny",
+        "release_date": "Fri, 02 Nov 2018 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 522,
+        "language": "ENGLISH",
+        "name": "McDonald's Promos 2018",
+        "release_date": "Fri, 19 Oct 2018 00:00:00 GMT"
+    },
+    {
+        "code": "sm8A",
+        "id": 146,
+        "language": "JAPANESE",
+        "name": "Dark Order",
+        "release_date": "Fri, 05 Oct 2018 00:00:00 GMT"
+    },
+    {
+        "code": "sm8",
+        "id": 147,
+        "language": "JAPANESE",
+        "name": "Explosive Impact",
+        "release_date": "Fri, 07 Sep 2018 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 11,
+        "language": "ENGLISH",
+        "name": "Dragon Majesty",
+        "release_date": "Fri, 07 Sep 2018 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 12,
+        "language": "ENGLISH",
+        "name": "Celestial Storm",
+        "release_date": "Fri, 03 Aug 2018 00:00:00 GMT"
+    },
+    {
+        "code": "sm7B",
+        "id": 148,
+        "language": "JAPANESE",
+        "name": "Fairy Rise",
+        "release_date": "Fri, 03 Aug 2018 00:00:00 GMT"
+    },
+    {
+        "code": "smH",
+        "id": 424,
+        "language": "JAPANESE",
+        "name": "GX Starter Decks",
+        "release_date": "Fri, 13 Jul 2018 00:00:00 GMT"
+    },
+    {
+        "code": "sm7A",
+        "id": 149,
+        "language": "JAPANESE",
+        "name": "Thunderclap Spark",
+        "release_date": "Fri, 06 Jul 2018 00:00:00 GMT"
+    },
+    {
+        "code": "sm7",
+        "id": 150,
+        "language": "JAPANESE",
+        "name": "Charisma of the Cracked Sky",
+        "release_date": "Fri, 01 Jun 2018 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 13,
+        "language": "ENGLISH",
+        "name": "Forbidden Light",
+        "release_date": "Fri, 04 May 2018 00:00:00 GMT"
+    },
+    {
+        "code": "sm6A",
+        "id": 152,
+        "language": "JAPANESE",
+        "name": "Dragon Storm",
+        "release_date": "Fri, 06 Apr 2018 00:00:00 GMT"
+    },
+    {
+        "code": "sm6B",
+        "id": 151,
+        "language": "JAPANESE",
+        "name": "Champion Road",
+        "release_date": "Fri, 06 Apr 2018 00:00:00 GMT"
+    },
+    {
+        "code": "sm6",
+        "id": 153,
+        "language": "JAPANESE",
+        "name": "Forbidden Light Japanese",
+        "release_date": "Fri, 02 Mar 2018 00:00:00 GMT"
+    },
+    {
+        "code": "smG",
+        "id": 468,
+        "language": "JAPANESE",
+        "name": "Ultra Sun & Ultra Moon Deck Build Boxes",
+        "release_date": "Fri, 16 Feb 2018 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 14,
+        "language": "ENGLISH",
+        "name": "Ultra Prism",
+        "release_date": "Fri, 02 Feb 2018 00:00:00 GMT"
+    },
+    {
+        "code": "sm5+",
+        "id": 154,
+        "language": "JAPANESE",
+        "name": "Ultra Force",
+        "release_date": "Fri, 19 Jan 2018 00:00:00 GMT"
+    },
+    {
+        "code": "sm5S",
+        "id": 156,
+        "language": "JAPANESE",
+        "name": "Ultra Sun",
+        "release_date": "Fri, 08 Dec 2017 00:00:00 GMT"
+    },
+    {
+        "code": "sm5M",
+        "id": 155,
+        "language": "JAPANESE",
+        "name": "Ultra Moon",
+        "release_date": "Fri, 08 Dec 2017 00:00:00 GMT"
+    },
+    {
+        "code": "smF",
+        "id": 469,
+        "language": "JAPANESE",
+        "name": "Ultra Sun & Ultra Moon Premium Trainer Box",
+        "release_date": "Fri, 08 Dec 2017 00:00:00 GMT"
+    },
+    {
+        "code": "smE",
+        "id": 451,
+        "language": "JAPANESE",
+        "name": "Solgaleo-GX & Lunala-GX Legendary Starter Set",
+        "release_date": "Fri, 10 Nov 2017 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 15,
+        "language": "ENGLISH",
+        "name": "Crimson Invasion",
+        "release_date": "Fri, 03 Nov 2017 00:00:00 GMT"
+    },
+    {
+        "code": "sm4+",
+        "id": 157,
+        "language": "JAPANESE",
+        "name": "GX Battle Boost",
+        "release_date": "Fri, 20 Oct 2017 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 16,
+        "language": "ENGLISH",
+        "name": "Shining Legends",
+        "release_date": "Fri, 06 Oct 2017 00:00:00 GMT"
+    },
+    {
+        "code": "sm4A",
+        "id": 158,
+        "language": "JAPANESE",
+        "name": "Transdimensional Beast",
+        "release_date": "Fri, 15 Sep 2017 00:00:00 GMT"
+    },
+    {
+        "code": "sm4S",
+        "id": 159,
+        "language": "JAPANESE",
+        "name": "Awakened Heroes",
+        "release_date": "Fri, 15 Sep 2017 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 17,
+        "language": "ENGLISH",
+        "name": "Burning Shadows",
+        "release_date": "Fri, 04 Aug 2017 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 523,
+        "language": "ENGLISH",
+        "name": "McDonald's Promos 2017",
+        "release_date": "Thu, 03 Aug 2017 00:00:00 GMT"
+    },
+    {
+        "code": "sm3+",
+        "id": 160,
+        "language": "JAPANESE",
+        "name": "Shining Legends Japanese",
+        "release_date": "Sat, 15 Jul 2017 00:00:00 GMT"
+    },
+    {
+        "code": "sm3H",
+        "id": 162,
+        "language": "JAPANESE",
+        "name": "Seen the Rainbow Battle",
+        "release_date": "Fri, 16 Jun 2017 00:00:00 GMT"
+    },
+    {
+        "code": "sm3N",
+        "id": 161,
+        "language": "JAPANESE",
+        "name": "Light Consuming Darkness",
+        "release_date": "Thu, 15 Jun 2017 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 18,
+        "language": "ENGLISH",
+        "name": "Guardians Rising",
+        "release_date": "Fri, 05 May 2017 00:00:00 GMT"
+    },
+    {
+        "code": "smD",
+        "id": 404,
+        "language": "JAPANESE",
+        "name": "Ash vs Team Rocket Deck Kit",
+        "release_date": "Fri, 21 Apr 2017 00:00:00 GMT"
+    },
+    {
+        "code": "XY",
+        "id": 365,
+        "language": "JAPANESE",
+        "name": "The Best of XY",
+        "release_date": "Fri, 21 Apr 2017 00:00:00 GMT"
+    },
+    {
+        "code": "sm2+",
+        "id": 163,
+        "language": "JAPANESE",
+        "name": "Facing a New Trial",
+        "release_date": "Fri, 21 Apr 2017 00:00:00 GMT"
+    },
+    {
+        "code": "sm2K",
+        "id": 164,
+        "language": "JAPANESE",
+        "name": "Islands Await You",
+        "release_date": "Fri, 17 Mar 2017 00:00:00 GMT"
+    },
+    {
+        "code": "sm2L",
+        "id": 165,
+        "language": "JAPANESE",
+        "name": "Alolan Moonlight",
+        "release_date": "Fri, 17 Mar 2017 00:00:00 GMT"
+    },
+    {
+        "code": "smC",
+        "id": 465,
+        "language": "JAPANESE",
+        "name": "Tapu Bulu-GX Enhanced Starter Set",
+        "release_date": "Fri, 17 Mar 2017 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 19,
+        "language": "ENGLISH",
+        "name": "Sun & Moon",
+        "release_date": "Fri, 03 Feb 2017 00:00:00 GMT"
+    },
+    {
+        "code": "sm1+",
+        "id": 166,
+        "language": "JAPANESE",
+        "name": "Strength Expansion Pack Sun & Moon",
+        "release_date": "Fri, 27 Jan 2017 00:00:00 GMT"
+    },
+    {
+        "code": "smP1",
+        "id": 447,
+        "language": "JAPANESE",
+        "name": "Rockruff Full Power Deck",
+        "release_date": "Thu, 15 Dec 2016 00:00:00 GMT"
+    },
+    {
+        "code": "sm1M",
+        "id": 168,
+        "language": "JAPANESE",
+        "name": "Collection Moon",
+        "release_date": "Fri, 09 Dec 2016 00:00:00 GMT"
+    },
+    {
+        "code": "smB",
+        "id": 445,
+        "language": "JAPANESE",
+        "name": "Premium Trainer Box",
+        "release_date": "Fri, 09 Dec 2016 00:00:00 GMT"
+    },
+    {
+        "code": "smA",
+        "id": 457,
+        "language": "JAPANESE",
+        "name": "Sun & Moon Starter Set",
+        "release_date": "Fri, 09 Dec 2016 00:00:00 GMT"
+    },
+    {
+        "code": "sm1S",
+        "id": 167,
+        "language": "JAPANESE",
+        "name": "Collection Sun",
+        "release_date": "Fri, 09 Dec 2016 00:00:00 GMT"
+    },
+    {
+        "code": "sm0",
+        "id": 438,
+        "language": "JAPANESE",
+        "name": "Pikachu's New Friends",
+        "release_date": "Fri, 18 Nov 2016 00:00:00 GMT"
+    },
+    {
+        "code": "PROMO",
+        "id": 456,
+        "language": "JAPANESE",
+        "name": "SM-P Promos",
+        "release_date": "Fri, 18 Nov 2016 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 25,
+        "language": "ENGLISH",
+        "name": "Sun & Moon Black Star Promo",
+        "release_date": "Mon, 03 Oct 2016 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 22,
+        "language": "ENGLISH",
+        "name": "Evolutions",
+        "release_date": "Sun, 02 Oct 2016 00:00:00 GMT"
+    },
+    {
+        "code": "CP6",
+        "id": 185,
+        "language": "JAPANESE",
+        "name": "Expansion Pack 20th Anniversary",
+        "release_date": "Fri, 16 Sep 2016 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 524,
+        "language": "ENGLISH",
+        "name": "McDonald's Promos 2016",
+        "release_date": "Sat, 20 Aug 2016 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 31,
+        "language": "ENGLISH",
+        "name": "Steam Siege",
+        "release_date": "Wed, 03 Aug 2016 00:00:00 GMT"
+    },
+    {
+        "code": "CP5",
+        "id": 186,
+        "language": "JAPANESE",
+        "name": "Mythical & Legendary Dream Shine Collection",
+        "release_date": "Sat, 16 Jul 2016 00:00:00 GMT"
+    },
+    {
+        "code": "XY11",
+        "id": 188,
+        "language": "JAPANESE",
+        "name": "Fever-Burst Fighter",
+        "release_date": "Fri, 17 Jun 2016 00:00:00 GMT"
+    },
+    {
+        "code": "XY11",
+        "id": 189,
+        "language": "JAPANESE",
+        "name": "Cruel Traitor",
+        "release_date": "Fri, 17 Jun 2016 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 32,
+        "language": "ENGLISH",
+        "name": "Fates Collide",
+        "release_date": "Mon, 02 May 2016 00:00:00 GMT"
+    },
+    {
+        "code": "XYh",
+        "id": 192,
+        "language": "JAPANESE",
+        "name": "M Audino-EX Mega Battle Deck",
+        "release_date": "Fri, 18 Mar 2016 00:00:00 GMT"
+    },
+    {
+        "code": "XY10",
+        "id": 190,
+        "language": "JAPANESE",
+        "name": "Awakening Psychic King",
+        "release_date": "Fri, 18 Mar 2016 00:00:00 GMT"
+    },
+    {
+        "code": "XYg",
+        "id": 191,
+        "language": "JAPANESE",
+        "name": "Zygarde-EX Perfect Battle Deck",
+        "release_date": "Fri, 18 Mar 2016 00:00:00 GMT"
+    },
+    {
+        "code": "CP4",
+        "id": 193,
+        "language": "JAPANESE",
+        "name": "Premium Champion Pack",
+        "release_date": "Wed, 16 Mar 2016 00:00:00 GMT"
+    },
+    {
+        "code": "20th",
+        "id": 194,
+        "language": "JAPANESE",
+        "name": "BREAK Starter Pack",
+        "release_date": "Sat, 27 Feb 2016 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 169,
+        "language": "ENGLISH",
+        "name": "Generations Radiant Collection",
+        "release_date": "Mon, 22 Feb 2016 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 33,
+        "language": "ENGLISH",
+        "name": "Generations",
+        "release_date": "Mon, 22 Feb 2016 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 34,
+        "language": "ENGLISH",
+        "name": "BREAKpoint",
+        "release_date": "Wed, 03 Feb 2016 00:00:00 GMT"
+    },
+    {
+        "code": "CP3",
+        "id": 187,
+        "language": "JAPANESE",
+        "name": "PokéKyun Collection",
+        "release_date": "Fri, 29 Jan 2016 00:00:00 GMT"
+    },
+    {
+        "code": "XY9",
+        "id": 195,
+        "language": "JAPANESE",
+        "name": "Rage of the Broken Heavens",
+        "release_date": "Fri, 11 Dec 2015 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 525,
+        "language": "ENGLISH",
+        "name": "McDonald's Promos 2015",
+        "release_date": "Fri, 27 Nov 2015 00:00:00 GMT"
+    },
+    {
+        "code": "XYf",
+        "id": 196,
+        "language": "JAPANESE",
+        "name": "Golduck BREAK Palkia-EX Combo Deck",
+        "release_date": "Fri, 09 Oct 2015 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 35,
+        "language": "ENGLISH",
+        "name": "BREAKthrough",
+        "release_date": "Sun, 04 Oct 2015 00:00:00 GMT"
+    },
+    {
+        "code": "SNP",
+        "id": 197,
+        "language": "JAPANESE",
+        "name": "Noivern BREAK Evolution Pack",
+        "release_date": "Sat, 26 Sep 2015 00:00:00 GMT"
+    },
+    {
+        "code": "SNP",
+        "id": 198,
+        "language": "JAPANESE",
+        "name": "Raichu BREAK Evolution Pack",
+        "release_date": "Sat, 26 Sep 2015 00:00:00 GMT"
+    },
+    {
+        "code": "XY8",
+        "id": 200,
+        "language": "JAPANESE",
+        "name": "Red Flash",
+        "release_date": "Sat, 26 Sep 2015 00:00:00 GMT"
+    },
+    {
+        "code": "XY8",
+        "id": 199,
+        "language": "JAPANESE",
+        "name": "Blue Shock",
+        "release_date": "Sat, 26 Sep 2015 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 36,
+        "language": "ENGLISH",
+        "name": "Ancient Origins",
+        "release_date": "Wed, 12 Aug 2015 00:00:00 GMT"
+    },
+    {
+        "code": "MMB",
+        "id": 433,
+        "language": "JAPANESE",
+        "name": "M Master Deck Build Box Power Style",
+        "release_date": "Fri, 07 Aug 2015 00:00:00 GMT"
+    },
+    {
+        "code": "XYe",
+        "id": 421,
+        "language": "JAPANESE",
+        "name": "Emboar-EX vs Togekiss-EX Deck Kit",
+        "release_date": "Sat, 18 Jul 2015 00:00:00 GMT"
+    },
+    {
+        "code": "CP2",
+        "id": 201,
+        "language": "JAPANESE",
+        "name": "Legendary Shine Collection",
+        "release_date": "Sat, 18 Jul 2015 00:00:00 GMT"
+    },
+    {
+        "code": "XY7",
+        "id": 202,
+        "language": "JAPANESE",
+        "name": "Bandit Ring",
+        "release_date": "Sat, 20 Jun 2015 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 37,
+        "language": "ENGLISH",
+        "name": "Roaring Skies",
+        "release_date": "Wed, 06 May 2015 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 291,
+        "language": "ENGLISH",
+        "name": "Double Crisis",
+        "release_date": "Wed, 25 Mar 2015 00:00:00 GMT"
+    },
+    {
+        "code": "XY6",
+        "id": 204,
+        "language": "JAPANESE",
+        "name": "Emerald Break",
+        "release_date": "Sat, 14 Mar 2015 00:00:00 GMT"
+    },
+    {
+        "code": "XYd",
+        "id": 203,
+        "language": "JAPANESE",
+        "name": "M Rayquaza-EX Mega Battle Deck",
+        "release_date": "Sat, 14 Mar 2015 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 38,
+        "language": "ENGLISH",
+        "name": "Primal Clash",
+        "release_date": "Wed, 04 Feb 2015 00:00:00 GMT"
+    },
+    {
+        "code": "CP1",
+        "id": 205,
+        "language": "JAPANESE",
+        "name": "Magma Gang vs Aqua Gang: Double Crisis",
+        "release_date": "Fri, 30 Jan 2015 00:00:00 GMT"
+    },
+    {
+        "code": "XY5",
+        "id": 206,
+        "language": "JAPANESE",
+        "name": "Tidal Storm",
+        "release_date": "Sat, 13 Dec 2014 00:00:00 GMT"
+    },
+    {
+        "code": "XY5",
+        "id": 207,
+        "language": "JAPANESE",
+        "name": "Gaia Volcano",
+        "release_date": "Sat, 13 Dec 2014 00:00:00 GMT"
+    },
+    {
+        "code": "XYc",
+        "id": 208,
+        "language": "JAPANESE",
+        "name": "Xerneas-EX & Yveltal-EX Super Legend Set",
+        "release_date": "Fri, 14 Nov 2014 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 39,
+        "language": "ENGLISH",
+        "name": "Phantom Forces",
+        "release_date": "Sun, 05 Oct 2014 00:00:00 GMT"
+    },
+    {
+        "code": "XYb",
+        "id": 209,
+        "language": "JAPANESE",
+        "name": "Dialga-EX Aegislash-EX Hyper Metal Chain Deck",
+        "release_date": "Sat, 13 Sep 2014 00:00:00 GMT"
+    },
+    {
+        "code": "XY4",
+        "id": 210,
+        "language": "JAPANESE",
+        "name": "Phantom Gate",
+        "release_date": "Sat, 13 Sep 2014 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 40,
+        "language": "ENGLISH",
+        "name": "Furious Fists",
+        "release_date": "Wed, 13 Aug 2014 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 174,
+        "language": "ENGLISH",
+        "name": "Alternate Art Promos",
+        "release_date": "Wed, 13 Aug 2014 00:00:00 GMT"
+    },
+    {
+        "code": "XY3",
+        "id": 211,
+        "language": "JAPANESE",
+        "name": "Rising Fist",
+        "release_date": "Sat, 14 Jun 2014 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 526,
+        "language": "ENGLISH",
+        "name": "McDonald's Promos 2014",
+        "release_date": "Fri, 23 May 2014 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 41,
+        "language": "ENGLISH",
+        "name": "Flashfire",
+        "release_date": "Wed, 07 May 2014 00:00:00 GMT"
+    },
+    {
+        "code": "XY2",
+        "id": 219,
+        "language": "JAPANESE",
+        "name": "Wild Blaze",
+        "release_date": "Sat, 15 Mar 2014 00:00:00 GMT"
+    },
+    {
+        "code": "XYa",
+        "id": 212,
+        "language": "JAPANESE",
+        "name": "M Charizard-EX Mega Battle Deck",
+        "release_date": "Sat, 15 Mar 2014 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 42,
+        "language": "ENGLISH",
+        "name": "XY Base",
+        "release_date": "Wed, 05 Feb 2014 00:00:00 GMT"
+    },
+    {
+        "code": "Y30",
+        "id": 213,
+        "language": "JAPANESE",
+        "name": "Yveltal Half Deck",
+        "release_date": "Fri, 31 Jan 2014 00:00:00 GMT"
+    },
+    {
+        "code": "X30",
+        "id": 214,
+        "language": "JAPANESE",
+        "name": "Xerneas Half Deck",
+        "release_date": "Fri, 31 Jan 2014 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 551,
+        "language": "JAPANESE",
+        "name": "Pokemon Scrap",
+        "release_date": "Thu, 02 Jan 2014 00:00:00 GMT"
+    },
+    {
+        "code": "XY1",
+        "id": 216,
+        "language": "JAPANESE",
+        "name": "Collection Y",
+        "release_date": "Fri, 13 Dec 2013 00:00:00 GMT"
+    },
+    {
+        "code": "XY1",
+        "id": 215,
+        "language": "JAPANESE",
+        "name": "Collection X",
+        "release_date": "Fri, 13 Dec 2013 00:00:00 GMT"
+    },
+    {
+        "code": "HXY",
+        "id": 217,
+        "language": "JAPANESE",
+        "name": "XY Beginning Set",
+        "release_date": "Fri, 08 Nov 2013 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 170,
+        "language": "ENGLISH",
+        "name": "Legendary Treasures Radiant Collection",
+        "release_date": "Wed, 06 Nov 2013 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 43,
+        "language": "ENGLISH",
+        "name": "Legendary Treasures",
+        "release_date": "Wed, 06 Nov 2013 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 175,
+        "language": "ENGLISH",
+        "name": "XY Black Star Promos",
+        "release_date": "Tue, 01 Oct 2013 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 44,
+        "language": "ENGLISH",
+        "name": "Plasma Blast",
+        "release_date": "Wed, 14 Aug 2013 00:00:00 GMT"
+    },
+    {
+        "code": "PROMO",
+        "id": 218,
+        "language": "JAPANESE",
+        "name": "XY Promos",
+        "release_date": "Thu, 01 Aug 2013 00:00:00 GMT"
+    },
+    {
+        "code": "MG",
+        "id": 220,
+        "language": "JAPANESE",
+        "name": "Mewtwo vs Genesect Deck Kit (Genesect)",
+        "release_date": "Sat, 13 Jul 2013 00:00:00 GMT"
+    },
+    {
+        "code": "EBB",
+        "id": 221,
+        "language": "JAPANESE",
+        "name": "EX Battle Boost",
+        "release_date": "Sat, 13 Jul 2013 00:00:00 GMT"
+    },
+    {
+        "code": "MG",
+        "id": 435,
+        "language": "JAPANESE",
+        "name": "Mewtwo vs Genesect Deck Kit (Mewtwo)",
+        "release_date": "Sat, 13 Jul 2013 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 45,
+        "language": "ENGLISH",
+        "name": "Plasma Freeze",
+        "release_date": "Wed, 08 May 2013 00:00:00 GMT"
+    },
+    {
+        "code": "BW9",
+        "id": 223,
+        "language": "JAPANESE",
+        "name": "Megalo Cannon",
+        "release_date": "Fri, 15 Mar 2013 00:00:00 GMT"
+    },
+    {
+        "code": "K+K",
+        "id": 222,
+        "language": "JAPANESE",
+        "name": "Blastoise Kyurem-EX Combo Deck",
+        "release_date": "Fri, 15 Mar 2013 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 46,
+        "language": "ENGLISH",
+        "name": "Plasma Storm",
+        "release_date": "Wed, 06 Feb 2013 00:00:00 GMT"
+    },
+    {
+        "code": "SC",
+        "id": 224,
+        "language": "JAPANESE",
+        "name": "Shiny Collection",
+        "release_date": "Fri, 01 Feb 2013 00:00:00 GMT"
+    },
+    {
+        "code": "BW8",
+        "id": 226,
+        "language": "JAPANESE",
+        "name": "Spiral Force",
+        "release_date": "Fri, 14 Dec 2012 00:00:00 GMT"
+    },
+    {
+        "code": "BW8",
+        "id": 225,
+        "language": "JAPANESE",
+        "name": "Thunder Knuckle",
+        "release_date": "Fri, 14 Dec 2012 00:00:00 GMT"
+    },
+    {
+        "code": "WAK",
+        "id": 227,
+        "language": "JAPANESE",
+        "name": "Everyone's Exciting Battle",
+        "release_date": "Fri, 16 Nov 2012 00:00:00 GMT"
+    },
+    {
+        "code": "PBG",
+        "id": 228,
+        "language": "JAPANESE",
+        "name": "Team Plasma Battle Gift Set",
+        "release_date": "Fri, 16 Nov 2012 00:00:00 GMT"
+    },
+    {
+        "code": "BKW",
+        "id": 229,
+        "language": "JAPANESE",
+        "name": "White Kyurem-EX Battle Strength Deck",
+        "release_date": "Fri, 19 Oct 2012 00:00:00 GMT"
+    },
+    {
+        "code": "BKB",
+        "id": 230,
+        "language": "JAPANESE",
+        "name": "Black Kyurem-EX Battle Strength Deck",
+        "release_date": "Fri, 19 Oct 2012 00:00:00 GMT"
+    },
+    {
+        "code": "BW7",
+        "id": 233,
+        "language": "JAPANESE",
+        "name": "Plasma Gale",
+        "release_date": "Sun, 14 Oct 2012 00:00:00 GMT"
+    },
+    {
+        "code": "PPD",
+        "id": 232,
+        "language": "JAPANESE",
+        "name": "Team Plasma Powered Half Deck",
+        "release_date": "Sun, 14 Oct 2012 00:00:00 GMT"
+    },
+    {
+        "code": "MDB",
+        "id": 231,
+        "language": "JAPANESE",
+        "name": "Master Deck Build Box EX",
+        "release_date": "Sun, 14 Oct 2012 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 389,
+        "language": "ENGLISH",
+        "name": "Dragon Vault",
+        "release_date": "Fri, 12 Oct 2012 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 47,
+        "language": "ENGLISH",
+        "name": "Boundaries Crossed",
+        "release_date": "Sun, 07 Oct 2012 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 48,
+        "language": "ENGLISH",
+        "name": "Dragons Exalted",
+        "release_date": "Wed, 15 Aug 2012 00:00:00 GMT"
+    },
+    {
+        "code": "BW6",
+        "id": 235,
+        "language": "JAPANESE",
+        "name": "Freeze Bolt",
+        "release_date": "Fri, 13 Jul 2012 00:00:00 GMT"
+    },
+    {
+        "code": "BW6",
+        "id": 234,
+        "language": "JAPANESE",
+        "name": "Cold Flare",
+        "release_date": "Fri, 13 Jul 2012 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 528,
+        "language": "ENGLISH",
+        "name": "McDonald's Promos 2012",
+        "release_date": "Fri, 15 Jun 2012 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 49,
+        "language": "ENGLISH",
+        "name": "Dark Explorers",
+        "release_date": "Wed, 09 May 2012 00:00:00 GMT"
+    },
+    {
+        "code": "HSZ",
+        "id": 236,
+        "language": "JAPANESE",
+        "name": "National Pokedex Beginning Set",
+        "release_date": "Fri, 20 Apr 2012 00:00:00 GMT"
+    },
+    {
+        "code": "KLD",
+        "id": 237,
+        "language": "JAPANESE",
+        "name": "Keldeo Battle Strength Deck",
+        "release_date": "Fri, 20 Apr 2012 00:00:00 GMT"
+    },
+    {
+        "code": "SZD",
+        "id": 239,
+        "language": "JAPANESE",
+        "name": "Hydreigon Half Deck",
+        "release_date": "Fri, 16 Mar 2012 00:00:00 GMT"
+    },
+    {
+        "code": "GBR",
+        "id": 238,
+        "language": "JAPANESE",
+        "name": "Garchomp Half Deck",
+        "release_date": "Fri, 16 Mar 2012 00:00:00 GMT"
+    },
+    {
+        "code": "BW5",
+        "id": 241,
+        "language": "JAPANESE",
+        "name": "Dragon Blade",
+        "release_date": "Fri, 16 Mar 2012 00:00:00 GMT"
+    },
+    {
+        "code": "BW5",
+        "id": 240,
+        "language": "JAPANESE",
+        "name": "Dragon Blast",
+        "release_date": "Fri, 16 Mar 2012 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 97,
+        "language": "ENGLISH",
+        "name": "Next Destinies",
+        "release_date": "Wed, 08 Feb 2012 00:00:00 GMT"
+    },
+    {
+        "code": "DS",
+        "id": 242,
+        "language": "JAPANESE",
+        "name": "Dragon Selection",
+        "release_date": "Fri, 27 Jan 2012 00:00:00 GMT"
+    },
+    {
+        "code": "BW4",
+        "id": 243,
+        "language": "JAPANESE",
+        "name": "Dark Rush",
+        "release_date": "Fri, 16 Dec 2011 00:00:00 GMT"
+    },
+    {
+        "code": "HSP",
+        "id": 256,
+        "language": "JAPANESE",
+        "name": "Beginning Set Pikachu (Oshawott)",
+        "release_date": "Fri, 18 Nov 2011 00:00:00 GMT"
+    },
+    {
+        "code": "HSP",
+        "id": 413,
+        "language": "JAPANESE",
+        "name": "Beginning Set Pikachu (Tepig)",
+        "release_date": "Fri, 18 Nov 2011 00:00:00 GMT"
+    },
+    {
+        "code": "HSP",
+        "id": 412,
+        "language": "JAPANESE",
+        "name": "Beginning Set Pikachu (Snivy)",
+        "release_date": "Fri, 18 Nov 2011 00:00:00 GMT"
+    },
+    {
+        "code": "BGS",
+        "id": 244,
+        "language": "JAPANESE",
+        "name": "Thundurus vs Tornadus Battle Gift Set",
+        "release_date": "Fri, 18 Nov 2011 00:00:00 GMT"
+    },
+    {
+        "code": "BKR",
+        "id": 246,
+        "language": "JAPANESE",
+        "name": "Reshiram-EX Battle Strength Deck",
+        "release_date": "Fri, 21 Oct 2011 00:00:00 GMT"
+    },
+    {
+        "code": "BKZ",
+        "id": 245,
+        "language": "JAPANESE",
+        "name": "Zekrom-EX Battle Strength Deck",
+        "release_date": "Fri, 21 Oct 2011 00:00:00 GMT"
+    },
+    {
+        "code": "BW3",
+        "id": 247,
+        "language": "JAPANESE",
+        "name": "Hail Blizzard",
+        "release_date": "Sun, 16 Oct 2011 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 50,
+        "language": "ENGLISH",
+        "name": "Noble Victories",
+        "release_date": "Sun, 16 Oct 2011 00:00:00 GMT"
+    },
+    {
+        "code": "BW3",
+        "id": 248,
+        "language": "JAPANESE",
+        "name": "Psycho Drive",
+        "release_date": "Sun, 16 Oct 2011 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 51,
+        "language": "ENGLISH",
+        "name": "Emerging Powers",
+        "release_date": "Wed, 31 Aug 2011 00:00:00 GMT"
+    },
+    {
+        "code": "HS+",
+        "id": 255,
+        "language": "JAPANESE",
+        "name": "Beginning Set Plus (Oshawott)",
+        "release_date": "Fri, 05 Aug 2011 00:00:00 GMT"
+    },
+    {
+        "code": "HS+",
+        "id": 411,
+        "language": "JAPANESE",
+        "name": "Beginning Set Plus (Tepig)",
+        "release_date": "Fri, 05 Aug 2011 00:00:00 GMT"
+    },
+    {
+        "code": "HS+",
+        "id": 410,
+        "language": "JAPANESE",
+        "name": "Beginning Set Plus (Snivy)",
+        "release_date": "Fri, 05 Aug 2011 00:00:00 GMT"
+    },
+    {
+        "code": "BW2",
+        "id": 249,
+        "language": "JAPANESE",
+        "name": "Red Collection",
+        "release_date": "Fri, 15 Jul 2011 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 529,
+        "language": "ENGLISH",
+        "name": "McDonald's Promos 2011",
+        "release_date": "Fri, 17 Jun 2011 00:00:00 GMT"
+    },
+    {
+        "code": "BTV",
+        "id": 250,
+        "language": "JAPANESE",
+        "name": "Victini Battle Theme Deck",
+        "release_date": "Fri, 17 Jun 2011 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 30,
+        "language": "ENGLISH",
+        "name": "Black and White",
+        "release_date": "Mon, 25 Apr 2011 00:00:00 GMT"
+    },
+    {
+        "code": "BK",
+        "id": 466,
+        "language": "JAPANESE",
+        "name": "Terrakion Battle Strength Deck",
+        "release_date": "Fri, 18 Mar 2011 00:00:00 GMT"
+    },
+    {
+        "code": "BK",
+        "id": 251,
+        "language": "JAPANESE",
+        "name": "Cobalion Battle Strength Deck",
+        "release_date": "Fri, 18 Mar 2011 00:00:00 GMT"
+    },
+    {
+        "code": "BK",
+        "id": 481,
+        "language": "JAPANESE",
+        "name": "Virizion Battle Strength Deck",
+        "release_date": "Fri, 18 Mar 2011 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 292,
+        "language": "ENGLISH",
+        "name": "Black and White Promos",
+        "release_date": "Tue, 01 Mar 2011 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 52,
+        "language": "ENGLISH",
+        "name": "Call of Legends",
+        "release_date": "Wed, 09 Feb 2011 00:00:00 GMT"
+    },
+    {
+        "code": "BW1",
+        "id": 252,
+        "language": "JAPANESE",
+        "name": "Black Collection",
+        "release_date": "Fri, 17 Dec 2010 00:00:00 GMT"
+    },
+    {
+        "code": "BW1",
+        "id": 253,
+        "language": "JAPANESE",
+        "name": "White Collection",
+        "release_date": "Fri, 17 Dec 2010 00:00:00 GMT"
+    },
+    {
+        "code": "PROMO",
+        "id": 258,
+        "language": "JAPANESE",
+        "name": "Black & White Promos",
+        "release_date": "Wed, 01 Dec 2010 00:00:00 GMT"
+    },
+    {
+        "code": "HS",
+        "id": 409,
+        "language": "JAPANESE",
+        "name": "Beginning Set (Tepig)",
+        "release_date": "Fri, 29 Oct 2010 00:00:00 GMT"
+    },
+    {
+        "code": "HS",
+        "id": 254,
+        "language": "JAPANESE",
+        "name": "Beginning Set (Oshawott)",
+        "release_date": "Fri, 29 Oct 2010 00:00:00 GMT"
+    },
+    {
+        "code": "HS",
+        "id": 408,
+        "language": "JAPANESE",
+        "name": "Beginning Set (Snivy)",
+        "release_date": "Fri, 29 Oct 2010 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 53,
+        "language": "ENGLISH",
+        "name": "Triumphant",
+        "release_date": "Sun, 03 Oct 2010 00:00:00 GMT"
+    },
+    {
+        "code": "CS1",
+        "id": 257,
+        "language": "JAPANESE",
+        "name": "Journey Partners",
+        "release_date": "Sat, 18 Sep 2010 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 54,
+        "language": "ENGLISH",
+        "name": "Undaunted",
+        "release_date": "Wed, 18 Aug 2010 00:00:00 GMT"
+    },
+    {
+        "code": "L3",
+        "id": 259,
+        "language": "JAPANESE",
+        "name": "Clash at the Summit",
+        "release_date": "Thu, 08 Jul 2010 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 55,
+        "language": "ENGLISH",
+        "name": "Unleashed",
+        "release_date": "Wed, 12 May 2010 00:00:00 GMT"
+    },
+    {
+        "code": "LL",
+        "id": 260,
+        "language": "JAPANESE",
+        "name": "Lost Link",
+        "release_date": "Fri, 16 Apr 2010 00:00:00 GMT"
+    },
+    {
+        "code": "L2",
+        "id": 263,
+        "language": "JAPANESE",
+        "name": "Reviving Legends",
+        "release_date": "Thu, 11 Feb 2010 00:00:00 GMT"
+    },
+    {
+        "code": "L2",
+        "id": 261,
+        "language": "JAPANESE",
+        "name": "Tyranitar Constructed Standard Deck",
+        "release_date": "Thu, 11 Feb 2010 00:00:00 GMT"
+    },
+    {
+        "code": "L2",
+        "id": 262,
+        "language": "JAPANESE",
+        "name": "Steelix Constructed Standard Deck",
+        "release_date": "Thu, 11 Feb 2010 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 80,
+        "language": "ENGLISH",
+        "name": "HeartGold SoulSilver",
+        "release_date": "Wed, 10 Feb 2010 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 518,
+        "language": "ENGLISH",
+        "name": "HGSS Black Star Promo",
+        "release_date": "Mon, 01 Feb 2010 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 176,
+        "language": "ENGLISH",
+        "name": "Miscellaneous Promos",
+        "release_date": "Fri, 01 Jan 2010 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 553,
+        "language": "ENGLISH",
+        "name": "Pokemon Rumble",
+        "release_date": "Wed, 02 Dec 2009 00:00:00 GMT"
+    },
+    {
+        "code": "B",
+        "id": 406,
+        "language": "JAPANESE",
+        "name": "Battle Starter Deck (Raichu)",
+        "release_date": "Fri, 20 Nov 2009 00:00:00 GMT"
+    },
+    {
+        "code": "B",
+        "id": 407,
+        "language": "JAPANESE",
+        "name": "Battle Starter Deck (Torterra)",
+        "release_date": "Fri, 20 Nov 2009 00:00:00 GMT"
+    },
+    {
+        "code": "E",
+        "id": 264,
+        "language": "JAPANESE",
+        "name": "Leafeon VS Metagross Expert Deck Online",
+        "release_date": "Fri, 20 Nov 2009 00:00:00 GMT"
+    },
+    {
+        "code": "B",
+        "id": 265,
+        "language": "JAPANESE",
+        "name": "Battle Starter Deck (Blastoise)",
+        "release_date": "Fri, 20 Nov 2009 00:00:00 GMT"
+    },
+    {
+        "code": "B",
+        "id": 405,
+        "language": "JAPANESE",
+        "name": "Battle Starter Deck (Magmortar)",
+        "release_date": "Fri, 20 Nov 2009 00:00:00 GMT"
+    },
+    {
+        "code": "L1",
+        "id": 266,
+        "language": "JAPANESE",
+        "name": "SoulSilver Collection",
+        "release_date": "Fri, 09 Oct 2009 00:00:00 GMT"
+    },
+    {
+        "code": "L1",
+        "id": 267,
+        "language": "JAPANESE",
+        "name": "HeartGold Collection",
+        "release_date": "Fri, 09 Oct 2009 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 56,
+        "language": "ENGLISH",
+        "name": "Arceus",
+        "release_date": "Sun, 04 Oct 2009 00:00:00 GMT"
+    },
+    {
+        "code": "PROMO",
+        "id": 431,
+        "language": "JAPANESE",
+        "name": "LEGEND Promos",
+        "release_date": "Tue, 01 Sep 2009 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 57,
+        "language": "ENGLISH",
+        "name": "Supreme Victors",
+        "release_date": "Wed, 19 Aug 2009 00:00:00 GMT"
+    },
+    {
+        "code": "M",
+        "id": 269,
+        "language": "JAPANESE",
+        "name": "Movie Commemoration Random Pack",
+        "release_date": "Sat, 18 Jul 2009 00:00:00 GMT"
+    },
+    {
+        "code": "L",
+        "id": 270,
+        "language": "JAPANESE",
+        "name": "Melee! Pokémon Scramble",
+        "release_date": "Fri, 10 Jul 2009 00:00:00 GMT"
+    },
+    {
+        "code": "pt4",
+        "id": 273,
+        "language": "JAPANESE",
+        "name": "Advent of Arceus",
+        "release_date": "Wed, 08 Jul 2009 00:00:00 GMT"
+    },
+    {
+        "code": "Pt",
+        "id": 271,
+        "language": "JAPANESE",
+        "name": "Arceus LV.X Deck (Lightning & Psychic)",
+        "release_date": "Wed, 08 Jul 2009 00:00:00 GMT"
+    },
+    {
+        "code": "Pt",
+        "id": 272,
+        "language": "JAPANESE",
+        "name": "Arceus LV.X Deck (Grass & Fire)",
+        "release_date": "Wed, 08 Jul 2009 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 100,
+        "language": "ENGLISH",
+        "name": "Rising Rivals",
+        "release_date": "Sat, 16 May 2009 00:00:00 GMT"
+    },
+    {
+        "code": "PtS",
+        "id": 274,
+        "language": "JAPANESE",
+        "name": "Collection Pack (Shaymin LV.X)",
+        "release_date": "Sat, 18 Apr 2009 00:00:00 GMT"
+    },
+    {
+        "code": "PtR",
+        "id": 276,
+        "language": "JAPANESE",
+        "name": "Collection Pack (Regigigas LV.X)",
+        "release_date": "Sat, 18 Apr 2009 00:00:00 GMT"
+    },
+    {
+        "code": "PtM",
+        "id": 275,
+        "language": "JAPANESE",
+        "name": "Collection Pack (Mewtwo LV.X)",
+        "release_date": "Sat, 18 Apr 2009 00:00:00 GMT"
+    },
+    {
+        "code": "Pt",
+        "id": 278,
+        "language": "JAPANESE",
+        "name": "Charizard Half Deck 2009",
+        "release_date": "Fri, 06 Mar 2009 00:00:00 GMT"
+    },
+    {
+        "code": "Pt",
+        "id": 277,
+        "language": "JAPANESE",
+        "name": "Garchomp Half Deck 2009",
+        "release_date": "Fri, 06 Mar 2009 00:00:00 GMT"
+    },
+    {
+        "code": "Pt3",
+        "id": 279,
+        "language": "JAPANESE",
+        "name": "Beat of the Frontier",
+        "release_date": "Fri, 06 Mar 2009 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 398,
+        "language": "ENGLISH",
+        "name": "Pop Series 9",
+        "release_date": "Sun, 01 Mar 2009 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 98,
+        "language": "ENGLISH",
+        "name": "Platinum",
+        "release_date": "Wed, 11 Feb 2009 00:00:00 GMT"
+    },
+    {
+        "code": "Pt",
+        "id": 281,
+        "language": "JAPANESE",
+        "name": "SP Deck Kit (Gallade)",
+        "release_date": "Fri, 26 Dec 2008 00:00:00 GMT"
+    },
+    {
+        "code": "Pt",
+        "id": 280,
+        "language": "JAPANESE",
+        "name": "SP Deck Kit (Infernape)",
+        "release_date": "Fri, 26 Dec 2008 00:00:00 GMT"
+    },
+    {
+        "code": "Pt2",
+        "id": 282,
+        "language": "JAPANESE",
+        "name": "Bonds to the End of Time",
+        "release_date": "Fri, 26 Dec 2008 00:00:00 GMT"
+    },
+    {
+        "code": "Pt",
+        "id": 418,
+        "language": "JAPANESE",
+        "name": "DPt Gift Box (Pikachu)",
+        "release_date": "Thu, 20 Nov 2008 00:00:00 GMT"
+    },
+    {
+        "code": "Pt",
+        "id": 284,
+        "language": "JAPANESE",
+        "name": "DPt Gift Box (Turtwig)",
+        "release_date": "Thu, 20 Nov 2008 00:00:00 GMT"
+    },
+    {
+        "code": "Pt",
+        "id": 419,
+        "language": "JAPANESE",
+        "name": "DPt Gift Box (Piplup)",
+        "release_date": "Thu, 20 Nov 2008 00:00:00 GMT"
+    },
+    {
+        "code": "Pt",
+        "id": 283,
+        "language": "JAPANESE",
+        "name": "DPt Gift Box (Chimchar)",
+        "release_date": "Thu, 20 Nov 2008 00:00:00 GMT"
+    },
+    {
+        "code": "Pt1",
+        "id": 288,
+        "language": "JAPANESE",
+        "name": "Galactic's Conquest",
+        "release_date": "Fri, 10 Oct 2008 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 285,
+        "language": "JAPANESE",
+        "name": "Giratina Half Deck",
+        "release_date": "Fri, 10 Oct 2008 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 286,
+        "language": "JAPANESE",
+        "name": "Dialga Half Deck",
+        "release_date": "Fri, 10 Oct 2008 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 287,
+        "language": "JAPANESE",
+        "name": "Palkia Half Deck",
+        "release_date": "Fri, 10 Oct 2008 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 105,
+        "language": "ENGLISH",
+        "name": "Stormfront",
+        "release_date": "Wed, 01 Oct 2008 00:00:00 GMT"
+    },
+    {
+        "code": "PROMO",
+        "id": 289,
+        "language": "JAPANESE",
+        "name": "DPt-P Promos",
+        "release_date": "Wed, 01 Oct 2008 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 397,
+        "language": "ENGLISH",
+        "name": "Pop Series 8",
+        "release_date": "Mon, 01 Sep 2008 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 58,
+        "language": "ENGLISH",
+        "name": "Legends Awakened",
+        "release_date": "Fri, 01 Aug 2008 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 293,
+        "language": "JAPANESE",
+        "name": "11th Movie Commemoration Set",
+        "release_date": "Fri, 01 Aug 2008 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 296,
+        "language": "JAPANESE",
+        "name": "Intense Fight in the Destroyed Sky",
+        "release_date": "Thu, 10 Jul 2008 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 87,
+        "language": "ENGLISH",
+        "name": "Majestic Dawn",
+        "release_date": "Thu, 01 May 2008 00:00:00 GMT"
+    },
+    {
+        "code": "DP5",
+        "id": 297,
+        "language": "JAPANESE",
+        "name": "Heatran Half Deck",
+        "release_date": "Fri, 14 Mar 2008 00:00:00 GMT"
+    },
+    {
+        "code": "DP5",
+        "id": 299,
+        "language": "JAPANESE",
+        "name": "Temple of Anger",
+        "release_date": "Fri, 14 Mar 2008 00:00:00 GMT"
+    },
+    {
+        "code": "DP5",
+        "id": 300,
+        "language": "JAPANESE",
+        "name": "Cry From The Mysterious",
+        "release_date": "Fri, 14 Mar 2008 00:00:00 GMT"
+    },
+    {
+        "code": "DP5",
+        "id": 298,
+        "language": "JAPANESE",
+        "name": "Regigigas Half Deck",
+        "release_date": "Fri, 14 Mar 2008 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 396,
+        "language": "ENGLISH",
+        "name": "Pop Series 7",
+        "release_date": "Sat, 01 Mar 2008 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 59,
+        "language": "ENGLISH",
+        "name": "Great Encounters",
+        "release_date": "Fri, 01 Feb 2008 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 493,
+        "language": "JAPANESE",
+        "name": "Infernape Half Deck 2007",
+        "release_date": "Fri, 30 Nov 2007 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 494,
+        "language": "JAPANESE",
+        "name": "Torterra Half Deck 2007",
+        "release_date": "Fri, 30 Nov 2007 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 496,
+        "language": "JAPANESE",
+        "name": "Raichu Half Deck 2007",
+        "release_date": "Fri, 30 Nov 2007 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 495,
+        "language": "JAPANESE",
+        "name": "Empoleon Half Deck 2007",
+        "release_date": "Fri, 30 Nov 2007 00:00:00 GMT"
+    },
+    {
+        "code": "DP4",
+        "id": 307,
+        "language": "JAPANESE",
+        "name": "Moonlit Pursuit",
+        "release_date": "Fri, 26 Oct 2007 00:00:00 GMT"
+    },
+    {
+        "code": "DP4",
+        "id": 305,
+        "language": "JAPANESE",
+        "name": "Magmortar Half Deck",
+        "release_date": "Fri, 26 Oct 2007 00:00:00 GMT"
+    },
+    {
+        "code": "DP4",
+        "id": 306,
+        "language": "JAPANESE",
+        "name": "Electivire Half Deck",
+        "release_date": "Fri, 26 Oct 2007 00:00:00 GMT"
+    },
+    {
+        "code": "DP4",
+        "id": 308,
+        "language": "JAPANESE",
+        "name": "Dawn Dash",
+        "release_date": "Fri, 26 Oct 2007 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 103,
+        "language": "ENGLISH",
+        "name": "Secret Wonders",
+        "release_date": "Mon, 01 Oct 2007 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 395,
+        "language": "ENGLISH",
+        "name": "Pop Series 6",
+        "release_date": "Sat, 01 Sep 2007 00:00:00 GMT"
+    },
+    {
+        "code": "10th",
+        "id": 309,
+        "language": "JAPANESE",
+        "name": "10th Movie Commemoration Set",
+        "release_date": "Fri, 03 Aug 2007 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 88,
+        "language": "ENGLISH",
+        "name": "Mysterious Treasures",
+        "release_date": "Wed, 01 Aug 2007 00:00:00 GMT"
+    },
+    {
+        "code": "DP3",
+        "id": 310,
+        "language": "JAPANESE",
+        "name": "Dialga LV.X Constructed Standard Deck",
+        "release_date": "Thu, 05 Jul 2007 00:00:00 GMT"
+    },
+    {
+        "code": "DP3",
+        "id": 312,
+        "language": "JAPANESE",
+        "name": "Shining Darkness",
+        "release_date": "Thu, 05 Jul 2007 00:00:00 GMT"
+    },
+    {
+        "code": "DP3",
+        "id": 311,
+        "language": "JAPANESE",
+        "name": "Palkia LV.X Constructed Standard Deck",
+        "release_date": "Thu, 05 Jul 2007 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 313,
+        "language": "JAPANESE",
+        "name": "World Champions Pack",
+        "release_date": "Thu, 05 Jul 2007 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 444,
+        "language": "JAPANESE",
+        "name": "PPP Promos",
+        "release_date": "Tue, 01 May 2007 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 60,
+        "language": "ENGLISH",
+        "name": "Diamond & Pearl",
+        "release_date": "Tue, 01 May 2007 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 113,
+        "language": "ENGLISH",
+        "name": "Diamond and Pearl Promo",
+        "release_date": "Tue, 01 May 2007 00:00:00 GMT"
+    },
+    {
+        "code": "DP2",
+        "id": 314,
+        "language": "JAPANESE",
+        "name": "Rampardos the Attacker",
+        "release_date": "Fri, 02 Mar 2007 00:00:00 GMT"
+    },
+    {
+        "code": "DP2",
+        "id": 316,
+        "language": "JAPANESE",
+        "name": "Secret of the Lakes",
+        "release_date": "Fri, 02 Mar 2007 00:00:00 GMT"
+    },
+    {
+        "code": "DP2",
+        "id": 315,
+        "language": "JAPANESE",
+        "name": "Bastiodon the Defender",
+        "release_date": "Fri, 02 Mar 2007 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 394,
+        "language": "ENGLISH",
+        "name": "Pop Series 5",
+        "release_date": "Thu, 01 Mar 2007 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 99,
+        "language": "ENGLISH",
+        "name": "Power Keepers",
+        "release_date": "Thu, 01 Feb 2007 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 318,
+        "language": "JAPANESE",
+        "name": "DP-P Promos",
+        "release_date": "Fri, 01 Dec 2006 00:00:00 GMT"
+    },
+    {
+        "code": "DP1",
+        "id": 317,
+        "language": "JAPANESE",
+        "name": "Space-Time Creation",
+        "release_date": "Thu, 30 Nov 2006 00:00:00 GMT"
+    },
+    {
+        "code": "DP",
+        "id": 303,
+        "language": "JAPANESE",
+        "name": "Empoleon Half Deck 2006",
+        "release_date": "Fri, 27 Oct 2006 00:00:00 GMT"
+    },
+    {
+        "code": "DP",
+        "id": 301,
+        "language": "JAPANESE",
+        "name": "Torterra Half Deck 2006",
+        "release_date": "Fri, 27 Oct 2006 00:00:00 GMT"
+    },
+    {
+        "code": "DP",
+        "id": 302,
+        "language": "JAPANESE",
+        "name": "Infernape Half Deck 2006",
+        "release_date": "Fri, 27 Oct 2006 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 61,
+        "language": "ENGLISH",
+        "name": "Dragon Frontiers",
+        "release_date": "Sun, 01 Oct 2006 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 393,
+        "language": "ENGLISH",
+        "name": "Pop Series 4",
+        "release_date": "Tue, 01 Aug 2006 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 62,
+        "language": "ENGLISH",
+        "name": "Crystal Guardians",
+        "release_date": "Tue, 01 Aug 2006 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 321,
+        "language": "JAPANESE",
+        "name": "Shockwave Tyranitar Constructed Standard Deck",
+        "release_date": "Sat, 29 Jul 2006 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 320,
+        "language": "JAPANESE",
+        "name": "Imprison Gardevoir Constructed Deck",
+        "release_date": "Sat, 29 Jul 2006 00:00:00 GMT"
+    },
+    {
+        "code": "Vs",
+        "id": 319,
+        "language": "JAPANESE",
+        "name": "Movie Release Commemoration VS Pack Sea's Manaphy",
+        "release_date": "Sat, 15 Jul 2006 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 436,
+        "language": "JAPANESE",
+        "name": "Offense and Defense of the Furthest Ends",
+        "release_date": "Thu, 29 Jun 2006 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 82,
+        "language": "ENGLISH",
+        "name": "Holon Phantoms",
+        "release_date": "Mon, 01 May 2006 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 392,
+        "language": "ENGLISH",
+        "name": "Pop Series 3",
+        "release_date": "Sat, 01 Apr 2006 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 324,
+        "language": "JAPANESE",
+        "name": "Earth's Groudon Constructed Starter Deck",
+        "release_date": "Fri, 10 Mar 2006 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 325,
+        "language": "JAPANESE",
+        "name": "Miracle Crystal",
+        "release_date": "Fri, 10 Mar 2006 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 323,
+        "language": "JAPANESE",
+        "name": "Ocean's Kyogre Constructed Starter Deck",
+        "release_date": "Fri, 10 Mar 2006 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 85,
+        "language": "ENGLISH",
+        "name": "Legend Maker",
+        "release_date": "Mon, 13 Feb 2006 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 326,
+        "language": "JAPANESE",
+        "name": "Holon Phantom",
+        "release_date": "Fri, 27 Jan 2006 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 329,
+        "language": "JAPANESE",
+        "name": "Crawdaunt Quarter Deck",
+        "release_date": "Wed, 16 Nov 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 330,
+        "language": "JAPANESE",
+        "name": "Lucario Quarter Deck",
+        "release_date": "Wed, 16 Nov 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 328,
+        "language": "JAPANESE",
+        "name": "Mightyena Quarter Deck",
+        "release_date": "Wed, 16 Nov 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 327,
+        "language": "JAPANESE",
+        "name": "Mew Quarter Deck",
+        "release_date": "Wed, 16 Nov 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 63,
+        "language": "ENGLISH",
+        "name": "Delta Species",
+        "release_date": "Mon, 31 Oct 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 331,
+        "language": "JAPANESE",
+        "name": "Holon Research Tower",
+        "release_date": "Fri, 28 Oct 2005 00:00:00 GMT"
+    },
+    {
+        "code": "R",
+        "id": 355,
+        "language": "JAPANESE",
+        "name": "Rocket Gang Strikes Back",
+        "release_date": "Sat, 15 Oct 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 332,
+        "language": "JAPANESE",
+        "name": "Holon Research Tower Lightning Quarter Deck",
+        "release_date": "Fri, 07 Oct 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 333,
+        "language": "JAPANESE",
+        "name": "Holon Research Tower Water Quarter Deck",
+        "release_date": "Fri, 07 Oct 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 334,
+        "language": "JAPANESE",
+        "name": "Holon Research Tower: Fire Quarter Deck",
+        "release_date": "Fri, 07 Oct 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 64,
+        "language": "ENGLISH",
+        "name": "Unseen Forces",
+        "release_date": "Mon, 01 Aug 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 391,
+        "language": "ENGLISH",
+        "name": "Pop Series 2",
+        "release_date": "Mon, 01 Aug 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 340,
+        "language": "JAPANESE",
+        "name": "Mirage Forest",
+        "release_date": "Sat, 30 Jul 2005 00:00:00 GMT"
+    },
+    {
+        "code": "Vs",
+        "id": 335,
+        "language": "JAPANESE",
+        "name": "Movie Commemoration VS Pack Aura's Lucario",
+        "release_date": "Sat, 16 Jul 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 336,
+        "language": "JAPANESE",
+        "name": "Bulbasaur Quarter Deck",
+        "release_date": "Fri, 15 Jul 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 337,
+        "language": "JAPANESE",
+        "name": "Torchic Quarter Deck",
+        "release_date": "Fri, 15 Jul 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 338,
+        "language": "JAPANESE",
+        "name": "Side Deck",
+        "release_date": "Fri, 15 Jul 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 339,
+        "language": "JAPANESE",
+        "name": "Mirage's Mew Constructed Starter Deck",
+        "release_date": "Thu, 30 Jun 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 65,
+        "language": "ENGLISH",
+        "name": "Emerald",
+        "release_date": "Sun, 01 May 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 341,
+        "language": "JAPANESE",
+        "name": "Golden Sky, Silvery Ocean",
+        "release_date": "Fri, 08 Apr 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 443,
+        "language": "JAPANESE",
+        "name": "PokéPark Forest",
+        "release_date": "Fri, 18 Mar 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 442,
+        "language": "JAPANESE",
+        "name": "PokéPark Blue",
+        "release_date": "Fri, 18 Mar 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 342,
+        "language": "JAPANESE",
+        "name": "Feraligatr Constructed Starter Deck",
+        "release_date": "Sat, 05 Mar 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 343,
+        "language": "JAPANESE",
+        "name": "Meganium Constructed Starter Deck",
+        "release_date": "Sat, 05 Mar 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 344,
+        "language": "JAPANESE",
+        "name": "Typhlosion Constructed Starter Deck",
+        "release_date": "Sat, 05 Mar 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 66,
+        "language": "ENGLISH",
+        "name": "Deoxys",
+        "release_date": "Tue, 01 Feb 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 350,
+        "language": "JAPANESE",
+        "name": "Psychic Quick Construction Pack",
+        "release_date": "Sun, 16 Jan 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 345,
+        "language": "JAPANESE",
+        "name": "Lightning Quick Construction Pack",
+        "release_date": "Sun, 16 Jan 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 346,
+        "language": "JAPANESE",
+        "name": "Grass Quick Construction Pack",
+        "release_date": "Sun, 16 Jan 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 347,
+        "language": "JAPANESE",
+        "name": "Fire Quick Construction Pack",
+        "release_date": "Sun, 16 Jan 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 348,
+        "language": "JAPANESE",
+        "name": "Water Quick Construction Pack",
+        "release_date": "Sun, 16 Jan 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 349,
+        "language": "JAPANESE",
+        "name": "Fighting Quick Construction Pack",
+        "release_date": "Sun, 16 Jan 2005 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 352,
+        "language": "JAPANESE",
+        "name": "Rayquaza Half Deck",
+        "release_date": "Fri, 19 Nov 2004 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 351,
+        "language": "JAPANESE",
+        "name": "Deoxys Half Deck",
+        "release_date": "Fri, 19 Nov 2004 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 414,
+        "language": "JAPANESE",
+        "name": "Black Deck Kit",
+        "release_date": "Fri, 15 Oct 2004 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 107,
+        "language": "ENGLISH",
+        "name": "Team Rocket Returns",
+        "release_date": "Fri, 01 Oct 2004 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 75,
+        "language": "ENGLISH",
+        "name": "Fire Red Leaf Green",
+        "release_date": "Wed, 01 Sep 2004 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 390,
+        "language": "ENGLISH",
+        "name": "Pop Series 1",
+        "release_date": "Wed, 01 Sep 2004 00:00:00 GMT"
+    },
+    {
+        "code": "Vs",
+        "id": 356,
+        "language": "JAPANESE",
+        "name": "Movie Commemoration VS Pack: Sky-Splitting Deoxys",
+        "release_date": "Sat, 17 Jul 2004 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 358,
+        "language": "JAPANESE",
+        "name": "Deoxys Starter Deck",
+        "release_date": "Thu, 01 Jul 2004 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 359,
+        "language": "JAPANESE",
+        "name": "Clash of the Blue Sky",
+        "release_date": "Thu, 01 Jul 2004 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 357,
+        "language": "JAPANESE",
+        "name": "Rayquaza Starter Deck",
+        "release_date": "Thu, 01 Jul 2004 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 81,
+        "language": "ENGLISH",
+        "name": "Hidden Legends",
+        "release_date": "Tue, 01 Jun 2004 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 360,
+        "language": "JAPANESE",
+        "name": "Flight of Legends",
+        "release_date": "Fri, 09 Apr 2004 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 363,
+        "language": "JAPANESE",
+        "name": "Venusaur Starter Deck",
+        "release_date": "Fri, 19 Mar 2004 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 362,
+        "language": "JAPANESE",
+        "name": "Charizard Starter Deck",
+        "release_date": "Fri, 19 Mar 2004 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 361,
+        "language": "JAPANESE",
+        "name": "Blastoise Starter Deck",
+        "release_date": "Fri, 19 Mar 2004 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 106,
+        "language": "ENGLISH",
+        "name": "Team Magma vs Team Aqua",
+        "release_date": "Mon, 01 Mar 2004 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 364,
+        "language": "JAPANESE",
+        "name": "PCG-P Promos",
+        "release_date": "Sun, 01 Feb 2004 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 367,
+        "language": "JAPANESE",
+        "name": "Undone Seal",
+        "release_date": "Fri, 16 Jan 2004 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 368,
+        "language": "JAPANESE",
+        "name": "Magma vs Aqua: Two Ambitions",
+        "release_date": "Fri, 24 Oct 2003 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 519,
+        "language": "ENGLISH",
+        "name": "Nintendo Black Star Promo",
+        "release_date": "Wed, 01 Oct 2003 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 102,
+        "language": "ENGLISH",
+        "name": "Sandstorm",
+        "release_date": "Thu, 18 Sep 2003 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 67,
+        "language": "ENGLISH",
+        "name": "Dragon",
+        "release_date": "Thu, 18 Sep 2003 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 101,
+        "language": "ENGLISH",
+        "name": "Ruby and Sapphire",
+        "release_date": "Tue, 01 Jul 2003 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 369,
+        "language": "JAPANESE",
+        "name": "Rulers of the Heavens",
+        "release_date": "Wed, 25 Jun 2003 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 104,
+        "language": "ENGLISH",
+        "name": "Skyridge",
+        "release_date": "Mon, 12 May 2003 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 370,
+        "language": "JAPANESE",
+        "name": "Miracle of the Desert",
+        "release_date": "Fri, 18 Apr 2003 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 371,
+        "language": "JAPANESE",
+        "name": "ADV Expansion Pack",
+        "release_date": "Fri, 31 Jan 2003 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 68,
+        "language": "ENGLISH",
+        "name": "Aquapolis",
+        "release_date": "Wed, 15 Jan 2003 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 403,
+        "language": "JAPANESE",
+        "name": "ADV-P Promos",
+        "release_date": "Wed, 01 Jan 2003 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 439,
+        "language": "JAPANESE",
+        "name": "PLAY Promos",
+        "release_date": "Wed, 01 Jan 2003 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 372,
+        "language": "JAPANESE",
+        "name": "Mysterious Mountains",
+        "release_date": "Fri, 04 Oct 2002 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 74,
+        "language": "ENGLISH",
+        "name": "Expedition",
+        "release_date": "Sun, 15 Sep 2002 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 373,
+        "language": "JAPANESE",
+        "name": "Split Earth",
+        "release_date": "Fri, 23 Aug 2002 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 374,
+        "language": "JAPANESE",
+        "name": "Wind from the Sea",
+        "release_date": "Fri, 24 May 2002 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 86,
+        "language": "ENGLISH",
+        "name": "Legendary Collection",
+        "release_date": "Fri, 24 May 2002 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 375,
+        "language": "JAPANESE",
+        "name": "The Town on No Map",
+        "release_date": "Fri, 08 Mar 2002 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 89,
+        "language": "ENGLISH",
+        "name": "Neo Destiny",
+        "release_date": "Thu, 28 Feb 2002 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 90,
+        "language": "ENGLISH",
+        "name": "Neo Destiny 1st Edition",
+        "release_date": "Wed, 27 Feb 2002 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 434,
+        "language": "JAPANESE",
+        "name": "McDonald's Pokémon-e Minimum Pack",
+        "release_date": "Sat, 26 Jan 2002 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 461,
+        "language": "JAPANESE",
+        "name": "T Promos",
+        "release_date": "Tue, 01 Jan 2002 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 376,
+        "language": "JAPANESE",
+        "name": "Base Expansion Pack",
+        "release_date": "Sat, 01 Dec 2001 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 441,
+        "language": "JAPANESE",
+        "name": "Pokémon Web",
+        "release_date": "Sat, 20 Oct 2001 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 95,
+        "language": "ENGLISH",
+        "name": "Neo Revelation",
+        "release_date": "Fri, 21 Sep 2001 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 96,
+        "language": "ENGLISH",
+        "name": "Neo Revelation 1st Edition",
+        "release_date": "Thu, 20 Sep 2001 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 430,
+        "language": "JAPANESE",
+        "name": "J Promos",
+        "release_date": "Wed, 01 Aug 2001 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 290,
+        "language": "ENGLISH",
+        "name": "Southern Islands",
+        "release_date": "Tue, 31 Jul 2001 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 440,
+        "language": "JAPANESE",
+        "name": "Pokémon VS",
+        "release_date": "Thu, 19 Jul 2001 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 437,
+        "language": "JAPANESE",
+        "name": "P Promos",
+        "release_date": "Sun, 01 Jul 2001 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 91,
+        "language": "ENGLISH",
+        "name": "Neo Discovery",
+        "release_date": "Sat, 02 Jun 2001 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 92,
+        "language": "ENGLISH",
+        "name": "Neo Discovery 1st Edition",
+        "release_date": "Fri, 01 Jun 2001 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 377,
+        "language": "JAPANESE",
+        "name": "Darkness, and to Light...",
+        "release_date": "Fri, 20 Apr 2001 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 428,
+        "language": "JAPANESE",
+        "name": "Intro Pack Neo (Chikorita)",
+        "release_date": "Fri, 06 Apr 2001 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 429,
+        "language": "JAPANESE",
+        "name": "Intro Pack Neo (Totodile)",
+        "release_date": "Fri, 06 Apr 2001 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 93,
+        "language": "ENGLISH",
+        "name": "Neo Genesis",
+        "release_date": "Sat, 16 Dec 2000 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 94,
+        "language": "ENGLISH",
+        "name": "Neo Genesis 1st Edition",
+        "release_date": "Fri, 15 Dec 2000 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 378,
+        "language": "JAPANESE",
+        "name": "Awakening Legends",
+        "release_date": "Thu, 23 Nov 2000 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 76,
+        "language": "ENGLISH",
+        "name": "Gym Challenge",
+        "release_date": "Mon, 16 Oct 2000 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 77,
+        "language": "ENGLISH",
+        "name": "Gym Challenge 1st Edition",
+        "release_date": "Sun, 15 Oct 2000 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 78,
+        "language": "ENGLISH",
+        "name": "Gym Heroes",
+        "release_date": "Mon, 14 Aug 2000 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 79,
+        "language": "ENGLISH",
+        "name": "Gym Heroes 1st Edition",
+        "release_date": "Sun, 13 Aug 2000 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 379,
+        "language": "JAPANESE",
+        "name": "Crossing the Ruins...",
+        "release_date": "Fri, 07 Jul 2000 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 69,
+        "language": "ENGLISH",
+        "name": "Team Rocket",
+        "release_date": "Mon, 24 Apr 2000 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 70,
+        "language": "ENGLISH",
+        "name": "Team Rocket 1st Edition",
+        "release_date": "Sun, 23 Apr 2000 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 73,
+        "language": "ENGLISH",
+        "name": "Base Set 2",
+        "release_date": "Thu, 24 Feb 2000 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 380,
+        "language": "JAPANESE",
+        "name": "Gold, Silver, to a New World...",
+        "release_date": "Fri, 04 Feb 2000 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 71,
+        "language": "ENGLISH",
+        "name": "Fossil",
+        "release_date": "Sun, 10 Oct 1999 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 72,
+        "language": "ENGLISH",
+        "name": "Fossil 1st Edition",
+        "release_date": "Sat, 09 Oct 1999 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 426,
+        "language": "JAPANESE",
+        "name": "Intro Pack (Bulbasaur)",
+        "release_date": "Fri, 30 Jul 1999 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 427,
+        "language": "JAPANESE",
+        "name": "Intro Pack (Squirtle)",
+        "release_date": "Fri, 30 Jul 1999 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 452,
+        "language": "JAPANESE",
+        "name": "Southern Islands Japanese",
+        "release_date": "Sat, 17 Jul 1999 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 110,
+        "language": "ENGLISH",
+        "name": "WOTC Promo",
+        "release_date": "Thu, 01 Jul 1999 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 381,
+        "language": "JAPANESE",
+        "name": "Challenge from the Darkness",
+        "release_date": "Fri, 25 Jun 1999 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 83,
+        "language": "ENGLISH",
+        "name": "Jungle",
+        "release_date": "Wed, 16 Jun 1999 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 84,
+        "language": "ENGLISH",
+        "name": "Jungle 1st Edition",
+        "release_date": "Tue, 15 Jun 1999 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 497,
+        "language": "JAPANESE",
+        "name": "Yamabuki City Gym Sabrina",
+        "release_date": "Fri, 26 Feb 1999 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 27,
+        "language": "ENGLISH",
+        "name": "Base Set Unlimited",
+        "release_date": "Tue, 12 Jan 1999 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 29,
+        "language": "ENGLISH",
+        "name": "Base Set Shadowless",
+        "release_date": "Mon, 11 Jan 1999 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 28,
+        "language": "ENGLISH",
+        "name": "Base Set 1st Edition",
+        "release_date": "Sun, 10 Jan 1999 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 480,
+        "language": "JAPANESE",
+        "name": "Vending Machine (Series 3)",
+        "release_date": "Tue, 24 Nov 1998 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 382,
+        "language": "JAPANESE",
+        "name": "Leaders' Stadium",
+        "release_date": "Sat, 24 Oct 1998 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 498,
+        "language": "JAPANESE",
+        "name": "Kuchiba City Gym Lt. Surge",
+        "release_date": "Sat, 25 Jul 1998 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 499,
+        "language": "JAPANESE",
+        "name": "Tamamushi City Gym Erika",
+        "release_date": "Sat, 25 Jul 1998 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 479,
+        "language": "JAPANESE",
+        "name": "Vending Machine (Series 2)",
+        "release_date": "Wed, 17 Jun 1998 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 501,
+        "language": "JAPANESE",
+        "name": "Hanada City Gym Misty",
+        "release_date": "Sun, 26 Apr 1998 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 500,
+        "language": "JAPANESE",
+        "name": "Nivi City Gym Brock",
+        "release_date": "Sun, 26 Apr 1998 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 478,
+        "language": "JAPANESE",
+        "name": "Vending Machine (Series 1)",
+        "release_date": "Mon, 23 Mar 1998 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 383,
+        "language": "JAPANESE",
+        "name": "Rocket Gang",
+        "release_date": "Fri, 21 Nov 1997 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 384,
+        "language": "JAPANESE",
+        "name": "Mystery of the Fossils",
+        "release_date": "Sat, 21 Jun 1997 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 385,
+        "language": "JAPANESE",
+        "name": "Pokémon Jungle",
+        "release_date": "Wed, 05 Mar 1997 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 386,
+        "language": "JAPANESE",
+        "name": "Expansion Pack",
+        "release_date": "Sun, 20 Oct 1996 00:00:00 GMT"
+    },
+    {
+        "code": null,
+        "id": 470,
+        "language": "JAPANESE",
+        "name": "Unnumbered Promos",
+        "release_date": "Tue, 01 Oct 1996 00:00:00 GMT"
+    }
+]

@@ -1,0 +1,12 @@
+FROM mcr.microsoft.com/devcontainers/base:ubuntu-22.04
+
+# Install additional utilities that features might not cover
+RUN apt-get update && apt-get install -y \
+    curl \
+    jq \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create workspace directory
+RUN mkdir -p /workspace
+WORKDIR /workspace

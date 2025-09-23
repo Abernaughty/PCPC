@@ -1,0 +1,45 @@
+{
+  "name": "pcpc-backend",
+  "version": "0.2.0",
+  "description": "Pokemon Card Price Checker (PCPC) - Azure Functions Backend Application",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "prestart": "npm run build",
+    "start": "func start",
+    "test": "node test-api.js",
+    "test:azure": "node test-azure.js",
+    "test:cosmos": "node test-cosmos.js",
+    "import": "npx ts-node import-data.ts",
+    "deploy": "deploy.bat",
+    "deploy:staging": "func azure functionapp publish pokedata-func --slot staging"
+  },
+  "keywords": [
+    "azure-functions",
+    "pokemon",
+    "card-prices",
+    "tcg",
+    "typescript"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@azure/cosmos": "^4.3.0",
+    "@azure/functions": "^4.7.2",
+    "@azure/storage-blob": "^12.27.0",
+    "@typespec/ts-http-runtime": "^0.2.2",
+    "axios": "^1.9.0",
+    "cookie": "^0.6.0",
+    "dotenv": "^16.5.0",
+    "redis": "^4.7.0"
+  }
+}
