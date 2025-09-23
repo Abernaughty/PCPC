@@ -1,0 +1,134 @@
+[
+    {
+        "id": 73053,
+        "language": "ENGLISH",
+        "name": "Amarys",
+        "num": "093",
+        "release_date": "2025-01-17",
+        "secret": false,
+        "set_code": "PRE",
+        "set_id": 557,
+        "set_name": "Prismatic Evolutions"
+    },
+    {
+        "id": 73130,
+        "language": "ENGLISH",
+        "name": "Amarys",
+        "num": "170",
+        "release_date": "2025-01-17",
+        "secret": true,
+        "set_code": "PRE",
+        "set_id": 557,
+        "set_name": "Prismatic Evolutions"
+    },
+    {
+        "id": 73092,
+        "language": "ENGLISH",
+        "name": "Amarys",
+        "num": "132",
+        "release_date": "2025-01-17",
+        "secret": true,
+        "set_code": "PRE",
+        "set_id": 557,
+        "set_name": "Prismatic Evolutions"
+    },
+    {
+        "id": 73742,
+        "language": "ENGLISH",
+        "name": "Amarys Poke ball Holo",
+        "num": "93",
+        "release_date": "2025-01-17",
+        "secret": false,
+        "set_code": "PRE",
+        "set_id": 557,
+        "set_name": "Prismatic Evolutions"
+    },
+    {
+        "id": 73744,
+        "language": "ENGLISH",
+        "name": "Amarys Reverse Holo",
+        "num": "93",
+        "release_date": "2025-01-17",
+        "secret": false,
+        "set_code": "PRE",
+        "set_id": 557,
+        "set_name": "Prismatic Evolutions"
+    },
+    {
+        "id": 72969,
+        "language": "ENGLISH",
+        "name": "Applin",
+        "num": "009",
+        "release_date": "2025-01-17",
+        "secret": false,
+        "set_code": "PRE",
+        "set_id": 557,
+        "set_name": "Prismatic Evolutions"
+    },
+    {
+        "id": 73019,
+        "language": "ENGLISH",
+        "name": "Umbreon",
+        "num": "059",
+        "release_date": "2025-01-17",
+        "secret": false,
+        "set_code": "PRE",
+        "set_id": 557,
+        "set_name": "Prismatic Evolutions"
+    },
+    {
+        "id": 73121,
+        "language": "ENGLISH",
+        "name": "Umbreon ex",
+        "num": "161",
+        "release_date": "2025-01-17",
+        "secret": true,
+        "set_code": "PRE",
+        "set_id": 557,
+        "set_name": "Prismatic Evolutions"
+    },
+    {
+        "id": 73020,
+        "language": "ENGLISH",
+        "name": "Umbreon ex",
+        "num": "060",
+        "release_date": "2025-01-17",
+        "secret": false,
+        "set_code": "PRE",
+        "set_id": 557,
+        "set_name": "Prismatic Evolutions"
+    },
+    {
+        "id": 73665,
+        "language": "ENGLISH",
+        "name": "Umbreon Master Ball Holo",
+        "num": "59",
+        "release_date": "2025-01-17",
+        "secret": false,
+        "set_code": "PRE",
+        "set_id": 557,
+        "set_name": "Prismatic Evolutions"
+    },
+    {
+        "id": 73664,
+        "language": "ENGLISH",
+        "name": "Umbreon Poke ball Holo",
+        "num": "59",
+        "release_date": "2025-01-17",
+        "secret": false,
+        "set_code": "PRE",
+        "set_id": 557,
+        "set_name": "Prismatic Evolutions"
+    },
+    {
+        "id": 73666,
+        "language": "ENGLISH",
+        "name": "Umbreon Reverse Holo",
+        "num": "59",
+        "release_date": "2025-01-17",
+        "secret": false,
+        "set_code": "PRE",
+        "set_id": 557,
+        "set_name": "Prismatic Evolutions"
+    }
+]
