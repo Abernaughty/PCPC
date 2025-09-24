@@ -3,7 +3,7 @@
   "dockerComposeFile": "docker-compose.yml",
   "service": "devcontainer",
   "workspaceFolder": "/workspace",
-  
+
   "features": {
     "ghcr.io/devcontainers/features/azure-cli:1": {
       "version": "2.77.0",
@@ -71,9 +71,13 @@
         "ms-vscode.remote-repositories",
         "eamodio.gitlens",
         "streetsidesoftware.code-spell-checker",
-        "saoudrizwan.claude-dev"
+        "saoudrizwan.claude-dev",
+        "ms-playwright.playwright",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "svelte.svelte-vscode"
       ],
-      
+
       "settings": {
         "terraform.experimentalFeatures.validateOnSave": true,
         "terraform.experimentalFeatures.prefillRequiredFields": true,
@@ -101,12 +105,11 @@
   },
 
   "postCreateCommand": ".devcontainer/setup.sh",
-  
+  "postStartCommand": ".devcontainer/startup.sh",
+
   "forwardPorts": [
-    7071,
-    4280,
-    10000, 10001, 10002,
-    8081, 8900, 8901, 8902, 8979, 10250, 10251, 10252, 10253, 10254, 10255, 10256, 10350
+    7071, 4280, 10000, 10001, 10002, 8081, 8900, 8901, 8902, 8979, 10250, 10251,
+    10252, 10253, 10254, 10255, 10256, 10350
   ],
 
   "portsAttributes": {
@@ -134,6 +137,6 @@
   ],
 
   "remoteUser": "vscode",
-  
+
   "shutdownAction": "stopCompose"
 }
