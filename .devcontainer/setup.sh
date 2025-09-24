@@ -2,6 +2,10 @@
 
 echo "🚀 Setting up PokeData DevOps Environment..."
 
+# Install devcontainer dependencies
+echo "📦 Installing devcontainer dependencies..."
+cd .devcontainer && npm install && cd ..
+
 # Install additional tools
 echo "📦 Installing additional tools..."
 npm install -g azurite
@@ -15,15 +19,15 @@ pip3 install checkov
 
 # Install Go testing dependencies
 echo "🧪 Installing testing tools..."
-go install github.com/gruntwork-io/terratest/modules/terraform@latest
+# Terratest is a library - install when needed in test files with 'go mod tidy'
+echo "🧪 Go testing tools will be installed via go mod when running tests"
+
+# Set execute permissions
+# chmod +x .devcontainer/startup.sh
 
 # Wait for emulators to be ready
 echo "⏳ Waiting for emulators to start..."
 sleep 30
-
-# Initialize Cosmos DB with sample data
-echo "🗄️ Initializing Cosmos DB emulator..."
-# Add script to create database and container
 
 # Verify emulator connectivity
 echo "✅ Verifying emulator connectivity..."
@@ -31,11 +35,8 @@ curl -k https://cosmosdb-emulator:8081/_explorer/emulator.pem > ~/cosmos_emulato
 curl -v http://azurite:10000/devstoreaccount1/ | head
 
 echo "🎉 Development environment ready!"
-echo "📍 Cosmos DB Explorer: https://localhost:8081/_explorer/index.html"
-echo "📍 Azurite Blob: http://localhost:10000"
+echo "📍 Cosmos DB Explorer: https://cosmosdb-emulator:8081/_explorer/index.html"
+echo "📍 Azurite Blob: http://azurite:10000"
 
-# Ensure .devcontainer/local.env exists
-[ -f .env ] || cp .env.example .env
-
-# Ensure .devcontainer/local.env exists
+# Ensure .env exists
 [ -f .env ] || cp .env.example .env

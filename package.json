@@ -1,0 +1,12 @@
+{
+  "name": "pcpc-devcontainer",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "DevContainer dependencies for PCPC project",
+  "dependencies": {
+    "@azure/cosmos": "^4.0.0"
+  },
+  "scripts": {
+    "seed-cosmos": "node .devcontainer/scripts/seed-cosmos.mjs"
+  }
+}

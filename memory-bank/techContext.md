@@ -229,7 +229,7 @@ make terraform-apply ENVIRONMENT=dev
 
 **Primary APIs**:
 
-1. **PokeData API** (`https://api.pokedata.ovh`)
+1. **PokeData API** (`https://www.pokedata.io/v0`)
 
    - Enhanced pricing data from multiple sources
    - Graded card values (PSA, CGC)
