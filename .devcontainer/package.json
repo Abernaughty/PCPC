@@ -1,0 +1,16 @@
+{
+  "name": "pcpc-devcontainer-scripts",
+  "version": "1.0.0",
+  "description": "Node.js scripts for PCPC devcontainer setup and cosmos DB readiness checks",
+  "type": "module",
+  "scripts": {
+    "cosmos-check": "node scripts/cosmos-readiness-check.mjs",
+    "seed-cosmos": "node scripts/seed-cosmos.mjs"
+  },
+  "dependencies": {
+    "@azure/cosmos": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
