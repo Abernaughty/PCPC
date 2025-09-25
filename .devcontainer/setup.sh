@@ -27,7 +27,7 @@ echo "🧪 Go testing tools will be installed via go mod when running tests"
 
 # Wait for emulators to be ready
 echo "⏳ Waiting for emulators to start..."
-sleep 30
+sleep 15
 
 # Verify emulator connectivity
 echo "✅ Verifying emulator connectivity..."

@@ -3,8 +3,9 @@ import { CosmosClient } from "@azure/cosmos";
 // Disable SSL verification for local emulator (development only)
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
 
-//const endpoint = "https://cosmosdb-emulator:8081";
-const endpoint = "https://localhost:8081";
+const endpoint = "https://cosmosdb-emulator:8081";
+// Fallback to localhost for debugging outside container
+// const endpoint = "https://localhost:8081";
 const key =
   "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==";
 
@@ -29,7 +30,7 @@ const client = new CosmosClient({
   },
 });
 
-const maxAttempts = 120; // 10 minutes (5 second intervals)
+const maxAttempts = 60; // 5 minutes (5 second intervals)
 let attempt = 1;
 
 async function testBasicConnectivity() {
