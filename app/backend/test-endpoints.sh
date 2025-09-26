@@ -43,7 +43,7 @@ test_endpoint() {
         echo -e "${GREEN}✅ SUCCESS${NC}"
         # Pretty print JSON if it's JSON
         if echo "$body" | jq . >/dev/null 2>&1; then
-            echo "$body" | jq . | head -20
+            echo "$body" | jq . | head -50
             if [ $(echo "$body" | jq . | wc -l) -gt 20 ]; then
                 echo "... (truncated)"
             fi
@@ -65,19 +65,13 @@ echo "Starting endpoint tests..."
 echo ""
 
 # Test 1: Get all sets
-test_endpoint "GET" "/sets" "Get all Pokemon sets" 200
+test_endpoint "GET" "/sets?all=true" "Get all Pokemon sets" 200
 
-# Test 2: Get sets with parameters
-test_endpoint "GET" "/sets?language=ENGLISH&page=1&pageSize=10" "Get English sets (paginated)" 200
+# Test 2: Get specific set (you may need to adjust the setId)
+test_endpoint "GET" "/sets/557/cards" "Get all cards from set 557" 200
 
-# Test 3: Get sets with all parameter
-test_endpoint "GET" "/sets?all=true" "Get all sets (no pagination)" 200
-
-# Test 4: Test a specific set's cards (you may need to adjust the setId)
-# test_endpoint "GET" "/sets/sv8pt5/cards" "Get cards from a specific set" 200
-
-# Test 5: Test a specific card (you may need to adjust the setId and cardId)
-# test_endpoint "GET" "/sets/sv8pt5/cards/155" "Get specific card info" 200
+# Test 3: Get specific card from a set (adjust the setId and cardId as needed)
+test_endpoint "GET" "/sets/557/cards/73121" "Get card with id 73121 from set 557" 200
 
 echo ""
 echo "🏁 Testing completed!"
