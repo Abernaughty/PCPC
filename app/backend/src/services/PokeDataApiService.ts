@@ -148,12 +148,16 @@ export class PokeDataApiService implements IPokeDataApiService {
    */
   async getAllSets(): Promise<PokeDataSet[]> {
     const startTime = Date.now();
+    const isDebugMode = process.env.DEBUG_MODE === "true";
     console.log(`🔥 [PokeDataApiService] Getting all sets - START`);
 
     // Check cache first
     if (this.setsCache.data && this.isCacheValid(this.setsCache.timestamp)) {
+      const cacheAge = Math.round(
+        (Date.now() - this.setsCache.timestamp) / 1000
+      );
       console.log(
-        `🔥 [PokeDataApiService] Using cached sets data (${this.setsCache.data.length} sets)`
+        `🔥 [PokeDataApiService] Using cached sets data (${this.setsCache.data.length} sets, ${cacheAge}s old)`
       );
       return this.setsCache.data;
     }
@@ -163,16 +167,31 @@ export class PokeDataApiService implements IPokeDataApiService {
       const headers = this.getHeaders();
 
       // Enhanced request logging
+      console.log(`🔥 [PokeDataApiService] Cache miss - making API request`);
       console.log(`🔥 [PokeDataApiService] Making HTTP GET request:`);
       console.log(`🔥 [PokeDataApiService]   URL: ${url}`);
+      console.log(`🔥 [PokeDataApiService]   Method: GET`);
+      console.log(`🔥 [PokeDataApiService]   User-Agent: axios (default)`);
       console.log(
-        `🔥 [PokeDataApiService]   Headers: ${JSON.stringify({
+        `🔥 [PokeDataApiService]   Authorization: ${
+          headers.Authorization
+            ? `Bearer ${headers.Authorization.substring(7, 27)}...`
+            : "❌ MISSING"
+        }`
+      );
+      console.log(
+        `🔥 [PokeDataApiService]   Content-Type: ${headers["Content-Type"]}`
+      );
+
+      // Debug mode: Log full headers (sanitized)
+      if (isDebugMode) {
+        console.log(`🔥 [PokeDataApiService] [DEBUG] Full request headers:`, {
           ...headers,
           Authorization: headers.Authorization
-            ? `Bearer ${headers.Authorization.substring(7, 27)}...`
+            ? "Bearer [REDACTED]"
             : "MISSING",
-        })}`
-      );
+        });
+      }
 
       const response = await axios.get(url, { headers });
       const requestTime = Date.now() - startTime;
@@ -187,6 +206,11 @@ export class PokeDataApiService implements IPokeDataApiService {
       console.log(
         `🔥 [PokeDataApiService]   Content-Type: ${
           response.headers["content-type"] || "unknown"
+        }`
+      );
+      console.log(
+        `🔥 [PokeDataApiService]   Content-Length: ${
+          response.headers["content-length"] || "unknown"
         }`
       );
       console.log(
@@ -245,48 +269,192 @@ export class PokeDataApiService implements IPokeDataApiService {
       return [];
     } catch (error: any) {
       const requestTime = Date.now() - startTime;
+      const isDebugMode = process.env.DEBUG_MODE === "true";
+
       console.error(
-        `🔥 [PokeDataApiService] ERROR in getAllSets after ${requestTime}ms:`
+        `❌ [PokeDataApiService] ERROR in getAllSets after ${requestTime}ms:`
       );
       console.error(
-        `🔥 [PokeDataApiService]   Error message: ${error.message}`
+        `❌ [PokeDataApiService] ==================== API ERROR DETAILS ====================`
       );
       console.error(
-        `🔥 [PokeDataApiService]   Error code: ${error.code || "unknown"}`
+        `❌ [PokeDataApiService] Error Type: ${error.constructor.name}`
+      );
+      console.error(`❌ [PokeDataApiService] Error Message: ${error.message}`);
+      console.error(
+        `❌ [PokeDataApiService] Error Code: ${error.code || "unknown"}`
+      );
+      console.error(
+        `❌ [PokeDataApiService] Request Duration: ${requestTime}ms`
+      );
+      console.error(
+        `❌ [PokeDataApiService] Timestamp: ${new Date().toISOString()}`
       );
 
       if (error.response) {
+        // Server responded with error status
+        console.error(`❌ [PokeDataApiService] === SERVER RESPONSE ERROR ===`);
         console.error(
-          `🔥 [PokeDataApiService]   Response status: ${error.response.status}`
+          `❌ [PokeDataApiService] Response Status: ${error.response.status} ${error.response.statusText}`
         );
         console.error(
-          `🔥 [PokeDataApiService]   Response statusText: ${error.response.statusText}`
+          `❌ [PokeDataApiService] Response URL: ${
+            error.response.config?.url || "unknown"
+          }`
         );
+        console.error(`❌ [PokeDataApiService] Response Headers:`, {
+          "content-type": error.response.headers["content-type"],
+          "content-length": error.response.headers["content-length"],
+          server: error.response.headers["server"],
+          date: error.response.headers["date"],
+          "x-ratelimit-remaining":
+            error.response.headers["x-ratelimit-remaining"],
+          "x-ratelimit-reset": error.response.headers["x-ratelimit-reset"],
+        });
         console.error(
-          `🔥 [PokeDataApiService]   Response headers:`,
-          error.response.headers
-        );
-        console.error(
-          `🔥 [PokeDataApiService]   Response data:`,
+          `❌ [PokeDataApiService] Response Data:`,
           error.response.data
         );
+
+        // Specific troubleshooting for common status codes
+        if (error.response.status === 500) {
+          console.error(
+            `❌ [PokeDataApiService] 🚨 500 INTERNAL SERVER ERROR TROUBLESHOOTING:`
+          );
+          console.error(
+            `❌ [PokeDataApiService]   - This is a server-side error on PokeData API`
+          );
+          console.error(
+            `❌ [PokeDataApiService]   - Check if API endpoint has changed: ${this.baseUrl}/sets`
+          );
+          console.error(
+            `❌ [PokeDataApiService]   - Verify API key is valid and not expired`
+          );
+          console.error(
+            `❌ [PokeDataApiService]   - Check PokeData API status/maintenance`
+          );
+          console.error(
+            `❌ [PokeDataApiService]   - API Key (first 20 chars): ${this.apiKey.substring(
+              0,
+              20
+            )}...`
+          );
+        } else if (error.response.status === 401) {
+          console.error(
+            `❌ [PokeDataApiService] 🚨 401 UNAUTHORIZED - API Key Issue`
+          );
+          console.error(
+            `❌ [PokeDataApiService]   - API Key present: ${!!this.apiKey}`
+          );
+          console.error(
+            `❌ [PokeDataApiService]   - API Key format: ${
+              this.apiKey ? "JWT-like" : "MISSING"
+            }`
+          );
+        } else if (error.response.status === 403) {
+          console.error(
+            `❌ [PokeDataApiService] 🚨 403 FORBIDDEN - Possible credit exhaustion`
+          );
+        } else if (error.response.status === 429) {
+          console.error(`❌ [PokeDataApiService] 🚨 429 RATE LIMITED`);
+        }
       } else if (error.request) {
-        console.error(`🔥 [PokeDataApiService]   No response received`);
-        console.error(`🔥 [PokeDataApiService]   Request config:`, {
-          url: error.config?.url,
-          method: error.config?.method,
-          headers: error.config?.headers
-            ? {
-                ...error.config.headers,
-                Authorization: error.config.headers.Authorization
-                  ? "Bearer [REDACTED]"
-                  : "MISSING",
-              }
-            : "none",
-        });
+        // Request was made but no response received
+        console.error(
+          `❌ [PokeDataApiService] === NETWORK/CONNECTION ERROR ===`
+        );
+        console.error(
+          `❌ [PokeDataApiService] No response received from server`
+        );
+        console.error(
+          `❌ [PokeDataApiService] Request URL: ${
+            error.config?.url || this.baseUrl + "/sets"
+          }`
+        );
+        console.error(
+          `❌ [PokeDataApiService] Request Method: ${
+            error.config?.method || "GET"
+          }`
+        );
+        console.error(
+          `❌ [PokeDataApiService] Request Timeout: ${
+            error.config?.timeout || "default"
+          }`
+        );
+        console.error(
+          `❌ [PokeDataApiService] Network Error Type: ${error.code}`
+        );
+
+        // Network troubleshooting
+        console.error(`❌ [PokeDataApiService] 🚨 NETWORK TROUBLESHOOTING:`);
+        console.error(
+          `❌ [PokeDataApiService]   - Check internet connectivity`
+        );
+        console.error(
+          `❌ [PokeDataApiService]   - Verify PokeData API is accessible: ${this.baseUrl}`
+        );
+        console.error(
+          `❌ [PokeDataApiService]   - Check for firewall/proxy issues`
+        );
+        console.error(
+          `❌ [PokeDataApiService]   - DNS resolution for: ${
+            new URL(this.baseUrl).hostname
+          }`
+        );
       } else {
-        console.error(`🔥 [PokeDataApiService]   Request setup error`);
+        // Request setup error
+        console.error(`❌ [PokeDataApiService] === REQUEST SETUP ERROR ===`);
+        console.error(`❌ [PokeDataApiService] Error setting up request`);
+        console.error(`❌ [PokeDataApiService] Stack trace:`, error.stack);
       }
+
+      // Debug mode: Additional troubleshooting info
+      if (isDebugMode) {
+        console.error(`❌ [PokeDataApiService] [DEBUG] Full error object:`, {
+          name: error.name,
+          message: error.message,
+          code: error.code,
+          stack: error.stack?.split("\n").slice(0, 5), // First 5 lines of stack
+          config: error.config
+            ? {
+                url: error.config.url,
+                method: error.config.method,
+                baseURL: error.config.baseURL,
+                timeout: error.config.timeout,
+                headers: {
+                  ...error.config.headers,
+                  Authorization: error.config.headers?.Authorization
+                    ? "Bearer [REDACTED]"
+                    : "MISSING",
+                },
+              }
+            : "No config",
+        });
+      }
+
+      console.error(
+        `❌ [PokeDataApiService] ============================================================`
+      );
+
+      // Try to provide helpful next steps
+      console.error(
+        `❌ [PokeDataApiService] 💡 NEXT STEPS FOR TROUBLESHOOTING:`
+      );
+      console.error(
+        `❌ [PokeDataApiService]   1. Check PokeData API status at their website/docs`
+      );
+      console.error(
+        `❌ [PokeDataApiService]   2. Verify API key in environment variables`
+      );
+      console.error(
+        `❌ [PokeDataApiService]   3. Test API endpoint manually with curl/Postman`
+      );
+      console.error(
+        `❌ [PokeDataApiService]   4. Check if API endpoint URL has changed`
+      );
+      console.error(
+        `❌ [PokeDataApiService]   5. Review API rate limits and credit usage`
+      );
 
       return [];
     }

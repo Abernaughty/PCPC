@@ -28,7 +28,12 @@ console.log(
   }`
 );
 console.log(
-  `  - COSMOS_DB_CONTAINER_NAME: ${
+  `  - COSMOS_DB_CARDS_CONTAINER_NAME: ${
+    process.env.COSMOS_DB_CONTAINER_NAME || "NOT SET"
+  }`
+);
+console.log(
+  `  - COSMOS_DB_SETS_CONTAINER_NAME: ${
     process.env.COSMOS_DB_CONTAINER_NAME || "NOT SET"
   }`
 );
