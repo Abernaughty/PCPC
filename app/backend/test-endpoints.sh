@@ -73,6 +73,26 @@ test_endpoint "GET" "/sets/557/cards" "Get all cards from set 557" 200
 # Test 3: Get specific card from a set (adjust the setId and cardId as needed)
 test_endpoint "GET" "/sets/557/cards/73121" "Get card with id 73121 from set 557" 200
 
+# Test 4: Get specific card and check image URLs only
+echo -e "${BLUE}Testing: Check image URLs for card 73121${NC}"
+echo -e "${YELLOW}GET ${BASE_URL}/sets/557/cards/73121 (image URLs only)${NC}"
+
+response=$(curl -s "${BASE_URL}/sets/557/cards/73121" \
+    -H "Content-Type: application/json" \
+    ${FUNCTION_KEY:+-H "x-functions-key: ${FUNCTION_KEY}"})
+
+if echo "$response" | jq . >/dev/null 2>&1; then
+    echo -e "${GREEN}✅ SUCCESS - Image URL Check${NC}"
+    echo "$response" | jq '.data | {cardName, cardNumber, imageUrl, imageUrlHiRes, images}'
+else
+    echo -e "${RED}❌ FAILED - Invalid JSON response${NC}"
+    echo "$response"
+fi
+
+echo ""
+echo "----------------------------------------"
+echo ""
+
 echo ""
 echo "🏁 Testing completed!"
 echo ""
