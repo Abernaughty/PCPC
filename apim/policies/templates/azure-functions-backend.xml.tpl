@@ -1,0 +1,56 @@
+<!-- Backend integration policy for Azure Functions -->
+<policies>
+    <inbound>
+        <!-- Set backend service URL dynamically based on environment -->
+        <set-backend-service base-url="{{function_app_url}}" />
+        
+        <!-- Add function key for authentication -->
+        <set-header name="x-functions-key" exists-action="override">
+            <value>{{function_app_key}}</value>
+        </set-header>
+        
+        <!-- Add correlation ID for tracing -->
+        <set-header name="X-Correlation-ID" exists-action="skip">
+            <value>@(Guid.NewGuid().ToString())</value>
+        </set-header>
+        
+        <!-- Add environment context -->
+        <set-header name="X-Environment" exists-action="override">
+            <value>{{environment}}</value>
+        </set-header>
+    </inbound>
+    <backend>
+        <forward-request timeout="{{backend_timeout}}" />
+    </backend>
+    <outbound>
+        <!-- Add response headers for debugging -->
+        <set-header name="X-Powered-By" exists-action="override">
+            <value>PCPC-APIM-{{environment}}</value>
+        </set-header>
+        
+        <!-- Remove sensitive headers from response -->
+        <set-header name="x-functions-key" exists-action="delete" />
+    </outbound>
+    <on-error>
+        <!-- Log errors for monitoring -->
+        <trace source="APIM-Backend-Error">
+            <message>@($"Backend error: {context.LastError.Message}")</message>
+        </trace>
+        
+        <!-- Return standardized error response -->
+        <return-response>
+            <set-status code="500" reason="Internal Server Error" />
+            <set-header name="Content-Type" exists-action="override">
+                <value>application/json</value>
+            </set-header>
+            <set-body>@{
+                return new JObject(
+                    new JProperty("status", 500),
+                    new JProperty("error", "Internal server error occurred"),
+                    new JProperty("timestamp", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")),
+                    new JProperty("correlationId", context.RequestId)
+                ).ToString();
+            }</set-body>
+        </return-response>
+    </on-error>
+</policies>

@@ -1,12 +1,51 @@
 {
-  "name": "pcpc-devcontainer",
+  "name": "pcpc-testing-framework",
   "version": "1.0.0",
   "type": "module",
-  "description": "DevContainer dependencies for PCPC project",
+  "description": "PCPC Comprehensive Testing Framework",
   "dependencies": {
     "@azure/cosmos": "^4.0.0"
   },
+  "devDependencies": {
+    "@babel/core": "^7.23.0",
+    "@babel/preset-env": "^7.23.0",
+    "@jest/globals": "^29.7.0",
+    "@playwright/test": "^1.40.0",
+    "@testing-library/jest-dom": "^6.1.0",
+    "@testing-library/svelte": "^4.0.0",
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.8.0",
+    "babel-jest": "^29.7.0",
+    "fake-indexeddb": "^5.0.0",
+    "identity-obj-proxy": "^3.0.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "jest-junit": "^16.0.0",
+    "jest-watch-typeahead": "^2.2.0",
+    "supertest": "^6.3.0",
+    "svelte": "^4.2.0",
+    "svelte-jester": "^3.0.0",
+    "@sveltejs/vite-plugin-svelte": "^2.4.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.2.0"
+  },
   "scripts": {
-    "seed-cosmos": "node .devcontainer/scripts/seed-cosmos.mjs"
+    "seed-cosmos": "node .devcontainer/scripts/seed-cosmos.mjs",
+    "test": "jest --config=jest.config.cjs",
+    "test:watch": "jest --config=jest.config.cjs --watch",
+    "test:coverage": "jest --config=jest.config.cjs --coverage",
+    "test:frontend": "jest --config=jest.config.cjs tests/frontend",
+    "test:backend": "jest --config=jest.config.cjs tests/backend",
+    "test:e2e": "playwright test --config=tests/config/playwright.config.ts",
+    "test:e2e:headed": "playwright test --config=tests/config/playwright.config.ts --headed",
+    "test:e2e:debug": "playwright test --config=tests/config/playwright.config.ts --debug",
+    "test:performance": "k6 run tests/performance/load/api-endpoints.js",
+    "test:security": "npm audit && echo 'Security scan completed'",
+    "test:all": "npm run test && npm run test:e2e",
+    "playwright:install": "playwright install",
+    "playwright:install-deps": "playwright install-deps"
+  },
+  "jest": {
+    "preset": "./jest.config.cjs"
   }
 }

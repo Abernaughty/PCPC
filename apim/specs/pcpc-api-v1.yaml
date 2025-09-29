@@ -1,0 +1,571 @@
+openapi: 3.0.1
+info:
+  title: Pokemon Card Price Checker API
+  description: "API for retrieving Pokemon card sets, cards, and pricing information"
+  version: "1.0"
+  contact:
+    name: PCPC API Support
+    email: support@pcpc.example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://maber-apim-test.azure-api.net/pokedata-api
+    description: Development server
+  - url: https://maber-apim-staging.azure-api.net/pokedata-api
+    description: Staging server
+  - url: https://maber-apim-prod.azure-api.net/pokedata-api
+    description: Production server
+
+paths:
+  /sets:
+    get:
+      summary: Get Set List
+      description: |
+        Returns a paginated list of all Pokemon card sets with optional filtering and grouping.
+        Supports language filtering, expansion grouping, and cache control.
+      operationId: get-set-list
+      tags:
+        - Sets
+      parameters:
+        - name: language
+          in: query
+          description: Filter sets by language (ENGLISH, JAPANESE, or ALL)
+          schema:
+            type: string
+            enum: [ENGLISH, JAPANESE, ALL]
+            default: ENGLISH
+        - name: page
+          in: query
+          description: Page number for pagination (minimum 1)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          description: Number of items per page (1-100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 100
+        - name: all
+          in: query
+          description: Return all sets without pagination
+          schema:
+            type: boolean
+            default: false
+        - name: includeCardCounts
+          in: query
+          description: Include card counts for each set (may impact performance)
+          schema:
+            type: boolean
+            default: false
+        - name: forceRefresh
+          in: query
+          description: Force refresh of cached data
+          schema:
+            type: boolean
+            default: false
+        - name: groupByExpansion
+          in: query
+          description: Group sets by expansion (legacy parameter)
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Successful response with set list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SetListResponse"
+              examples:
+                successful_response:
+                  summary: Successful set list response
+                  value:
+                    status: 200
+                    data:
+                      sets:
+                        - code: "sv8"
+                          id: 123
+                          language: "ENGLISH"
+                          name: "Surging Sparks"
+                          release_date: "2024-11-08"
+                          releaseYear: 2024
+                          isRecent: true
+                      pagination:
+                        page: 1
+                        pageSize: 100
+                        totalCount: 150
+                        totalPages: 2
+                    timestamp: "2024-01-15T10:30:00Z"
+                    cached: true
+                    cacheAge: 300
+        "400":
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: No sets found for specified criteria
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  "/sets/{setCode}/cards":
+    get:
+      summary: Get Cards By Set
+      description: |
+        Returns cards for a specific Pokemon card set with pagination support.
+        Includes card metadata, pricing information, and image URLs.
+      operationId: get-cards-by-set
+      tags:
+        - Cards
+      parameters:
+        - name: setCode
+          in: path
+          required: true
+          description: The set code (e.g., 'sv8', 'base1')
+          schema:
+            type: string
+            pattern: "^[a-zA-Z0-9-_]+$"
+            example: "sv8"
+        - name: page
+          in: query
+          description: Page number for pagination (minimum 1)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          description: Number of cards per page (1-100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: forceRefresh
+          in: query
+          description: Force refresh of cached data
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Successful response with cards for the set
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CardListResponse"
+        "400":
+          description: Bad request - invalid set code or parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Set not found or no cards available
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  "/sets/{setId}/cards/{cardId}":
+    get:
+      summary: Get Card Info
+      description: |
+        Returns detailed information for a specific Pokemon card including
+        pricing data, variants, images, and market information.
+      operationId: get-card-info
+      tags:
+        - Cards
+      parameters:
+        - name: setId
+          in: path
+          required: true
+          description: The set identifier
+          schema:
+            type: string
+            pattern: "^[a-zA-Z0-9-_]+$"
+            example: "sv8"
+        - name: cardId
+          in: path
+          required: true
+          description: The card identifier within the set
+          schema:
+            type: string
+            pattern: "^[a-zA-Z0-9-_]+$"
+            example: "001"
+        - name: forceRefresh
+          in: query
+          description: Force refresh of cached pricing data
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Successful response with detailed card information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CardInfoResponse"
+        "400":
+          description: Bad request - invalid set or card identifiers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  securitySchemes:
+    apiKeyHeader:
+      type: apiKey
+      name: Ocp-Apim-Subscription-Key
+      in: header
+      description: API subscription key in header
+    apiKeyQuery:
+      type: apiKey
+      name: subscription-key
+      in: query
+      description: API subscription key in query parameter
+
+  schemas:
+    SetListResponse:
+      type: object
+      required:
+        - status
+        - data
+        - timestamp
+      properties:
+        status:
+          type: integer
+          example: 200
+        data:
+          type: object
+          required:
+            - sets
+            - pagination
+          properties:
+            sets:
+              type: array
+              items:
+                $ref: "#/components/schemas/PokeDataSet"
+            pagination:
+              $ref: "#/components/schemas/PaginationInfo"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+        cached:
+          type: boolean
+          description: Whether the response was served from cache
+        cacheAge:
+          type: integer
+          description: Age of cached data in seconds
+
+    CardListResponse:
+      type: object
+      required:
+        - status
+        - data
+        - timestamp
+      properties:
+        status:
+          type: integer
+          example: 200
+        data:
+          type: object
+          required:
+            - cards
+            - pagination
+          properties:
+            cards:
+              type: array
+              items:
+                $ref: "#/components/schemas/Card"
+            pagination:
+              $ref: "#/components/schemas/PaginationInfo"
+        timestamp:
+          type: string
+          format: date-time
+        cached:
+          type: boolean
+        cacheAge:
+          type: integer
+
+    CardInfoResponse:
+      type: object
+      required:
+        - status
+        - data
+        - timestamp
+      properties:
+        status:
+          type: integer
+          example: 200
+        data:
+          $ref: "#/components/schemas/CardDetail"
+        timestamp:
+          type: string
+          format: date-time
+        cached:
+          type: boolean
+        cacheAge:
+          type: integer
+
+    PokeDataSet:
+      type: object
+      required:
+        - id
+        - name
+        - language
+      properties:
+        code:
+          type: string
+          nullable: true
+          description: Set code identifier
+          example: "sv8"
+        id:
+          type: integer
+          description: Unique set identifier
+          example: 123
+        language:
+          type: string
+          enum: [ENGLISH, JAPANESE]
+          description: Set language
+        name:
+          type: string
+          description: Set display name
+          example: "Surging Sparks"
+        release_date:
+          type: string
+          format: date
+          description: Set release date
+          example: "2024-11-08"
+        cardCount:
+          type: integer
+          description: Number of cards in the set
+          example: 191
+        releaseYear:
+          type: integer
+          description: Year the set was released
+          example: 2024
+        isRecent:
+          type: boolean
+          description: Whether the set was released in the last 2 years
+
+    Card:
+      type: object
+      required:
+        - id
+        - name
+        - setCode
+      properties:
+        id:
+          type: string
+          description: Card identifier
+          example: "sv8-001"
+        name:
+          type: string
+          description: Card name
+          example: "Pikachu"
+        setCode:
+          type: string
+          description: Set code
+          example: "sv8"
+        number:
+          type: string
+          description: Card number within set
+          example: "001"
+        rarity:
+          type: string
+          description: Card rarity
+          example: "Common"
+        images:
+          $ref: "#/components/schemas/CardImages"
+
+    CardDetail:
+      allOf:
+        - $ref: "#/components/schemas/Card"
+        - type: object
+          properties:
+            pricing:
+              $ref: "#/components/schemas/PricingInfo"
+            variants:
+              type: array
+              items:
+                $ref: "#/components/schemas/CardVariant"
+            marketData:
+              $ref: "#/components/schemas/MarketData"
+
+    CardImages:
+      type: object
+      properties:
+        small:
+          type: string
+          format: uri
+          description: Small card image URL
+          example: "https://images.pokemontcg.io/sv8/1.png"
+        large:
+          type: string
+          format: uri
+          description: Large card image URL
+          example: "https://images.pokemontcg.io/sv8/1_hires.png"
+
+    PricingInfo:
+      type: object
+      properties:
+        market:
+          type: number
+          format: float
+          description: Current market price
+          example: 12.50
+        low:
+          type: number
+          format: float
+          description: Low market price
+          example: 8.00
+        mid:
+          type: number
+          format: float
+          description: Mid market price
+          example: 10.25
+        high:
+          type: number
+          format: float
+          description: High market price
+          example: 15.00
+        currency:
+          type: string
+          description: Price currency
+          example: "USD"
+        lastUpdated:
+          type: string
+          format: date-time
+          description: When pricing was last updated
+
+    CardVariant:
+      type: object
+      properties:
+        condition:
+          type: string
+          enum: [Mint, Near Mint, Excellent, Good, Light Played, Played, Poor]
+          description: Card condition
+        finish:
+          type: string
+          enum: [Normal, Holofoil, Reverse Holofoil]
+          description: Card finish type
+        pricing:
+          $ref: "#/components/schemas/PricingInfo"
+
+    MarketData:
+      type: object
+      properties:
+        trend:
+          type: string
+          enum: [up, down, stable]
+          description: Price trend direction
+        volume:
+          type: integer
+          description: Trading volume
+        lastSale:
+          type: number
+          format: float
+          description: Last sale price
+
+    PaginationInfo:
+      type: object
+      required:
+        - page
+        - pageSize
+        - totalCount
+        - totalPages
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          description: Current page number
+          example: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Items per page
+          example: 50
+        totalCount:
+          type: integer
+          minimum: 0
+          description: Total number of items
+          example: 150
+        totalPages:
+          type: integer
+          minimum: 0
+          description: Total number of pages
+          example: 3
+
+    ErrorResponse:
+      type: object
+      required:
+        - status
+        - error
+        - timestamp
+      properties:
+        status:
+          type: integer
+          description: HTTP status code
+          example: 404
+        error:
+          type: string
+          description: Error message
+          example: "Set not found"
+        details:
+          type: string
+          description: Additional error details
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+        correlationId:
+          type: string
+          description: Request correlation ID for debugging
+          example: "setlist-1642248600000"
+
+security:
+  - apiKeyHeader: []
+  - apiKeyQuery: []
+
+tags:
+  - name: Sets
+    description: Pokemon card set operations
+  - name: Cards
+    description: Pokemon card operations

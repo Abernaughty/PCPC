@@ -1,0 +1,278 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Cards Container Indexing Policy",
+  "description": "Comprehensive indexing strategy for the Cards container in PCPC database",
+  "containerName": "Cards",
+  "partitionKey": "/setId",
+  "indexingPolicy": {
+    "automatic": true,
+    "indexingMode": "consistent",
+    "includedPaths": [
+      {
+        "path": "/*",
+        "indexes": [
+          {
+            "kind": "Range",
+            "dataType": "String",
+            "precision": -1
+          },
+          {
+            "kind": "Range",
+            "dataType": "Number",
+            "precision": -1
+          }
+        ]
+      }
+    ],
+    "excludedPaths": [
+      {
+        "path": "/\"_etag\"/?"
+      },
+      {
+        "path": "/pricing/*"
+      },
+      {
+        "path": "/images/variants/*"
+      },
+      {
+        "path": "/enhancedPricing/*"
+      }
+    ],
+    "compositeIndexes": [
+      [
+        {
+          "path": "/setId",
+          "order": "ascending"
+        },
+        {
+          "path": "/cardNumber",
+          "order": "ascending"
+        }
+      ],
+      [
+        {
+          "path": "/setCode",
+          "order": "ascending"
+        },
+        {
+          "path": "/cardNumber",
+          "order": "ascending"
+        }
+      ],
+      [
+        {
+          "path": "/cardName",
+          "order": "ascending"
+        },
+        {
+          "path": "/setId",
+          "order": "ascending"
+        }
+      ],
+      [
+        {
+          "path": "/lastUpdated",
+          "order": "descending"
+        },
+        {
+          "path": "/setId",
+          "order": "ascending"
+        }
+      ],
+      [
+        {
+          "path": "/rarity",
+          "order": "ascending"
+        },
+        {
+          "path": "/setId",
+          "order": "ascending"
+        }
+      ]
+    ]
+  },
+  "indexAnalysis": {
+    "singlePropertyIndexes": {
+      "id": {
+        "usage": "Primary key lookups",
+        "queryPattern": "SELECT * FROM c WHERE c.id = @cardId",
+        "ruCost": "1-2 RU",
+        "performance": "Excellent"
+      },
+      "setId": {
+        "usage": "Partition key queries (most efficient)",
+        "queryPattern": "SELECT * FROM c WHERE c.setId = @setId",
+        "ruCost": "2-5 RU",
+        "performance": "Excellent"
+      },
+      "setCode": {
+        "usage": "Set-based card lookups",
+        "queryPattern": "SELECT * FROM c WHERE c.setCode = @setCode",
+        "ruCost": "5-15 RU",
+        "performance": "Good"
+      },
+      "cardName": {
+        "usage": "Card name searches",
+        "queryPattern": "SELECT * FROM c WHERE c.cardName = @cardName",
+        "ruCost": "10-30 RU",
+        "performance": "Good"
+      },
+      "cardNumber": {
+        "usage": "Card number lookups within set",
+        "queryPattern": "SELECT * FROM c WHERE c.cardNumber = @cardNumber",
+        "ruCost": "5-15 RU",
+        "performance": "Good"
+      },
+      "rarity": {
+        "usage": "Rarity-based filtering",
+        "queryPattern": "SELECT * FROM c WHERE c.rarity = @rarity",
+        "ruCost": "10-25 RU",
+        "performance": "Good"
+      }
+    },
+    "compositeIndexes": {
+      "setId_cardNumber": {
+        "usage": "Specific card lookup within set",
+        "queryPattern": "SELECT * FROM c WHERE c.setId = @setId AND c.cardNumber = @cardNumber",
+        "ruCost": "2-3 RU",
+        "performance": "Excellent",
+        "benefit": "Single-partition query with efficient card identification"
+      },
+      "setCode_cardNumber": {
+        "usage": "Card lookup by set code and number",
+        "queryPattern": "SELECT * FROM c WHERE c.setCode = @setCode AND c.cardNumber = @cardNumber",
+        "ruCost": "3-8 RU",
+        "performance": "Excellent",
+        "benefit": "Efficient card identification across partitions"
+      },
+      "cardName_setId": {
+        "usage": "Named card searches with set context",
+        "queryPattern": "SELECT * FROM c WHERE c.cardName = @cardName ORDER BY c.setId",
+        "ruCost": "8-20 RU",
+        "performance": "Good",
+        "benefit": "Efficient card name searches with set ordering"
+      },
+      "lastUpdated_setId": {
+        "usage": "Recently updated cards",
+        "queryPattern": "SELECT * FROM c WHERE c.lastUpdated >= @since ORDER BY c.lastUpdated DESC",
+        "ruCost": "10-30 RU",
+        "performance": "Good",
+        "benefit": "Efficient time-based queries with set context"
+      },
+      "rarity_setId": {
+        "usage": "Rarity filtering within sets",
+        "queryPattern": "SELECT * FROM c WHERE c.rarity = @rarity AND c.setId = @setId",
+        "ruCost": "3-8 RU",
+        "performance": "Excellent",
+        "benefit": "Single-partition rarity queries"
+      }
+    }
+  },
+  "performanceOptimizations": {
+    "recommendations": [
+      {
+        "optimization": "Always include setId in WHERE clause",
+        "reason": "Enables single-partition queries",
+        "impact": "60-80% RU reduction"
+      },
+      {
+        "optimization": "Use composite indexes for multi-field queries",
+        "reason": "Eliminates expensive cross-partition scans",
+        "impact": "40-70% RU reduction"
+      },
+      {
+        "optimization": "Exclude large nested objects from indexing",
+        "reason": "Reduces storage costs and write RU consumption",
+        "impact": "20-40% storage reduction, 10-20% write RU reduction"
+      },
+      {
+        "optimization": "Use specific field selection in queries",
+        "reason": "Reduces data transfer and RU consumption",
+        "impact": "15-30% RU reduction"
+      }
+    ],
+    "antiPatterns": [
+      {
+        "pattern": "SELECT * FROM c WHERE CONTAINS(c.cardName, @searchTerm)",
+        "issue": "Full-text search without proper indexing strategy",
+        "solution": "Use STARTSWITH for prefix searches or integrate with Azure Cognitive Search"
+      },
+      {
+        "pattern": "SELECT * FROM c ORDER BY c.lastUpdated DESC",
+        "issue": "Cross-partition query without WHERE clause",
+        "solution": "Add setId filter or use composite index with time range"
+      },
+      {
+        "pattern": "SELECT COUNT(*) FROM c WHERE c.rarity = 'Ultra Rare'",
+        "issue": "Expensive aggregation across all partitions",
+        "solution": "Pre-compute counts or add setId filter to limit scope"
+      }
+    ]
+  },
+  "queryPatterns": {
+    "highPerformance": [
+      {
+        "name": "getCardsBySetId",
+        "query": "SELECT * FROM c WHERE c.setId = @setId",
+        "ruCost": "2-5 RU",
+        "partitionScope": "single",
+        "indexUsage": ["setId"]
+      },
+      {
+        "name": "getSpecificCard",
+        "query": "SELECT * FROM c WHERE c.setId = @setId AND c.cardNumber = @cardNumber",
+        "ruCost": "2-3 RU",
+        "partitionScope": "single",
+        "indexUsage": ["setId", "cardNumber"]
+      },
+      {
+        "name": "getCardsByRarityInSet",
+        "query": "SELECT * FROM c WHERE c.setId = @setId AND c.rarity = @rarity",
+        "ruCost": "3-8 RU",
+        "partitionScope": "single",
+        "indexUsage": ["rarity", "setId"]
+      }
+    ],
+    "mediumPerformance": [
+      {
+        "name": "getCardsBySetCode",
+        "query": "SELECT * FROM c WHERE c.setCode = @setCode",
+        "ruCost": "5-15 RU",
+        "partitionScope": "cross",
+        "indexUsage": ["setCode"]
+      },
+      {
+        "name": "searchCardsByName",
+        "query": "SELECT * FROM c WHERE c.cardName = @cardName",
+        "ruCost": "10-30 RU",
+        "partitionScope": "cross",
+        "indexUsage": ["cardName", "setId"]
+      },
+      {
+        "name": "getRecentlyUpdatedCards",
+        "query": "SELECT * FROM c WHERE c.lastUpdated >= @since ORDER BY c.lastUpdated DESC",
+        "ruCost": "10-30 RU",
+        "partitionScope": "cross",
+        "indexUsage": ["lastUpdated", "setId"]
+      }
+    ]
+  },
+  "maintenanceConsiderations": {
+    "indexRebuild": {
+      "frequency": "Not required - Cosmos DB handles automatically",
+      "monitoring": "Monitor RU consumption patterns and query performance metrics"
+    },
+    "storageImpact": {
+      "estimate": "Indexes add ~25-35% storage overhead due to card data complexity",
+      "optimization": "Exclude pricing and image variant data from indexing"
+    },
+    "ruImpact": {
+      "writes": "Each composite index adds ~1-3 RU per write operation",
+      "reads": "Proper index usage reduces read RU by 60-80%"
+    },
+    "hotPartitionMonitoring": {
+      "focus": "Monitor current/popular sets (setId 557, etc.) for hot partition issues",
+      "mitigation": "Use batch operations within same partition, implement caching for popular cards"
+    }
+  }
+}

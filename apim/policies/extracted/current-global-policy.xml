@@ -1,0 +1,32 @@
+<policies>
+    <inbound>
+        <cors>
+            <allowed-origins>
+                <origin>https://pokedata.maber.io</origin>
+                <origin>http://localhost:3000</origin>
+                <origin>http://localhost:52783</origin>
+                <origin>https://calm-mud-07a7f7a10.6.azurestaticapps.net</origin>
+            </allowed-origins>
+            <allowed-methods>
+                <method>GET</method>
+                <method>OPTIONS</method>
+            </allowed-methods>
+            <allowed-headers>
+                <header>Content-Type</header>
+                <header>Ocp-Apim-Subscription-Key</header>
+            </allowed-headers>
+            <expose-headers>
+                <header>X-RateLimit-Remaining</header>
+            </expose-headers>
+        </cors>
+        <!-- Check origin to ensure requests only come from your application -->
+        <rate-limit calls="300" renewal-period="60" remaining-calls-header-name="X-RateLimit-Remaining" remaining-calls-variable-name="remainingCalls" />
+    </inbound>
+    <backend>
+        <!--base: Begin Global scope-->
+        <forward-request />
+        <!--base: End Global scope-->
+    </backend>
+    <outbound />
+    <on-error />
+</policies>

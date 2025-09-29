@@ -1,0 +1,169 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://pcpc.maber.io/schemas/sets.json",
+  "title": "Pokemon Card Set Schema",
+  "description": "Schema definition for Pokemon card sets in the PCPC database",
+  "type": "object",
+  "required": [
+    "id",
+    "code",
+    "name",
+    "series",
+    "releaseDate",
+    "cardCount",
+    "isCurrent"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the set (numeric string)",
+      "pattern": "^[0-9]+$",
+      "examples": ["557", "556", "555"]
+    },
+    "code": {
+      "type": "string",
+      "description": "Short code identifier for the set",
+      "minLength": 2,
+      "maxLength": 10,
+      "pattern": "^[A-Z0-9-]+$",
+      "examples": ["PRE", "PAL", "SVI"]
+    },
+    "name": {
+      "type": "string",
+      "description": "Full name of the Pokemon card set",
+      "minLength": 1,
+      "maxLength": 100,
+      "examples": ["Prismatic Evolutions", "Paldea Evolved", "Scarlet & Violet"]
+    },
+    "series": {
+      "type": "string",
+      "description": "Series or generation the set belongs to (partition key)",
+      "minLength": 1,
+      "maxLength": 50,
+      "examples": ["PokeData", "Scarlet & Violet", "Sword & Shield"]
+    },
+    "releaseDate": {
+      "type": "string",
+      "description": "Release date of the set in ISO 8601 format or GMT string",
+      "examples": ["2025-01-17T00:00:00.000Z", "Fri, 17 Jan 2025 00:00:00 GMT"]
+    },
+    "cardCount": {
+      "type": "integer",
+      "description": "Total number of cards in the set",
+      "minimum": 0,
+      "maximum": 1000,
+      "examples": [200, 264, 195]
+    },
+    "isCurrent": {
+      "type": "boolean",
+      "description": "Whether this set is currently in print/rotation",
+      "examples": [true, false]
+    },
+    "lastUpdated": {
+      "type": "string",
+      "description": "Timestamp of last update in ISO 8601 format",
+      "format": "date-time",
+      "examples": ["2025-09-21T00:00:00.598Z"]
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "id": "557",
+      "name": "Prismatic Evolutions",
+      "code": "PRE",
+      "series": "PokeData",
+      "cardCount": 200,
+      "releaseDate": "Fri, 17 Jan 2025 00:00:00 GMT",
+      "isCurrent": true,
+      "lastUpdated": "2025-09-21T00:00:00.598Z"
+    }
+  ],
+  "cosmosDb": {
+    "containerName": "Sets",
+    "partitionKey": "/series",
+    "indexingPolicy": {
+      "automatic": true,
+      "includedPaths": [
+        {
+          "path": "/*"
+        }
+      ],
+      "excludedPaths": [
+        {
+          "path": "/\"_etag\"/?"
+        }
+      ],
+      "compositeIndexes": [
+        [
+          {
+            "path": "/isCurrent",
+            "order": "descending"
+          },
+          {
+            "path": "/releaseDate",
+            "order": "descending"
+          }
+        ],
+        [
+          {
+            "path": "/series",
+            "order": "ascending"
+          },
+          {
+            "path": "/releaseDate",
+            "order": "descending"
+          }
+        ]
+      ]
+    },
+    "uniqueKeyPolicy": {
+      "uniqueKeys": [
+        {
+          "paths": ["/code"]
+        }
+      ]
+    },
+    "defaultTtl": -1,
+    "conflictResolutionPolicy": {
+      "mode": "LastWriterWins",
+      "conflictResolutionPath": "/_ts"
+    }
+  },
+  "queryPatterns": [
+    {
+      "name": "getAllSets",
+      "description": "Retrieve all sets",
+      "query": "SELECT * FROM c",
+      "partitionKey": "cross-partition"
+    },
+    {
+      "name": "getCurrentSets",
+      "description": "Retrieve only current sets",
+      "query": "SELECT * FROM c WHERE c.isCurrent = true",
+      "partitionKey": "cross-partition",
+      "indexUsage": ["isCurrent", "releaseDate"]
+    },
+    {
+      "name": "getSetByCode",
+      "description": "Retrieve set by code",
+      "query": "SELECT * FROM c WHERE c.code = @setCode",
+      "partitionKey": "cross-partition",
+      "parameters": ["setCode"]
+    },
+    {
+      "name": "getSetsBySeries",
+      "description": "Retrieve sets by series",
+      "query": "SELECT * FROM c WHERE c.series = @series ORDER BY c.releaseDate DESC",
+      "partitionKey": "single-partition",
+      "parameters": ["series"],
+      "indexUsage": ["series", "releaseDate"]
+    }
+  ],
+  "performanceNotes": {
+    "partitionStrategy": "Series-based partitioning provides good distribution for Pokemon card sets",
+    "hotPartitions": "Monitor 'PokeData' partition as it may contain more current sets",
+    "queryOptimization": "Use composite indexes for isCurrent + releaseDate queries",
+    "ruConsumption": "Single-partition queries (by series) are most efficient"
+  }
+}
