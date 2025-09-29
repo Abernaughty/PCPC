@@ -224,6 +224,68 @@ docs: ## Generate documentation
 	@echo "Generating documentation..."
 	@echo "Documentation generation not yet implemented"
 
+# Container Management
+container-build: ## Build and push devcontainer to ACR
+	@if [ -z "$(ACR_NAME)" ]; then \
+		echo "Error: ACR_NAME variable is required"; \
+		exit 1; \
+	fi
+	@echo "Building and pushing devcontainer to $(ACR_NAME).azurecr.io..."
+	@echo "Logging into Azure Container Registry..."
+	@az acr login --name $(ACR_NAME)
+	@echo "Building container image..."
+	@docker build -f .devcontainer/Dockerfile.optimized -t $(ACR_NAME).azurecr.io/pcpc-devcontainer:latest .devcontainer
+	@docker tag $(ACR_NAME).azurecr.io/pcpc-devcontainer:latest $(ACR_NAME).azurecr.io/pcpc-devcontainer:$$(git rev-parse --short HEAD)
+	@echo "Pushing container images..."
+	@docker push $(ACR_NAME).azurecr.io/pcpc-devcontainer:latest
+	@docker push $(ACR_NAME).azurecr.io/pcpc-devcontainer:$$(git rev-parse --short HEAD)
+	@echo "Container build and push complete!"
+
+container-pull: ## Pull latest devcontainer from ACR
+	@echo "Pulling latest devcontainer from ACR..."
+	@az acr login --name maberdevcontainerregistry
+	@docker pull maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-devcontainer:latest
+	@echo "Container pull complete!"
+
+container-test: ## Test devcontainer functionality
+	@echo "Testing devcontainer functionality..."
+	@echo "Checking Node.js..."
+	@docker run --rm $(ACR_NAME).azurecr.io/pcpc-devcontainer:latest node --version
+	@echo "Checking Azure CLI..."
+	@docker run --rm $(ACR_NAME).azurecr.io/pcpc-devcontainer:latest az --version | head -n1
+	@echo "Checking Terraform..."
+	@docker run --rm $(ACR_NAME).azurecr.io/pcpc-devcontainer:latest terraform --version | head -n1
+	@echo "Container functionality test complete!"
+
+container-update: ## Update DevContainer to latest ACR image
+	@echo "Updating DevContainer to latest ACR image..."
+	@az acr login --name maberdevcontainerregistry
+	@docker-compose -f ../.devcontainer/docker-compose.yml pull devcontainer
+	@docker-compose -f ../.devcontainer/docker-compose.yml up -d --force-recreate devcontainer
+	@echo "DevContainer update complete!"
+
+container-clean: ## Clean local container images
+	@echo "Cleaning local container images..."
+	@docker images | grep "pcpc-devcontainer" | awk '{print $$3}' | xargs -r docker rmi -f
+	@echo "Container cleanup complete!"
+
+container-status: ## Show container registry status
+	@if [ -z "$(ACR_NAME)" ]; then \
+		echo "Error: ACR_NAME variable is required"; \
+		exit 1; \
+	fi
+	@echo "Container Registry Status for $(ACR_NAME)"
+	@echo "=========================================="
+	@echo ""
+	@echo "Registry info:"
+	@az acr show --name $(ACR_NAME) --query "{name:name,loginServer:loginServer,sku:sku.name}" -o table
+	@echo ""
+	@echo "Available images:"
+	@az acr repository list --name $(ACR_NAME) -o table
+	@echo ""
+	@echo "pcpc-devcontainer tags:"
+	@az acr repository show-tags --name $(ACR_NAME) --repository pcpc-devcontainer -o table 2>/dev/null || echo "No pcpc-devcontainer images found"
+
 # Utilities
 logs-dev: ## View development environment logs
 	@echo "Viewing development logs..."

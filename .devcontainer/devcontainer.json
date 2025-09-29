@@ -1,47 +1,8 @@
 {
-  "name": "PokeData Infrastructure DevOps",
+  "name": "PCPC Enterprise Development Environment",
   "dockerComposeFile": "docker-compose.yml",
   "service": "devcontainer",
   "workspaceFolder": "/workspace",
-
-  "features": {
-    "ghcr.io/devcontainers/features/azure-cli:1": {
-      "version": "2.77.0",
-      "extensions": "azure-devops"
-    },
-    "ghcr.io/devcontainers/features/terraform:1": {
-      "version": "1.9.8",
-      "tflint": "0.59.1",
-      "terragrunt": "0.87.4"
-    },
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "22",
-      "nodeGypDependencies": true,
-      "nvmVersion": "0.40.3"
-    },
-    "ghcr.io/devcontainers/features/go:1": {
-      "version": "1.23"
-    },
-    "ghcr.io/devcontainers/features/powershell:1": {
-      "version": "latest"
-    },
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {
-      "version": "latest",
-      "moby": true,
-      "dockerDashComposeVersion": "v2"
-    },
-    "ghcr.io/devcontainers/features/git:1": {
-      "version": "latest",
-      "ppa": true
-    },
-    "ghcr.io/devcontainers/features/github-cli:1": {
-      "version": "latest"
-    },
-    "ghcr.io/devcontainers/features/python:1": {
-      "version": "3.12",
-      "installTools": true
-    }
-  },
 
   "customizations": {
     "vscode": {

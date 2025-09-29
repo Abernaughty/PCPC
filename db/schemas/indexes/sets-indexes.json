@@ -1,0 +1,167 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Sets Container Indexing Policy",
+  "description": "Comprehensive indexing strategy for the Sets container in PCPC database",
+  "containerName": "Sets",
+  "partitionKey": "/series",
+  "indexingPolicy": {
+    "automatic": true,
+    "indexingMode": "consistent",
+    "includedPaths": [
+      {
+        "path": "/*",
+        "indexes": [
+          {
+            "kind": "Range",
+            "dataType": "String",
+            "precision": -1
+          },
+          {
+            "kind": "Range",
+            "dataType": "Number",
+            "precision": -1
+          }
+        ]
+      }
+    ],
+    "excludedPaths": [
+      {
+        "path": "/\"_etag\"/?"
+      }
+    ],
+    "compositeIndexes": [
+      [
+        {
+          "path": "/isCurrent",
+          "order": "descending"
+        },
+        {
+          "path": "/releaseDate",
+          "order": "descending"
+        }
+      ],
+      [
+        {
+          "path": "/series",
+          "order": "ascending"
+        },
+        {
+          "path": "/releaseDate",
+          "order": "descending"
+        }
+      ],
+      [
+        {
+          "path": "/cardCount",
+          "order": "descending"
+        },
+        {
+          "path": "/releaseDate",
+          "order": "descending"
+        }
+      ]
+    ]
+  },
+  "indexAnalysis": {
+    "singlePropertyIndexes": {
+      "id": {
+        "usage": "Primary key lookups",
+        "queryPattern": "SELECT * FROM c WHERE c.id = @id",
+        "ruCost": "1-2 RU",
+        "performance": "Excellent"
+      },
+      "code": {
+        "usage": "Set code lookups",
+        "queryPattern": "SELECT * FROM c WHERE c.code = @code",
+        "ruCost": "2-3 RU",
+        "performance": "Excellent"
+      },
+      "series": {
+        "usage": "Partition key queries",
+        "queryPattern": "SELECT * FROM c WHERE c.series = @series",
+        "ruCost": "2-5 RU",
+        "performance": "Excellent"
+      },
+      "isCurrent": {
+        "usage": "Current sets filtering",
+        "queryPattern": "SELECT * FROM c WHERE c.isCurrent = true",
+        "ruCost": "5-10 RU",
+        "performance": "Good"
+      },
+      "releaseDate": {
+        "usage": "Date range queries",
+        "queryPattern": "SELECT * FROM c WHERE c.releaseDate >= @date",
+        "ruCost": "5-15 RU",
+        "performance": "Good"
+      }
+    },
+    "compositeIndexes": {
+      "isCurrent_releaseDate": {
+        "usage": "Current sets ordered by release date",
+        "queryPattern": "SELECT * FROM c WHERE c.isCurrent = true ORDER BY c.releaseDate DESC",
+        "ruCost": "3-8 RU",
+        "performance": "Excellent",
+        "benefit": "Eliminates need for separate sorting operation"
+      },
+      "series_releaseDate": {
+        "usage": "Sets within series ordered by date",
+        "queryPattern": "SELECT * FROM c WHERE c.series = @series ORDER BY c.releaseDate DESC",
+        "ruCost": "2-5 RU",
+        "performance": "Excellent",
+        "benefit": "Single-partition query with efficient sorting"
+      },
+      "cardCount_releaseDate": {
+        "usage": "Sets ordered by size and date",
+        "queryPattern": "SELECT * FROM c WHERE c.cardCount > @minCount ORDER BY c.cardCount DESC, c.releaseDate DESC",
+        "ruCost": "5-12 RU",
+        "performance": "Good",
+        "benefit": "Efficient for finding large recent sets"
+      }
+    }
+  },
+  "performanceOptimizations": {
+    "recommendations": [
+      {
+        "optimization": "Use series in WHERE clause",
+        "reason": "Enables single-partition queries",
+        "impact": "50-80% RU reduction"
+      },
+      {
+        "optimization": "Leverage composite indexes for sorting",
+        "reason": "Eliminates expensive ORDER BY operations",
+        "impact": "30-60% RU reduction"
+      },
+      {
+        "optimization": "Use SELECT with specific fields",
+        "reason": "Reduces data transfer and RU consumption",
+        "impact": "10-30% RU reduction"
+      }
+    ],
+    "antiPatterns": [
+      {
+        "pattern": "SELECT * FROM c ORDER BY c.releaseDate DESC",
+        "issue": "Cross-partition query without composite index",
+        "solution": "Use composite index or add WHERE clause with partition key"
+      },
+      {
+        "pattern": "SELECT * FROM c WHERE CONTAINS(c.name, @searchTerm)",
+        "issue": "Full-text search without proper indexing",
+        "solution": "Consider Azure Cognitive Search integration for full-text queries"
+      }
+    ]
+  },
+  "maintenanceConsiderations": {
+    "indexRebuild": {
+      "frequency": "Not required - Cosmos DB handles automatically",
+      "monitoring": "Monitor RU consumption patterns for index effectiveness"
+    },
+    "storageImpact": {
+      "estimate": "Indexes add ~20-30% storage overhead",
+      "optimization": "Exclude large text fields if not queried"
+    },
+    "ruImpact": {
+      "writes": "Each composite index adds ~1-2 RU per write operation",
+      "reads": "Proper index usage reduces read RU by 50-80%"
+    }
+  }
+}

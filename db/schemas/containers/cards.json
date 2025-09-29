@@ -1,0 +1,381 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://pcpc.maber.io/schemas/cards.json",
+  "title": "Pokemon Card Schema",
+  "description": "Schema definition for Pokemon cards in the PCPC database",
+  "type": "object",
+  "required": ["id", "setId", "setCode", "setName", "cardName", "cardNumber"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the card (numeric string)",
+      "pattern": "^[0-9]+$",
+      "examples": ["73121", "73122", "73123"]
+    },
+    "setCode": {
+      "type": "string",
+      "description": "Short code identifier for the set this card belongs to",
+      "minLength": 2,
+      "maxLength": 10,
+      "pattern": "^[A-Z0-9-]+$",
+      "examples": ["PRE", "PAL", "SVI"]
+    },
+    "setId": {
+      "type": "integer",
+      "description": "Numeric identifier for the set (partition key)",
+      "minimum": 1,
+      "examples": [557, 556, 555]
+    },
+    "setName": {
+      "type": "string",
+      "description": "Full name of the set this card belongs to",
+      "minLength": 1,
+      "maxLength": 100,
+      "examples": ["Prismatic Evolutions", "Paldea Evolved"]
+    },
+    "cardId": {
+      "type": "string",
+      "description": "Alternative card identifier (may include prefixes)",
+      "examples": ["pokedata-73121", "73121"]
+    },
+    "cardName": {
+      "type": "string",
+      "description": "Name of the Pokemon card",
+      "minLength": 1,
+      "maxLength": 100,
+      "examples": ["Umbreon ex", "Pikachu", "Charizard VMAX"]
+    },
+    "cardNumber": {
+      "type": "string",
+      "description": "Card number within the set",
+      "pattern": "^[0-9A-Za-z/-]+$",
+      "examples": ["161", "025", "SV001", "PROMO"]
+    },
+    "rarity": {
+      "type": "string",
+      "description": "Rarity of the card",
+      "examples": ["Common", "Uncommon", "Rare", "Ultra Rare", "Secret Rare"]
+    },
+    "imageUrl": {
+      "type": "string",
+      "description": "URL to the card image",
+      "format": "uri",
+      "examples": ["https://images.pokemontcg.io/PRE/161.png"]
+    },
+    "imageUrlHiRes": {
+      "type": "string",
+      "description": "URL to high-resolution card image",
+      "format": "uri",
+      "examples": ["https://images.pokemontcg.io/PRE/161_hires.png"]
+    },
+    "originalImageUrl": {
+      "type": "string",
+      "description": "Original image URL from source API",
+      "format": "uri"
+    },
+    "tcgPlayerPrice": {
+      "type": "object",
+      "description": "TCGPlayer pricing data",
+      "properties": {
+        "market": {
+          "type": "number",
+          "description": "Market price",
+          "minimum": 0
+        },
+        "low": {
+          "type": "number",
+          "description": "Low price",
+          "minimum": 0
+        },
+        "mid": {
+          "type": "number",
+          "description": "Mid price",
+          "minimum": 0
+        },
+        "high": {
+          "type": "number",
+          "description": "High price",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "enhancedPricing": {
+      "type": "object",
+      "description": "Enhanced pricing data from multiple sources",
+      "properties": {
+        "psaGrades": {
+          "type": "object",
+          "description": "PSA graded card prices",
+          "patternProperties": {
+            "^(1|2|3|4|5|6|7|8|9|10)$": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": ["value"],
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "cgcGrades": {
+          "type": "object",
+          "description": "CGC graded card prices",
+          "patternProperties": {
+            "^(1|2|3|4|5|6|7|8|9|10)$": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": ["value"],
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "ebayRaw": {
+          "type": "object",
+          "description": "Raw eBay pricing data",
+          "properties": {
+            "value": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": ["value"],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "lastUpdated": {
+      "type": "string",
+      "description": "Timestamp of last update in ISO 8601 format",
+      "format": "date-time",
+      "examples": ["2025-09-20T23:30:53.366Z"]
+    },
+    "pokeDataId": {
+      "type": "integer",
+      "description": "PokeData's unique numeric ID",
+      "minimum": 1,
+      "examples": [73121, 73122]
+    },
+    "pricing": {
+      "type": "object",
+      "description": "Raw pricing data from PokeData API",
+      "additionalProperties": true
+    },
+    "pricingLastUpdated": {
+      "type": "string",
+      "description": "Timestamp of last pricing update",
+      "format": "date-time"
+    },
+    "images": {
+      "type": "object",
+      "description": "Comprehensive image URLs",
+      "properties": {
+        "small": {
+          "type": "string",
+          "description": "Small image URL",
+          "format": "uri"
+        },
+        "large": {
+          "type": "string",
+          "description": "Large image URL",
+          "format": "uri"
+        },
+        "original": {
+          "type": "string",
+          "description": "Original image URL",
+          "format": "uri"
+        },
+        "variants": {
+          "type": "object",
+          "description": "Alternative image variants",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "source": {
+      "type": "string",
+      "description": "Data source identifier",
+      "examples": ["pokedata", "pokemontcg", "hybrid"]
+    },
+    "secret": {
+      "type": "boolean",
+      "description": "Whether this is a secret rare card"
+    },
+    "language": {
+      "type": "string",
+      "description": "Card language",
+      "examples": ["ENGLISH", "JAPANESE", "FRENCH"]
+    },
+    "releaseDate": {
+      "type": "string",
+      "description": "Card release date",
+      "format": "date",
+      "examples": ["2025-01-17"]
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "id": "73121",
+      "source": "pokedata",
+      "pokeDataId": 73121,
+      "setId": 557,
+      "setName": "Prismatic Evolutions",
+      "setCode": "PRE",
+      "cardName": "Umbreon ex",
+      "cardNumber": "161",
+      "secret": true,
+      "language": "ENGLISH",
+      "releaseDate": "2025-01-17",
+      "pricing": {},
+      "lastUpdated": "2025-09-20T23:30:53.366Z"
+    }
+  ],
+  "cosmosDb": {
+    "containerName": "Cards",
+    "partitionKey": "/setId",
+    "indexingPolicy": {
+      "automatic": true,
+      "includedPaths": [
+        {
+          "path": "/*"
+        }
+      ],
+      "excludedPaths": [
+        {
+          "path": "/\"_etag\"/?"
+        },
+        {
+          "path": "/pricing/*"
+        },
+        {
+          "path": "/images/variants/*"
+        }
+      ],
+      "compositeIndexes": [
+        [
+          {
+            "path": "/setId",
+            "order": "ascending"
+          },
+          {
+            "path": "/cardNumber",
+            "order": "ascending"
+          }
+        ],
+        [
+          {
+            "path": "/setCode",
+            "order": "ascending"
+          },
+          {
+            "path": "/cardNumber",
+            "order": "ascending"
+          }
+        ],
+        [
+          {
+            "path": "/cardName",
+            "order": "ascending"
+          },
+          {
+            "path": "/setId",
+            "order": "ascending"
+          }
+        ],
+        [
+          {
+            "path": "/lastUpdated",
+            "order": "descending"
+          },
+          {
+            "path": "/setId",
+            "order": "ascending"
+          }
+        ]
+      ]
+    },
+    "uniqueKeyPolicy": {
+      "uniqueKeys": [
+        {
+          "paths": ["/id"]
+        },
+        {
+          "paths": ["/setId", "/cardNumber"]
+        }
+      ]
+    },
+    "defaultTtl": -1,
+    "conflictResolutionPolicy": {
+      "mode": "LastWriterWins",
+      "conflictResolutionPath": "/_ts"
+    }
+  },
+  "queryPatterns": [
+    {
+      "name": "getCardsBySetId",
+      "description": "Retrieve all cards for a specific set",
+      "query": "SELECT * FROM c WHERE c.setId = @setId",
+      "partitionKey": "single-partition",
+      "parameters": ["setId"],
+      "indexUsage": ["setId"]
+    },
+    {
+      "name": "getCardsBySetCode",
+      "description": "Retrieve cards by set code",
+      "query": "SELECT * FROM c WHERE c.setCode = @setCode",
+      "partitionKey": "cross-partition",
+      "parameters": ["setCode"],
+      "indexUsage": ["setCode", "cardNumber"]
+    },
+    {
+      "name": "getCard",
+      "description": "Retrieve specific card by ID and setId",
+      "query": "SELECT * FROM c WHERE c.id = @cardId AND c.setId = @setId",
+      "partitionKey": "single-partition",
+      "parameters": ["cardId", "setId"]
+    },
+    {
+      "name": "searchCardsByName",
+      "description": "Search cards by name",
+      "query": "SELECT * FROM c WHERE CONTAINS(UPPER(c.cardName), UPPER(@cardName))",
+      "partitionKey": "cross-partition",
+      "parameters": ["cardName"],
+      "indexUsage": ["cardName", "setId"]
+    },
+    {
+      "name": "getRecentlyUpdatedCards",
+      "description": "Get recently updated cards",
+      "query": "SELECT * FROM c WHERE c.lastUpdated >= @since ORDER BY c.lastUpdated DESC",
+      "partitionKey": "cross-partition",
+      "parameters": ["since"],
+      "indexUsage": ["lastUpdated", "setId"]
+    }
+  ],
+  "performanceNotes": {
+    "partitionStrategy": "SetId-based partitioning provides excellent query performance for set-based operations",
+    "hotPartitions": "Monitor current/popular sets (setId 557, etc.) for hot partition issues",
+    "queryOptimization": "Use setId in WHERE clause whenever possible for single-partition queries",
+    "ruConsumption": "Single-partition queries by setId are most efficient (2-5 RU vs 10+ RU cross-partition)",
+    "indexingStrategy": "Exclude large nested objects (pricing, image variants) from indexing to reduce RU costs",
+    "batchOperations": "Use batch operations for bulk card inserts/updates within same partition (setId)"
+  }
+}

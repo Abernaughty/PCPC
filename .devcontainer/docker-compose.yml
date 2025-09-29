@@ -1,8 +1,6 @@
 services:
   devcontainer:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-devcontainer:latest
     volumes:
       - ..:/workspace:cached
       - /var/run/docker.sock:/var/run/docker-host.sock
@@ -22,6 +20,11 @@ services:
           memory: 2G
           cpus: "2"
     restart: unless-stopped
+    depends_on:
+      azurite:
+        condition: service_healthy
+      cosmosdb-emulator:
+        condition: service_healthy
 
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite:latest

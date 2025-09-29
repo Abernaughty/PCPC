@@ -1,0 +1,35 @@
+# -----------------------------------------------------------------------------
+# DEVELOPMENT ENVIRONMENT CONFIGURATION
+# -----------------------------------------------------------------------------
+# Copy this file to terraform.tfvars and update the values as needed
+
+# Required variables (update these with your actual values)
+api_management_name = "maber-apim-test"
+resource_group_name = "pokedata-dev-rg"
+function_app_name   = "pokedata-func-dev"
+
+# SENSITIVE: Function App Key (set via environment variable or uncomment and set)
+# function_app_key = "your-function-app-key-here"
+
+# Application Insights configuration
+enable_application_insights = true
+application_insights_name   = "pokedata-appinsights-dev"
+
+# Optional: Additional CORS origins for development
+# additional_cors_origins = [
+#   "http://localhost:8080",
+#   "https://dev-frontend.example.com"
+# ]
+
+# Optional: Override rate limiting for development testing
+# override_rate_limit_calls = 1000
+
+# Optional: Override cache durations for development testing
+# override_cache_durations = {
+#   sets      = 60   # 1 minute for faster testing
+#   cards     = 120  # 2 minutes
+#   card_info = 180  # 3 minutes
+# }
+
+# Enable debug features for development
+enable_debug_features = true

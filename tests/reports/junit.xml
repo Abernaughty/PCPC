@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="26" failures="0" errors="0" time="7.518">
+  <testsuite name="GetSetList Function" errors="0" failures="0" skipped="0" timestamp="2025-09-29T01:55:28" time="1.784" tests="9">
+    <testcase classname="GetSetList Function › Function Execution" name="should return sets list successfully" time="0.013">
+    </testcase>
+    <testcase classname="GetSetList Function › Function Execution" name="should handle pagination parameters" time="0.001">
+    </testcase>
+    <testcase classname="GetSetList Function › Function Execution" name="should handle database errors gracefully" time="0.004">
+    </testcase>
+    <testcase classname="GetSetList Function › Function Execution" name="should validate query parameters" time="0.001">
+    </testcase>
+    <testcase classname="GetSetList Function › API Integration" name="should handle PokeData API integration" time="0.001">
+    </testcase>
+    <testcase classname="GetSetList Function › API Integration" name="should handle API key validation failure" time="0.014">
+    </testcase>
+    <testcase classname="GetSetList Function › Response Formatting" name="should format response correctly" time="0.003">
+    </testcase>
+    <testcase classname="GetSetList Function › Response Formatting" name="should handle empty results" time="0">
+    </testcase>
+    <testcase classname="GetSetList Function › Caching Integration" name="should integrate with cache service" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="SearchableSelect Component" errors="0" failures="0" skipped="0" timestamp="2025-09-29T01:55:30" time="2.312" tests="17">
+    <testcase classname="SearchableSelect Component › Component Rendering" name="should render with default props" time="0.015">
+    </testcase>
+    <testcase classname="SearchableSelect Component › Component Rendering" name="should display placeholder text when no option is selected" time="0.002">
+    </testcase>
+    <testcase classname="SearchableSelect Component › Component Rendering" name="should render all provided options" time="0.001">
+    </testcase>
+    <testcase classname="SearchableSelect Component › User Interactions" name="should open dropdown when clicked" time="0">
+    </testcase>
+    <testcase classname="SearchableSelect Component › User Interactions" name="should filter options based on search input" time="0.001">
+    </testcase>
+    <testcase classname="SearchableSelect Component › User Interactions" name="should select option when clicked" time="0.001">
+    </testcase>
+    <testcase classname="SearchableSelect Component › User Interactions" name="should close dropdown when option is selected" time="0.001">
+    </testcase>
+    <testcase classname="SearchableSelect Component › Keyboard Navigation" name="should navigate options with arrow keys" time="0.001">
+    </testcase>
+    <testcase classname="SearchableSelect Component › Keyboard Navigation" name="should select option with Enter key" time="0">
+    </testcase>
+    <testcase classname="SearchableSelect Component › Keyboard Navigation" name="should close dropdown with Escape key" time="0.003">
+    </testcase>
+    <testcase classname="SearchableSelect Component › Accessibility" name="should have proper ARIA attributes" time="0.002">
+    </testcase>
+    <testcase classname="SearchableSelect Component › Accessibility" name="should be keyboard accessible" time="0.002">
+    </testcase>
+    <testcase classname="SearchableSelect Component › Accessibility" name="should announce selection changes to screen readers" time="0.001">
+    </testcase>
+    <testcase classname="SearchableSelect Component › Error Handling" name="should handle empty options array gracefully" time="0">
+    </testcase>
+    <testcase classname="SearchableSelect Component › Error Handling" name="should handle invalid option format gracefully" time="0.001">
+    </testcase>
+    <testcase classname="SearchableSelect Component › Performance" name="should handle large option lists efficiently" time="0.002">
+    </testcase>
+    <testcase classname="SearchableSelect Component › Performance" name="should debounce search input for performance" time="0.001">
+    </testcase>
+  </testsuite>
+</testsuites>
