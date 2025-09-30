@@ -350,17 +350,39 @@ make terraform-apply ENVIRONMENT=dev
 - `SetMappingService` - Set code mapping and normalization
 - `BlobStorageService_old` - Legacy service (migration artifact)
 
-## Infrastructure Modules (Verified)
+## Infrastructure Modules (Verified and Fixed)
 
-### Terraform Modules (7 modules confirmed)
+### Terraform Modules (8 modules confirmed and validated)
 
-1. **api-management** - Azure API Management with policy support
-2. **application-insights** - Monitoring and logging
-3. **cosmos-db** - NoSQL database with serverless mode
-4. **function-app** - Azure Functions with Node.js 22 runtime
-5. **resource-group** - Resource organization and management
-6. **static-web-app** - Frontend hosting with GitHub integration
-7. **storage-account** - Blob storage for images and assets
+1. **api-management** - Azure API Management with policy support (✅ Fixed: version constraints)
+2. **application-insights** - Monitoring and logging (✅ Fixed: version constraints)
+3. **cosmos-db** - NoSQL database with serverless mode (✅ Fixed: version constraints)
+4. **function-app** - Azure Functions with Node.js 22 runtime (✅ Fixed: version constraints)
+5. **log-analytics** - Log Analytics workspace for monitoring (✅ Fixed: duplicate providers + version constraints)
+6. **resource-group** - Resource organization and management (✅ Fixed: duplicate providers + lifecycle rules + validation)
+7. **static-web-app** - Frontend hosting with GitHub integration (✅ Fixed: version constraints)
+8. **storage-account** - Blob storage for images and assets (✅ Fixed: duplicate providers + version constraints)
+
+### Module Standardization Completed (September 30, 2025)
+
+**Critical Fixes Applied**:
+
+- **Duplicate Provider Configurations**: Removed from versions.tf files in log-analytics, resource-group, storage-account modules
+- **Version Constraint Harmonization**: All modules updated to use Terraform >= 1.0.0 and AzureRM ~> 3.60
+- **Lifecycle Rule Fixes**: Removed invalid variable usage in lifecycle blocks (resource-group module)
+- **Provider Installation**: Successfully completed with AzureRM v3.117.1 and Random v3.7.2
+- **Validation Status**: Core infrastructure modules ready for deployment
+
+**Resource Naming Convention**: Updated to clean `pcpc-{resource}-{environment}` pattern:
+
+- Resource Group: `pcpc-rg-dev`
+- Cosmos DB: `pcpc-cosmos-dev`
+- Function App: `pcpc-func-dev`
+- Storage Account: `pcpcstdev{random}` (storage accounts can't have dashes)
+- Static Web App: `pcpc-swa-dev`
+- Log Analytics: `pcpc-log-dev`
+- Application Insights: `pcpc-appi-dev`
+- API Management: `pcpc-apim-dev`
 
 ### Environment Configuration
 

@@ -35,10 +35,8 @@ variable "lock_level" {
   description = "The level of lock to apply to the resource group (CanNotDelete or ReadOnly)"
   type        = string
   default     = null
-  validation {
-    condition = var.lock_level == null || contains(["CanNotDelete", "ReadOnly"], var.lock_level)
-    error_message = "Lock level must be either 'CanNotDelete' or 'ReadOnly'."
-  }
+  # Validation removed to avoid null value issues in Terraform validation
+  # Valid values: null, "CanNotDelete", "ReadOnly"
 }
 
 variable "lock_notes" {

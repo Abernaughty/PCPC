@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.13.0"
+  required_version = ">= 1.0.0"
 
   required_providers {
     azurerm = {
@@ -12,12 +12,14 @@ terraform {
     }
   }
 
-  backend "azurerm" {
-    resource_group_name  = "rg-pcpc-tfstate"
-    storage_account_name = "stpcpctfstate"
-    container_name       = "tfstate"
-    key                  = "dev.terraform.tfstate"
-  }
+  # Using local backend for development
+  # For production, uncomment and configure the azurerm backend below:
+  # backend "azurerm" {
+  #   resource_group_name  = "rg-pcpc-tfstate"
+  #   storage_account_name = "stpcpctfstate"
+  #   container_name       = "tfstate"
+  #   key                  = "dev.terraform.tfstate"
+  # }
 }
 
 provider "azurerm" {
@@ -42,9 +44,8 @@ resource "random_string" "suffix" {
 }
 
 locals {
-  # Common naming convention
-  name_prefix = "pcpc-${var.environment}"
-  name_suffix = random_string.suffix.result
+  # New naming convention: pcpc-{resource}-{environment}
+  environment = var.environment
   
   # Common tags
   common_tags = {
@@ -60,7 +61,7 @@ locals {
 module "resource_group" {
   source = "../../modules/resource-group"
 
-  name         = "rg-${local.name_prefix}"
+  name         = "pcpc-rg-${local.environment}"
   location     = var.location
   environment  = var.environment
   project_name = var.project_name
@@ -71,13 +72,12 @@ module "resource_group" {
 module "storage_account" {
   source = "../../modules/storage-account"
 
-  name                = "st${replace(local.name_prefix, "-", "")}${local.name_suffix}"
-  resource_group_name = module.resource_group.name
-  location            = var.location
-  environment         = var.environment
+  storage_account_name = "pcpcst${local.environment}${random_string.suffix.result}"
+  resource_group_name  = module.resource_group.name
+  location             = var.location
   
-  account_tier             = var.storage_account_tier
-  account_replication_type = var.storage_account_replication_type
+  account_tier     = var.storage_account_tier
+  replication_type = var.storage_account_replication_type
   
   tags = local.common_tags
 
@@ -88,20 +88,14 @@ module "storage_account" {
 module "cosmos_db" {
   source = "../../modules/cosmos-db"
 
-  name                = "cosmos-${local.name_prefix}-${local.name_suffix}"
+  name                = "pcpc-cosmos-${local.environment}"
   resource_group_name = module.resource_group.name
   location            = var.location
   environment         = var.environment
 
-  offer_type                    = var.cosmos_offer_type
-  kind                         = var.cosmos_kind
-  consistency_level            = var.cosmos_consistency_level
-  max_interval_in_seconds      = var.cosmos_max_interval_in_seconds
-  max_staleness_prefix         = var.cosmos_max_staleness_prefix
-  enable_automatic_failover    = var.cosmos_enable_automatic_failover
+  consistency_level               = var.cosmos_consistency_level
+  enable_automatic_failover       = var.cosmos_enable_automatic_failover
   enable_multiple_write_locations = var.cosmos_enable_multiple_write_locations
-
-  databases = var.cosmos_databases
   
   tags = local.common_tags
 
@@ -112,15 +106,15 @@ module "cosmos_db" {
 module "function_app" {
   source = "../../modules/function-app"
 
-  name                = "func-${local.name_prefix}-${local.name_suffix}"
+  name                = "pcpc-func-${local.environment}"
   resource_group_name = module.resource_group.name
   location            = var.location
   environment         = var.environment
 
-  storage_account_name       = module.storage_account.name
-  storage_account_access_key = module.storage_account.primary_access_key
+  storage_account_name = module.storage_account.name
+  storage_account_key  = module.storage_account.primary_access_key
   
-  service_plan_sku_name = var.function_app_sku_name
+  sku_name = var.function_app_sku_name
   
   app_settings = merge(
     var.function_app_settings,
@@ -131,19 +125,21 @@ module "function_app" {
       "WEBSITE_NODE_DEFAULT_VERSION" = "~22"
       "FUNCTIONS_WORKER_RUNTIME"    = "node"
       "FUNCTIONS_EXTENSION_VERSION" = "~4"
+      "APPINSIGHTS_INSTRUMENTATIONKEY" = module.application_insights.instrumentation_key
+      "APPLICATIONINSIGHTS_CONNECTION_STRING" = module.application_insights.connection_string
     }
   )
   
   tags = local.common_tags
 
-  depends_on = [module.resource_group, module.storage_account, module.cosmos_db]
+  depends_on = [module.resource_group, module.storage_account, module.cosmos_db, module.application_insights]
 }
 
 # Static Web App
 module "static_web_app" {
   source = "../../modules/static-web-app"
 
-  name                = "swa-${local.name_prefix}-${local.name_suffix}"
+  name                = "pcpc-swa-${local.environment}"
   resource_group_name = module.resource_group.name
   location            = var.static_web_app_location
   environment         = var.environment
@@ -163,12 +159,97 @@ module "static_web_app" {
   depends_on = [module.resource_group, module.function_app]
 }
 
+# Log Analytics Workspace
+module "log_analytics" {
+  source = "../../modules/log-analytics"
+
+  name                = "pcpc-log-${local.environment}"
+  resource_group_name = module.resource_group.name
+  location            = var.location
+  environment         = var.environment
+  project_name        = var.project_name
+
+  sku               = var.log_analytics_sku
+  retention_in_days = var.log_analytics_retention_days
+  daily_quota_gb    = var.log_analytics_daily_quota_gb
+
+  tags = local.common_tags
+
+  depends_on = [module.resource_group]
+}
+
+# Application Insights
+module "application_insights" {
+  source = "../../modules/application-insights"
+
+  name                = "pcpc-appi-${local.environment}"
+  resource_group_name = module.resource_group.name
+  location            = var.location
+  environment         = var.environment
+  project_name        = var.project_name
+
+  application_type = var.application_insights_type
+  workspace_id     = module.log_analytics.id
+
+  retention_in_days                     = var.application_insights_retention_days
+  daily_data_cap_in_gb                  = var.application_insights_daily_cap_gb
+  daily_data_cap_notifications_disabled = var.application_insights_disable_cap_notifications
+  sampling_percentage                   = var.application_insights_sampling_percentage
+
+  # Create basic action groups for alerting
+  action_groups = [
+    {
+      name       = "pcpc-critical-alerts"
+      short_name = "pcpc-crit"
+      email_receivers = [
+        {
+          name          = "admin"
+          email_address = var.alert_email_address
+        }
+      ]
+      webhook_receivers = []
+    }
+  ]
+
+  # Create basic metric alerts
+  metric_alerts = [
+    {
+      name        = "High Error Rate"
+      description = "Triggers when error rate exceeds 5%"
+      severity    = 1
+      frequency   = "PT1M"
+      window_size = "PT5M"
+      enabled     = true
+      metric_name = "requests/failed"
+      aggregation = "Count"
+      operator    = "GreaterThan"
+      threshold   = 10
+    },
+    {
+      name        = "Slow Response Time"
+      description = "Triggers when average response time exceeds 2 seconds"
+      severity    = 2
+      frequency   = "PT5M"
+      window_size = "PT10M"
+      enabled     = true
+      metric_name = "requests/duration"
+      aggregation = "Average"
+      operator    = "GreaterThan"
+      threshold   = 2000
+    }
+  ]
+
+  tags = local.common_tags
+
+  depends_on = [module.resource_group, module.log_analytics]
+}
+
 # API Management (Optional for dev environment)
 module "api_management" {
   count  = var.enable_api_management ? 1 : 0
   source = "../../modules/api-management"
 
-  name                = "apim-${local.name_prefix}-${local.name_suffix}"
+  name                = "pcpc-apim-${local.environment}"
   resource_group_name = module.resource_group.name
   location            = var.location
   environment         = var.environment

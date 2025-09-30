@@ -5,7 +5,7 @@ echo "[devcontainer] Running startup.sh..."
 
 # Wait for Cosmos DB Emulator HTTP endpoint
 endpoint="https://cosmosdb-emulator:8081"
-max_attempts=40
+max_attempts=60
 attempt=1
 
 echo "[devcontainer] Checking Cosmos DB Emulator at $endpoint"

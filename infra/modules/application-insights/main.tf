@@ -5,7 +5,7 @@ terraform {
       version = "~> 3.60"
     }
   }
-  required_version = ">= 1.13.0"
+  required_version = ">= 1.0.0"
 }
 
 resource "azurerm_application_insights" "this" {
