@@ -4,18 +4,18 @@
 # -----------------------------------------------------------------------------
 
 terraform {
-  required_version = ">= 1.9.0"
+  required_version = ">= 1.0.0"
 
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 4.40.0"
+      version = "~> 3.60"
     }
 
     # Random provider for generating unique names if needed
     random = {
       source  = "hashicorp/random"
-      version = "~> 3.6.0"
+      version = "~> 3.5"
     }
   }
 }

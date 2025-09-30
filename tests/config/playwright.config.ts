@@ -1,11 +1,17 @@
 import { defineConfig, devices } from "@playwright/test";
+import path from "path";
+import { fileURLToPath } from "url";
+
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
   // Test directory
-  testDir: "../e2e",
+  testDir: path.resolve(__dirname, "../e2e"),
 
   // Run tests in files in parallel
   fullyParallel: true,
@@ -21,9 +27,25 @@ export default defineConfig({
 
   // Reporter to use
   reporter: [
-    ["html", { outputFolder: "../reports/playwright-report" }],
-    ["json", { outputFile: "../reports/playwright-results.json" }],
-    ["junit", { outputFile: "../reports/playwright-junit.xml" }],
+    [
+      "html",
+      { outputFolder: path.resolve(__dirname, "../reports/playwright-report") },
+    ],
+    [
+      "json",
+      {
+        outputFile: path.resolve(
+          __dirname,
+          "../reports/playwright-results.json"
+        ),
+      },
+    ],
+    [
+      "junit",
+      {
+        outputFile: path.resolve(__dirname, "../reports/playwright-junit.xml"),
+      },
+    ],
     ["line"],
   ],
 
@@ -104,15 +126,15 @@ export default defineConfig({
     },
   ],
 
-  // Global setup and teardown
-  globalSetup: require.resolve("./playwright-global-setup.ts"),
-  globalTeardown: require.resolve("./playwright-global-teardown.ts"),
+  // Global setup and teardown (using path.resolve instead of require.resolve)
+  globalSetup: path.resolve(__dirname, "./playwright-global-setup.ts"),
+  globalTeardown: path.resolve(__dirname, "./playwright-global-teardown.ts"),
 
   // Run your local dev server before starting the tests
   webServer: [
     {
       command: "npm run dev",
-      cwd: "./app/frontend",
+      cwd: path.resolve(__dirname, "../../app/frontend"),
       port: 3000,
       reuseExistingServer: !process.env.CI,
       timeout: 120000,
@@ -121,8 +143,8 @@ export default defineConfig({
       },
     },
     {
-      command: "npm run start",
-      cwd: "./app/backend",
+      command: "npm start",
+      cwd: path.resolve(__dirname, "../../app/backend"),
       port: 7071,
       reuseExistingServer: !process.env.CI,
       timeout: 120000,
@@ -144,12 +166,5 @@ export default defineConfig({
   },
 
   // Output directory
-  outputDir: "../reports/test-results",
-
-  // Metadata
-  metadata: {
-    project: "PCPC E2E Tests",
-    version: "1.0.0",
-    environment: process.env.NODE_ENV || "test",
-  },
+  outputDir: path.resolve(__dirname, "../reports/test-results"),
 });

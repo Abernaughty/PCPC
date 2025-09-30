@@ -164,17 +164,73 @@ variable "enable_api_management" {
 variable "apim_publisher_name" {
   description = "The publisher name for API Management"
   type        = string
-  default     = "PCPC Development"
+  default     = "maber.io"
 }
 
 variable "apim_publisher_email" {
   description = "The publisher email for API Management"
   type        = string
-  default     = "dev@pcpc.local"
+  default     = "devops@maber.io"
 }
 
 variable "apim_sku_name" {
   description = "The SKU name for API Management"
   type        = string
   default     = "Developer_1"
+}
+
+# Log Analytics Configuration
+variable "log_analytics_sku" {
+  description = "The SKU of the Log Analytics workspace"
+  type        = string
+  default     = "PerGB2018"
+}
+
+variable "log_analytics_retention_days" {
+  description = "The workspace data retention in days"
+  type        = number
+  default     = 30
+}
+
+variable "log_analytics_daily_quota_gb" {
+  description = "The workspace daily quota for ingestion in GB"
+  type        = number
+  default     = -1
+}
+
+# Application Insights Configuration
+variable "application_insights_type" {
+  description = "The type of Application Insights to create"
+  type        = string
+  default     = "web"
+}
+
+variable "application_insights_retention_days" {
+  description = "The retention period in days for Application Insights"
+  type        = number
+  default     = 90
+}
+
+variable "application_insights_daily_cap_gb" {
+  description = "The daily data volume cap in GB for Application Insights"
+  type        = number
+  default     = 1
+}
+
+variable "application_insights_disable_cap_notifications" {
+  description = "Disable daily data cap notifications"
+  type        = bool
+  default     = false
+}
+
+variable "application_insights_sampling_percentage" {
+  description = "The percentage of telemetry to sample"
+  type        = number
+  default     = 100
+}
+
+variable "alert_email_address" {
+  description = "Email address for alert notifications"
+  type        = string
+  default     = "devops@maber.io"
 }

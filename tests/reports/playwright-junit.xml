@@ -1,0 +1,408 @@
+<testsuites id="" name="" tests="91" failures="0" skipped="91" errors="0" time="0.08441200000000026">
+<testsuite name="api.spec.ts" timestamp="2025-09-30T18:35:01.782Z" hostname="chromium" tests="5" failures="0" skipped="5" time="0" errors="0">
+<testcase name="PCPC Backend API Tests › should have backend API available" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should handle API requests from frontend" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should handle API errors gracefully" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should test API endpoints directly" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should handle CORS properly" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="example.spec.ts" timestamp="2025-09-30T18:35:01.782Z" hostname="chromium" tests="3" failures="0" skipped="3" time="0" errors="0">
+<testcase name="PCPC Application E2E Tests › should load the homepage" classname="example.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Application E2E Tests › should have working navigation" classname="example.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Application E2E Tests › should handle API connectivity" classname="example.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="frontend.spec.ts" timestamp="2025-09-30T18:35:01.782Z" hostname="chromium" tests="5" failures="0" skipped="5" time="0" errors="0">
+<testcase name="PCPC Frontend UI Tests › should render the main application" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should handle theme switching" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should handle search functionality" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should be responsive" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should handle errors gracefully" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="api.spec.ts" timestamp="2025-09-30T18:35:01.782Z" hostname="firefox" tests="5" failures="0" skipped="5" time="0" errors="0">
+<testcase name="PCPC Backend API Tests › should have backend API available" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should handle API requests from frontend" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should handle API errors gracefully" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should test API endpoints directly" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should handle CORS properly" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="example.spec.ts" timestamp="2025-09-30T18:35:01.782Z" hostname="firefox" tests="3" failures="0" skipped="3" time="0" errors="0">
+<testcase name="PCPC Application E2E Tests › should load the homepage" classname="example.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Application E2E Tests › should have working navigation" classname="example.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Application E2E Tests › should handle API connectivity" classname="example.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="frontend.spec.ts" timestamp="2025-09-30T18:35:01.782Z" hostname="firefox" tests="5" failures="0" skipped="5" time="0" errors="0">
+<testcase name="PCPC Frontend UI Tests › should render the main application" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should handle theme switching" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should handle search functionality" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should be responsive" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should handle errors gracefully" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="api.spec.ts" timestamp="2025-09-30T18:35:01.782Z" hostname="webkit" tests="5" failures="0" skipped="5" time="0" errors="0">
+<testcase name="PCPC Backend API Tests › should have backend API available" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should handle API requests from frontend" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should handle API errors gracefully" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should test API endpoints directly" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should handle CORS properly" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="example.spec.ts" timestamp="2025-09-30T18:35:01.782Z" hostname="webkit" tests="3" failures="0" skipped="3" time="0" errors="0">
+<testcase name="PCPC Application E2E Tests › should load the homepage" classname="example.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Application E2E Tests › should have working navigation" classname="example.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Application E2E Tests › should handle API connectivity" classname="example.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="frontend.spec.ts" timestamp="2025-09-30T18:35:01.782Z" hostname="webkit" tests="5" failures="0" skipped="5" time="0" errors="0">
+<testcase name="PCPC Frontend UI Tests › should render the main application" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should handle theme switching" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should handle search functionality" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should be responsive" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should handle errors gracefully" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="api.spec.ts" timestamp="2025-09-30T18:35:01.782Z" hostname="Mobile Chrome" tests="5" failures="0" skipped="5" time="0" errors="0">
+<testcase name="PCPC Backend API Tests › should have backend API available" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should handle API requests from frontend" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should handle API errors gracefully" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should test API endpoints directly" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should handle CORS properly" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="example.spec.ts" timestamp="2025-09-30T18:35:01.782Z" hostname="Mobile Chrome" tests="3" failures="0" skipped="3" time="0" errors="0">
+<testcase name="PCPC Application E2E Tests › should load the homepage" classname="example.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Application E2E Tests › should have working navigation" classname="example.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Application E2E Tests › should handle API connectivity" classname="example.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="frontend.spec.ts" timestamp="2025-09-30T18:35:01.782Z" hostname="Mobile Chrome" tests="5" failures="0" skipped="5" time="0" errors="0">
+<testcase name="PCPC Frontend UI Tests › should render the main application" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should handle theme switching" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should handle search functionality" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should be responsive" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should handle errors gracefully" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="api.spec.ts" timestamp="2025-09-30T18:35:01.782Z" hostname="Mobile Safari" tests="5" failures="0" skipped="5" time="0" errors="0">
+<testcase name="PCPC Backend API Tests › should have backend API available" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should handle API requests from frontend" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should handle API errors gracefully" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should test API endpoints directly" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should handle CORS properly" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="example.spec.ts" timestamp="2025-09-30T18:35:01.782Z" hostname="Mobile Safari" tests="3" failures="0" skipped="3" time="0" errors="0">
+<testcase name="PCPC Application E2E Tests › should load the homepage" classname="example.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Application E2E Tests › should have working navigation" classname="example.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Application E2E Tests › should handle API connectivity" classname="example.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="frontend.spec.ts" timestamp="2025-09-30T18:35:01.782Z" hostname="Mobile Safari" tests="5" failures="0" skipped="5" time="0" errors="0">
+<testcase name="PCPC Frontend UI Tests › should render the main application" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should handle theme switching" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should handle search functionality" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should be responsive" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should handle errors gracefully" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="api.spec.ts" timestamp="2025-09-30T18:35:01.782Z" hostname="Microsoft Edge" tests="5" failures="0" skipped="5" time="0" errors="0">
+<testcase name="PCPC Backend API Tests › should have backend API available" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should handle API requests from frontend" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should handle API errors gracefully" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should test API endpoints directly" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should handle CORS properly" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="example.spec.ts" timestamp="2025-09-30T18:35:01.782Z" hostname="Microsoft Edge" tests="3" failures="0" skipped="3" time="0" errors="0">
+<testcase name="PCPC Application E2E Tests › should load the homepage" classname="example.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Application E2E Tests › should have working navigation" classname="example.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Application E2E Tests › should handle API connectivity" classname="example.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="frontend.spec.ts" timestamp="2025-09-30T18:35:01.782Z" hostname="Microsoft Edge" tests="5" failures="0" skipped="5" time="0" errors="0">
+<testcase name="PCPC Frontend UI Tests › should render the main application" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should handle theme switching" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should handle search functionality" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should be responsive" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should handle errors gracefully" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="api.spec.ts" timestamp="2025-09-30T18:35:01.782Z" hostname="Google Chrome" tests="5" failures="0" skipped="5" time="0" errors="0">
+<testcase name="PCPC Backend API Tests › should have backend API available" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should handle API requests from frontend" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should handle API errors gracefully" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should test API endpoints directly" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Backend API Tests › should handle CORS properly" classname="api.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="example.spec.ts" timestamp="2025-09-30T18:35:01.782Z" hostname="Google Chrome" tests="3" failures="0" skipped="3" time="0" errors="0">
+<testcase name="PCPC Application E2E Tests › should load the homepage" classname="example.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Application E2E Tests › should have working navigation" classname="example.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Application E2E Tests › should handle API connectivity" classname="example.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="frontend.spec.ts" timestamp="2025-09-30T18:35:01.782Z" hostname="Google Chrome" tests="5" failures="0" skipped="5" time="0" errors="0">
+<testcase name="PCPC Frontend UI Tests › should render the main application" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should handle theme switching" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should handle search functionality" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should be responsive" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PCPC Frontend UI Tests › should handle errors gracefully" classname="frontend.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+</testsuites>

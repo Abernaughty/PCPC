@@ -5,7 +5,7 @@ terraform {
       version = "~> 3.60"
     }
   }
-  required_version = ">= 1.13.0"
+  required_version = ">= 1.0.0"
 }
 
 resource "azurerm_resource_group" "this" {
@@ -21,9 +21,11 @@ resource "azurerm_resource_group" "this" {
     }
   )
 
-  lifecycle {
-    prevent_destroy = var.prevent_destroy
-  }
+  # Note: prevent_destroy must be a literal value, not a variable
+  # Uncomment the lifecycle block below if you want to prevent accidental deletion
+  # lifecycle {
+  #   prevent_destroy = true
+  # }
 }
 
 # Optional: Create a management lock if specified
