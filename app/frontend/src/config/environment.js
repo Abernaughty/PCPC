@@ -62,6 +62,13 @@ export const isDevelopment = () => ENV_CONFIG.NODE_ENV === 'development';
 export const isProduction = () => ENV_CONFIG.NODE_ENV === 'production';
 
 /**
+ * Check if we're using local Azure Functions (localhost)
+ */
+const isLocalFunctions = (baseUrl) => {
+  return baseUrl && (baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1'));
+};
+
+/**
  * Get API configuration based on environment
  */
 export const getApiConfig = () => {
@@ -78,10 +85,14 @@ export const getApiConfig = () => {
       }
     };
   } else {
+    // Check if we're using local functions
+    const isLocal = isLocalFunctions(ENV_CONFIG.AZURE_FUNCTIONS_BASE_URL);
+    
     return {
       baseUrl: ENV_CONFIG.AZURE_FUNCTIONS_BASE_URL,
       functionKey: ENV_CONFIG.AZURE_FUNCTION_KEY,
-      authType: 'function',
+      // Use 'none' for localhost, 'function' for production Azure Functions
+      authType: isLocal ? 'none' : 'function',
       getHeaders() {
         return {
           'Content-Type': 'application/json'
@@ -101,8 +112,10 @@ export const validateEnvironment = () => {
     errors.push('APIM_SUBSCRIPTION_KEY is required when USE_API_MANAGEMENT is true');
   }
   
-  if (!ENV_CONFIG.USE_API_MANAGEMENT && !ENV_CONFIG.AZURE_FUNCTION_KEY) {
-    errors.push('AZURE_FUNCTION_KEY is required when USE_API_MANAGEMENT is false');
+  // Only require function key for non-local environments
+  const isLocal = isLocalFunctions(ENV_CONFIG.AZURE_FUNCTIONS_BASE_URL);
+  if (!ENV_CONFIG.USE_API_MANAGEMENT && !isLocal && !ENV_CONFIG.AZURE_FUNCTION_KEY) {
+    errors.push('AZURE_FUNCTION_KEY is required when USE_API_MANAGEMENT is false and not using localhost');
   }
   
   return {
@@ -117,7 +130,10 @@ if (isDevelopment() && ENV_CONFIG.DEBUG_API) {
     NODE_ENV: ENV_CONFIG.NODE_ENV,
     USE_API_MANAGEMENT: ENV_CONFIG.USE_API_MANAGEMENT,
     APIM_BASE_URL: ENV_CONFIG.APIM_BASE_URL,
+    AZURE_FUNCTIONS_BASE_URL: ENV_CONFIG.AZURE_FUNCTIONS_BASE_URL,
+    isLocalFunctions: isLocalFunctions(ENV_CONFIG.AZURE_FUNCTIONS_BASE_URL),
+    authType: ENV_CONFIG.USE_API_MANAGEMENT ? 'subscription' : (isLocalFunctions(ENV_CONFIG.AZURE_FUNCTIONS_BASE_URL) ? 'none' : 'function'),
     hasSubscriptionKey: !!ENV_CONFIG.APIM_SUBSCRIPTION_KEY,
-    hasfunctionKey: !!ENV_CONFIG.AZURE_FUNCTION_KEY
+    hasFunctionKey: !!ENV_CONFIG.AZURE_FUNCTION_KEY
   });
 }

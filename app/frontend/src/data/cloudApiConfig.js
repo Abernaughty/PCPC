@@ -24,16 +24,20 @@ export const API_CONFIG = {
   
   // URL builder functions for API Management endpoints
   buildSetsUrl() {
+    // Only add function code for production Azure Functions (not localhost)
     if (this.authType === 'function') {
       return `${this.baseUrl}/sets?code=${encodeURIComponent(this.functionKey)}`;
     }
+    // For localhost or APIM, no code parameter needed
     return `${this.baseUrl}/sets`;
   },
   
   buildCardsForSetUrl(setId) {
+    // Only add function code for production Azure Functions (not localhost)
     if (this.authType === 'function') {
       return `${this.baseUrl}/sets/${encodeURIComponent(setId)}/cards?code=${encodeURIComponent(this.functionKey)}`;
     }
+    // For localhost or APIM, no code parameter needed
     return `${this.baseUrl}/sets/${encodeURIComponent(setId)}/cards`;
   },
   
@@ -41,9 +45,11 @@ export const API_CONFIG = {
     if (!setId) {
       throw new Error('setId is required for buildCardInfoUrl');
     }
+    // Only add function code for production Azure Functions (not localhost)
     if (this.authType === 'function') {
       return `${this.baseUrl}/sets/${encodeURIComponent(setId)}/cards/${encodeURIComponent(cardId)}?code=${encodeURIComponent(this.functionKey)}`;
     }
+    // For localhost or APIM, no code parameter needed
     return `${this.baseUrl}/sets/${encodeURIComponent(setId)}/cards/${encodeURIComponent(cardId)}`;
   },
   
@@ -52,9 +58,11 @@ export const API_CONFIG = {
     if (!setId) {
       throw new Error('setId is required for buildPricingUrl');
     }
+    // Only add function code for production Azure Functions (not localhost)
     if (this.authType === 'function') {
       return `${this.baseUrl}/sets/${encodeURIComponent(setId)}/cards/${encodeURIComponent(id)}?code=${encodeURIComponent(this.functionKey)}`;
     }
+    // For localhost or APIM, no code parameter needed
     return `${this.baseUrl}/sets/${encodeURIComponent(setId)}/cards/${encodeURIComponent(id)}`;
   }
 };

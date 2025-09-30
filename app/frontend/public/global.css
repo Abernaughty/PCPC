@@ -1,70 +1,125 @@
-/* CSS Variables for Theming */
+/* CSS Variables for Theming - Organized by Component */
 :root {
-  /* Light mode colors */
-  --bg-primary: #ffffff;
-  --bg-secondary: rgba(255, 255, 255, 0.9);
-  --bg-tertiary: rgba(249, 249, 249, 0.9);
-  --bg-container: rgba(255, 255, 255, 0.9);
-  --bg-dropdown: #ffffff;
-  --bg-hover: #f5f5f5;
-  --bg-group-header: #f0f0f0;
+  /* === LIGHT MODE COLORS === */
 
-  --text-primary: #333;
-  --text-secondary: #666;
-  --text-muted: #999;
-  --text-inverse: #ffffff;
+  /* Page Background & Layout */
+  --bg-primary: #000000; /* Main page background color behind all content */
+  --bg-secondary: rgba(
+    0,
+    0,
+    0,
+    0.9
+  ); /* Card image container background in results section */
+  --bg-tertiary: rgba(
+    0,
+    0,
+    0,
+    0.9
+  ); /* Results section background (where card details and pricing are displayed) */
+  --bg-image-opacity: 1; /* Opacity of the background image (background.png) */
 
-  --border-primary: #ddd;
-  --border-secondary: #eee;
-  --border-input: #ddd;
-  --border-focus: #3c5aa6;
+  /* Form Container (Main form box) */
+  --bg-container: rgba(
+    0,
+    0,
+    0,
+    0.9
+  ); /* Background of the main form container (white box containing "Select Set", "Card Name", and "Get Price" button) */
 
-  --color-pokemon-blue: #3c5aa6;
-  --color-pokemon-red: #ee1515;
-  --color-pokemon-red-dark: #cc0000;
-  --color-link: rgb(0, 100, 200);
-  --color-link-visited: rgb(0, 80, 160);
+  /* Search Boxes & Inputs */
+  --bg-dropdown: #41444e; /* Background color of input fields and dropdown menus */
+  --border-input: #000000; /* Border color of input fields and dropdowns in normal state */
+  --border-focus: #000000; /* Border color of input fields when focused/active */
 
-  --shadow-light: rgba(0, 0, 0, 0.1);
-  --shadow-medium: rgba(0, 0, 0, 0.2);
-  --shadow-heavy: rgba(0, 0, 0, 0.3);
+  /* Interactive States */
+  --bg-hover: #000000; /* Background color for hover states (dropdown options, pricing categories, disabled inputs) */
+  --bg-group-header: #000000; /* Background color for group headers in dropdown lists */
 
-  --bg-image-opacity: 1;
-  --transition-speed: 0.3s;
+  /* Typography */
+  --text-primary: #000000; /* Main text color (labels, body text, card details) */
+  --text-secondary: #000000; /* Secondary text color (currency labels, timestamps) */
+  --text-muted: #000000; /* Muted text color (disabled inputs, placeholder text) */
+  --text-inverse: #000000; /* White text color (used on dark backgrounds like header) */
+
+  /* Borders */
+  --border-primary: #000000; /* Primary border color (results section, card details, disabled buttons) */
+  --border-secondary: #000000; /* Secondary border color (list item separators in pricing) */
+
+  /* Pokemon Theme Colors */
+  --color-pokemon-blue: #000000; /* Header background, card detail headings (h2), cached indicators, pricing category text */
+  --color-pokemon-red: #000000; /* "Get Price" button background, price values, error text, stale indicators */
+  --color-pokemon-red-dark: #000000; /* "Get Price" button hover state */
+
+  /* Links */
+  --color-link: rgb(0, 100, 200); /* Link color (if any links are present) */
+  --color-link-visited: rgb(0, 80, 160); /* Visited link color */
+
+  /* Shadows */
+  --shadow-light: rgba(0, 0, 0, 0.1); /* Light shadow (not currently used) */
+  --shadow-medium: rgba(
+    0,
+    0,
+    0,
+    0.2
+  ); /* Medium shadow (results section box shadow) */
+  --shadow-heavy: rgba(
+    0,
+    0,
+    0,
+    0.3
+  ); /* Heavy shadow (form container box shadow) */
+
+  /* Transitions */
+  --transition-speed: 0.3s; /* Animation speed for theme transitions and hover effects */
 }
 
 [data-theme="dark"] {
-  /* Dark mode colors */
-  --bg-primary: #1a1a1a;
-  --bg-secondary: rgba(42, 42, 42, 0.95);
-  --bg-tertiary: rgba(50, 50, 50, 0.95);
-  --bg-container: rgba(35, 35, 35, 0.95);
-  --bg-dropdown: #2a2a2a;
-  --bg-hover: #3a3a3a;
-  --bg-group-header: #2a2a2a;
+  /* === DARK MODE COLORS === */
 
-  --text-primary: #e0e0e0;
-  --text-secondary: #b0b0b0;
-  --text-muted: #808080;
-  --text-inverse: #1a1a1a;
+  /* Page Background & Layout */
+  --bg-primary: #000000; /* Main page background color behind all content (visible as cyan background) */
+  --bg-secondary: #41444e; /* Card image container background in results section AND scrollbar track */
+  --bg-tertiary: #41444e; /* Results section background (where card details and pricing are displayed) */
+  --bg-image-opacity: 1; /* Opacity of the background image (background-dark.png) */
 
-  --border-primary: #3a3a3a;
-  --border-secondary: #2a2a2a;
-  --border-input: #3a3a3a;
-  --border-focus: #5c7ac6;
+  /* Form Container (Main form box) */
+  --bg-container: #41444e; /* Background of the main form container (dark box containing "Select Set", "Card Name", and "Get Price" button) */
 
-  --color-pokemon-blue: #5c7ac6;
-  --color-pokemon-red: #ee1515;
-  --color-pokemon-red-dark: #ff3333;
-  --color-link: #6ca0dc;
-  --color-link-visited: #5c8ac6;
+  /* Search Boxes & Inputs */
+  --bg-dropdown: #22242f; /* Background color of input fields and dropdown menus */
+  --border-input: #48365b; /* Border color of input fields and dropdowns in normal state */
+  --border-focus: #48365b; /* Border color of input fields when focused/active */
 
-  --shadow-light: rgba(0, 0, 0, 0.3);
-  --shadow-medium: rgba(0, 0, 0, 0.5);
-  --shadow-heavy: rgba(0, 0, 0, 0.7);
+  /* Interactive States */
+  --bg-hover: #22242f; /* Background color for hover states (dropdown options, pricing categories, disabled inputs) */
+  --bg-group-header: #41444e; /* Background color for group headers in dropdown lists */
 
-  --bg-image-opacity: 1; /* Darker/more subtle for dark mode */
-  --transition-speed: 0.3s;
+  /* Typography */
+  --text-primary: #d7dee3; /* Main text color (labels, body text, card details) */
+  --text-secondary: #d7dee3; /* Secondary text color (currency labels, timestamps) */
+  --text-muted: #e3d7d7; /* Muted text color (disabled inputs, placeholder text) AND scrollbar thumb hover */
+  --text-inverse: #eeff00; /* Used on light backgrounds (opposite of light mode) */
+
+  /* Borders */
+  --border-primary: #22242f; /* Primary border color (results section, card details, disabled buttons) AND scrollbar thumb */
+  --border-secondary: #000000; /* Secondary border color (list item separators in pricing) */
+
+  /* Pokemon Theme Colors */
+  --color-pokemon-blue: #d7dee3; /* Header background, card detail headings (h2), cached indicators, pricing category text */
+  --color-pokemon-red: #ff0000; /* "Get Price" button background, price values, error text, stale indicators */
+  --color-pokemon-red-dark: #ff0000; /* "Get Price" button hover state */
+
+  /* Links */
+  --color-link: #000000; /* Link color (if any links are present) */
+  --color-link-visited: #000000; /* Visited link color */
+
+  /* Shadows */
+  --shadow-light: rgba(0, 0, 0, 0.3); /*  */
+  --shadow-medium: rgba(0, 0, 0, 0.5); /*  */
+  --shadow-heavy: rgba(0, 0, 0, 0.7); /*  */
+
+  /* Transitions */
+  --transition-speed: 0.3s; /*  */
 }
 
 /* Smooth transitions for theme switching */
