@@ -36,7 +36,9 @@
         "ms-playwright.playwright",
         "esbenp.prettier-vscode",
         "bradlc.vscode-tailwindcss",
-        "svelte.svelte-vscode"
+        "svelte.svelte-vscode",
+        "github.copilot-chat",
+        "github.vscode-pull-request-github"
       ],
 
       "settings": {
