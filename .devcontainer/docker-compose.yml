@@ -20,11 +20,11 @@ services:
           memory: 2G
           cpus: "2"
     restart: unless-stopped
-    depends_on:
-      azurite:
-        condition: service_healthy
-      cosmosdb-emulator:
-        condition: service_healthy
+    # depends_on:
+    #   azurite:
+    #     condition: service_healthy
+    #   cosmosdb-emulator:
+    #     condition: service_healthy
 
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite:latest

@@ -1,17 +1,15 @@
 <script>
-  import { onMount, onDestroy } from 'svelte';
-  
+  import { onMount } from 'svelte';
   // Import stores
-  import { availableSets, groupedSetsForDropdown, selectedSet, isLoadingSets, loadSets, selectSet } from './stores/setStore';
-  import { cardsInSet, selectedCard, isLoadingCards, cardName, selectCard } from './stores/cardStore';
-  import { priceData, isLoading, pricingTimestamp, pricingFromCache, pricingIsStale, fetchCardPrice, formatPrice, loadPricingForVariant } from './stores/priceStore';
-  import { error, isOnline, initNetworkListeners, startBackgroundTasks } from './stores/uiStore';
+  import { cardsInSet, isLoadingCards, selectCard, selectedCard } from './stores/cardStore';
+  import { fetchCardPrice, formatPrice, isLoading, loadPricingForVariant, priceData, pricingFromCache, pricingIsStale, pricingTimestamp } from './stores/priceStore';
+  import { groupedSetsForDropdown, isLoadingSets, loadSets, selectedSet, selectSet } from './stores/setStore';
   import { theme, toggleTheme } from './stores/themeStore';
-  
-  // Import components
-  import SearchableSelect from './components/SearchableSelect.svelte';
+  import { error, initNetworkListeners, startBackgroundTasks } from './stores/uiStore';
+// Import components
   import CardSearchSelect from './components/CardSearchSelect.svelte';
   import CardVariantSelector from './components/CardVariantSelector.svelte';
+  import SearchableSelect from './components/SearchableSelect.svelte';
   
   // Reference to CardSearchSelect component
   let cardSearchComponent;

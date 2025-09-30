@@ -12,6 +12,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Phase 4.2: Monitoring and Observability (Azure Monitor, dashboards, alerting)
 - Phase 3 Advanced Features: Continue implementation OR new initiatives
 
+## [1.8.1] - 2025-09-29
+
+### Fixed
+
+- **GetCardInfo Pricing Data Issue - CRITICAL BUG RESOLVED**: Complete resolution of empty pricing data in getCardInfo endpoint
+
+  - **Root Cause Identified**: Early return logic (lines 140-165) bypassed pricing data population when cards had complete images
+  - **Architecture Flaw**: Function mixed image enhancement and pricing concerns, causing one to block the other
+  - **Critical Impact**: Card ID 73121 and potentially other cards returned `"pricing": {}` instead of comprehensive market data
+
+- **Always-Fresh Pricing Architecture Implementation**: Complete code restructure with separation of concerns
+
+  - **Removed Early Return Bug**: Eliminated problematic lines 140-165 that caused pricing bypass
+  - **Helper Functions Created**: `createBaseCardWithImages()` and `fetchFreshPricing()` for clean separation
+  - **New 7-Step Flow**: Cache check → DB metadata → Create if missing → **ALWAYS fetch fresh pricing** → Combine → Cache → Return
+  - **Backup Created**: Original function preserved in `index.ts.backup` for rollback capability
+
+- **Pricing Data Validation Results**: Comprehensive pricing now returned for all cards
+
+  - **Before Fix**: `"pricing": {}`
+  - **After Fix**: Complete pricing with PSA grades (9: $1,256.25, 10: $4,095.19), CGC grades (8.0: $1,200), TCGPlayer ($1,048.71), eBay Raw ($1,021.21), PokeData Raw ($1,048.71)
+  - **Performance**: Maintained sub-second response times with always-fresh market data
+  - **Reliability**: Consistent pricing data across all requests
+
+### Changed
+
+- **GetCardInfo Function Architecture**: Restructured from conditional pricing to always-fresh pricing approach
+- **Cache TTL**: Reduced from 24 hours to 1 hour (3600s) for fresher pricing data
+- **Error Handling**: Enhanced with comprehensive pricing fetch error handling (non-critical failures)
+- **Logging**: Improved correlation IDs and step-by-step execution logging
+
+### Technical Achievements
+
+- **Code Quality**: Clean separation of concerns with dedicated helper functions
+- **Reliability**: Eliminated conditional logic that could skip critical pricing data
+- **Performance**: Maintained fast response times while ensuring data freshness
+- **Maintainability**: Clear, predictable code flow with comprehensive error handling
+- **Backward Compatibility**: All existing functionality preserved during restructure
+
+### Development Experience
+
+- **Debugging**: Enhanced logging with correlation IDs for better troubleshooting
+- **Testing**: Comprehensive validation with multiple test scenarios
+- **Documentation**: Clear code comments and function documentation
+- **Rollback**: Complete backup strategy for safe deployment
+
+### Critical Bug Resolution Impact
+
+- **User Experience**: Users now receive comprehensive pricing data for all cards
+- **Data Accuracy**: Always-fresh pricing ensures current market values
+- **System Reliability**: Eliminated unpredictable pricing data availability
+- **Business Value**: Restored core functionality of Pokemon Card Price Checker
+
+### Phase 3.4 Pricing Data Fix
+
+- Critical pricing data bug completely resolved with architectural improvements
+- Always-fresh pricing architecture implemented with enterprise-grade quality
+- Comprehensive testing validated across multiple card scenarios
+- Production deployment ready with rollback capability
+
 ## [1.8.0] - 2025-09-28
 
 ### Added
@@ -19,10 +79,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Phase 4.1 Comprehensive Documentation Suite - COMPLETE**: Full enterprise-grade documentation implementation with 36,000+ words across all 5 tiers
 
   - **Tier 3 - Security & Performance Documentation (5,000+ words)**: Complete security architecture and performance optimization documentation
+
     - **Security Documentation**: 2,500+ word comprehensive security architecture with defense-in-depth strategy, authentication flows, compliance frameworks (GDPR, SOC 2)
     - **Performance Documentation**: 2,500+ word complete performance optimization guide with monitoring, caching strategies, Core Web Vitals tracking
-  
+
   - **Tier 4 - Decision & Process Records (6,000+ words)**: Complete architectural decisions and operational procedures documentation
+
     - **Architecture Decision Records**: 3,000+ word complete ADR framework with critical decisions (Package Manager Standardization, DevContainer ACR Optimization)
     - **Operational Runbooks**: 3,000+ word comprehensive operational procedures framework for incident response, deployment, and maintenance
 
