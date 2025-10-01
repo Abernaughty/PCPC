@@ -1,16 +1,18 @@
 #!/bin/bash
 
-echo "🚀 Initializing PCPC DevContainer (ACR Optimized)..."
+echo "🚀 Initializing PCPC DevContainer v1.3.0 (ACR Optimized)..."
 
 # Verify pre-installed tools from ACR image
 echo "✅ Verifying pre-installed development tools..."
-echo "   Node.js: $(node --version)"
+echo "   Node.js: $(node --version) (Expected: v22.19.0)"
 echo "   npm: $(npm --version)"
 echo "   Azure CLI: $(az --version | head -1)"
-echo "   Terraform: $(terraform version | head -1)"
-echo "   Azure Functions Core Tools: $(func --version)"
-echo "   Go: $(go version)"
+echo "   Terraform: $(terraform version | head -1) (Expected: v1.13.3)"
+echo "   Azure Functions Core Tools: $(func --version) (Expected: 4.x)"
+echo "   Go: $(go version) (Expected: go1.23.12)"
 echo "   PowerShell: $(pwsh --version)"
+echo "   GitHub CLI: $(gh --version | head -1)"
+echo "   Python: $(python3 --version) (Expected: 3.12.x)"
 
 # Install devcontainer-specific Node.js dependencies
 echo "📦 Installing DevContainer Node.js dependencies..."
@@ -29,7 +31,8 @@ echo "🎉 DevContainer ready!"
 echo "📍 Cosmos DB Explorer: https://cosmosdb-emulator:8081/_explorer/index.html"
 echo "📍 Azurite Blob: http://azurite:10000"
 echo ""
-echo "💡 All tools pre-installed from ACR image (95% faster startup!)"
+echo "💡 All tools pre-installed from ACR image v1.3.0 (95% faster startup!)"
+echo "🔧 New in v1.3.0: Azure Functions Core Tools v4.x + Terraform 1.13.3"
 
 # Ensure .env exists
 [ -f .env ] || cp .env.example .env

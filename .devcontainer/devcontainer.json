@@ -71,25 +71,75 @@
   "postStartCommand": ".devcontainer/startup.sh",
 
   "forwardPorts": [
-    7071, 4280, 10000, 10001, 10002, 8081, 8900, 8901, 8902, 8979, 10250, 10251,
-    10252, 10253, 10254, 10255, 10256, 10350
+    3000, // Frontend Dev Server (CRITICAL - MISSING!)
+    7071, // Azure Functions
+    8081, // Cosmos DB Gateway
+    8900, // Cosmos DB MongoDB API
+    8901, // Cosmos DB MongoDB API
+    8902, // Cosmos DB MongoDB API
+    8979, // Cosmos DB Data Explorer
+    9229, // Node.js Debugger
+    10000, // Azurite Blob
+    10001, // Azurite Queue
+    10002, // Azurite Table
+    10250, // Cosmos DB SQL API
+    10251, // Cosmos DB Internal
+    10252, // Cosmos DB Internal
+    10253, // Cosmos DB Internal
+    10254, // Cosmos DB Internal
+    10255, // Cosmos DB Internal
+    10256, // Cosmos DB Internal
+    10350, // Cosmos DB Internal
+    35729 // LiveReload
   ],
 
   "portsAttributes": {
-    "7071": {
-      "label": "Azure Functions",
+    "3000": {
+      "label": "Frontend Dev Server (Svelte)",
       "onAutoForward": "notify"
     },
-    "4280": {
-      "label": "Static Web Apps CLI",
+    "7071": {
+      "label": "Azure Functions (Backend API)",
       "onAutoForward": "notify"
     },
     "8081": {
-      "label": "Cosmos DB Emulator",
+      "label": "Cosmos DB Emulator Gateway",
       "onAutoForward": "notify"
+    },
+    "8900": {
+      "label": "Cosmos DB MongoDB API",
+      "onAutoForward": "silent"
+    },
+    "8901": {
+      "label": "Cosmos DB MongoDB API",
+      "onAutoForward": "silent"
+    },
+    "8902": {
+      "label": "Cosmos DB MongoDB API",
+      "onAutoForward": "silent"
+    },
+    "8979": {
+      "label": "Cosmos DB Data Explorer",
+      "onAutoForward": "silent"
+    },
+    "9229": {
+      "label": "Node.js Debugger",
+      "onAutoForward": "silent"
     },
     "10000": {
       "label": "Azurite Blob Storage",
+      "onAutoForward": "silent"
+    },
+    "10001": {
+      "label": "Azurite Queue Storage",
+      "onAutoForward": "silent"
+    },
+    "10002": {
+      "label": "Azurite Table Storage",
+      "onAutoForward": "silent"
+    },
+    "35729": {
+      "label": "LiveReload",
       "onAutoForward": "silent"
     }
   },
