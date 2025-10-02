@@ -123,20 +123,20 @@
   }
   
   .modal {
-    background-color: white;
+    background-color: var(--bg-container);
     border-radius: 8px;
     width: 90%;
     max-width: 600px;
     max-height: 80vh;
     overflow-y: auto;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 20px var(--shadow-medium);
     display: flex;
     flex-direction: column;
   }
   
   .modal-header {
     padding: 1rem;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid var(--border-primary);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -144,7 +144,7 @@
   
   .modal-header h3 {
     margin: 0;
-    color: #3c5aa6;
+    color: var(--color-pokemon-blue);
   }
   
   .close-button {
@@ -152,7 +152,7 @@
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    color: #666;
+    color: var(--text-secondary);
     padding: 0;
     margin: 0;
     line-height: 1;
@@ -161,19 +161,20 @@
   .modal-body {
     padding: 1rem;
     overflow-y: auto;
+    color: var(--text-primary);
   }
   
   .variants-list {
     margin-top: 1rem;
     max-height: 300px;
     overflow-y: auto;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-primary);
     border-radius: 4px;
   }
   
   .variant-item {
     padding: 0.75rem;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid var(--border-secondary);
     cursor: pointer;
     transition: background-color 0.2s;
   }
@@ -183,12 +184,12 @@
   }
   
   .variant-item:hover {
-    background-color: #f5f5f5;
+    background-color: var(--bg-hover);
   }
   
   .variant-item.selected {
     background-color: rgba(60, 90, 166, 0.1);
-    border-left: 3px solid #3c5aa6;
+    border-left: 3px solid var(--color-pokemon-blue);
   }
   
   .variant-details {
@@ -209,16 +210,16 @@
   }
   
   .variant-number {
-    color: #666;
+    color: var(--text-secondary);
   }
   
   .variant-rarity {
-    color: #ee1515;
+    color: var(--color-pokemon-red);
     font-weight: 500;
   }
   
   .variant-type {
-    color: #3c5aa6;
+    color: var(--color-pokemon-blue);
     font-style: italic;
   }
   
@@ -231,19 +232,19 @@
     width: 100%;
     height: auto;
     border-radius: 4px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-primary);
   }
   
   .modal-footer {
     padding: 1rem;
-    border-top: 1px solid #ddd;
+    border-top: 1px solid var(--border-primary);
     display: flex;
     justify-content: flex-end;
     gap: 0.75rem;
   }
   
   .confirm-button {
-    background-color: #ee1515;
+    background-color: var(--color-pokemon-red);
     color: white;
     border: none;
     padding: 0.5rem 1rem;
@@ -253,14 +254,15 @@
   }
   
   .confirm-button:disabled {
-    background-color: #ccc;
+    background-color: var(--border-primary);
+    color: var(--text-muted);
     cursor: not-allowed;
   }
   
   .cancel-button {
-    background-color: #f5f5f5;
-    color: #333;
-    border: 1px solid #ddd;
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
     padding: 0.5rem 1rem;
     border-radius: 4px;
     cursor: pointer;

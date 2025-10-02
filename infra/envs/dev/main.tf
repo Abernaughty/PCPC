@@ -111,7 +111,7 @@ module "function_app" {
   location            = var.location
   environment         = var.environment
 
-  storage_account_name = module.storage_account.name
+  storage_account_name = module.storage_account.storage_account_name
   storage_account_key  = module.storage_account.primary_access_key
   
   sku_name = var.function_app_sku_name
@@ -119,7 +119,7 @@ module "function_app" {
   app_settings = merge(
     var.function_app_settings,
     {
-      "COSMOS_DB_CONNECTION_STRING" = module.cosmos_db.connection_strings[0]
+      "COSMOS_DB_CONNECTION_STRING" = module.cosmos_db.primary_sql_connection_string
       "COSMOS_DB_ENDPOINT"          = module.cosmos_db.endpoint
       "COSMOS_DB_KEY"               = module.cosmos_db.primary_key
       "WEBSITE_NODE_DEFAULT_VERSION" = "~22"
@@ -230,7 +230,7 @@ module "application_insights" {
       description = "Triggers when average response time exceeds 2 seconds"
       severity    = 2
       frequency   = "PT5M"
-      window_size = "PT10M"
+      window_size = "PT15M"
       enabled     = true
       metric_name = "requests/duration"
       aggregation = "Average"

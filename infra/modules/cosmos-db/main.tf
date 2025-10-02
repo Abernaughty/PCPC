@@ -105,7 +105,7 @@ resource "azurerm_cosmosdb_account" "this" {
 
   # Network configuration
   public_network_access_enabled     = var.public_network_access_enabled
-  ip_range_filter                   = toset(var.ip_range_filter)
+  ip_range_filter                   = join(",", var.ip_range_filter)
   is_virtual_network_filter_enabled = length(var.virtual_network_rules) > 0
 
   # Virtual network rules

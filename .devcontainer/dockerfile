@@ -96,9 +96,9 @@ RUN apt-get update && apt-get install -y \
 # Set up vscode user environment
 USER vscode
 
-# Set up Go environment for vscode user
-RUN echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> ~/.bashrc \
-    && echo 'export GOPATH=$HOME/go' >> ~/.bashrc
+# # Set up Go environment for vscode user
+# RUN echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> ~/.bashrc \
+#     && echo 'export GOPATH=$HOME/go' >> ~/.bashrc
 
 # Create workspace directory
 USER root
@@ -110,3 +110,26 @@ WORKDIR /workspace
 
 # Set default shell to bash
 SHELL ["/bin/bash", "-c"]
+
+# --- add near the end ---
+USER root
+
+# (Optional) deps referenced by your .bashrc: bash-completion, netstat, telnet, etc.
+RUN apt-get update && apt-get install -y \
+    bash-completion net-tools telnet cmatrix fortune cowsay lolcat screenfetch \
+    && rm -rf /var/lib/apt/lists/*
+
+# Option A: copy a pinned file from your repo
+# Put the file in your repo at .devcontainer/.bashrc first
+COPY .devcontainer/.bashrc /home/vscode/.bashrc
+RUN chown vscode:vscode /home/vscode/.bashrc
+
+# Keep your PATH/GOPATH lines from earlier (append them to the copied file)
+RUN echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> /home/vscode/.bashrc \
+ && echo 'export GOPATH=$HOME/go' >> /home/vscode/.bashrc
+
+# (Alternative Option B: fetch latest from GitHub)
+# RUN curl -fsSL https://raw.githubusercontent.com/Abernaughty/git-maber/main/dotfiles/bashrc/.bashrc \
+#     -o /home/vscode/.bashrc && chown vscode:vscode /home/vscode/.bashrc
+
+USER vscode

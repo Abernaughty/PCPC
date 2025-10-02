@@ -1,6 +1,6 @@
 <script>
-  import { featureFlagService } from '../services/featureFlagService';
   import { onMount } from 'svelte';
+  import { featureFlagService } from '../services/featureFlagService';
   
   // State
   let useCloudApi = false;
@@ -90,7 +90,7 @@
   }
   
   .toggle-button {
-    background-color: #007bff;
+    background-color: var(--color-pokemon-blue);
     color: white;
     border: none;
     padding: 5px 10px;
@@ -100,12 +100,12 @@
   }
   
   .panel {
-    background-color: white;
-    border: 1px solid #ccc;
+    background-color: var(--bg-container);
+    border: 1px solid var(--border-primary);
     border-radius: 4px;
     padding: 10px;
     margin-top: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 5px var(--shadow-light);
     width: 200px;
   }
   
@@ -113,12 +113,13 @@
     margin-top: 0;
     margin-bottom: 10px;
     font-size: 14px;
-    color: #333;
+    color: var(--text-primary);
   }
   
   .flag-item {
     margin-bottom: 8px;
     font-size: 12px;
+    color: var(--text-primary);
   }
   
   .button-group {
@@ -128,7 +129,7 @@
   }
   
   .apply-button {
-    background-color: #28a745;
+    background-color: var(--color-pokemon-blue);
     color: white;
     border: none;
     padding: 4px 8px;
@@ -138,7 +139,7 @@
   }
   
   .reset-button {
-    background-color: #dc3545;
+    background-color: var(--color-pokemon-red);
     color: white;
     border: none;
     padding: 4px 8px;

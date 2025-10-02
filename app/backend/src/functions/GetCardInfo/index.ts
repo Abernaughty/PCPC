@@ -5,6 +5,7 @@ import {
 } from "@azure/functions";
 import {
   cosmosDbService,
+  monitoringService,
   pokeDataApiService,
   redisCacheService,
 } from "../../index";
@@ -127,7 +128,7 @@ async function enhanceCardWithImages(
   context: InvocationContext
 ): Promise<PokeDataFirstCard> {
   context.log(`${correlationId} Enhancing card with image URLs`);
-  
+
   try {
     const enhancementStartTime = Date.now();
 
@@ -296,7 +297,7 @@ async function fetchFreshPricing(
 
 /**
  * GetCardInfo Function - Always-Fresh Pricing with Image Enhancement
- * 
+ *
  * FLOW:
  * 1. Validate Parameters
  * 2. Check Redis Cache (if enabled and not force refresh) → Return if hit
@@ -315,8 +316,16 @@ export async function getCardInfo(
   context: InvocationContext
 ): Promise<HttpResponseInit> {
   const timestamp = Date.now();
-  const correlationId = `[pokedata-card-${request.params.cardId}-${timestamp}]`;
+  const correlationId = monitoringService.createCorrelationId();
   const startTime = Date.now();
+
+  // Track function invocation
+  monitoringService.trackEvent("function.invoked", {
+    functionName: "GetCardInfo",
+    cardId: request.params.cardId || "unknown",
+    setId: request.params.setId || "unknown",
+    correlationId,
+  });
 
   try {
     // STEP 1: Validate Parameters
@@ -395,6 +404,14 @@ export async function getCardInfo(
       `${correlationId} Request parameters - forceRefresh: ${forceRefresh}, TTL: ${cardsTtl}`
     );
 
+    // Track request parameters
+    monitoringService.trackEvent("request.parameters", {
+      cardId: pokeDataCardId,
+      setId: String(setId),
+      forceRefresh,
+      correlationId,
+    });
+
     // STEP 2: Check Redis Cache (if enabled and not force refresh)
     const cacheKey = getCardCacheKey(pokeDataCardId);
     let completeCard: PokeDataFirstCard | null = null;
@@ -403,9 +420,7 @@ export async function getCardInfo(
 
     if (!forceRefresh && process.env.ENABLE_REDIS_CACHE === "true") {
       const cacheStartTime = Date.now();
-      context.log(
-        `${correlationId} Checking Redis cache: ${cacheKey}`
-      );
+      context.log(`${correlationId} Checking Redis cache: ${cacheKey}`);
       const cachedEntry = await redisCacheService.get<{
         data: PokeDataFirstCard;
         timestamp: number;
@@ -416,11 +431,16 @@ export async function getCardInfo(
       const cacheTime = Date.now() - cacheStartTime;
 
       if (completeCard) {
-        context.log(
-          `${correlationId} Cache HIT (${cacheTime}ms)`
-        );
+        context.log(`${correlationId} Cache HIT (${cacheTime}ms)`);
         cacheHit = true;
         cacheAge = cachedEntry ? getCacheAge(cachedEntry.timestamp) : 0;
+
+        // Track cache hit
+        monitoringService.trackEvent("cache.hit", {
+          cardId: pokeDataCardId,
+          correlationId,
+        });
+        monitoringService.trackMetric("cache.check.duration", cacheTime);
 
         // Return cached complete card immediately
         const response: ApiResponse<PokeDataFirstCard> = {
@@ -436,15 +456,30 @@ export async function getCardInfo(
           `${correlationId} Returning cached card - Total time: ${totalTime}ms`
         );
 
+        // Track successful cache return
+        monitoringService.trackEvent("function.success", {
+          functionName: "GetCardInfo",
+          cardId: pokeDataCardId,
+          cached: true,
+          duration: totalTime,
+          correlationId,
+        });
+        monitoringService.trackMetric("function.duration", totalTime);
+
         return {
           jsonBody: response,
           status: response.status,
           headers: { "Cache-Control": `public, max-age=${cardsTtl}` },
         };
       } else {
-        context.log(
-          `${correlationId} Cache MISS (${cacheTime}ms)`
-        );
+        context.log(`${correlationId} Cache MISS (${cacheTime}ms)`);
+
+        // Track cache miss
+        monitoringService.trackEvent("cache.miss", {
+          cardId: pokeDataCardId,
+          correlationId,
+        });
+        monitoringService.trackMetric("cache.check.duration", cacheTime);
       }
     } else {
       context.log(
@@ -456,9 +491,7 @@ export async function getCardInfo(
     let cardMetadata: PokeDataFirstCard | null = null;
     const dbStartTime = Date.now();
 
-    context.log(
-      `${correlationId} Checking Cosmos DB for card metadata`
-    );
+    context.log(`${correlationId} Checking Cosmos DB for card metadata`);
     const dbCard = await cosmosDbService.getCard(pokeDataCardId, setId);
     const dbTime = Date.now() - dbStartTime;
 
@@ -467,9 +500,36 @@ export async function getCardInfo(
       context.log(
         `${correlationId} Database HIT (${dbTime}ms) - images: ${!!cardMetadata.images}`
       );
+
+      // Track database hit
+      monitoringService.trackEvent("database.hit", {
+        cardId: pokeDataCardId,
+        hasImages: !!cardMetadata.images,
+        correlationId,
+      });
+      monitoringService.trackMetric("cosmosdb.query.duration", dbTime);
+      monitoringService.trackDependency(
+        "Cosmos DB",
+        "Query",
+        `getCard(${pokeDataCardId})`,
+        dbTime,
+        true
+      );
     } else {
-      context.log(
-        `${correlationId} Database MISS (${dbTime}ms)`
+      context.log(`${correlationId} Database MISS (${dbTime}ms)`);
+
+      // Track database miss
+      monitoringService.trackEvent("database.miss", {
+        cardId: pokeDataCardId,
+        correlationId,
+      });
+      monitoringService.trackMetric("cosmosdb.query.duration", dbTime);
+      monitoringService.trackDependency(
+        "Cosmos DB",
+        "Query",
+        `getCard(${pokeDataCardId})`,
+        dbTime,
+        false
       );
     }
 
@@ -477,41 +537,125 @@ export async function getCardInfo(
     if (!cardMetadata || !cardMetadata.images) {
       if (!cardMetadata) {
         context.log(`${correlationId} Creating new card`);
-        // Create base card structure
+
+        // Track card creation
+        const createStartTime = Date.now();
         cardMetadata = await createBaseCard(
           cardIdNum,
           setId,
           correlationId,
           context
         );
+        const createTime = Date.now() - createStartTime;
+
+        monitoringService.trackEvent("card.created", {
+          cardId: pokeDataCardId,
+          correlationId,
+        });
+        monitoringService.trackMetric("card.creation.duration", createTime);
       } else {
         context.log(`${correlationId} Card exists but missing images`);
       }
 
-      // Generate image URLs
+      // Generate image URLs with enhancement tracking
+      const enhanceStartTime = Date.now();
       cardMetadata = await enhanceCardWithImages(
         cardMetadata,
         correlationId,
         context
       );
+      const enhanceTime = Date.now() - enhanceStartTime;
+
+      // Track image enhancement success/failure
+      if (cardMetadata.images) {
+        monitoringService.trackEvent("image.enhancement.success", {
+          cardId: pokeDataCardId,
+          hasEnhancement: !!cardMetadata.enhancement,
+          tcgCardId: cardMetadata.enhancement?.tcgCardId || "none",
+          correlationId,
+        });
+        monitoringService.trackMetric(
+          "image.enhancement.duration",
+          enhanceTime
+        );
+      } else {
+        monitoringService.trackEvent("image.enhancement.failed", {
+          cardId: pokeDataCardId,
+          reason: "No images returned",
+          correlationId,
+        });
+        monitoringService.trackMetric(
+          "image.enhancement.duration",
+          enhanceTime
+        );
+      }
 
       // Save card with images to DB
       const saveStartTime = Date.now();
       await cosmosDbService.saveCard(cardMetadata as any);
       const saveTime = Date.now() - saveStartTime;
-      context.log(
-        `${correlationId} Card saved to Cosmos DB (${saveTime}ms)`
+      context.log(`${correlationId} Card saved to Cosmos DB (${saveTime}ms)`);
+
+      monitoringService.trackMetric("card.save.duration", saveTime);
+      monitoringService.trackDependency(
+        "Cosmos DB",
+        "Save",
+        `saveCard(${pokeDataCardId})`,
+        saveTime,
+        true
       );
     }
 
     // STEP 5: Fetch fresh pricing from PokeData API (ALWAYS)
     let freshPricing: any = {};
+    const pricingStartTime = Date.now();
     try {
       freshPricing = await fetchFreshPricing(cardIdNum, correlationId, context);
+      const pricingTime = Date.now() - pricingStartTime;
+
+      // Track pricing fetch success
+      const pricingSourceCount = Object.keys(freshPricing).length;
+      monitoringService.trackEvent("pricing.fetch.success", {
+        cardId: pokeDataCardId,
+        sourcesAvailable: pricingSourceCount,
+        hasPSA: !!freshPricing.psa,
+        hasCGC: !!freshPricing.cgc,
+        hasTCGPlayer: !!freshPricing.tcgPlayer,
+        correlationId,
+      });
+      monitoringService.trackMetric("pricing.fetch.duration", pricingTime);
+      monitoringService.trackMetric(
+        "pricing.sources.count",
+        pricingSourceCount
+      );
+      monitoringService.trackDependency(
+        "PokeData API",
+        "HTTP",
+        `getFullCardDetailsById(${cardIdNum})`,
+        pricingTime,
+        true
+      );
     } catch (error: any) {
+      const pricingTime = Date.now() - pricingStartTime;
       context.log(
         `${correlationId} WARNING: Failed to fetch pricing (non-critical): ${error.message}`
       );
+
+      // Track pricing fetch failure
+      monitoringService.trackEvent("pricing.fetch.failed", {
+        cardId: pokeDataCardId,
+        error: error.message,
+        correlationId,
+      });
+      monitoringService.trackMetric("pricing.fetch.duration", pricingTime);
+      monitoringService.trackDependency(
+        "PokeData API",
+        "HTTP",
+        `getFullCardDetailsById(${cardIdNum})`,
+        pricingTime,
+        false
+      );
+
       // Continue with empty pricing rather than failing
     }
 
@@ -521,6 +665,44 @@ export async function getCardInfo(
       pricing: freshPricing,
       lastUpdated: new Date().toISOString(),
     };
+
+    // Calculate data completeness score
+    let completenessScore = 0;
+    const hasPricing = freshPricing && Object.keys(freshPricing).length > 0;
+    const hasImages = !!completeCard.images;
+    const hasEnhancement = !!completeCard.enhancement;
+
+    if (hasPricing) completenessScore += 40;
+    if (hasImages) completenessScore += 30;
+    if (hasEnhancement) completenessScore += 30;
+
+    // Track data completeness
+    monitoringService.trackMetric(
+      "card.data_completeness_score",
+      completenessScore
+    );
+    monitoringService.trackMetric("card.has_pricing", hasPricing ? 1 : 0);
+    monitoringService.trackMetric("card.has_images", hasImages ? 1 : 0);
+    monitoringService.trackMetric(
+      "card.has_enhancement",
+      hasEnhancement ? 1 : 0
+    );
+
+    if (completenessScore < 100) {
+      monitoringService.trackEvent("card.incomplete_data", {
+        cardId: pokeDataCardId,
+        score: completenessScore,
+        hasPricing,
+        hasImages,
+        hasEnhancement,
+        correlationId,
+      });
+    } else {
+      monitoringService.trackEvent("card.data_complete", {
+        cardId: pokeDataCardId,
+        correlationId,
+      });
+    }
 
     // STEP 7: Cache complete result
     if (process.env.ENABLE_REDIS_CACHE === "true") {
@@ -551,6 +733,19 @@ export async function getCardInfo(
       `${correlationId} Request complete - Total time: ${totalTime}ms, pricing sources: ${pricingSourceCount}, images: ${!!completeCard.images}`
     );
 
+    // Track successful completion
+    monitoringService.trackEvent("function.success", {
+      functionName: "GetCardInfo",
+      cardId: pokeDataCardId,
+      pricingSources: pricingSourceCount,
+      hasImages: !!completeCard.images,
+      hasEnhancement: !!completeCard.enhancement,
+      cached: false,
+      duration: totalTime,
+      correlationId,
+    });
+    monitoringService.trackMetric("function.duration", totalTime);
+
     return {
       jsonBody: response,
       status: response.status,
@@ -563,6 +758,23 @@ export async function getCardInfo(
     context.log(
       `${correlationId} ERROR after ${totalTime}ms: ${error.message}`
     );
+
+    // Track error
+    monitoringService.trackException(error, {
+      functionName: "GetCardInfo",
+      cardId: request.params.cardId || "unknown",
+      setId: request.params.setId || "unknown",
+      duration: totalTime,
+      correlationId,
+    });
+    monitoringService.trackEvent("function.error", {
+      functionName: "GetCardInfo",
+      error: error.message,
+      duration: totalTime,
+      correlationId,
+    });
+    monitoringService.trackMetric("function.duration", totalTime);
+
     const errorResponse = handleError(error, "GetCardInfo");
     return {
       jsonBody: errorResponse,

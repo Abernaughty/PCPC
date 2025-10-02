@@ -32,5 +32,11 @@
     "healthCheckInterval": "00:00:10",
     "healthCheckWindow": "00:02:00",
     "healthCheckThreshold": 6
+  },
+  "cors": {
+    "allowedOrigins": [
+      "http://localhost:3000"
+    ],
+    "supportCredentials": false
   }
 }

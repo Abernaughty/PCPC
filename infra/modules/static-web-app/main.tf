@@ -46,7 +46,6 @@ resource "azurerm_static_web_app" "this" {
   app_settings                       = var.app_settings
   preview_environments_enabled       = var.preview_environments_enabled
   configuration_file_changes_enabled = var.configuration_file_changes_enabled
-  public_network_access_enabled      = true
 
   tags = local.common_tags
 }

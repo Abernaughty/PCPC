@@ -1,6 +1,7 @@
 import * as azureFunctions from "@azure/functions";
 import { BlobStorageService } from "./services/BlobStorageService";
 import { CosmosDbService } from "./services/CosmosDbService";
+import { MonitoringService } from "./services/MonitoringService";
 import { PokeDataApiService } from "./services/PokeDataApiService";
 import { PokemonTcgApiService } from "./services/PokemonTcgApiService";
 import { RedisCacheService } from "./services/RedisCacheService";
@@ -84,6 +85,9 @@ export const pokeDataApiService = new PokeDataApiService(
   process.env.POKEDATA_API_KEY || "",
   process.env.POKEDATA_API_BASE_URL
 );
+
+console.log("📊 [STARTUP] Initializing Monitoring Service...");
+export const monitoringService = MonitoringService.getInstance();
 
 console.log("✅ [STARTUP] All services initialized successfully!");
 

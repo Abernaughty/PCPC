@@ -111,6 +111,21 @@ module.exports = {
 
         // Build metadata
         "process.env.BUILD_TIME": JSON.stringify(new Date().toISOString()),
+
+        // Application Insights configuration (individual property replacements)
+        "import.meta.env.VITE_APPLICATIONINSIGHTS_CONNECTION_STRING":
+          JSON.stringify(
+            process.env.VITE_APPLICATIONINSIGHTS_CONNECTION_STRING || ""
+          ),
+        "import.meta.env.VITE_APPLICATIONINSIGHTS_ROLE_NAME": JSON.stringify(
+          process.env.VITE_APPLICATIONINSIGHTS_ROLE_NAME || "pcpc-frontend"
+        ),
+        "import.meta.env.VITE_APP_VERSION": JSON.stringify(
+          process.env.VITE_APP_VERSION || "0.2.0"
+        ),
+        "import.meta.env.VITE_ENVIRONMENT": JSON.stringify(
+          process.env.VITE_ENVIRONMENT || "development"
+        ),
       },
     }),
     svelte({
