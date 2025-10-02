@@ -35,7 +35,10 @@
   "dependencies": {
     "@azure/cosmos": "^4.3.0",
     "@azure/functions": "^4.7.2",
+    "@azure/monitor-opentelemetry": "^1.14.0",
     "@azure/storage-blob": "^12.27.0",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/instrumentation": "^0.205.0",
     "@typespec/ts-http-runtime": "^0.2.2",
     "axios": "^1.9.0",
     "cookie": "^0.6.0",

@@ -125,7 +125,7 @@
     </div>
 
     <div class="form-group">
-      <label for="cardName">Card Name:</label>
+      <label for="cardName">Select Card:</label>
       
       <!-- Replace the input field with SearchableSelect -->
       {#if !$selectedSet}
@@ -291,7 +291,7 @@
   }
   
   header {
-    background-color: var(--color-pokemon-blue);
+    background-color: var(--color-header-bg);
     padding: 1rem;
     border-radius: 8px 8px 0 0;
     margin-bottom: 1.5rem;
@@ -302,7 +302,7 @@
   }
   
   h1 {
-    color: white;
+    color: var(--text-inverse);
     font-size: 1.8rem;
     margin: 0;
     text-align: center;
@@ -333,7 +333,7 @@
   .theme-toggle svg {
     width: 24px;
     height: 24px;
-    color: white;
+    color: var(--text-inverse);
   }
   
   .form-container {
@@ -381,7 +381,7 @@
     width: 100%;
     margin-top: 0.75rem;
     padding: 0.75rem 1rem;
-    background-color: var(--color-pokemon-red);
+    background-color: var(--color-button-primary-bg);
     color: white;
     border: none;
     border-radius: 4px;
@@ -392,7 +392,7 @@
   }
   
   button:not(.theme-toggle):hover {
-    background-color: var(--color-pokemon-red-dark);
+    background-color: var(--color-button-primary-hover-bg);
   }
   
   button:not(.theme-toggle):disabled {
@@ -419,7 +419,7 @@
     width: 20px;
     height: 20px;
     border: 2px solid rgba(60, 90, 166, 0.2);
-    border-top: 2px solid var(--color-pokemon-blue);
+    border-top: 2px solid var(--color-header-bg);
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }
@@ -431,7 +431,7 @@
   
   .error-select input {
     background-color: rgba(238, 21, 21, 0.05);
-    color: var(--color-pokemon-red);
+    color: var(--color-error-text);
     cursor: not-allowed;
     border: 1px solid rgba(238, 21, 21, 0.3);
   }
@@ -439,7 +439,7 @@
   
 
   .error {
-    color: var(--color-pokemon-red);
+    color: var(--color-error-text);
     font-size: 0.9rem;
     margin-top: 0.5rem;
     padding: 0.5rem;
@@ -498,7 +498,7 @@
   }
   
   .card-details h2 {
-    color: var(--color-pokemon-blue);
+    color: var(--color-heading);
     margin-top: 0;
     margin-bottom: 0.5rem;
     border-bottom: 1px solid var(--border-primary);
@@ -512,7 +512,7 @@
   }
   
   .results h2 {
-    color: var(--color-pokemon-blue);
+    color: var(--color-heading);
     margin-top: 0;
     border-bottom: 1px solid var(--border-primary);
     padding-bottom: 0.5rem;
@@ -521,7 +521,7 @@
   .results h3 {
     margin-top: 1rem;
     margin-bottom: 0.5rem;
-    color: var(--color-pokemon-red);
+    color: var(--color-price-value);
   }
   
   .results ul {
@@ -545,7 +545,7 @@
   
   .price {
     font-weight: 700;
-    color: var(--color-pokemon-red);
+    color: var(--color-price-value);
   }
   
   .currency {
@@ -556,7 +556,7 @@
   .pricing-category {
     background-color: var(--bg-hover);
     font-weight: 700;
-    color: var(--color-pokemon-blue);
+    color: var(--color-pricing-category);
     margin-top: 0.5rem;
     padding: 0.5rem;
     border-radius: 4px;
@@ -584,13 +584,13 @@
   }
   
   .cached-indicator {
-    color: var(--color-pokemon-blue);
+    color: var(--color-cached-indicator);
     font-weight: 500;
     margin-left: 0.5rem;
   }
   
   .stale-indicator {
-    color: var(--color-pokemon-red);
+    color: var(--color-stale-indicator);
     font-weight: 500;
     margin-left: 0.5rem;
   }

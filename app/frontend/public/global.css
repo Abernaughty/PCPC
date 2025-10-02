@@ -3,59 +3,117 @@
   /* === LIGHT MODE COLORS === */
 
   /* Page Background & Layout */
-  --bg-primary: #000000; /* Main page background color behind all content */
+  --bg-primary: #ffffff; /* Main page background color behind all content */
   --bg-secondary: rgba(
-    0,
-    0,
-    0,
+    255,
+    255,
+    255,
     0.9
   ); /* Card image container background in results section */
   --bg-tertiary: rgba(
-    0,
-    0,
-    0,
+    249,
+    249,
+    249,
     0.9
   ); /* Results section background (where card details and pricing are displayed) */
-  --bg-image-opacity: 1; /* Opacity of the background image (background.png) */
-
-  /* Form Container (Main form box) */
   --bg-container: rgba(
-    0,
-    0,
-    0,
+    255,
+    255,
+    255,
     0.9
   ); /* Background of the main form container (white box containing "Select Set", "Card Name", and "Get Price" button) */
 
   /* Search Boxes & Inputs */
-  --bg-dropdown: #41444e; /* Background color of input fields and dropdown menus */
-  --border-input: #000000; /* Border color of input fields and dropdowns in normal state */
-  --border-focus: #000000; /* Border color of input fields when focused/active */
+  --bg-dropdown: #ffffff; /* Background color of input fields and dropdown menus */
+  --border-input: #ddd; /* Border color of input fields and dropdowns in normal state */
+  --border-focus: #3c5aa6; /* Border color of input fields when focused/active */
 
   /* Interactive States */
-  --bg-hover: #000000; /* Background color for hover states (dropdown options, pricing categories, disabled inputs) */
-  --bg-group-header: #000000; /* Background color for group headers in dropdown lists */
+  --bg-hover: #f5f5f5; /* Background color for hover states (dropdown options, pricing categories) */
+  --bg-group-header: #f0f0f0; /* Background color for group headers in dropdown lists */
 
   /* Typography */
-  --text-primary: #000000; /* Main text color (labels, body text, card details) */
-  --text-secondary: #000000; /* Secondary text color (currency labels, timestamps) */
-  --text-muted: #000000; /* Muted text color (disabled inputs, placeholder text) */
-  --text-inverse: #000000; /* White text color (used on dark backgrounds like header) */
+  --text-primary: #333; /* Main text color (labels, body text, card details) */
+  --text-secondary: #666; /* Secondary text color (currency labels, timestamps) */
+  --text-muted: #999; /* Muted text color (disabled inputs, placeholder text) */
+  --text-inverse: #ffffff; /* White text color (used on dark backgrounds like header and buttons) */
 
   /* Borders */
-  --border-primary: #000000; /* Primary border color (results section, card details, disabled buttons) */
-  --border-secondary: #000000; /* Secondary border color (list item separators in pricing) */
+  --border-primary: #ddd; /* Primary border color (results section, card details) */
+  --border-secondary: #eee; /* Secondary border color (list item separators in pricing) */
 
-  /* Pokemon Theme Colors */
-  --color-pokemon-blue: #000000; /* Header background, card detail headings (h2), cached indicators, pricing category text */
-  --color-pokemon-red: #000000; /* "Get Price" button background, price values, error text, stale indicators */
-  --color-pokemon-red-dark: #000000; /* "Get Price" button hover state */
+  /* Button Colors */
+  --button-text-color: #ffffff; /* Button text color (primary buttons) */
+  --button-disabled-bg: #e0e0e0; /* Disabled button background color */
+  --button-disabled-text: #999; /* Disabled button text color */
+
+  /* Focus States */
+  --focus-ring-color: rgba(
+    60,
+    90,
+    166,
+    0.2
+  ); /* Focus ring color for interactive elements */
+
+  /* Pokemon Theme Colors - Base Colors */
+  --color-pokemon-blue: #3c5aa6; /* Base Pokemon blue color */
+  --color-pokemon-red: #ee1515; /* Base Pokemon red color */
+  --color-pokemon-red-dark: #cc0000; /* Darker Pokemon red for hover states */
+
+  /* Header */
+  --color-header-bg: var(--color-pokemon-blue); /* Header background color */
+
+  /* Headings */
+  --color-heading: var(
+    --color-pokemon-blue
+  ); /* Card detail headings (h2) and results headings */
+
+  /* Buttons */
+  --color-button-primary-bg: var(
+    --color-pokemon-red
+  ); /* Primary action button background (Get Price, Confirm) */
+  --color-button-primary-hover-bg: var(
+    --color-pokemon-red-dark
+  ); /* Primary button hover state */
+  --color-clear-button-bg: var(
+    --color-pokemon-red
+  ); /* Clear/close button background */
+
+  /* Dropdown Components */
+  --color-group-header: var(--color-pokemon-blue); /* Dropdown group headers */
+
+  /* Card Variant Selector */
+  --color-variant-type: var(--color-pokemon-blue); /* Card variant type text */
+  --color-variant-rarity: var(
+    --color-pokemon-red
+  ); /* Card variant rarity text */
+  --color-variant-selected-border: var(
+    --color-pokemon-blue
+  ); /* Selected variant border */
+
+  /* Pricing Display */
+  --color-pricing-category: var(
+    --color-pokemon-blue
+  ); /* Pricing category labels */
+  --color-price-value: var(--color-pokemon-red); /* Price value text */
+
+  /* Data Status Indicators */
+  --color-cached-indicator: var(
+    --color-pokemon-blue
+  ); /* Cached data indicator text */
+  --color-stale-indicator: var(
+    --color-pokemon-red
+  ); /* Stale data indicator text */
+
+  /* Error Messages */
+  --color-error-text: var(--color-pokemon-red); /* Error message text */
 
   /* Links */
-  --color-link: rgb(0, 100, 200); /* Link color (if any links are present) */
+  --color-link: rgb(0, 100, 200); /* Link color */
   --color-link-visited: rgb(0, 80, 160); /* Visited link color */
 
   /* Shadows */
-  --shadow-light: rgba(0, 0, 0, 0.1); /* Light shadow (not currently used) */
+  --shadow-light: rgba(0, 0, 0, 0.1); /* Light shadow for subtle elevation */
   --shadow-medium: rgba(
     0,
     0,
@@ -69,7 +127,13 @@
     0.3
   ); /* Heavy shadow (form container box shadow) */
 
+  /* Scrollbar Colors */
+  --scrollbar-track-bg: #f5f5f5; /* Scrollbar track background */
+  --scrollbar-thumb-bg: #c1c1c1; /* Scrollbar thumb (draggable part) */
+  --scrollbar-thumb-hover-bg: #a8a8a8; /* Scrollbar thumb on hover */
+
   /* Transitions */
+  --bg-image-opacity: 1; /* Opacity of the background image (background.png) */
   --transition-speed: 0.3s; /* Animation speed for theme transitions and hover effects */
 }
 
@@ -77,8 +141,8 @@
   /* === DARK MODE COLORS === */
 
   /* Page Background & Layout */
-  --bg-primary: #000000; /* Main page background color behind all content (visible as cyan background) */
-  --bg-secondary: #41444e; /* Card image container background in results section AND scrollbar track */
+  --bg-primary: #000000; /* Main page background color behind all content */
+  --bg-secondary: #41444e; /* Card image container background in results section */
   --bg-tertiary: #41444e; /* Results section background (where card details and pricing are displayed) */
   --bg-image-opacity: 1; /* Opacity of the background image (background-dark.png) */
 
@@ -91,35 +155,111 @@
   --border-focus: #48365b; /* Border color of input fields when focused/active */
 
   /* Interactive States */
-  --bg-hover: #22242f; /* Background color for hover states (dropdown options, pricing categories, disabled inputs) */
+  --bg-hover: #22242f; /* Background color for hover states (dropdown options, pricing categories) */
   --bg-group-header: #41444e; /* Background color for group headers in dropdown lists */
 
   /* Typography */
   --text-primary: #d7dee3; /* Main text color (labels, body text, card details) */
   --text-secondary: #d7dee3; /* Secondary text color (currency labels, timestamps) */
-  --text-muted: #e3d7d7; /* Muted text color (disabled inputs, placeholder text) AND scrollbar thumb hover */
+  --text-muted: #e3d7d7; /* Muted text color (disabled inputs, placeholder text) */
   --text-inverse: #eeff00; /* Used on light backgrounds (opposite of light mode) */
 
   /* Borders */
-  --border-primary: #22242f; /* Primary border color (results section, card details, disabled buttons) AND scrollbar thumb */
+  --border-primary: #22242f; /* Primary border color (results section, card details) */
   --border-secondary: #000000; /* Secondary border color (list item separators in pricing) */
 
-  /* Pokemon Theme Colors */
-  --color-pokemon-blue: #d7dee3; /* Header background, card detail headings (h2), cached indicators, pricing category text */
-  --color-pokemon-red: #ff0000; /* "Get Price" button background, price values, error text, stale indicators */
-  --color-pokemon-red-dark: #ff0000; /* "Get Price" button hover state */
+  /* Button Colors */
+  --button-text-color: #ffffff; /* Button text color (primary buttons) */
+  --button-disabled-bg: #2a2a2a; /* Disabled button background color */
+  --button-disabled-text: #666666; /* Disabled button text color */
+
+  /* Focus States */
+  --focus-ring-color: rgba(
+    92,
+    122,
+    198,
+    0.3
+  ); /* Focus ring color for interactive elements */
+
+  /* Pokemon Theme Colors - Base Colors */
+  --color-pokemon-blue: #d7dee3; /* Base Pokemon blue color */
+  --color-pokemon-red: #ff0000; /* Base Pokemon red color */
+  --color-pokemon-red-dark: #ff0000; /* Darker Pokemon red for hover states */
+
+  /* Header */
+  --color-header-bg: #41444e; /* Header background color */
+
+  /* Headings */
+  --color-heading: var(
+    --color-pokemon-blue
+  ); /* Card detail headings (h2) and results headings */
+
+  /* Buttons */
+  --color-button-primary-bg: var(
+    --color-pokemon-red
+  ); /* Primary action button background (Get Price, Confirm) */
+  --color-button-primary-hover-bg: var(
+    --color-pokemon-red-dark
+  ); /* Primary button hover state */
+  --color-clear-button-bg: var(
+    --color-pokemon-red
+  ); /* Clear/close button background */
+
+  /* Dropdown Components */
+  --color-group-header: var(--color-pokemon-blue); /* Dropdown group headers */
+
+  /* Card Variant Selector */
+  --color-variant-type: var(--color-pokemon-blue); /* Card variant type text */
+  --color-variant-rarity: var(
+    --color-pokemon-red
+  ); /* Card variant rarity text */
+  --color-variant-selected-border: var(
+    --color-pokemon-blue
+  ); /* Selected variant border */
+
+  /* Pricing Display */
+  --color-pricing-category: var(
+    --color-pokemon-blue
+  ); /* Pricing category labels */
+  --color-price-value: var(--color-pokemon-red); /* Price value text */
+
+  /* Data Status Indicators */
+  --color-cached-indicator: var(
+    --color-pokemon-blue
+  ); /* Cached data indicator text */
+  --color-stale-indicator: var(
+    --color-pokemon-red
+  ); /* Stale data indicator text */
+
+  /* Error Messages */
+  --color-error-text: var(--color-pokemon-red); /* Error message text */
 
   /* Links */
   --color-link: #000000; /* Link color (if any links are present) */
   --color-link-visited: #000000; /* Visited link color */
 
   /* Shadows */
-  --shadow-light: rgba(0, 0, 0, 0.3); /*  */
-  --shadow-medium: rgba(0, 0, 0, 0.5); /*  */
-  --shadow-heavy: rgba(0, 0, 0, 0.7); /*  */
+  --shadow-light: rgba(0, 0, 0, 0.3); /* Light shadow for subtle elevation */
+  --shadow-medium: rgba(
+    0,
+    0,
+    0,
+    0.5
+  ); /* Medium shadow (results section box shadow) */
+  --shadow-heavy: rgba(
+    0,
+    0,
+    0,
+    0.7
+  ); /* Heavy shadow (form container box shadow) */
+
+  /* Scrollbar Colors */
+  --scrollbar-track-bg: #41444e; /* Scrollbar track background */
+  --scrollbar-thumb-bg: #22242f; /* Scrollbar thumb (draggable part) */
+  --scrollbar-thumb-hover-bg: #e3d7d7; /* Scrollbar thumb on hover */
 
   /* Transitions */
-  --transition-speed: 0.3s; /*  */
+  --transition-speed: 0.3s; /* Animation speed for theme transitions and hover effects */
 }
 
 /* Smooth transitions for theme switching */
@@ -209,7 +349,7 @@ input:disabled {
 }
 
 button {
-  color: white;
+  color: var(--button-text-color);
   background-color: var(--color-pokemon-red);
   outline: none;
   border: none;
@@ -217,8 +357,8 @@ button {
 }
 
 button:disabled {
-  color: var(--text-muted);
-  background-color: var(--border-primary);
+  color: var(--button-disabled-text);
+  background-color: var(--button-disabled-bg);
   cursor: not-allowed;
 }
 
@@ -232,7 +372,7 @@ button:not(:disabled):hover {
 
 button:focus {
   border-color: var(--border-focus);
-  box-shadow: 0 0 0 2px rgba(60, 90, 166, 0.2);
+  box-shadow: 0 0 0 2px var(--focus-ring-color);
 }
 
 #app {
@@ -256,7 +396,26 @@ input {
 [data-theme="dark"] textarea:focus {
   outline: none;
   border-color: var(--border-focus);
-  box-shadow: 0 0 0 2px rgba(92, 122, 198, 0.3);
+  box-shadow: 0 0 0 2px var(--focus-ring-color);
+}
+
+/* Scrollbar styling for light mode */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-bg);
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover-bg);
 }
 
 /* Scrollbar styling for dark mode */
@@ -266,14 +425,14 @@ input {
 }
 
 [data-theme="dark"] ::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+  background: var(--scrollbar-track-bg);
 }
 
 [data-theme="dark"] ::-webkit-scrollbar-thumb {
-  background: var(--border-primary);
+  background: var(--scrollbar-thumb-bg);
   border-radius: 6px;
 }
 
 [data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+  background: var(--scrollbar-thumb-hover-bg);
 }

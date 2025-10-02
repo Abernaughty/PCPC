@@ -61,24 +61,16 @@ resource "azurerm_api_management" "this" {
     type = var.identity_type
   }
 
-  # Protocol configuration
-  protocols {
-    http2_enabled = var.enable_http2
-  }
-
-  # Security configuration - Using v5.0 compatible property names
+  # Security configuration
   security {
-    # Use new property names for v5.0 compatibility
-    backend_tls10_enabled  = var.tls_10_enabled
-    backend_tls11_enabled  = var.tls_11_enabled
-    frontend_tls10_enabled = var.tls_10_enabled
-    frontend_tls11_enabled = var.tls_11_enabled
+    enable_backend_ssl30  = false
+    enable_backend_tls10  = var.tls_10_enabled
+    enable_backend_tls11  = var.tls_11_enabled
+    enable_frontend_ssl30 = false
+    enable_frontend_tls10 = var.tls_10_enabled
+    enable_frontend_tls11 = var.tls_11_enabled
 
-    triple_des_ciphers_enabled = var.triple_des_enabled
-
-    # Disable weak ciphers - using new property names
-    backend_ssl30_enabled                               = false
-    frontend_ssl30_enabled                              = false
+    # Disable weak ciphers
     tls_ecdhe_ecdsa_with_aes128_cbc_sha_ciphers_enabled = false
     tls_ecdhe_ecdsa_with_aes256_cbc_sha_ciphers_enabled = false
     tls_ecdhe_rsa_with_aes128_cbc_sha_ciphers_enabled   = false

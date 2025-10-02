@@ -56,10 +56,12 @@ locals {
 
 # -----------------------------------------------------------------------------
 # STORAGE ACCOUNT (Optional - create if not provided)
+# Note: Since storage_account_name is required, this resource is never created
+# Keeping for backward compatibility but count is always 0
 # -----------------------------------------------------------------------------
 
 resource "azurerm_storage_account" "this" {
-  count = var.storage_account_name == "" ? 1 : 0
+  count = 0  # Never create - storage account is always provided
 
   name                     = "${replace(var.name, "-", "")}st"
   resource_group_name      = var.resource_group_name
@@ -119,8 +121,8 @@ resource "azurerm_windows_function_app" "this" {
   resource_group_name = var.resource_group_name
   service_plan_id     = local.create_service_plan ? azurerm_service_plan.this[0].id : var.service_plan_id
 
-  storage_account_name       = var.storage_account_name != "" ? var.storage_account_name : azurerm_storage_account.this[0].name
-  storage_account_access_key = var.storage_account_key != "" ? var.storage_account_key : azurerm_storage_account.this[0].primary_access_key
+  storage_account_name       = var.storage_account_name
+  storage_account_access_key = var.storage_account_key
 
   functions_extension_version = "~4"
   builtin_logging_enabled     = false
@@ -223,8 +225,8 @@ resource "azurerm_linux_function_app" "this" {
   resource_group_name = var.resource_group_name
   service_plan_id     = local.create_service_plan ? azurerm_service_plan.this[0].id : var.service_plan_id
 
-  storage_account_name       = var.storage_account_name != "" ? var.storage_account_name : azurerm_storage_account.this[0].name
-  storage_account_access_key = var.storage_account_key != "" ? var.storage_account_key : azurerm_storage_account.this[0].primary_access_key
+  storage_account_name       = var.storage_account_name
+  storage_account_access_key = var.storage_account_key
 
   functions_extension_version = "~4"
   builtin_logging_enabled     = false

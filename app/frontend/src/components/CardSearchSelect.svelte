@@ -270,9 +270,11 @@
     width: 100%;
     padding: 0.6rem 0.75rem;
     padding-right: 3.5rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-input);
     border-radius: 4px;
     font-size: 1rem;
+    background-color: var(--bg-dropdown);
+    color: var(--text-primary);
     transition: border-color 0.3s ease;
   }
   
@@ -288,7 +290,7 @@
   }
 
   .clear-icon-circle {
-    background-color: #ee1515; /* Pokemon red */
+    background-color: var(--color-pokemon-red);
     border-radius: 50%;
     width: 18px;
     height: 18px;
@@ -301,12 +303,12 @@
   }
 
   .clear-icon:hover .clear-icon-circle {
-    background-color: #cc0000; /* Darker red on hover */
+    background-color: var(--color-pokemon-red-dark);
   }
   
   input:focus {
     outline: none;
-    border-color: #3c5aa6;
+    border-color: var(--border-focus);
     box-shadow: 0 0 0 2px rgba(60, 90, 166, 0.2);
   }
   
@@ -315,7 +317,7 @@
     right: 0.5rem;
     top: 50%;
     transform: translateY(-50%);
-    color: #666;
+    color: var(--text-secondary);
     pointer-events: none;
   }
   
@@ -326,12 +328,12 @@
     width: 100%;
     max-height: 300px;
     overflow-y: auto;
-    background-color: white;
-    border: 1px solid #ddd;
+    background-color: var(--bg-dropdown);
+    border: 1px solid var(--border-primary);
     border-top: none;
     border-radius: 0 0 4px 4px;
     z-index: 10;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 8px var(--shadow-medium);
     margin-top: -1px;
   }
   
@@ -341,11 +343,11 @@
     padding: 0.5rem 0.75rem;
     background: none;
     border: none;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--border-secondary);
     cursor: pointer;
     font-size: 1rem;
     transition: background-color 0.15s ease;
-    color: #333;
+    color: var(--text-primary);
   }
   
   .card-item:last-child {
@@ -353,8 +355,8 @@
   }
   
   .card-item:hover, .highlighted {
-    background-color: #f0f0f0;
-    color: #3c5aa6;
+    background-color: var(--bg-hover);
+    color: var(--color-pokemon-blue);
   }
   
   .card-info {
@@ -372,14 +374,14 @@
   
   .card-num {
     font-weight: normal;
-    color: #666;
+    color: var(--text-secondary);
     font-size: 0.9rem;
     margin-left: 4px;
   }
   
   .no-results {
     padding: 0.75rem;
-    color: #666;
+    color: var(--text-secondary);
     font-style: italic;
     text-align: center;
   }
