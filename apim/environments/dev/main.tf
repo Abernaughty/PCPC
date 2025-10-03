@@ -14,7 +14,7 @@ terraform {
   # Backend configuration for remote state
   backend "azurerm" {
     resource_group_name  = "pcpc-terraform-state-rg"
-    storage_account_name = "pcpcterraformstate"
+    storage_account_name = "pcpctfstatedacc29c2"
     container_name       = "tfstate"
     key                  = "apim/dev/terraform.tfstate"
   }
