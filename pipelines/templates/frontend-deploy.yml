@@ -18,6 +18,10 @@ jobs:
       runOnce:
         deploy:
           steps:
+            # Checkout source code (needed for smoke test script)
+            - checkout: self
+              displayName: "Checkout Source Code"
+
             # Download build artifacts
             - download: current
               artifact: frontend-build
