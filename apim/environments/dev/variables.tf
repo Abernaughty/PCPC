@@ -5,19 +5,19 @@
 variable "api_management_name" {
   description = "Name of the existing API Management instance"
   type        = string
-  default     = "maber-apim-test"  # Based on your current setup
+  default     = "maber-apim-test" # Based on your current setup
 }
 
 variable "resource_group_name" {
   description = "Name of the resource group containing the API Management instance"
   type        = string
-  default     = "pokedata-dev-rg"  # Based on your naming convention
+  default     = "pokedata-dev-rg" # Based on your naming convention
 }
 
 variable "function_app_name" {
   description = "Name of the Azure Function App backend"
   type        = string
-  default     = "pokedata-func-dev"  # Based on your naming convention
+  default     = "pokedata-func-dev" # Based on your naming convention
 }
 
 variable "function_app_key" {
@@ -36,7 +36,7 @@ variable "enable_application_insights" {
 variable "application_insights_name" {
   description = "Name of the Application Insights instance"
   type        = string
-  default     = "pokedata-appinsights-dev"  # Based on your naming convention
+  default     = "pokedata-appinsights-dev" # Based on your naming convention
 }
 
 # -----------------------------------------------------------------------------

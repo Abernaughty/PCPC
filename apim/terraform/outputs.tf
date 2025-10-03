@@ -149,9 +149,9 @@ output "rate_limiting" {
 output "caching_configuration" {
   description = "Caching configuration"
   value = {
-    enabled              = var.enable_caching
-    cache_duration_sets  = var.cache_duration_sets
-    cache_duration_cards = var.cache_duration_cards
+    enabled                  = var.enable_caching
+    cache_duration_sets      = var.cache_duration_sets
+    cache_duration_cards     = var.cache_duration_cards
     cache_duration_card_info = var.cache_duration_card_info
   }
 }
@@ -166,7 +166,7 @@ output "monitoring_configuration" {
     application_insights_enabled = var.enable_application_insights
     application_insights_name    = var.application_insights_name
     detailed_logging_enabled     = var.enable_detailed_logging
-    log_retention_days          = var.log_retention_days
+    log_retention_days           = var.log_retention_days
   }
 }
 
@@ -198,12 +198,12 @@ output "api_endpoints" {
 output "deployment_info" {
   description = "Deployment information and metadata"
   value = {
-    environment         = var.environment
-    api_version        = var.api_version
-    terraform_version  = "~> 1.13.0"
-    azurerm_version    = "~> 3.60"
-    deployment_time    = timestamp()
-    resource_group     = var.resource_group_name
-    subscription_id    = data.azurerm_client_config.current.subscription_id
+    environment       = var.environment
+    api_version       = var.api_version
+    terraform_version = "~> 1.13.0"
+    azurerm_version   = "~> 3.60"
+    deployment_time   = timestamp()
+    resource_group    = var.resource_group_name
+    subscription_id   = data.azurerm_client_config.current.subscription_id
   }
 }
