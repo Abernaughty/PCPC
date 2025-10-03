@@ -29,9 +29,16 @@ sudo update-ca-certificates
 echo "[devcontainer] Certificate installed, checking data plane readiness..."
 
 # Check data plane readiness with Node.js script
-cd .devcontainer && node scripts/cosmos-readiness-check.mjs && cd ..
+# cd .devcontainer && node scripts/cosmos-readiness-check.mjs && cd ..
 
-echo "[devcontainer] Cosmos DB fully ready, running seed script..."
-node /workspace/.devcontainer/scripts/seed-cosmos.mjs
+# echo "[devcontainer] Cosmos DB fully ready, running seed script..."
+# node /workspace/.devcontainer/scripts/seed-cosmos.mjs
 
-echo "[devcontainer] Startup seeding complete."
+# echo "[devcontainer] Startup seeding complete."
+
+echo "Configure git"
+git config --global user.name "Michael Abernathy"
+git config --global user.email "mabernathy87@gmail.com"
+
+echo "Fix repository ownership (for mounted volumes)"
+git config --global --add safe.directory /workspace

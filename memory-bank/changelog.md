@@ -13,6 +13,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Phase 4.2.9: Observability Infrastructure (Dashboards + Advanced Monitoring)
 - Cosmos DB Module Enhancement (Database/Container IaC)
 
+## [2.5.1] - 2025-10-03
+
+### Fixed
+
+- **DevContainer Dotfiles Configuration - CRITICAL USABILITY FIX**: Complete resolution of custom .bashrc and aliases not loading after container rebuild
+
+  - **Root Cause Identified**: Dockerfile copied custom .bashrc during image build, but base image's default .bashrc was overwriting it at container runtime
+  - **Problem Analysis**: Custom aliases (gs, ga, gc, ll, ws, etc.) and functions (mkcd, ff, extract) were not available in new terminal sessions
+  - **Solution Implemented**:
+    - Created `.bash_profile` to ensure .bashrc is sourced for login shells
+    - Updated `setup.sh` to copy custom .bashrc on every container start
+    - Ensures dotfiles persist across container rebuilds
+
+- **Shell Configuration Persistence**: Fixed dotfiles not loading in new terminal sessions
+
+  - Modified `.devcontainer/setup.sh` to copy custom .bashrc from workspace to home directory
+  - Created `.bash_profile` that sources .bashrc for login shells
+  - Added dotfiles setup section to setup.sh with proper error handling
+
+### Changed
+
+- **DevContainer Startup Process**: Enhanced setup.sh with automatic dotfiles configuration
+- **Shell Initialization**: Added .bash_profile for reliable .bashrc sourcing across all shell types
+- **User Experience**: Custom aliases and functions now available immediately in all new terminals
+
+### Technical Achievements
+
+- **Verified Working Features**: All 30+ aliases and custom functions confirmed operational
+
+  - Git aliases: gs, ga, gc, gp, gl, gd, gco, gb
+  - Directory aliases: ll, la, l, .., ..., ...., ws, workspace
+  - Custom functions: mkcd(), ff(), gg(), extract()
+  - Docker aliases: dps, dpa, di, drm, drmi
+  - Custom prompt with git branch and timestamp
+  - Environment variables: HISTSIZE=10000, EDITOR=vim
+
+- **Persistent Configuration**: Dotfiles now survive container rebuilds
+- **Automatic Setup**: No manual intervention required after container rebuild
+- **Shell Compatibility**: Works for both login and non-login shells
+
+### Files Modified
+
+- `.devcontainer/setup.sh` - Added dotfiles configuration section (15 lines)
+- Created `/home/vscode/.bash_profile` - Ensures .bashrc sourcing for login shells
+
+### Development Experience
+
+- **Immediate Productivity**: Custom aliases and functions available in all new terminals
+- **Consistent Environment**: Same shell configuration across all container rebuilds
+- **Zero Configuration**: Automatic dotfiles setup on container start
+- **Professional Workflow**: Git aliases, directory shortcuts, and custom functions working seamlessly
+
+### DevContainer Dotfiles Fix Impact
+
+- **User Experience**: Developers now have their custom shell configuration in every terminal session
+- **Productivity**: Git aliases and custom functions immediately available
+- **Reliability**: Configuration persists across container rebuilds without manual intervention
+- **Professional Environment**: Complete shell customization working as expected
+
 ## [2.5.0] - 2025-10-03
 
 ### Added
