@@ -19,17 +19,23 @@ jobs:
         inputs:
           versionSpec: ${{ parameters.nodeVersion }}
 
-      # Install dependencies
+      # Install root dependencies (for Jest testing framework)
+      - script: |
+          npm ci
+        displayName: "Install Root Dependencies"
+        workingDirectory: $(System.DefaultWorkingDirectory)
+
+      # Install frontend dependencies
       - script: |
           cd ${{ parameters.workingDirectory }}
           npm ci
-        displayName: "Install Dependencies"
+        displayName: "Install Frontend Dependencies"
 
-      # Run unit tests with coverage
+      # Run unit tests with coverage (from root where Jest is configured)
       - script: |
-          cd ${{ parameters.workingDirectory }}
           npm test -- --selectProjects=frontend --ci --coverage --reporters=default --reporters=jest-junit
         displayName: "Run Unit Tests"
+        workingDirectory: $(System.DefaultWorkingDirectory)
         env:
           JEST_JUNIT_OUTPUT_DIR: $(System.DefaultWorkingDirectory)/test-results
           JEST_JUNIT_OUTPUT_NAME: frontend-test-results.xml
