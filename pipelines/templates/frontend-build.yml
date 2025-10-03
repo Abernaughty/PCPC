@@ -82,8 +82,8 @@ jobs:
             echo "Error: Build directory not found!"
             exit 1
           fi
-          if [ ! -f "public/build/bundle.js" ]; then
-            echo "Error: bundle.js not found!"
+          if [ ! -f "public/build/main.js" ]; then
+            echo "Error: main.js not found!"
             exit 1
           fi
           echo "Build verification successful"

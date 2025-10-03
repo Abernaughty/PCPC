@@ -93,8 +93,8 @@ check_javascript_bundle() {
     echo "Test 3: JavaScript Bundle Check"
     echo "--------------------------------"
     
-    # Check if bundle.js exists
-    BUNDLE_URL="${url}/build/bundle.js"
+    # Check if main.js exists (Rollup output)
+    BUNDLE_URL="${url}/build/main.js"
     BUNDLE_HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${BUNDLE_URL}" || echo "000")
     
     if [ "$BUNDLE_HTTP_CODE" = "200" ]; then

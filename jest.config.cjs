@@ -25,6 +25,13 @@ module.exports = {
         "^@/(.*)$": "<rootDir>/app/frontend/src/$1",
         "^@tests/(.*)$": "<rootDir>/tests/$1",
       },
+      collectCoverageFrom: [
+        "app/frontend/src/**/*.{js,ts,svelte}",
+        "!app/frontend/src/**/*.d.ts",
+        "!app/frontend/src/main.js",
+        "!**/__mocks__/**",
+        "!**/node_modules/**",
+      ],
     },
     // Backend tests (node environment)
     {
@@ -41,6 +48,13 @@ module.exports = {
         "^@backend/(.*)$": "<rootDir>/app/backend/src/$1",
         "^@tests/(.*)$": "<rootDir>/tests/$1",
       },
+      collectCoverageFrom: [
+        "app/backend/src/**/*.{js,ts}",
+        "!app/backend/src/**/*.d.ts",
+        "!app/backend/src/index.ts",
+        "!**/__mocks__/**",
+        "!**/node_modules/**",
+      ],
     },
   ],
 
@@ -49,17 +63,7 @@ module.exports = {
   coverageDirectory: "<rootDir>/tests/coverage",
   coverageReporters: ["text", "lcov", "html", "json-summary"],
 
-  // Coverage collection patterns
-  collectCoverageFrom: [
-    "app/frontend/src/**/*.{js,ts,svelte}",
-    "app/backend/src/**/*.{js,ts}",
-    "!app/frontend/src/**/*.d.ts",
-    "!app/backend/src/**/*.d.ts",
-    "!app/frontend/src/main.js",
-    "!app/backend/src/index.ts",
-    "!**/__mocks__/**",
-    "!**/node_modules/**",
-  ],
+  // Note: Coverage patterns moved to individual projects to avoid cross-contamination
 
   // Coverage thresholds (relaxed for initial implementation)
   coverageThreshold: {
