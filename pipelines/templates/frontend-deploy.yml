@@ -1,0 +1,75 @@
+# Frontend Deploy Template
+# Deploys Svelte application to Azure Static Web Apps
+
+parameters:
+  - name: environment
+    type: string
+    default: "dev"
+  - name: staticWebAppName
+    type: string
+  - name: serviceConnection
+    type: string
+
+jobs:
+  - deployment: DeployFrontend
+    displayName: "Deploy to Static Web App"
+    environment: pcpc-${{ parameters.environment }}
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            # Download build artifacts
+            - download: current
+              artifact: frontend-build
+              displayName: "Download Build Artifacts"
+
+            # Display deployment info
+            - script: |
+                echo "==================================="
+                echo "Frontend Deployment Info"
+                echo "==================================="
+                echo "Environment: ${{ parameters.environment }}"
+                echo "Static Web App: ${{ parameters.staticWebAppName }}"
+                echo "Build Number: $(Build.BuildNumber)"
+                echo "Artifact Location: $(Pipeline.Workspace)/frontend-build"
+                echo "==================================="
+                ls -la $(Pipeline.Workspace)/frontend-build/
+              displayName: "Display Deployment Info"
+
+            # Deploy to Azure Static Web Apps
+            - task: AzureStaticWebApp@0
+              displayName: "Deploy to Azure Static Web Apps"
+              inputs:
+                azure_static_web_apps_api_token: $(AZURE_STATIC_WEB_APPS_API_TOKEN)
+                app_location: "/"
+                api_location: ""
+                output_location: "build"
+                skip_app_build: true
+                skip_api_build: true
+                workingDirectory: $(Pipeline.Workspace)/frontend-build
+
+            # Wait for deployment to propagate
+            - script: |
+                echo "Waiting 30 seconds for deployment to propagate..."
+                sleep 30
+              displayName: "Wait for Deployment"
+
+            # Run smoke tests
+            - script: |
+                chmod +x $(System.DefaultWorkingDirectory)/pipelines/scripts/verify-frontend-deployment.sh
+                $(System.DefaultWorkingDirectory)/pipelines/scripts/verify-frontend-deployment.sh "${{ parameters.staticWebAppName }}"
+              displayName: "Verify Deployment (Smoke Test)"
+              env:
+                STATIC_WEB_APP_NAME: ${{ parameters.staticWebAppName }}
+
+            # Display deployment summary
+            - script: |
+                echo "==================================="
+                echo "Deployment Complete!"
+                echo "==================================="
+                echo "Environment: ${{ parameters.environment }}"
+                echo "Static Web App: ${{ parameters.staticWebAppName }}"
+                echo "URL: https://${{ parameters.staticWebAppName }}.azurestaticapps.net"
+                echo "Build: $(Build.BuildNumber)"
+                echo "==================================="
+              displayName: "Deployment Summary"

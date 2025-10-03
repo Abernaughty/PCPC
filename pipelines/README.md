@@ -1,14 +1,49 @@
-# PCPC Azure DevOps Pipeline
+# PCPC Azure DevOps Pipelines
 
 ## Overview
 
-This directory contains the Azure DevOps pipeline configuration for deploying PCPC infrastructure using Terraform. The pipeline implements Infrastructure as Code (IaC) best practices with automated validation, planning, and deployment stages.
+This directory contains Azure DevOps pipeline configurations for the PCPC project. The pipelines are organized by deployment type, following DevOps best practices with separation of concerns between infrastructure and application deployments.
 
-## Pipeline Architecture
+## Available Pipelines
+
+### 1. Infrastructure Pipeline (`azure-pipelines.yml`)
+
+Deploys Azure infrastructure using Terraform with automated validation, planning, and deployment stages.
+
+**What it deploys:**
+
+- Azure Resource Groups
+- Cosmos DB accounts
+- Function Apps (empty shells)
+- Static Web Apps (empty shells)
+- Storage Accounts
+- Application Insights
+- Log Analytics workspaces
+
+**Documentation:** See [SETUP_GUIDE.md](SETUP_GUIDE.md)
+
+### 2. Frontend Pipeline (`frontend-pipeline.yml`)
+
+Builds and deploys the Svelte application to Azure Static Web Apps with comprehensive testing.
+
+**What it deploys:**
+
+- Svelte application code
+- Static assets (CSS, images)
+- JavaScript bundles
+- Application configuration
+
+**Documentation:** See [FRONTEND_SETUP_GUIDE.md](FRONTEND_SETUP_GUIDE.md)
+
+### 3. Backend Pipeline (Coming Soon)
+
+Will deploy Azure Functions code to the Function App created by infrastructure pipeline.
+
+## Infrastructure Pipeline Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     Azure DevOps Pipeline                    │
+│              Infrastructure Pipeline (Terraform)             │
 ├─────────────────────────────────────────────────────────────┤
 │                                                               │
 │  Stage 1: Validate                                           │
@@ -32,26 +67,90 @@ This directory contains the Azure DevOps pipeline configuration for deploying PC
 └─────────────────────────────────────────────────────────────┘
 ```
 
+## Frontend Pipeline Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Frontend Pipeline                         │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  Stage 1: Build & Test                                       │
+│  ├─ Install Node.js 22.x                                     │
+│  ├─ Install Dependencies (npm ci)                            │
+│  ├─ Run Unit Tests (Jest)                                    │
+│  ├─ Publish Test Results                                     │
+│  ├─ Publish Code Coverage                                    │
+│  ├─ Build Production Bundle (Rollup)                         │
+│  ├─ Verify Build Output                                      │
+│  └─ Publish Build Artifacts                                  │
+│                                                               │
+│  Stage 2: Deploy                                             │
+│  ├─ Download Build Artifacts                                 │
+│  ├─ Deploy to Static Web App                                 │
+│  ├─ Wait for Propagation (30s)                               │
+│  ├─ Run Smoke Tests                                          │
+│  └─ Display Deployment Summary                               │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘
+```
+
 ## Directory Structure
 
 ```
 pipelines/
-├── azure-pipelines.yml              # Main pipeline definition
+├── azure-pipelines.yml              # Infrastructure pipeline (Terraform)
+├── frontend-pipeline.yml            # Frontend deployment pipeline
 ├── templates/
-│   ├── terraform-validate.yml       # Validation stage template
-│   ├── terraform-plan.yml           # Plan stage template
-│   └── terraform-apply.yml          # Apply stage template
+│   ├── terraform-validate.yml       # Terraform validation template
+│   ├── terraform-plan.yml           # Terraform plan template
+│   ├── terraform-apply.yml          # Terraform apply template
+│   ├── frontend-build.yml           # Frontend build template
+│   └── frontend-deploy.yml          # Frontend deploy template
 ├── scripts/
-│   ├── setup-backend.sh             # Backend validation script
-│   └── validate-deployment.sh       # Post-deployment validation
-└── README.md                        # This file
+│   ├── setup-backend.sh             # Terraform backend validation
+│   ├── validate-deployment.sh       # Infrastructure validation
+│   └── verify-frontend-deployment.sh # Frontend smoke tests
+├── README.md                        # This file (overview)
+├── SETUP_GUIDE.md                   # Infrastructure pipeline setup
+└── FRONTEND_SETUP_GUIDE.md          # Frontend pipeline setup
 ```
 
-## Prerequisites
+## Pipeline Separation Strategy
+
+The PCPC project uses **separate pipelines** for infrastructure and applications, following DevOps best practices:
+
+**Why Separate Pipelines?**
+
+- ✅ **Faster deployments** - Only rebuild what changed
+- ✅ **Independent scaling** - Deploy frontend 10x/day, infrastructure 1x/month
+- ✅ **Clear ownership** - Platform team owns infra, dev teams own apps
+- ✅ **Reduced risk** - App bugs don't affect infrastructure
+- ✅ **Better CI/CD performance** - Smaller, focused pipelines
+
+**Pipeline Relationships:**
+
+```
+Infrastructure Pipeline (Terraform)
+    ↓ Creates resources
+    ├─→ Function App (empty) ──→ Backend Pipeline deploys code
+    └─→ Static Web App (empty) ──→ Frontend Pipeline deploys code
+```
+
+## Quick Start
+
+### For Infrastructure Deployment
+
+See [SETUP_GUIDE.md](SETUP_GUIDE.md) for complete infrastructure pipeline setup.
+
+### For Frontend Deployment
+
+See [FRONTEND_SETUP_GUIDE.md](FRONTEND_SETUP_GUIDE.md) for complete frontend pipeline setup.
+
+## Infrastructure Pipeline Prerequisites
 
 ### 1. Azure Infrastructure
 
-Before running the pipeline, you must create the following Azure resources:
+Before running the infrastructure pipeline, you must create the following Azure resources:
 
 #### Terraform State Storage Account
 
