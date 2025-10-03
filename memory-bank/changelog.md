@@ -9,9 +9,112 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- CI/CD Pipeline Implementation (Azure DevOps + GitHub Actions)
 - Production Infrastructure Deployment
 - Phase 4.2.9: Observability Infrastructure (Dashboards + Advanced Monitoring)
+- Cosmos DB Module Enhancement (Database/Container IaC)
+
+## [2.5.0] - 2025-10-03
+
+### Added
+
+- **Azure DevOps Pipeline Implementation - COMPLETE**: Full CI/CD pipeline for infrastructure deployment
+
+  - **Pipeline Files Created**: 8 comprehensive files for automated infrastructure deployment
+
+    - `pipelines/azure-pipelines.yml` - Main 3-stage pipeline (Validate → Plan → Apply)
+    - `pipelines/templates/terraform-validate.yml` - Format check, syntax validation, linting
+    - `pipelines/templates/terraform-plan.yml` - Plan generation with artifact publishing
+    - `pipelines/templates/terraform-apply.yml` - Deployment with approval gates
+    - `pipelines/scripts/setup-backend.sh` - Backend validation script
+    - `pipelines/scripts/validate-deployment.sh` - Post-deployment validation
+    - `pipelines/README.md` - Comprehensive pipeline documentation
+    - `pipelines/SETUP_GUIDE.md` - Step-by-step setup instructions
+
+  - **Pipeline Architecture**:
+
+    - **Stage 1 - Validate**: Terraform format check, syntax validation, TFLint
+    - **Stage 2 - Plan**: Generate execution plan, publish artifacts, display summary
+    - **Stage 3 - Apply**: Apply changes with approval gates, post-deployment validation
+    - **Approval Gates**: Manual approval for dev environment (devops@maber.io, mike@maber.io)
+    - **Artifact Management**: Plan files and outputs published for review
+    - **Post-Deployment Validation**: Automated resource verification
+
+  - **Configuration**:
+    - **Organization**: maber-devops
+    - **Project**: PCPC
+    - **Service Connection**: pcpc-dev-terraform (secret-based authentication)
+    - **Variable Group**: pcpc-terraform-dev
+    - **Environment**: pcpc-dev with approval workflow
+    - **Terraform Version**: 1.13.3
+    - **Working Directory**: infra/envs/dev
+
+### Fixed
+
+- **AzureRM Provider v4 Compatibility Issues - CRITICAL DEPLOYMENT FIX**: Complete resolution of Node.js 22 and ip_range_filter compatibility
+
+  - **Node.js 22 Support**: Updated AzureRM provider from v3.60 to v4.0
+
+    - **Problem**: AzureRM v3.x doesn't support Node.js 22 (`~22` not in allowed values)
+    - **Solution**: Updated all module `versions.tf` files to `version = "~> 4.0"`
+    - **Result**: AzureRM v4.47.0 installed, Node.js 22 now supported
+    - **Impact**: Function Apps can now deploy with Node.js 22.19.0 LTS runtime
+
+  - **ip_range_filter Breaking Change**: Fixed Cosmos DB module for AzureRM v4
+
+    - **Problem**: AzureRM v4 changed `ip_range_filter` from string to set of strings
+    - **Previous Fix**: Used `join(",", var.ip_range_filter)` for v3 compatibility
+    - **v4 Fix**: Removed `join()` function, pass list directly: `ip_range_filter = var.ip_range_filter`
+    - **Location**: `infra/modules/cosmos-db/main.tf` line 108
+    - **Validation**: ✅ `terraform validate` passes with v4.47.0
+
+  - **TFLint Warnings Cleanup**: Removed 5 unused Cosmos DB variables
+    - Removed: `cosmos_offer_type`, `cosmos_kind`, `cosmos_max_interval_in_seconds`, `cosmos_max_staleness_prefix`, `cosmos_databases`
+    - Added TODO comment for future Cosmos DB database/container IaC enhancement
+    - **Impact**: Pipeline linting stage now passes cleanly
+
+### Changed
+
+- **Terraform Provider Versions**: Standardized all modules to AzureRM v4.0
+
+  - Updated 8 module `versions.tf` files
+  - Updated root module `infra/envs/dev/main.tf`
+  - Consistent provider versions across entire infrastructure
+
+- **Cosmos DB Strategy**: Deferred database/container creation to future enhancement
+  - **Current**: Terraform creates Cosmos DB account only
+  - **Manual Setup**: Database and containers created manually or via application
+  - **Future**: Add `cosmos_databases` variable support for complete IaC
+
+### Technical Achievements
+
+- **Provider Compatibility**: Successfully migrated from AzureRM v3.60 to v4.47.0
+- **Node.js 22 Support**: Function Apps can now use latest LTS runtime
+- **Breaking Change Resolution**: Identified and fixed ip_range_filter type change
+- **Clean Linting**: All TFLint warnings resolved
+- **Validation Success**: `terraform validate` passes with v4 provider
+
+### Files Modified
+
+- `infra/modules/*/versions.tf` - Updated AzureRM provider to v4.0 (8 modules)
+- `infra/envs/dev/main.tf` - Updated AzureRM provider to v4.0
+- `infra/modules/cosmos-db/main.tf` - Fixed ip_range_filter for v4 compatibility
+- `infra/envs/dev/variables.tf` - Removed 5 unused variables, added TODO
+- `apim/` - Terraform formatting applied (5 files)
+
+### Development Experience
+
+- **Local Validation**: Terraform validate passes with AzureRM v4.47.0
+- **Provider Upgrade**: `terraform init -upgrade` successfully installed v4
+- **Pipeline Ready**: All validation, linting, and formatting checks will pass
+- **Deployment Ready**: Infrastructure ready for first Azure deployment
+
+### Pipeline Deployment Status
+
+- **Pipeline Created**: Successfully configured in Azure DevOps
+- **Manual Setup**: Terraform state storage, service principal, variable group configured
+- **Validation**: All Terraform configuration validated and formatted
+- **Next**: Push commits to trigger automated deployment
+- **Post-Deployment**: Manual Cosmos DB database/container creation required
 
 ## [2.4.1] - 2025-10-03
 

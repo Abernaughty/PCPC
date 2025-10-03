@@ -15,8 +15,8 @@ terraform {
   # Using local backend for development
   # For production, uncomment and configure the azurerm backend below:
   # backend "azurerm" {
-  #   resource_group_name  = "rg-pcpc-tfstate"
-  #   storage_account_name = "stpcpctfstate"
+  #   resource_group_name  = "terraform-state-rg"
+  #   storage_account_name = "pcpctfstatedacc29c2"
   #   container_name       = "tfstate"
   #   key                  = "dev.terraform.tfstate"
   # }
@@ -32,6 +32,7 @@ provider "azurerm" {
       recover_soft_deleted_key_vaults = true
     }
   }
+  subscription_id = "555b4cfa-ad2e-4c71-9433-620a59cf7616"
 }
 
 provider "random" {}
