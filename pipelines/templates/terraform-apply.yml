@@ -1,0 +1,163 @@
+# Terraform Apply Template
+# Applies Terraform execution plan to deploy infrastructure
+
+parameters:
+  - name: environment
+    type: string
+  - name: serviceConnection
+    type: string
+  - name: autoApprove
+    type: boolean
+    default: false
+
+jobs:
+  - deployment: Apply
+    displayName: "Terraform Apply - ${{ parameters.environment }}"
+    environment: "pcpc-${{ parameters.environment }}"
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            # Download plan artifact
+            - task: DownloadPipelineArtifact@2
+              displayName: "Download Plan Artifact"
+              inputs:
+                artifact: "tfplan-${{ parameters.environment }}"
+                path: "$(Pipeline.Workspace)/tfplan"
+              condition: succeeded()
+
+            # Install Terraform
+            - task: TerraformInstaller@0
+              displayName: "Install Terraform $(terraformVersion)"
+              inputs:
+                terraformVersion: "$(terraformVersion)"
+
+            # Checkout repository (required for deployment job)
+            - checkout: self
+              displayName: "Checkout Repository"
+
+            # Initialize Terraform with backend configuration
+            - task: AzureCLI@2
+              displayName: "Terraform Init"
+              inputs:
+                azureSubscription: "${{ parameters.serviceConnection }}"
+                scriptType: "bash"
+                scriptLocation: "inlineScript"
+                inlineScript: |
+                  echo "Initializing Terraform with backend configuration..."
+                  echo "Environment: ${{ parameters.environment }}"
+
+                  terraform init \
+                    -backend-config="resource_group_name=$(TF_STATE_RESOURCE_GROUP)" \
+                    -backend-config="storage_account_name=$(TF_STATE_STORAGE_ACCOUNT)" \
+                    -backend-config="container_name=$(TF_STATE_CONTAINER)" \
+                    -backend-config="key=pcpc.${{ parameters.environment }}.tfstate"
+
+                  echo "Terraform initialization completed successfully"
+                workingDirectory: "$(workingDirectory)"
+                addSpnToEnvironment: true
+
+            # Copy plan file to working directory
+            - script: |
+                echo "Copying plan file to working directory..."
+                cp $(Pipeline.Workspace)/tfplan/tfplan .
+                ls -la tfplan
+                echo "Plan file copied successfully"
+              displayName: "Copy Plan File"
+              workingDirectory: "$(workingDirectory)"
+              condition: succeeded()
+
+            # Apply Terraform plan
+            - task: AzureCLI@2
+              displayName: "Terraform Apply"
+              inputs:
+                azureSubscription: "${{ parameters.serviceConnection }}"
+                scriptType: "bash"
+                scriptLocation: "inlineScript"
+                inlineScript: |
+                  echo "Applying Terraform plan..."
+                  echo "Environment: ${{ parameters.environment }}"
+                  echo "Auto-approve: ${{ parameters.autoApprove }}"
+
+                  # Apply the plan
+                  if [ "${{ parameters.autoApprove }}" = "True" ]; then
+                    echo "Applying with auto-approve..."
+                    terraform apply -auto-approve tfplan
+                  else
+                    echo "Applying plan (manual approval required)..."
+                    terraform apply tfplan
+                  fi
+
+                  APPLY_EXIT_CODE=$?
+
+                  if [ $APPLY_EXIT_CODE -eq 0 ]; then
+                    echo "##[section]Terraform apply completed successfully"
+                  else
+                    echo "##[error]Terraform apply failed with exit code $APPLY_EXIT_CODE"
+                    exit $APPLY_EXIT_CODE
+                  fi
+                workingDirectory: "$(workingDirectory)"
+                addSpnToEnvironment: true
+
+            # Display Terraform outputs
+            - script: |
+                echo "=========================================="
+                echo "Terraform Outputs"
+                echo "=========================================="
+                terraform output -json > outputs.json
+                cat outputs.json | jq '.' || cat outputs.json
+                echo "=========================================="
+              displayName: "Display Terraform Outputs"
+              workingDirectory: "$(workingDirectory)"
+              condition: succeeded()
+
+            # Publish outputs artifact
+            - task: PublishPipelineArtifact@1
+              displayName: "Publish Outputs Artifact"
+              inputs:
+                targetPath: "$(workingDirectory)/outputs.json"
+                artifact: "terraform-outputs-${{ parameters.environment }}"
+                publishLocation: "pipeline"
+              condition: succeeded()
+
+            # Run post-deployment validation
+            - script: |
+                echo "=========================================="
+                echo "Post-Deployment Validation"
+                echo "=========================================="
+
+                # Check if resource group exists
+                RESOURCE_GROUP="pcpc-rg-${{ parameters.environment }}"
+                echo "Checking resource group: $RESOURCE_GROUP"
+
+                if az group show --name "$RESOURCE_GROUP" &>/dev/null; then
+                  echo "✓ Resource group exists"
+                else
+                  echo "✗ Resource group not found"
+                  exit 1
+                fi
+
+                # List deployed resources
+                echo ""
+                echo "Deployed resources:"
+                az resource list --resource-group "$RESOURCE_GROUP" --output table
+
+                echo "=========================================="
+                echo "Validation completed successfully"
+                echo "=========================================="
+              displayName: "Post-Deployment Validation"
+              condition: succeeded()
+              env:
+                AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
+
+            # Display deployment summary
+            - script: |
+                echo "=========================================="
+                echo "Deployment Summary"
+                echo "=========================================="
+                echo "Environment: ${{ parameters.environment }}"
+                echo "Status: SUCCESS"
+                echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+                echo "=========================================="
+              displayName: "Deployment Summary"
+              condition: succeeded()
