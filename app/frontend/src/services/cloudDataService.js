@@ -41,6 +41,9 @@ export const cloudDataService = {
       // Request all sets (English + Japanese) instead of just English
       url.searchParams.append("language", "ALL");
 
+      // Request all sets without pagination
+      url.searchParams.append("all", "true");
+
       const response = await fetch(url.toString(), {
         headers: API_CONFIG.getHeaders(),
       });

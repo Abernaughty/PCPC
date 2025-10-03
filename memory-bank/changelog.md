@@ -13,6 +13,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Production Infrastructure Deployment
 - Phase 4.2.9: Observability Infrastructure (Dashboards + Advanced Monitoring)
 
+## [2.4.1] - 2025-10-03
+
+### Fixed
+
+- **GetSetList Pagination Bug - CRITICAL USER-REPORTED BUG RESOLVED**: Complete resolution of frontend only receiving 100 sets instead of all 562 sets
+
+  - **Root Cause Identified**: Frontend wasn't passing `all=true` query parameter to backend API
+  - **Problem Analysis**: Backend correctly retrieved all 562 sets from cache but applied pagination (returning page 1/6 with 100 sets) because `returnAll=false`
+  - **Solution Implemented**: Added single line to cloudDataService.js to include `all=true` parameter in API request
+  - **Result**: Backend now returns all 562 sets without pagination when `returnAll=true`
+
+- **API Request Configuration**: Fixed missing query parameter in frontend API calls
+
+  - Modified `app/frontend/src/services/cloudDataService.js` line 44
+  - Added: `url.searchParams.append("all", "true");`
+  - Ensures backend receives instruction to return complete set list
+
+### Changed
+
+- **GetSetList API Behavior**: Frontend now explicitly requests all sets without pagination
+- **User Experience**: Users can now see complete set list including all English and Japanese sets (562 total)
+
+### Technical Details
+
+- **Before Fix**:
+
+  - Frontend request: No `all` parameter
+  - Backend behavior: `returnAll=false, page=1, pageSize=100`
+  - Backend response: Returns 100 sets (page 1/6 of 562)
+  - Backend logs: "Returning page 1/6 with 100 sets (1-100 of 562)"
+
+- **After Fix**:
+  - Frontend request: `all=true` parameter included
+  - Backend behavior: `returnAll=true`
+  - Backend response: Returns all 562 sets
+  - Backend logs: "Returning ALL 562 sets (all=true parameter)"
+
+### Files Modified
+
+- `app/frontend/src/services/cloudDataService.js` - Added `all=true` query parameter (1 line change)
+
+### User Impact
+
+- **Complete Set List**: Users now see all 562 Pokemon card sets (English + Japanese)
+- **No Pagination**: Single API call returns complete dataset
+- **Improved UX**: No missing sets or incomplete data in set selection dropdown
+
+### Bug Resolution
+
+- User-reported issue completely resolved with minimal code change
+- Backend functionality was correct - only frontend request needed adjustment
+- Simple one-line fix demonstrates importance of API parameter documentation
+- Memory bank updated to reflect bug fix and resolution details
+
 ## [2.4.0] - 2025-10-02
 
 ### Added

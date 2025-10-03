@@ -52,6 +52,22 @@
 
 ## Recent Changes (Last 10 Events)
 
+### 2025-10-03 00:20 - GetSetList Pagination Bug Fixed
+
+- **Action**: Fixed critical pagination issue where frontend only received 100 sets instead of all 562 sets
+- **Impact**: Frontend now receives complete set list, resolving user-reported bug
+- **Problem Identified**: Frontend wasn't passing `all=true` query parameter to backend API
+- **Root Cause**: Backend was correctly retrieving all 562 sets from cache but applying pagination (returning page 1/6 with 100 sets) because `returnAll=false`
+- **Solution Implemented**: Added `all=true` query parameter to API request in cloudDataService.js (line 44)
+- **Result**: Backend now returns all 562 sets without pagination when `returnAll=true`
+- **Files Modified**: `app/frontend/src/services/cloudDataService.js` - Added single line for `all=true` parameter
+- **Technical Details**:
+  - Before: `returnAll=false, page=1, pageSize=100` → Returns 100 sets (page 1/6)
+  - After: `returnAll=true` → Returns all 562 sets
+  - Backend logs now show: "Returning ALL 562 sets" instead of "Returning page 1/6 with 100 sets"
+- **User Impact**: Users can now see complete set list including all English and Japanese sets
+- **Status**: Bug fix complete and verified - frontend receives all sets as expected
+
 ### 2025-10-02 02:09 - Terraform Infrastructure Validation Completed
 
 - **Action**: Successfully validated all Terraform configurations and fixed 7 critical issues
