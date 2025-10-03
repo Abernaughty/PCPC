@@ -27,18 +27,26 @@ jobs:
           inlineScript: |
             echo "Initializing Terraform with backend configuration..."
             echo "Environment: ${{ parameters.environment }}"
+            echo "Working Directory: $(workingDirectory)"
             echo "State Resource Group: $(TF_STATE_RESOURCE_GROUP)"
             echo "State Storage Account: $(TF_STATE_STORAGE_ACCOUNT)"
             echo "State Container: $(TF_STATE_CONTAINER)"
 
+            # Change to working directory
+            cd $(workingDirectory)
+
+            # Remove any existing .terraform directory to ensure clean init
+            rm -rf .terraform
+
+            # Initialize with backend configuration
             terraform init \
               -backend-config="resource_group_name=$(TF_STATE_RESOURCE_GROUP)" \
               -backend-config="storage_account_name=$(TF_STATE_STORAGE_ACCOUNT)" \
               -backend-config="container_name=$(TF_STATE_CONTAINER)" \
-              -backend-config="key=pcpc.${{ parameters.environment }}.tfstate"
+              -backend-config="key=pcpc.${{ parameters.environment }}.tfstate" \
+              -reconfigure
 
             echo "Terraform initialization completed successfully"
-          workingDirectory: "$(workingDirectory)"
           addSpnToEnvironment: true
 
       # Generate Terraform plan
@@ -51,6 +59,10 @@ jobs:
           inlineScript: |
             echo "Generating Terraform plan..."
             echo "Environment: ${{ parameters.environment }}"
+            echo "Working Directory: $(workingDirectory)"
+
+            # Change to working directory
+            cd $(workingDirectory)
 
             # Run terraform plan with detailed exit code
             # Exit code 0: No changes
@@ -74,12 +86,12 @@ jobs:
               echo "##[error]Terraform plan failed with exit code $PLAN_EXIT_CODE"
               exit $PLAN_EXIT_CODE
             fi
-          workingDirectory: "$(workingDirectory)"
           addSpnToEnvironment: true
         name: TerraformPlan
 
       # Display plan summary
       - script: |
+          cd $(workingDirectory)
           echo "=========================================="
           echo "Terraform Plan Summary"
           echo "=========================================="
@@ -97,7 +109,6 @@ jobs:
           echo "Resources to destroy: $TO_DESTROY"
           echo "=========================================="
         displayName: "Display Plan Summary"
-        workingDirectory: "$(workingDirectory)"
         condition: succeeded()
 
       # Publish plan artifact
