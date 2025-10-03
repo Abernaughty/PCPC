@@ -46,14 +46,14 @@ resource "random_string" "suffix" {
 locals {
   # New naming convention: pcpc-{resource}-{environment}
   environment = var.environment
-  
+
   # Common tags
   common_tags = {
-    Environment   = var.environment
-    Project       = var.project_name
-    ManagedBy     = "Terraform"
-    CreatedDate   = formatdate("YYYY-MM-DD", timestamp())
-    Repository    = "PCPC"
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "Terraform"
+    CreatedDate = formatdate("YYYY-MM-DD", timestamp())
+    Repository  = "PCPC"
   }
 }
 
@@ -75,10 +75,10 @@ module "storage_account" {
   storage_account_name = "pcpcst${local.environment}${random_string.suffix.result}"
   resource_group_name  = module.resource_group.name
   location             = var.location
-  
+
   account_tier     = var.storage_account_tier
   replication_type = var.storage_account_replication_type
-  
+
   tags = local.common_tags
 
   depends_on = [module.resource_group]
@@ -96,7 +96,7 @@ module "cosmos_db" {
   consistency_level               = var.cosmos_consistency_level
   enable_automatic_failover       = var.cosmos_enable_automatic_failover
   enable_multiple_write_locations = var.cosmos_enable_multiple_write_locations
-  
+
   tags = local.common_tags
 
   depends_on = [module.resource_group]
@@ -113,23 +113,23 @@ module "function_app" {
 
   storage_account_name = module.storage_account.storage_account_name
   storage_account_key  = module.storage_account.primary_access_key
-  
+
   sku_name = var.function_app_sku_name
-  
+
   app_settings = merge(
     var.function_app_settings,
     {
-      "COSMOS_DB_CONNECTION_STRING" = module.cosmos_db.primary_sql_connection_string
-      "COSMOS_DB_ENDPOINT"          = module.cosmos_db.endpoint
-      "COSMOS_DB_KEY"               = module.cosmos_db.primary_key
-      "WEBSITE_NODE_DEFAULT_VERSION" = "~22"
-      "FUNCTIONS_WORKER_RUNTIME"    = "node"
-      "FUNCTIONS_EXTENSION_VERSION" = "~4"
-      "APPINSIGHTS_INSTRUMENTATIONKEY" = module.application_insights.instrumentation_key
+      "COSMOS_DB_CONNECTION_STRING"           = module.cosmos_db.primary_sql_connection_string
+      "COSMOS_DB_ENDPOINT"                    = module.cosmos_db.endpoint
+      "COSMOS_DB_KEY"                         = module.cosmos_db.primary_key
+      "WEBSITE_NODE_DEFAULT_VERSION"          = "~22"
+      "FUNCTIONS_WORKER_RUNTIME"              = "node"
+      "FUNCTIONS_EXTENSION_VERSION"           = "~4"
+      "APPINSIGHTS_INSTRUMENTATIONKEY"        = module.application_insights.instrumentation_key
       "APPLICATIONINSIGHTS_CONNECTION_STRING" = module.application_insights.connection_string
     }
   )
-  
+
   tags = local.common_tags
 
   depends_on = [module.resource_group, module.storage_account, module.cosmos_db, module.application_insights]

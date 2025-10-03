@@ -122,7 +122,7 @@ variable "function_app_settings" {
   default = {
     "POKEMON_TCG_API_KEY" = ""
     "ENVIRONMENT"         = "development"
-    "LOG_LEVEL"          = "debug"
+    "LOG_LEVEL"           = "debug"
   }
 }
 
