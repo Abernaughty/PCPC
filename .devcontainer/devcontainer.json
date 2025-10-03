@@ -9,7 +9,6 @@
       "extensions": [
         "HashiCorp.terraform",
         "ms-vscode.terraform-plan",
-        "ms-vscode.azure-account",
         "ms-azuretools.vscode-azurefunctions",
         "ms-azuretools.vscode-azurestaticwebapps",
         "ms-azuretools.vscode-azureresourcegroups",
