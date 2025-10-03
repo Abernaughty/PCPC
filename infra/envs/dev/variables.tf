@@ -31,35 +31,13 @@ variable "storage_account_replication_type" {
 }
 
 # Cosmos DB Configuration
-variable "cosmos_offer_type" {
-  description = "The offer type for Cosmos DB"
-  type        = string
-  default     = "Standard"
-}
-
-variable "cosmos_kind" {
-  description = "The kind of Cosmos DB account"
-  type        = string
-  default     = "GlobalDocumentDB"
-}
-
 variable "cosmos_consistency_level" {
   description = "The consistency level for Cosmos DB"
   type        = string
   default     = "Session"
 }
 
-variable "cosmos_max_interval_in_seconds" {
-  description = "The max interval in seconds for Cosmos DB consistency"
-  type        = number
-  default     = 300
-}
 
-variable "cosmos_max_staleness_prefix" {
-  description = "The max staleness prefix for Cosmos DB consistency"
-  type        = number
-  default     = 100000
-}
 
 variable "cosmos_enable_automatic_failover" {
   description = "Enable automatic failover for Cosmos DB"
@@ -73,41 +51,8 @@ variable "cosmos_enable_multiple_write_locations" {
   default     = false
 }
 
-variable "cosmos_databases" {
-  description = "List of Cosmos DB databases to create"
-  type = list(object({
-    name       = string
-    throughput = number
-    containers = list(object({
-      name               = string
-      partition_key_path = string
-      throughput         = number
-    }))
-  }))
-  default = [
-    {
-      name       = "PokeData"
-      throughput = 400
-      containers = [
-        {
-          name               = "cards"
-          partition_key_path = "/setId"
-          throughput         = 400
-        },
-        {
-          name               = "sets"
-          partition_key_path = "/id"
-          throughput         = 400
-        },
-        {
-          name               = "pricing-history"
-          partition_key_path = "/cardId"
-          throughput         = 400
-        }
-      ]
-    }
-  ]
-}
+# TODO: Future enhancement - Add cosmos_databases variable to enable full IaC
+# for database and container creation. See memory bank for details.
 
 # Function App Configuration
 variable "function_app_sku_name" {
