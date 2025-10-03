@@ -1,0 +1,119 @@
+# Terraform Plan Template
+# Generates and publishes Terraform execution plan
+
+parameters:
+  - name: environment
+    type: string
+  - name: serviceConnection
+    type: string
+
+jobs:
+  - job: Plan
+    displayName: "Terraform Plan - ${{ parameters.environment }}"
+    steps:
+      # Install Terraform
+      - task: TerraformInstaller@0
+        displayName: "Install Terraform $(terraformVersion)"
+        inputs:
+          terraformVersion: "$(terraformVersion)"
+
+      # Initialize Terraform with backend configuration
+      - task: AzureCLI@2
+        displayName: "Terraform Init"
+        inputs:
+          azureSubscription: "${{ parameters.serviceConnection }}"
+          scriptType: "bash"
+          scriptLocation: "inlineScript"
+          inlineScript: |
+            echo "Initializing Terraform with backend configuration..."
+            echo "Environment: ${{ parameters.environment }}"
+            echo "State Resource Group: $(TF_STATE_RESOURCE_GROUP)"
+            echo "State Storage Account: $(TF_STATE_STORAGE_ACCOUNT)"
+            echo "State Container: $(TF_STATE_CONTAINER)"
+
+            terraform init \
+              -backend-config="resource_group_name=$(TF_STATE_RESOURCE_GROUP)" \
+              -backend-config="storage_account_name=$(TF_STATE_STORAGE_ACCOUNT)" \
+              -backend-config="container_name=$(TF_STATE_CONTAINER)" \
+              -backend-config="key=pcpc.${{ parameters.environment }}.tfstate"
+
+            echo "Terraform initialization completed successfully"
+          workingDirectory: "$(workingDirectory)"
+          addSpnToEnvironment: true
+
+      # Generate Terraform plan
+      - task: AzureCLI@2
+        displayName: "Terraform Plan"
+        inputs:
+          azureSubscription: "${{ parameters.serviceConnection }}"
+          scriptType: "bash"
+          scriptLocation: "inlineScript"
+          inlineScript: |
+            echo "Generating Terraform plan..."
+            echo "Environment: ${{ parameters.environment }}"
+
+            # Run terraform plan with detailed exit code
+            # Exit code 0: No changes
+            # Exit code 1: Error
+            # Exit code 2: Changes present
+            set +e
+            terraform plan \
+              -out=tfplan \
+              -var="environment=${{ parameters.environment }}" \
+              -detailed-exitcode
+
+            PLAN_EXIT_CODE=$?
+
+            if [ $PLAN_EXIT_CODE -eq 0 ]; then
+              echo "##[section]No infrastructure changes detected"
+              echo "##vso[task.setvariable variable=HasChanges;isOutput=true]false"
+            elif [ $PLAN_EXIT_CODE -eq 2 ]; then
+              echo "##[section]Infrastructure changes detected"
+              echo "##vso[task.setvariable variable=HasChanges;isOutput=true]true"
+            else
+              echo "##[error]Terraform plan failed with exit code $PLAN_EXIT_CODE"
+              exit $PLAN_EXIT_CODE
+            fi
+          workingDirectory: "$(workingDirectory)"
+          addSpnToEnvironment: true
+        name: TerraformPlan
+
+      # Display plan summary
+      - script: |
+          echo "=========================================="
+          echo "Terraform Plan Summary"
+          echo "=========================================="
+          terraform show -no-color tfplan > plan-output.txt
+          cat plan-output.txt
+          echo "=========================================="
+
+          # Extract resource counts
+          TO_ADD=$(grep -c "will be created" plan-output.txt || echo "0")
+          TO_CHANGE=$(grep -c "will be updated" plan-output.txt || echo "0")
+          TO_DESTROY=$(grep -c "will be destroyed" plan-output.txt || echo "0")
+
+          echo "Resources to add: $TO_ADD"
+          echo "Resources to change: $TO_CHANGE"
+          echo "Resources to destroy: $TO_DESTROY"
+          echo "=========================================="
+        displayName: "Display Plan Summary"
+        workingDirectory: "$(workingDirectory)"
+        condition: succeeded()
+
+      # Publish plan artifact
+      - task: PublishPipelineArtifact@1
+        displayName: "Publish Plan Artifact"
+        inputs:
+          targetPath: "$(workingDirectory)/tfplan"
+          artifact: "tfplan-${{ parameters.environment }}"
+          publishLocation: "pipeline"
+        condition: and(succeeded(), eq(variables['TerraformPlan.HasChanges'], 'true'))
+
+      # Publish plan output for review
+      - task: PublishPipelineArtifact@1
+        displayName: "Publish Plan Output"
+        inputs:
+          targetPath: "$(workingDirectory)/plan-output.txt"
+          artifact: "tfplan-output-${{ parameters.environment }}"
+          publishLocation: "pipeline"
+        condition: succeeded()

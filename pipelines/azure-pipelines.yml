@@ -1,0 +1,60 @@
+# PCPC Infrastructure Deployment Pipeline
+# Azure DevOps pipeline for deploying PCPC infrastructure using Terraform
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - infra/**
+      - pipelines/**
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - infra/**
+      - pipelines/**
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+  - group: pcpc-terraform-dev
+  - name: terraformVersion
+    value: "1.13.3"
+  - name: workingDirectory
+    value: "$(System.DefaultWorkingDirectory)/infra/envs/dev"
+
+stages:
+  # Stage 1: Validate Terraform Configuration
+  - stage: Validate
+    displayName: "Validate Terraform"
+    jobs:
+      - template: templates/terraform-validate.yml
+
+  # Stage 2: Plan Infrastructure Changes
+  - stage: Plan
+    displayName: "Terraform Plan - Dev"
+    dependsOn: Validate
+    condition: succeeded()
+    jobs:
+      - template: templates/terraform-plan.yml
+        parameters:
+          environment: "dev"
+          serviceConnection: "pcpc-dev-terraform"
+
+  # Stage 3: Apply Infrastructure Changes
+  - stage: Apply
+    displayName: "Terraform Apply - Dev"
+    dependsOn: Plan
+    condition: succeeded()
+    jobs:
+      - template: templates/terraform-apply.yml
+        parameters:
+          environment: "dev"
+          serviceConnection: "pcpc-dev-terraform"
+          autoApprove: true # Auto-approve for dev environment

@@ -1,0 +1,60 @@
+# Terraform Validation Template
+# Validates Terraform configuration syntax, formatting, and best practices
+
+jobs:
+  - job: Validate
+    displayName: "Validate Terraform Configuration"
+    steps:
+      # Install Terraform
+      - task: TerraformInstaller@0
+        displayName: "Install Terraform $(terraformVersion)"
+        inputs:
+          terraformVersion: "$(terraformVersion)"
+
+      # Check Terraform formatting
+      - script: |
+          echo "Checking Terraform formatting..."
+          terraform fmt -check -recursive
+        displayName: "Terraform Format Check"
+        workingDirectory: "$(System.DefaultWorkingDirectory)/infra"
+        continueOnError: false
+
+      # Initialize Terraform (without backend for validation)
+      - script: |
+          echo "Initializing Terraform for validation..."
+          terraform init -backend=false
+        displayName: "Terraform Init (No Backend)"
+        workingDirectory: "$(workingDirectory)"
+
+      # Validate Terraform configuration
+      - script: |
+          echo "Validating Terraform configuration..."
+          terraform validate
+        displayName: "Terraform Validate"
+        workingDirectory: "$(workingDirectory)"
+
+      # Install and run tflint
+      - script: |
+          echo "Installing tflint..."
+          curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+
+          echo "Initializing tflint..."
+          tflint --init
+
+          echo "Running tflint..."
+          tflint --format compact
+        displayName: "Terraform Lint"
+        workingDirectory: "$(workingDirectory)"
+        continueOnError: true # Don't fail pipeline on linting warnings
+
+      # Display validation summary
+      - script: |
+          echo "=========================================="
+          echo "Terraform Validation Summary"
+          echo "=========================================="
+          echo "✓ Format check passed"
+          echo "✓ Syntax validation passed"
+          echo "✓ Linting completed"
+          echo "=========================================="
+        displayName: "Validation Summary"
+        condition: succeeded()
