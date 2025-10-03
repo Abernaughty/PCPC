@@ -12,14 +12,13 @@ terraform {
     }
   }
 
-  # Using local backend for development
-  # For production, uncomment and configure the azurerm backend below:
-  # backend "azurerm" {
-  #   resource_group_name  = "terraform-state-rg"
-  #   storage_account_name = "pcpctfstatedacc29c2"
-  #   container_name       = "tfstate"
-  #   key                  = "dev.terraform.tfstate"
-  # }
+  # Remote backend for state management
+  backend "azurerm" {
+    resource_group_name  = "pcpc-terraform-state-rg"
+    storage_account_name = "pcpctfstatedacc29c2"
+    container_name       = "tfstate"
+    key                  = "dev.terraform.tfstate"
+  }
 }
 
 provider "azurerm" {
@@ -263,4 +262,3 @@ module "api_management" {
 
   depends_on = [module.resource_group]
 }
-
