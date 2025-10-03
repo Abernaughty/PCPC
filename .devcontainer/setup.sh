@@ -19,8 +19,8 @@ echo "📦 Installing DevContainer Node.js dependencies..."
 cd .devcontainer && npm install && cd ..
 
 # Wait for emulators to be ready
-echo "⏳ Waiting for emulators to start..."
-sleep 15
+# echo "⏳ Waiting for emulators to start..."
+# sleep 15
 
 # Verify emulator connectivity
 echo "✅ Verifying emulator connectivity..."
@@ -35,4 +35,24 @@ echo "💡 All tools pre-installed from ACR image v1.3.0 (95% faster startup!)"
 echo "🔧 New in v1.3.0: Azure Functions Core Tools v4.x + Terraform 1.13.3"
 
 # Ensure .env exists
-[ -f .env ] || cp .env.example .env
+[ -f /workspace/.devcontainer/.env ] || cp /workspace/.devcontainer/.env.example /workspace/.devcontainer/.env
+[ -f /workspace/app/backend/local.settings.json ] || cp /workspace/app/backend/local.settings.json.example /workspace/app/backend/local.settings.json
+[ -f /workspace/app/frontend/.env ] || cp /workspace/app/frontend/.env.example /workspace/app/frontend/.env
+
+# Ensure custom dotfiles are in place
+echo "🔧 Setting up custom dotfiles..."
+cp /workspace/.devcontainer/.bashrc ~/.bashrc
+if [ ! -f ~/.bash_profile ]; then
+    cat > ~/.bash_profile << 'EOF'
+#!/bin/bash
+# .bash_profile - Executed for login shells
+
+# Source .bashrc if it exists
+if [ -f ~/.bashrc ]; then
+    source ~/.bashrc
+fi
+
+# Additional login shell configurations can go here
+EOF
+fi
+echo "✅ Dotfiles configured"
