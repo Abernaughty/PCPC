@@ -42,6 +42,7 @@ export LC_ALL=en_US.UTF-8
 # ------------------------------------------------------------------------------
 # Git Configuration Aliases
 # ------------------------------------------------------------------------------
+alias gf='git fetch'
 alias gs='git status'
 alias ga='git add'
 alias gc='git commit'
