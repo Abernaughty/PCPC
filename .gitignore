@@ -21,7 +21,6 @@ out/
 .env.development.local
 .env.test.local
 .env.production.local
-local.settings.json
 
 # IDE and editor files
 .vscode/
@@ -163,11 +162,11 @@ Icon
 *.iws
 
 # Visual Studio Code
-.vscode/settings.json
-.vscode/tasks.json
-.vscode/launch.json
-.vscode/extensions.json
-.history/
+# .vscode/settings.json
+# .vscode/tasks.json
+# .vscode/launch.json
+# .vscode/extensions.json
+# .history/
 
 # Sublime Text
 *.sublime-project
