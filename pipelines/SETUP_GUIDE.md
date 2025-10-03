@@ -36,7 +36,7 @@ az account set --subscription "<your-subscription-id>"
 RESOURCE_GROUP="pcpc-terraform-state-rg"
 STORAGE_ACCOUNT="pcpctfstate$(openssl rand -hex 4)"
 CONTAINER_NAME="tfstate"
-LOCATION="eastus"
+LOCATION="centralus"
 
 # Save storage account name for later
 echo "Storage Account Name: $STORAGE_ACCOUNT"
