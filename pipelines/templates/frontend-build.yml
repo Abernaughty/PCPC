@@ -1,0 +1,105 @@
+# Frontend Build Template
+# Builds Svelte application and runs unit tests
+
+parameters:
+  - name: nodeVersion
+    type: string
+    default: "22.x"
+  - name: workingDirectory
+    type: string
+    default: "$(System.DefaultWorkingDirectory)/app/frontend"
+
+jobs:
+  - job: BuildAndTest
+    displayName: "Build and Test Frontend"
+    steps:
+      # Setup Node.js
+      - task: NodeTool@0
+        displayName: "Install Node.js ${{ parameters.nodeVersion }}"
+        inputs:
+          versionSpec: ${{ parameters.nodeVersion }}
+
+      # Install dependencies
+      - script: |
+          cd ${{ parameters.workingDirectory }}
+          npm ci
+        displayName: "Install Dependencies"
+
+      # Run unit tests with coverage
+      - script: |
+          cd ${{ parameters.workingDirectory }}
+          npm test -- --selectProjects=frontend --ci --coverage --reporters=default --reporters=jest-junit
+        displayName: "Run Unit Tests"
+        env:
+          JEST_JUNIT_OUTPUT_DIR: $(System.DefaultWorkingDirectory)/test-results
+          JEST_JUNIT_OUTPUT_NAME: frontend-test-results.xml
+
+      # Publish test results
+      - task: PublishTestResults@2
+        displayName: "Publish Test Results"
+        condition: succeededOrFailed()
+        inputs:
+          testResultsFormat: "JUnit"
+          testResultsFiles: "**/frontend-test-results.xml"
+          searchFolder: $(System.DefaultWorkingDirectory)/test-results
+          mergeTestResults: true
+          failTaskOnFailedTests: true
+          testRunTitle: "Frontend Unit Tests"
+
+      # Publish code coverage
+      - task: PublishCodeCoverageResults@2
+        displayName: "Publish Code Coverage"
+        condition: succeededOrFailed()
+        inputs:
+          codeCoverageTool: "Cobertura"
+          summaryFileLocation: "$(System.DefaultWorkingDirectory)/app/frontend/coverage/cobertura-coverage.xml"
+          reportDirectory: "$(System.DefaultWorkingDirectory)/app/frontend/coverage"
+          failIfCoverageEmpty: false
+
+      # Build production bundle
+      - script: |
+          cd ${{ parameters.workingDirectory }}
+          npm run build
+        displayName: "Build Production Bundle"
+        env:
+          NODE_ENV: production
+          VITE_API_BASE_URL: $(VITE_API_BASE_URL)
+          VITE_APPLICATIONINSIGHTS_CONNECTION_STRING: $(VITE_APPLICATIONINSIGHTS_CONNECTION_STRING)
+          VITE_APPLICATIONINSIGHTS_ROLE_NAME: $(VITE_APPLICATIONINSIGHTS_ROLE_NAME)
+          VITE_APP_VERSION: $(Build.BuildNumber)
+          VITE_ENVIRONMENT: $(VITE_ENVIRONMENT)
+
+      # Verify build output
+      - script: |
+          cd ${{ parameters.workingDirectory }}
+          if [ ! -d "public/build" ]; then
+            echo "Error: Build directory not found!"
+            exit 1
+          fi
+          if [ ! -f "public/build/bundle.js" ]; then
+            echo "Error: bundle.js not found!"
+            exit 1
+          fi
+          echo "Build verification successful"
+          ls -lh public/build/
+        displayName: "Verify Build Output"
+
+      # Publish build artifacts
+      - task: PublishBuildArtifacts@1
+        displayName: "Publish Build Artifacts"
+        inputs:
+          PathtoPublish: "${{ parameters.workingDirectory }}/public"
+          ArtifactName: "frontend-build"
+          publishLocation: "Container"
+
+      # Display build summary
+      - script: |
+          echo "==================================="
+          echo "Frontend Build Summary"
+          echo "==================================="
+          echo "Node Version: ${{ parameters.nodeVersion }}"
+          echo "Build Number: $(Build.BuildNumber)"
+          echo "Source Branch: $(Build.SourceBranch)"
+          echo "Commit: $(Build.SourceVersion)"
+          echo "==================================="
+        displayName: "Build Summary"
