@@ -67,7 +67,7 @@ export async function healthCheck(
     }
 
     // Check Redis if enabled
-    if (process.env.REDIS_CACHE_ENABLED === "true") {
+    if (process.env.ENABLE_REDIS_CACHE === "true") {
       checks.redis = await checkRedis();
     } else {
       checks.redis = {

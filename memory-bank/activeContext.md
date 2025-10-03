@@ -52,6 +52,48 @@
 
 ## Recent Changes (Last 10 Events)
 
+### 2025-10-03 19:52 - Environment Variable Configuration Standardization Completed
+
+- **Action**: Successfully standardized and cleaned up environment variable configuration across all files
+- **Impact**: Eliminated duplication, fixed inconsistent naming, resolved Terraform validation errors
+- **Key Achievements**:
+  - **Terraform Validation Fixed**: Removed `TF_VAR_environment: "local"` causing validation errors
+  - **Variable Naming Standardized**: Verified actual code usage and standardized to correct names
+  - **Duplication Eliminated**: Removed redundant variables across configuration files
+  - **Configuration Consolidated**: Single source of truth established for each environment type
+- **Files Modified**:
+  - `.devcontainer/devcontainer.json` - Simplified containerEnv to only NODE_ENV
+  - `.devcontainer/.env` - Added DisableServerCertificateValidation to Cosmos connection string
+  - `app/backend/local.settings.json` - Fixed 3 variable names, removed 2 duplicates
+  - `app/backend/src/functions/HealthCheck/index.ts` - Fixed Redis cache variable reference
+  - Deleted `/workspace/.env` - Eliminated root-level duplication
+- **Variable Naming Fixes** (verified against actual code usage):
+  1. **POKEMON_TCG_BASE_URL** → **POKEMON_TCG_API_BASE_URL** (used in index.ts)
+  2. **AZURE_STORAGE_CONNECTION_STRING** removed (duplicate of BLOB_STORAGE_CONNECTION_STRING)
+  3. **REDIS_CACHE_ENABLED** removed (standardized on ENABLE_REDIS_CACHE used in 12 locations)
+  4. **HealthCheck function** updated to use ENABLE_REDIS_CACHE (was using REDIS_CACHE_ENABLED)
+- **Configuration Structure** (final state):
+  - **`.devcontainer/.env`**: Single source for container environment (emulators, API URLs)
+  - **`app/backend/local.settings.json`**: Backend runtime only (database names, feature flags, cache settings)
+  - **`app/frontend/.env`**: Frontend build/runtime (API endpoints, Application Insights, feature flags)
+  - **`devcontainer.json` containerEnv**: Minimal (only NODE_ENV=development)
+- **Code Analysis Performed**:
+  - Searched all TypeScript files to verify which variable names are actually used
+  - Found ENABLE_REDIS_CACHE used in 12 locations vs REDIS_CACHE_ENABLED in 1 location
+  - Confirmed BLOB_STORAGE_CONNECTION_STRING is the correct storage variable name
+  - Verified POKEMON_TCG_API_BASE_URL matches code expectations
+- **Technical Details**:
+  - Cosmos DB connection string now includes `DisableServerCertificateValidation=true` in both files
+  - All storage operations use `BLOB_STORAGE_CONNECTION_STRING` consistently
+  - Redis cache operations use `ENABLE_REDIS_CACHE` consistently across all 13 locations
+  - Pokemon TCG API calls use `POKEMON_TCG_API_BASE_URL` consistently
+- **Benefits**:
+  - **No Duplication**: Each variable exists in exactly one appropriate location
+  - **Consistent Naming**: All code references match configuration variable names
+  - **Clear Organization**: Each config file has single, well-defined purpose
+  - **Terraform Compatible**: No conflicting environment variables causing validation errors
+- **Status**: Environment variable configuration standardization COMPLETE - all files properly organized with consistent naming
+
 ### 2025-10-03 18:10 - Azure DevOps Pipeline Implementation and TFLint Cleanup
 
 - **Action**: Successfully implemented complete Azure DevOps pipeline for infrastructure deployment and cleaned up Terraform linting warnings

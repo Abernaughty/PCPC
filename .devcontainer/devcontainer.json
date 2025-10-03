@@ -56,10 +56,6 @@
   },
 
   "containerEnv": {
-    "TF_VAR_environment": "local",
-    "TF_VAR_location": "centralus",
-    "AZURE_FUNCTIONS_ENVIRONMENT": "Development",
-    "ASPNETCORE_ENVIRONMENT": "Development",
     "NODE_ENV": "development"
   },
 
