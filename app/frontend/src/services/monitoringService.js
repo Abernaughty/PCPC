@@ -266,22 +266,28 @@ class MonitoringService {
 
   /**
    * Start a performance timer
-   * @param {string} name - Timer name
-   * @returns {Object} Timer object with stop method
+   * @param {string} name - Timer name (optional)
+   * @returns {Function} Timer function that returns elapsed time when called
    */
   startTimer(name) {
     const startTime = performance.now();
 
-    return {
-      stop: (properties = {}) => {
-        const duration = performance.now() - startTime;
+    // Return a function that can be called to get elapsed time
+    const timerFunc = (properties = {}) => {
+      const duration = performance.now() - startTime;
+      if (name) {
         this.trackMetric(name, duration, {
           ...properties,
           unit: "milliseconds",
         });
-        return duration;
-      },
+      }
+      return duration;
     };
+
+    // Keep the stop method for backward compatibility
+    timerFunc.stop = timerFunc;
+
+    return timerFunc;
   }
 
   /**
