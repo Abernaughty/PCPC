@@ -28,7 +28,7 @@ variable "sku" {
   description = "The SKU of the Log Analytics workspace"
   type        = string
   default     = "PerGB2018"
-  
+
   validation {
     condition = contains([
       "Free", "Standalone", "PerNode", "PerGB2018"
@@ -41,7 +41,7 @@ variable "retention_in_days" {
   description = "The workspace data retention in days"
   type        = number
   default     = 30
-  
+
   validation {
     condition     = var.retention_in_days >= 30 && var.retention_in_days <= 730
     error_message = "Retention in days must be between 30 and 730."

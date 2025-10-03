@@ -28,7 +28,7 @@ variable "application_type" {
   description = "The type of Application Insights to create"
   type        = string
   default     = "web"
-  
+
   validation {
     condition = contains([
       "web", "ios", "other", "store", "java", "phone"
@@ -46,7 +46,7 @@ variable "retention_in_days" {
   description = "The retention period in days for Application Insights"
   type        = number
   default     = 90
-  
+
   validation {
     condition     = var.retention_in_days >= 30 && var.retention_in_days <= 730
     error_message = "Retention in days must be between 30 and 730."
@@ -69,7 +69,7 @@ variable "sampling_percentage" {
   description = "The percentage of telemetry to sample"
   type        = number
   default     = 100
-  
+
   validation {
     condition     = var.sampling_percentage >= 0 && var.sampling_percentage <= 100
     error_message = "Sampling percentage must be between 0 and 100."
