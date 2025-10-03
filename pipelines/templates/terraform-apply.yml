@@ -46,25 +46,36 @@ jobs:
                 inlineScript: |
                   echo "Initializing Terraform with backend configuration..."
                   echo "Environment: ${{ parameters.environment }}"
+                  echo "Working Directory: $(workingDirectory)"
+                  echo "State Resource Group: $(TF_STATE_RESOURCE_GROUP)"
+                  echo "State Storage Account: $(TF_STATE_STORAGE_ACCOUNT)"
+                  echo "State Container: $(TF_STATE_CONTAINER)"
 
+                  # Change to working directory
+                  cd $(workingDirectory)
+
+                  # Remove any existing .terraform directory to ensure clean init
+                  rm -rf .terraform
+
+                  # Initialize with backend configuration
                   terraform init \
                     -backend-config="resource_group_name=$(TF_STATE_RESOURCE_GROUP)" \
                     -backend-config="storage_account_name=$(TF_STATE_STORAGE_ACCOUNT)" \
                     -backend-config="container_name=$(TF_STATE_CONTAINER)" \
-                    -backend-config="key=pcpc.${{ parameters.environment }}.tfstate"
+                    -backend-config="key=pcpc.${{ parameters.environment }}.tfstate" \
+                    -reconfigure
 
                   echo "Terraform initialization completed successfully"
-                workingDirectory: "$(workingDirectory)"
                 addSpnToEnvironment: true
 
             # Copy plan file to working directory
             - script: |
+                cd $(workingDirectory)
                 echo "Copying plan file to working directory..."
                 cp $(Pipeline.Workspace)/tfplan/tfplan .
                 ls -la tfplan
                 echo "Plan file copied successfully"
               displayName: "Copy Plan File"
-              workingDirectory: "$(workingDirectory)"
               condition: succeeded()
 
             # Apply Terraform plan
@@ -77,7 +88,11 @@ jobs:
                 inlineScript: |
                   echo "Applying Terraform plan..."
                   echo "Environment: ${{ parameters.environment }}"
+                  echo "Working Directory: $(workingDirectory)"
                   echo "Auto-approve: ${{ parameters.autoApprove }}"
+
+                  # Change to working directory
+                  cd $(workingDirectory)
 
                   # Apply the plan
                   if [ "${{ parameters.autoApprove }}" = "True" ]; then
@@ -96,11 +111,11 @@ jobs:
                     echo "##[error]Terraform apply failed with exit code $APPLY_EXIT_CODE"
                     exit $APPLY_EXIT_CODE
                   fi
-                workingDirectory: "$(workingDirectory)"
                 addSpnToEnvironment: true
 
             # Display Terraform outputs
             - script: |
+                cd $(workingDirectory)
                 echo "=========================================="
                 echo "Terraform Outputs"
                 echo "=========================================="
@@ -108,7 +123,6 @@ jobs:
                 cat outputs.json | jq '.' || cat outputs.json
                 echo "=========================================="
               displayName: "Display Terraform Outputs"
-              workingDirectory: "$(workingDirectory)"
               condition: succeeded()
 
             # Publish outputs artifact

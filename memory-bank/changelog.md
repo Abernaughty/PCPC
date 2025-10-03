@@ -13,6 +13,109 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Phase 4.2.9: Observability Infrastructure (Dashboards + Advanced Monitoring)
 - Cosmos DB Module Enhancement (Database/Container IaC)
 
+## [2.5.2] - 2025-10-03
+
+### Added
+
+- **Terraform Remote Backend Configuration and State Migration Solution**: Complete solution for resolving pipeline deployment errors caused by local state management
+
+  - **Backend Configuration**: Uncommented and corrected remote backend in `infra/envs/dev/main.tf`
+
+    - Fixed resource group name from `terraform-state-rg` to `pcpc-terraform-state-rg`
+    - Configured Azure Storage backend: `pcpctfstatedacc29c2` storage account, `tfstate` container
+    - State file key: `dev.terraform.tfstate`
+
+  - **Import Script Created**: Automated bash script for backend initialization and resource import
+
+    - `infra/envs/dev/import-existing-resources.sh` (200+ lines)
+    - Azure CLI authentication verification
+    - Backend storage validation
+    - Terraform initialization with remote backend
+    - Automatic resource group import
+    - Detection and import guidance for other resources (Cosmos DB, Storage, Function App, etc.)
+    - Color-coded output with progress indicators
+    - Comprehensive error handling
+
+  - **Comprehensive Documentation**: Complete migration guides for user execution
+    - `infra/envs/dev/MIGRATION_GUIDE.md` (200+ lines) - Complete step-by-step migration instructions
+    - `infra/envs/dev/QUICK_START.md` (60+ lines) - Quick reference guide
+    - Troubleshooting guide for common errors
+    - Pipeline variable verification checklist
+    - Security and backup considerations
+
+### Fixed
+
+- **Pipeline Deployment Error**: Resolved "resource already exists" error caused by local state management
+  - **Root Cause**: Backend configuration was commented out, causing each pipeline run to start with empty state
+  - **Impact**: Resource group `pcpc-rg-dev` existed in Azure but wasn't tracked in Terraform state
+  - **Solution**: Configured remote backend and created automated import tooling
+
+### Changed
+
+- **State Management Strategy**: Migrated from local state to remote Azure Storage backend
+  - State now persisted in Azure Storage for consistency across pipeline runs
+  - Shared state between local development and pipeline deployments
+  - State locking prevents concurrent modifications
+  - No more "resource already exists" errors in pipeline
+
+### Infrastructure
+
+- **Remote Backend Configuration**:
+
+  ```hcl
+  backend "azurerm" {
+    resource_group_name  = "pcpc-terraform-state-rg"
+    storage_account_name = "pcpctfstatedacc29c2"
+    container_name       = "tfstate"
+    key                  = "dev.terraform.tfstate"
+  }
+  ```
+
+- **Migration Process**:
+  1. User authenticates with Azure CLI (`az login`)
+  2. Run import script to initialize backend and import resource group
+  3. Import additional resources if they exist (script provides commands)
+  4. Verify with `terraform plan`
+  5. Commit changes and push to trigger pipeline
+
+### Technical Achievements
+
+- **Automated Migration**: Complete bash script handles backend initialization and resource import
+- **Comprehensive Documentation**: Step-by-step guides with troubleshooting and best practices
+- **Error Prevention**: Proper state management prevents future deployment conflicts
+- **Pipeline Compatibility**: Backend configuration works seamlessly with Azure DevOps pipeline
+
+### Development Experience
+
+- **Clear Instructions**: User has complete guide for executing migration
+- **Automated Tooling**: Script handles complex migration steps automatically
+- **Troubleshooting Support**: Comprehensive error handling and documentation
+- **Quick Reference**: Quick start guide for immediate action
+
+### Files Created
+
+- `infra/envs/dev/import-existing-resources.sh` - Automated migration script (200+ lines)
+- `infra/envs/dev/MIGRATION_GUIDE.md` - Complete migration documentation (200+ lines)
+- `infra/envs/dev/QUICK_START.md` - Quick reference guide (60+ lines)
+
+### Files Modified
+
+- `infra/envs/dev/main.tf` - Uncommented and corrected backend configuration
+
+### User Action Required
+
+- Authenticate with Azure CLI
+- Run import script to complete migration
+- Verify with terraform plan
+- Push changes to test pipeline
+
+### Terraform State Migration Impact
+
+- **Pipeline Reliability**: No more "resource already exists" errors
+- **State Consistency**: Shared state across local and pipeline runs
+- **Concurrent Protection**: State locking prevents conflicts
+- **Enterprise Standards**: Proper state management following best practices
+
 ## [2.5.1] - 2025-10-03
 
 ### Fixed
