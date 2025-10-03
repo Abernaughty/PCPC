@@ -47,8 +47,8 @@ locals {
 
   # Build app settings with defaults - simplified for Node.js
   default_app_settings = {
-    "FUNCTIONS_WORKER_RUNTIME"     = "node"
-    "WEBSITE_RUN_FROM_PACKAGE"     = "1"
+    "FUNCTIONS_WORKER_RUNTIME" = "node"
+    "WEBSITE_RUN_FROM_PACKAGE" = "1"
   }
 
   app_settings = merge(local.default_app_settings, var.app_settings)
@@ -61,7 +61,7 @@ locals {
 # -----------------------------------------------------------------------------
 
 resource "azurerm_storage_account" "this" {
-  count = 0  # Never create - storage account is always provided
+  count = 0 # Never create - storage account is always provided
 
   name                     = "${replace(var.name, "-", "")}st"
   resource_group_name      = var.resource_group_name
