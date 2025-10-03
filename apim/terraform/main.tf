@@ -61,14 +61,14 @@ locals {
 
   # Policy template variables
   policy_vars = {
-    cors_origins         = var.cors_origins
-    rate_limit_calls     = var.rate_limit_calls
-    rate_limit_period    = var.rate_limit_period
-    cache_duration_sets  = var.cache_duration_sets
-    function_app_url     = local.function_app_url
-    function_app_key     = var.function_app_key
-    environment          = var.environment
-    backend_timeout      = var.backend_timeout
+    cors_origins        = var.cors_origins
+    rate_limit_calls    = var.rate_limit_calls
+    rate_limit_period   = var.rate_limit_period
+    cache_duration_sets = var.cache_duration_sets
+    function_app_url    = local.function_app_url
+    function_app_key    = var.function_app_key
+    environment         = var.environment
+    backend_timeout     = var.backend_timeout
   }
 }
 

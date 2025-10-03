@@ -55,16 +55,16 @@ module "pcpc_apim" {
   rate_limit_period = 60
 
   # Caching configuration (shorter durations for development)
-  cache_duration_sets      = 300  # 5 minutes
-  cache_duration_cards     = 600  # 10 minutes
-  cache_duration_card_info = 900  # 15 minutes
+  cache_duration_sets      = 300 # 5 minutes
+  cache_duration_cards     = 600 # 10 minutes
+  cache_duration_card_info = 900 # 15 minutes
 
   # Backend configuration
   backend_timeout = 30
 
   # Feature flags
-  enable_caching           = true
-  enable_detailed_logging  = true
+  enable_caching              = true
+  enable_detailed_logging     = true
   enable_application_insights = var.enable_application_insights
   application_insights_name   = var.application_insights_name
 
@@ -79,20 +79,20 @@ module "pcpc_apim" {
       published             = true
       approval_required     = false
       subscription_required = true
-      subscriptions_limit   = 5  # Higher limit for dev testing
+      subscriptions_limit   = 5 # Higher limit for dev testing
     }
     premium = {
       display_name          = "Premium (Dev)"
       description           = "Premium product for development testing"
       published             = true
-      approval_required     = false  # No approval required in dev
+      approval_required     = false # No approval required in dev
       subscription_required = true
       subscriptions_limit   = 10
     }
   }
 
   # Monitoring configuration
-  log_retention_days = 7  # Shorter retention for dev
+  log_retention_days = 7 # Shorter retention for dev
 
   # Additional tags
   additional_tags = {

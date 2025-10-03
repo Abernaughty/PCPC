@@ -180,9 +180,9 @@ resource "azurerm_api_management_api_diagnostic" "pcpc_api_diagnostics" {
   api_management_logger_id = azurerm_api_management_logger.application_insights[0].id
 
   sampling_percentage       = 100.0
-  always_log_errors        = true
-  log_client_ip            = true
-  verbosity                = var.enable_detailed_logging ? "verbose" : "information"
+  always_log_errors         = true
+  log_client_ip             = true
+  verbosity                 = var.enable_detailed_logging ? "verbose" : "information"
   http_correlation_protocol = "W3C"
 
   frontend_request {
