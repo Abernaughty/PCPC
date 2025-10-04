@@ -52,6 +52,43 @@
 
 ## Recent Changes (Last 10 Events)
 
+### 2025-10-04 22:27 - APIM SKU Configuration Issue and Resolution Plan - IN PROGRESS
+
+- **Action**: Identified and corrected APIM SKU configuration from Developer to Consumption tier
+- **Impact**: Infrastructure pipeline was deploying expensive Developer SKU ($50/month) instead of cost-free Consumption tier
+- **Problem Discovered**: Variable `apim_sku_name` was set to `"Developer_1"` instead of `"Consumption"` in `infra/envs/dev/variables.tf`
+- **Root Cause**: Default value not updated when APIM was enabled in infrastructure pipeline
+- **Current Situation**:
+  - APIM instance `pcpc-apim-dev` is currently being provisioned with Developer SKU
+  - Resource is locked with `ServiceLocked` error: "The API Service pcpc-apim-dev is transitioning at this time"
+  - Cannot delete until provisioning completes (typically 15-45 minutes)
+- **Resolution Plan** (User Decision):
+  1. **Wait for provisioning to complete** - Monitor APIM status until state shows "Succeeded"
+  2. **Delete Developer SKU APIM** - Use `az apim delete --name pcpc-apim-dev --resource-group pcpc-rg-dev --yes --no-wait`
+  3. **Wait for deletion** - Deletion takes 15-30 minutes
+  4. **Push Consumption SKU change** - Trigger pipeline with corrected configuration
+  5. **Deploy clean Consumption SKU** - Fresh deployment with correct tier (5-15 minutes)
+- **Files Modified**:
+  - `infra/envs/dev/variables.tf` - Changed `apim_sku_name` default from `"Developer_1"` to `"Consumption"`
+  - `pipelines/azure-pipelines.yml` - Aligned trigger and PR path filters for consistency
+  - `pipelines/templates/terraform-apply.yml` - Fixed authentication issues (Display Outputs, Post-Deployment Validation)
+- **Timeline Expectations**:
+  - APIM Creation (Developer): 15-45 minutes
+  - APIM Deletion: 15-30 minutes
+  - APIM Creation (Consumption): 5-15 minutes
+  - **Total time to clean Consumption SKU**: ~30-90 minutes from discovery
+- **Cost Impact**:
+  - Developer SKU: ~$50/month fixed cost
+  - Consumption SKU: $0 base + pay-per-call (much cheaper for low traffic)
+  - Aligns with project goal of $0/month dev environment
+- **Security Architecture Maintained**:
+  - APIM still provides function key protection (proxies Function App)
+  - Rate limiting still enforced via APIM subscription keys
+  - CORS policies and caching still configured
+  - Consumption tier sufficient for dev/test workloads
+- **Status**: Waiting for APIM provisioning to complete before deletion and redeployment
+- **Next**: Monitor APIM status, delete when ready, redeploy with Consumption SKU
+
 ### 2025-10-04 21:53 - Frontend Pipeline URL Handling Fix - COMPLETE
 
 - **Action**: Fixed frontend pipeline verification script to properly handle Azure-generated Static Web App URLs

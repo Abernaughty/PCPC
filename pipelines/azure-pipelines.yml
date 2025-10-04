@@ -10,6 +10,8 @@ trigger:
       - infra/**
       - pipelines/azure-pipelines.yml
       - pipelines/templates/terraform-*.yml
+      - pipelines/scripts/setup-backend.sh
+      - pipelines/scripts/validate-deployment.sh
 
 pr:
   branches:
@@ -18,7 +20,10 @@ pr:
   paths:
     include:
       - infra/**
-      - pipelines/**
+      - pipelines/azure-pipelines.yml
+      - pipelines/templates/terraform-*.yml
+      - pipelines/scripts/setup-backend.sh
+      - pipelines/scripts/validate-deployment.sh
 
 pool:
   vmImage: "ubuntu-latest"
