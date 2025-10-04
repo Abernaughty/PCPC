@@ -103,7 +103,7 @@ variable "static_web_app_settings" {
 variable "enable_api_management" {
   description = "Whether to enable API Management"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "apim_publisher_name" {
