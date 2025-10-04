@@ -121,7 +121,7 @@ variable "apim_publisher_email" {
 variable "apim_sku_name" {
   description = "The SKU name for API Management"
   type        = string
-  default     = "Consumption"
+  default     = "Consumption_0"
 }
 
 # Log Analytics Configuration
