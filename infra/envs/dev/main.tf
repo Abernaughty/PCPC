@@ -20,6 +20,7 @@ terraform {
     key                  = "dev.terraform.tfstate"
     tenant_id            = "5f445a68-ec75-42cf-a50f-6ec158ee675c"
     subscription_id      = "555b4cfa-ad2e-4c71-9433-620a59cf7616"
+    lock_timeout         = "5m"  # Automatically release after 5 minutes of inactivity
   }
 }
 
