@@ -78,23 +78,23 @@ jobs:
       # Verify build output
       - script: |
           cd ${{ parameters.workingDirectory }}
-          if [ ! -d "public/build" ]; then
+          if [ ! -d "dist" ]; then
             echo "Error: Build directory not found!"
             exit 1
           fi
-          if [ ! -f "public/build/main.js" ]; then
+          if [ ! -f "dist/main.js" ]; then
             echo "Error: main.js not found!"
             exit 1
           fi
           echo "Build verification successful"
-          ls -lh public/build/
+          ls -lh dist/
         displayName: "Verify Build Output"
 
       # Publish build artifacts
       - task: PublishBuildArtifacts@1
         displayName: "Publish Build Artifacts"
         inputs:
-          PathtoPublish: "${{ parameters.workingDirectory }}/public"
+          PathtoPublish: "${{ parameters.workingDirectory }}/dist"
           ArtifactName: "frontend-build"
           publishLocation: "Container"
 

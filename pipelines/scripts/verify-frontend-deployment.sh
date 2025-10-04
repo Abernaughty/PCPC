@@ -93,8 +93,8 @@ check_javascript_bundle() {
     echo "Test 3: JavaScript Bundle Check"
     echo "--------------------------------"
     
-    # Check if main.js exists (Rollup output)
-    BUNDLE_URL="${url}/build/main.js"
+    # Check if main.js exists (Rollup output - now at root level)
+    BUNDLE_URL="${url}/main.js"
     BUNDLE_HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${BUNDLE_URL}" || echo "000")
     
     if [ "$BUNDLE_HTTP_CODE" = "200" ]; then
@@ -124,18 +124,8 @@ check_css() {
     echo "Test 4: CSS Check"
     echo "-----------------"
     
-    # Check if global.css exists
-    CSS_URL="${url}/global.css"
-    CSS_HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${CSS_URL}" || echo "000")
-    
-    if [ "$CSS_HTTP_CODE" = "200" ]; then
-        echo "✓ Global CSS accessible (${CSS_URL})"
-    else
-        echo "✗ WARNING: Global CSS not accessible (HTTP ${CSS_HTTP_CODE})"
-    fi
-    
-    # Check if bundle.css exists
-    BUNDLE_CSS_URL="${url}/build/bundle.css"
+    # Check if bundle.css exists (now at root level)
+    BUNDLE_CSS_URL="${url}/bundle.css"
     BUNDLE_CSS_HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${BUNDLE_CSS_URL}" || echo "000")
     
     if [ "$BUNDLE_CSS_HTTP_CODE" = "200" ]; then
