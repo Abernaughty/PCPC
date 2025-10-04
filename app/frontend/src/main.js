@@ -4,6 +4,9 @@ import { loggerService } from "./services/loggerService";
 import { monitoringService } from "./services/monitoringService";
 import { initWebVitals } from "./utils/webVitals";
 
+// Import global styles - bundled into bundle.css by Rollup
+import "./styles/global.css";
+
 // Initialize the application with logging
 function initializeApp() {
   // Initialize Application Insights monitoring

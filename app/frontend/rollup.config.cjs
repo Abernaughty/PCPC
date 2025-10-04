@@ -6,6 +6,7 @@ const livereload = require("rollup-plugin-livereload");
 const { terser } = require("rollup-plugin-terser");
 const css = require("rollup-plugin-css-only");
 const replace = require("@rollup/plugin-replace");
+const copy = require("rollup-plugin-copy");
 const dotenv = require("dotenv");
 
 // Load environment variables from .env file
@@ -65,7 +66,7 @@ module.exports = {
   output: {
     sourcemap: production, // Only generate source maps in production
     format: "esm",
-    dir: "public/build",
+    dir: "dist",
     // Always use .js extension to match index.html expectations
     entryFileNames: `[name].js`,
     chunkFileNames: `[name].js`,
@@ -140,6 +141,14 @@ module.exports = {
       // Add source maps in development mode
       sourceMap: !production,
     }),
+    // Copy static assets and index.html to dist/
+    copy({
+      targets: [
+        { src: "static/*", dest: "dist" },
+        { src: "src/index.html", dest: "dist" },
+      ],
+      hook: "writeBundle",
+    }),
     nodeResolve({
       browser: true,
       dedupe: ["svelte"],
@@ -148,7 +157,7 @@ module.exports = {
     !production && serve(),
     !production &&
       livereload({
-        watch: "public",
+        watch: ["dist", "src"],
         port: LIVERELOAD_PORT,
         verbose: true,
       }),

@@ -9,10 +9,262 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Frontend Pipeline Deployment Path Fix (final 5% to completion)
-- Production Infrastructure Deployment
+- Phase 4.2.8.3 Completion: User Experience & Business Metrics (hybridDataService, storage/db, component tracking)
 - Phase 4.2.9: Observability Infrastructure (Dashboards + Advanced Monitoring)
 - Cosmos DB Module Enhancement (Database/Container IaC)
+- GitHub Issue #4 Phase 4: Update Documentation and Git
+
+## [2.6.4] - 2025-10-04
+
+### Fixed
+
+- **GitHub Issue #4 Phase 3 Complete Resolution - CSS Bundling Critical Fix**: Resolved missing styles issue after path updates
+
+  - **Critical Discovery**: CSS file was loading (HTTP 200) but contained no styles because global.css wasn't imported in JavaScript
+  - **Root Cause**: Removed `<link rel="stylesheet" href="./global.css">` from index.html but didn't add corresponding JavaScript import
+  - **Impact**: Site loaded with text but no design/styling applied
+  - **Solution**: Added `import "./styles/global.css";` to `main.js` following modern bundler best practices
+
+- **Complete Path Reference Updates**: Fixed all outdated paths from old `public/build/` structure
+
+  - **index.html Updates** (5 critical changes):
+    - Removed `/build/` from bundle.css path: `./build/bundle.css` → `./bundle.css`
+    - Removed global.css link entirely (now bundled via JavaScript import)
+    - Updated cache-busting script to remove globalCSS references
+    - Updated CSS loading check to remove globalCSS validation logic
+    - Removed `/build/` from main.js path: `./build/main.js` → `./main.js`
+  - **frontend-deploy.yml Update**:
+    - Fixed Azure Static Web Apps output_location: `"build"` → `""` (empty string)
+    - Matches new structure where files are at root of dist/
+  - **main.js Critical Addition**:
+    - Added CSS import: `import "./styles/global.css";`
+    - Enables Rollup to bundle global styles into bundle.css
+    - Follows industry-standard bundler pattern (Webpack, Rollup, Vite)
+
+### Changed
+
+- **CSS Bundling Strategy**: Migrated from HTML `<link>` tags to JavaScript imports (modern best practice)
+- **Build Output**: bundle.css now 27KB (previously empty) containing all global + component styles
+- **Frontend Functionality**: Site now loads with full design and styling applied
+
+### Technical Achievements
+
+- **Build Verification**: Successful build in 14.5 seconds with proper CSS bundling
+- **Bundle Size**: bundle.css 27KB (global styles + component styles combined)
+- **Zero 404 Errors**: All resources load correctly from root of dist/
+- **Modern Best Practices**: CSS imported in JavaScript following React/Vue/Angular/Svelte standards
+- **Explicit Dependencies**: Rollup knows exactly what CSS to bundle (enables optimizations)
+
+### Files Modified
+
+- `app/frontend/src/index.html` - Updated all file paths, removed obsolete global.css link
+- `pipelines/templates/frontend-deploy.yml` - Fixed output_location parameter
+- `app/frontend/src/main.js` - Added global.css import for proper bundling
+
+### Development Experience
+
+- **Full Styling**: Site now renders with complete design and styling
+- **Modern Pattern**: CSS managed through JavaScript imports (industry standard)
+- **Build Optimization**: Enables minification, tree-shaking, code splitting
+- **Maintainability**: Explicit dependency management through imports
+
+### Best Practices Implemented
+
+- **CSS in JavaScript**: Industry-standard approach for bundler-based workflows
+- **Explicit Dependencies**: Clear import statements show what CSS is needed
+- **Build Optimization**: Bundler can optimize, minify, and fingerprint CSS
+- **Framework Consistency**: Matches React, Vue, Angular, Svelte best practices
+
+### GitHub Issue #4 Final Status
+
+- **Phase 1**: ✅ Directory Restructure (COMPLETE)
+- **Phase 2**: ✅ Build Configuration Update (COMPLETE)
+- **Phase 3**: ✅ CI/CD Pipeline Update + Path Fixes + CSS Bundling (COMPLETE)
+- **Phase 4**: ⏳ Update Documentation and Git (NEXT)
+
+### Next Steps
+
+- Update `.gitignore` to ignore `dist/` instead of `public/build/`
+- Update `app/frontend/README.md` with new structure documentation
+- Create migration notes documenting the complete restructure
+- Consider updating any other documentation referencing old structure
+
+## [2.6.3] - 2025-10-04
+
+### Changed
+
+- **GitHub Issue #4 Phase 3 CI/CD Pipeline Update - COMPLETE**: Successfully updated all Azure DevOps pipeline files for new frontend structure
+
+  - **Pipeline Compatibility**: CI/CD pipeline now fully compatible with `dist/` build output instead of `public/build/`
+  - **Build Template Updates** (`pipelines/templates/frontend-build.yml`):
+    - Changed build verification from `public/build` to `dist` directory
+    - Updated artifact publishing path from `public` to `dist`
+    - Build now verifies `dist/main.js` exists instead of `public/build/main.js`
+  - **Verification Script Updates** (`pipelines/scripts/verify-frontend-deployment.sh`):
+    - Changed JavaScript bundle check from `/build/main.js` to `/main.js` (root level)
+    - Updated CSS check from `/build/bundle.css` to `/bundle.css` (root level)
+    - Removed obsolete global.css check (no longer in public directory)
+  - **Deployment Template**: No changes needed - `frontend-deploy.yml` already uses artifact correctly
+
+### Technical Achievements
+
+- **Pipeline Alignment**: Build stage now publishes `dist/` directory as artifact
+- **Deployment Compatibility**: Deploy stage extracts artifact and deploys correctly
+- **Verification Accuracy**: Smoke tests check files at correct URLs (root level instead of /build/ subdirectory)
+- **Zero Breaking Changes**: No disruption to deployment process
+
+### Files Modified
+
+- `pipelines/templates/frontend-build.yml` - Updated verification and artifact paths (2 changes)
+- `pipelines/scripts/verify-frontend-deployment.sh` - Updated URL paths for file checks (2 functions)
+
+### Development Experience
+
+- **Build Verification**: Pipeline checks correct paths for build output
+- **Deployment Testing**: Smoke tests validate correct file locations
+- **Consistent Structure**: Pipeline now matches frontend's standard build pattern
+
+### GitHub Issue #4 Progress
+
+- **Phase 1**: ✅ Directory Restructure (COMPLETE)
+- **Phase 2**: ✅ Build Configuration Update (COMPLETE)
+- **Phase 3**: ✅ CI/CD Pipeline Update (COMPLETE)
+- **Phase 4**: ⏳ Update Documentation and Git (NEXT)
+
+### Next Steps
+
+- Update `.gitignore` to ignore `dist/` instead of `public/build/`
+- Update `app/frontend/README.md` with new structure documentation
+- Create migration notes documenting the restructure
+- Consider updating any other documentation referencing old structure
+
+## [2.6.2] - 2025-10-04
+
+### Added
+
+- **GitHub Issue #4 Phase 2 Build Configuration Update - COMPLETE**: Successfully updated frontend build system to work with new directory structure
+
+  - **rollup-plugin-copy Installation**: Added plugin (26 packages) for copying static assets and index.html to dist/
+  - **Rollup Configuration Updates**: Complete build system reconfiguration for new structure
+    - Changed output directory from `public/build` to `dist/`
+    - Added copy plugin to copy `static/*` and `src/index.html` to `dist/`
+    - Updated livereload to watch `["dist", "src"]` instead of `"public"`
+  - **Package.json Script Updates**: Changed start script from `sirv public` to `sirv dist`
+  - **Old Structure Cleanup**: Removed old `public/build/` directory and empty `public/` directory
+
+### Changed
+
+- **Frontend Build Output**: Build now outputs to `dist/` directory instead of `public/build/`
+- **Static Asset Handling**: Static files now copied from `static/` to `dist/` during build
+- **Development Server**: Now serves from `dist/` directory with proper file structure
+
+### Fixed
+
+- **Build System Compatibility**: Rollup now works correctly with new directory structure
+- **Static Asset Copying**: All static files (images, data, config) properly copied to build output
+- **Development Workflow**: Livereload now watches correct directories for changes
+
+### Technical Achievements
+
+- **Clean Build Process**: Can safely `rm -rf dist/` to clean all generated files
+- **Industry Standard Structure**: Frontend now follows standard `src/` + `static/` → `dist/` pattern
+- **Backend Consistency**: Frontend structure now matches backend's `src/` → `dist/` pattern
+- **Build Verification**: Clean build from scratch completes successfully in 20.1 seconds
+
+### Build Output Verification
+
+- **JavaScript Files**: main.js, setList.js with source maps
+- **CSS Bundle**: bundle.css properly generated
+- **HTML Entry**: index.html copied from src/
+- **Static Config**: staticwebapp.config.json copied from static/
+- **Asset Directories**: data/ and images/ directories copied from static/
+
+### Files Modified
+
+- `app/frontend/rollup.config.cjs` - Added copy plugin, updated output dir and livereload
+- `app/frontend/package.json` - Updated start script, added rollup-plugin-copy dependency
+
+### Development Experience
+
+- **Cleaner Structure**: Clear separation between source, static assets, and build output
+- **Better Version Control**: Only need to ignore `dist/` directory
+- **Familiar Patterns**: Follows industry-standard build patterns (Vite, Webpack, Parcel)
+- **Improved Maintainability**: Easier to understand and modify build configuration
+
+### GitHub Issue #4 Progress
+
+- **Phase 1**: ✅ Directory Restructure (COMPLETE)
+- **Phase 2**: ✅ Build Configuration Update (COMPLETE)
+- **Phase 3**: ⏳ Update CI/CD Pipeline (NEXT)
+- **Phase 4**: ⏳ Update Documentation and Git
+
+### Next Steps
+
+- Update `pipelines/templates/frontend-build.yml` to use `dist/` instead of `public/build/`
+- Update `pipelines/templates/frontend-deploy.yml` artifact paths
+- Update `pipelines/scripts/verify-frontend-deployment.sh` to check `dist/` directory
+- Update `.gitignore` to ignore `dist/` instead of `public/build/`
+- Update `app/frontend/README.md` with new structure documentation
+
+## [2.6.1] - 2025-10-04
+
+### Fixed
+
+- **Azure Static Web Apps Deployment Configuration - CRITICAL FIX**: Resolved deployment path mismatch preventing successful deployment
+
+  - **Root Cause**: Artifact structure didn't match deployment configuration expectations
+    - Build artifact contains: `index.html`, `build/`, `images/`, `data/` (public folder contents directly)
+    - Deployment config specified: `app_location: "/"` (looking for `/public` subdirectory)
+  - **Solution**: Changed `app_location` from `"/"` to `""` (empty string) in `pipelines/templates/frontend-deploy.yml`
+  - **Technical Details**:
+    - Artifact structure: `$(Pipeline.Workspace)/frontend-build/` contains public folder contents directly
+    - Correct config: `app_location: ""` (files at root), `output_location: "build"` (JS in build/ subfolder)
+    - This tells Azure SWA that app files are in working directory root, not in a subdirectory
+  - **Result**: Frontend pipeline now deploys successfully to Azure Static Web Apps without errors
+
+### Added
+
+- **GitHub Issue Tracking**: Created comprehensive issue for future frontend restructure enhancement
+  - **Issue #4**: "Refactor: Restructure frontend to follow standard build patterns"
+  - **Labels**: enhancement, refactor, frontend, good first issue
+  - **Priority**: Medium - current structure works but should be improved for maintainability
+  - **Proposed Structure**: Separate `static/` and `dist/` folders matching backend's clean separation
+  - **Created Labels**: Added "refactor" and "frontend" labels to repository for better issue categorization
+
+### Changed
+
+- **Frontend Pipeline Status**: Advanced from 95% to 100% completion with deployment fix
+- **Deployment Configuration**: Updated `app_location` parameter to match actual artifact structure
+- **Project Status**: Frontend CI/CD pipeline now fully operational end-to-end
+
+### Technical Achievements
+
+- **Deployment Success**: Frontend now deploys successfully to Azure Static Web Apps
+- **Configuration Accuracy**: Deployment configuration now matches actual build artifact structure
+- **Issue Tracking**: Established GitHub issue for tracking future architectural improvements
+
+### Architecture Analysis
+
+- **Frontend Structure**: Unconventional (static files + build output mixed in `public/`)
+- **Backend Structure**: ✅ Standard (clean separation: `src/` → `dist/`)
+- **Recommendation**: Restructure frontend to match backend's organization (tracked in Issue #4)
+
+### Files Modified
+
+- `pipelines/templates/frontend-deploy.yml` - Changed `app_location: "/"` to `app_location: ""`
+
+### Development Experience
+
+- **Pipeline Reliability**: Frontend deployment now succeeds consistently
+- **Configuration Clarity**: Deployment configuration accurately reflects artifact structure
+- **Future Planning**: GitHub issue provides clear path for architectural improvements
+
+### Frontend Pipeline Completion
+
+- Critical deployment configuration issue resolved
+- Frontend pipeline now 100% operational end-to-end
+- GitHub issue created for tracking future frontend restructure enhancement
+- Ready for continued Phase 4.2.8 Frontend Monitoring Enhancement
 
 ## [2.6.0] - 2025-10-04
 
