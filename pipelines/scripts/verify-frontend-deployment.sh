@@ -4,10 +4,24 @@
 
 set -e
 
-STATIC_WEB_APP_NAME="${1:-pcpc-swa-dev}"
-STATIC_WEB_APP_URL="https://${STATIC_WEB_APP_NAME}.azurestaticapps.net"
+STATIC_WEB_APP_INPUT="${1:-pcpc-swa-dev}"
 MAX_RETRIES=5
 RETRY_DELAY=10
+
+# Check if input is already a full URL or just a hostname/app name
+if [[ "$STATIC_WEB_APP_INPUT" == https://* ]]; then
+    # Input is a full URL, use it directly
+    STATIC_WEB_APP_URL="$STATIC_WEB_APP_INPUT"
+    STATIC_WEB_APP_NAME=$(echo "$STATIC_WEB_APP_INPUT" | sed 's|https://||' | sed 's|\.azurestaticapps\.net.*||')
+elif [[ "$STATIC_WEB_APP_INPUT" == *.azurestaticapps.net ]]; then
+    # Input is a hostname (with .azurestaticapps.net), add https://
+    STATIC_WEB_APP_URL="https://$STATIC_WEB_APP_INPUT"
+    STATIC_WEB_APP_NAME=$(echo "$STATIC_WEB_APP_INPUT" | sed 's|\.azurestaticapps\.net.*||')
+else
+    # Input is just an app name, construct full URL
+    STATIC_WEB_APP_NAME="$STATIC_WEB_APP_INPUT"
+    STATIC_WEB_APP_URL="https://${STATIC_WEB_APP_NAME}.azurestaticapps.net"
+fi
 
 echo "=========================================="
 echo "Frontend Deployment Verification"

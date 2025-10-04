@@ -30,8 +30,7 @@ const production = !process.env.ROLLUP_WATCH;
 
 // Get environment variables with fallbacks
 const API_BASE_URL =
-  process.env.API_BASE_URL ||
-  "https://maber-apim-test.azure-api.net/pokedata-api/v0";
+  process.env.API_BASE_URL || "https://pcpc-apim-dev.azure-api.net/pcpc-api/v0";
 
 // Force port 3000 for development server and 35729 for livereload
 const PORT = process.env.PORT || 3000;
@@ -84,7 +83,7 @@ module.exports = {
         // API Management configuration
         "process.env.APIM_BASE_URL": JSON.stringify(
           process.env.APIM_BASE_URL ||
-            "https://maber-apim-test.azure-api.net/pokedata-api"
+            "https://pcpc-apim-dev.azure-api.net/pcpc-api"
         ),
         "process.env.APIM_SUBSCRIPTION_KEY": JSON.stringify(
           process.env.APIM_SUBSCRIPTION_KEY || ""

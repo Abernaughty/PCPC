@@ -5,7 +5,7 @@
 variable "api_management_name" {
   description = "Name of the existing API Management instance"
   type        = string
-  default     = "maber-apim-test" # Based on your current setup
+  default     = "pcpc-apim-dev" # Based on your current setup
 }
 
 variable "resource_group_name" {
