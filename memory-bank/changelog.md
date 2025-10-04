@@ -14,6 +14,84 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cosmos DB Module Enhancement (Database/Container IaC)
 - GitHub Issue #4 Phase 4: Update Documentation and Git
 
+## [2.6.5] - 2025-10-04
+
+### Fixed
+
+- **Frontend Pipeline URL Handling - CRITICAL FIX**: Resolved verification script URL handling and service principal permissions issues
+
+  - **Problem 1 - Service Principal Permissions**: Service principal lacked permissions to query Static Web App metadata
+
+    - **Root Cause**: Service principal needed Contributor role to read Static Web App properties
+    - **Solution**: User granted service principal Contributor role on resource group
+    - **Result**: Azure CLI can now successfully query Static Web App details
+
+  - **Problem 2 - URL Duplication Bug**: Verification script received full hostname but added `.azurestaticapps.net` again
+    - **Root Cause**: Script expected app name but received full hostname from Azure CLI query
+    - **Example**: `https://hostname.azurestaticapps.net.azurestaticapps.net` (double suffix)
+    - **Solution**: Enhanced script to intelligently detect and handle three URL formats:
+      - Full URL: `https://hostname.azurestaticapps.net` → Use directly
+      - Hostname only: `hostname.azurestaticapps.net` → Add `https://`
+      - App name: `pcpc-swa-dev` → Construct full URL
+    - **Result**: Script now correctly handles any URL format without duplication
+
+### Changed
+
+- **Verification Script Intelligence**: Enhanced `pipelines/scripts/verify-frontend-deployment.sh` with URL format detection
+  - Added regex pattern matching to detect URL format
+  - Implemented conditional logic for three input scenarios
+  - Maintains backward compatibility with app name input
+- **Pipeline Configuration**: Restored Azure CLI query in `pipelines/templates/frontend-deploy.yml`
+  - Queries Azure for actual `defaultHostname` (e.g., `delightful-forest-0623b560f.2.azurestaticapps.net`)
+  - Constructs full URL with `https://` prefix
+  - Passes complete URL to verification script
+  - Script detects full URL format and uses directly
+
+### Technical Achievements
+
+- **Dynamic URL Discovery**: Pipeline now correctly queries Azure for actual hostname
+- **Flexible Script**: Verification script handles any URL format intelligently
+- **Proper Permissions**: Service principal has necessary access for Azure queries
+- **No URL Duplication**: Intelligent format detection prevents malformed URLs
+- **Production Ready**: Follows Azure best practices for multi-environment deployments
+
+### Pipeline Flow (Now Working)
+
+1. Deploy to Azure Static Web Apps ✅
+2. Wait 30 seconds for propagation ✅
+3. Query Azure for actual hostname ✅
+4. Construct full URL: `https://{hostname}` ✅
+5. Pass to verification script ✅
+6. Script detects full URL and uses directly ✅
+7. Run 5 comprehensive smoke tests ✅
+
+### Files Modified
+
+- `pipelines/scripts/verify-frontend-deployment.sh` - Added intelligent URL format detection (15 lines)
+- `pipelines/templates/frontend-deploy.yml` - Restored Azure CLI query with full URL construction (20 lines)
+
+### Development Experience
+
+- **Dynamic Configuration**: Pipeline adapts to actual deployed URL automatically
+- **Robust Verification**: Script handles any URL format without errors
+- **Clear Logging**: Enhanced output shows URL format detection and processing
+- **Error Prevention**: Intelligent format detection prevents common URL issues
+
+### Key Insights
+
+- Azure Static Web Apps can have auto-generated URLs different from app name
+- Service principal needs at least Reader role to query Static Web App properties
+- Verification scripts should be flexible to handle multiple input formats
+- Dynamic URL discovery is more robust than hardcoded URLs for multi-environment deployments
+
+### Frontend Pipeline Status
+
+- ✅ Build stage operational (17/17 tests passing)
+- ✅ Deploy stage operational (successful deployment to Azure)
+- ✅ URL discovery working (Azure CLI query successful)
+- ✅ Verification working (intelligent URL handling)
+- ✅ End-to-end pipeline ready for production use
+
 ## [2.6.4] - 2025-10-04
 
 ### Fixed

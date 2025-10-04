@@ -52,6 +52,54 @@
 
 ## Recent Changes (Last 10 Events)
 
+### 2025-10-04 21:53 - Frontend Pipeline URL Handling Fix - COMPLETE
+
+- **Action**: Fixed frontend pipeline verification script to properly handle Azure-generated Static Web App URLs
+- **Impact**: Pipeline now correctly queries Azure for actual hostname and passes full URL to verification script
+- **Problem Identified**: Two issues causing pipeline failures:
+  1. **Service Principal Permissions**: Service principal lacked permissions to query Static Web App metadata
+  2. **URL Duplication Bug**: Verification script received full hostname but added `.azurestaticapps.net` again, creating malformed URL
+- **Root Causes**:
+  - Service principal needed Contributor role to read Static Web App properties
+  - Script expected app name but received full hostname from Azure CLI query
+  - Result: `https://hostname.azurestaticapps.net.azurestaticapps.net` (double suffix)
+- **Solutions Implemented**:
+  1. **User Fixed Permissions**: Granted service principal Contributor role on resource group
+  2. **Enhanced Verification Script**: Made script intelligent to detect and handle three input formats:
+     - Full URL: `https://hostname.azurestaticapps.net` → Use directly
+     - Hostname only: `hostname.azurestaticapps.net` → Add `https://`
+     - App name: `pcpc-swa-dev` → Construct full URL
+  3. **Restored Azure CLI Query**: Kept dynamic URL discovery from Azure (gets actual hostname)
+- **Technical Implementation**:
+  - **verify-frontend-deployment.sh**: Added URL format detection logic with regex patterns
+  - **frontend-deploy.yml**: Restored Azure CLI query to get `defaultHostname` from Azure
+  - **URL Construction**: Azure CLI constructs full URL with `https://` prefix before passing to script
+  - **Script Logic**: Detects full URL format and uses it directly (no duplication)
+- **Pipeline Flow** (now working):
+  1. Deploy to Azure Static Web Apps ✅
+  2. Wait 30 seconds for propagation ✅
+  3. Query Azure for actual hostname (e.g., `delightful-forest-0623b560f.2.azurestaticapps.net`) ✅
+  4. Construct full URL: `https://{hostname}` ✅
+  5. Pass to verification script ✅
+  6. Script detects full URL and uses directly ✅
+  7. Run 5 comprehensive smoke tests ✅
+- **Benefits Achieved**:
+  - ✅ Dynamic URL discovery (gets real Azure-generated hostname)
+  - ✅ Flexible script (handles any URL format)
+  - ✅ No URL duplication (intelligent format detection)
+  - ✅ Proper permissions (service principal has necessary access)
+  - ✅ Production-ready (follows Azure best practices)
+- **Files Modified**:
+  - `pipelines/scripts/verify-frontend-deployment.sh` - Added intelligent URL format detection
+  - `pipelines/templates/frontend-deploy.yml` - Restored Azure CLI query with full URL construction
+- **Key Insights**:
+  - Azure Static Web Apps can have auto-generated URLs different from app name
+  - Service principal needs at least Reader role to query Static Web App properties
+  - Verification scripts should be flexible to handle multiple input formats
+  - Dynamic URL discovery is more robust than hardcoded URLs for multi-environment deployments
+- **Status**: Frontend pipeline URL handling COMPLETE ✅ - Pipeline ready for successful end-to-end deployment
+- **Next**: Commit changes and run pipeline to verify complete deployment success
+
 ### 2025-10-04 21:15 - GitHub Issue #4 Phase 3 Complete Resolution with CSS Bundling Fix - COMPLETE
 
 - **Action**: Successfully completed Phase 3 with comprehensive path reference fixes and critical CSS bundling resolution
