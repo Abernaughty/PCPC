@@ -58,15 +58,31 @@ jobs:
                 sleep 30
               displayName: "Wait for Deployment"
 
-            # Get deployed URL from deployment output
-            - script: |
-                # Azure Static Web Apps deployment outputs the URL
-                # Extract it from the deployment logs or use the known pattern
-                echo "Static Web App URL: https://${{ parameters.staticWebAppName }}.azurestaticapps.net"
-                echo "##vso[task.setvariable variable=StaticWebAppUrl]https://${{ parameters.staticWebAppName }}.azurestaticapps.net"
-              displayName: "Set Static Web App URL"
+            # Get actual deployed URL from Azure
+            - task: AzureCLI@2
+              displayName: "Get Static Web App URL"
+              inputs:
+                azureSubscription: "${{ parameters.serviceConnection }}"
+                scriptType: "bash"
+                scriptLocation: "inlineScript"
+                inlineScript: |
+                  echo "Querying Azure for Static Web App URL..."
+                  HOSTNAME=$(az staticwebapp show \
+                    --name ${{ parameters.staticWebAppName }} \
+                    --resource-group pcpc-rg-dev \
+                    --query "defaultHostname" \
+                    --output tsv)
 
-            # Run smoke tests with full URL
+                  if [ -z "$HOSTNAME" ]; then
+                    echo "##[error]Failed to retrieve Static Web App hostname"
+                    exit 1
+                  fi
+
+                  echo "Static Web App Hostname: $HOSTNAME"
+                  echo "Full URL: https://$HOSTNAME"
+                  echo "##vso[task.setvariable variable=StaticWebAppUrl]https://$HOSTNAME"
+
+            # Run smoke tests with dynamically retrieved URL
             - script: |
                 chmod +x $(System.DefaultWorkingDirectory)/pipelines/scripts/verify-frontend-deployment.sh
                 $(System.DefaultWorkingDirectory)/pipelines/scripts/verify-frontend-deployment.sh "$(StaticWebAppUrl)"
