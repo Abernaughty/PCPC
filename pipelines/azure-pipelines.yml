@@ -8,7 +8,8 @@ trigger:
   paths:
     include:
       - infra/**
-      - pipelines/**
+      - pipelines/azure-pipelines.yml
+      - pipelines/templates/terraform-*.yml
 
 pr:
   branches:

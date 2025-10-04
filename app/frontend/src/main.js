@@ -26,7 +26,7 @@ function initializeApp() {
 
   // Create and mount the app
   const app = new App({
-    target: document.body,
+    target: document.getElementById("app"),
   });
 
   // Log successful initialization
