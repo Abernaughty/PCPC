@@ -114,15 +114,20 @@ jobs:
                 addSpnToEnvironment: true
 
             # Display Terraform outputs
-            - script: |
-                cd $(workingDirectory)
-                echo "=========================================="
-                echo "Terraform Outputs"
-                echo "=========================================="
-                terraform output -json > outputs.json
-                cat outputs.json | jq '.' || cat outputs.json
-                echo "=========================================="
+            - task: AzureCLI@2
               displayName: "Display Terraform Outputs"
+              inputs:
+                azureSubscription: "${{ parameters.serviceConnection }}"
+                scriptType: "bash"
+                scriptLocation: "inlineScript"
+                inlineScript: |
+                  cd $(workingDirectory)
+                  echo "=========================================="
+                  echo "Terraform Outputs"
+                  echo "=========================================="
+                  terraform output -json > outputs.json
+                  cat outputs.json | jq '.' || cat outputs.json
+                  echo "=========================================="
               condition: succeeded()
 
             # Publish outputs artifact
@@ -135,49 +140,45 @@ jobs:
               condition: succeeded()
 
             # Run post-deployment validation
-            - script: |
-                - task: AzureCLI@2
-                  displayName: 'Post-Deployment Validation'
-                  inputs:
-                    azureSubscription: '$(azureServiceConnection)'
-                    scriptType: 'bash'
-                    scriptLocation: 'inlineScript'
-                    inlineScript: |
-                      echo "=========================================="
-                      echo "Post-Deployment Validation"
-                      echo "=========================================="
-                      
-                      RESOURCE_GROUP="pcpc-rg-${{ parameters.environment }}"
-                      echo "Checking resource group: $RESOURCE_GROUP"
-                      echo "Subscription: $(az account show --query name -o tsv)"
-                      
-                      # Wait for eventual consistency
-                      MAX_ATTEMPTS=10
-                      for i in $(seq 1 $MAX_ATTEMPTS); do
-                        if az group show --name "$RESOURCE_GROUP" &>/dev/null; then
-                          echo "✓ Resource group exists"
-                          break
-                        fi
-                        if [ $i -eq $MAX_ATTEMPTS ]; then
-                          echo "✗ Resource group not found after $MAX_ATTEMPTS attempts"
-                          exit 1
-                        fi
-                        echo "Attempt $i/$MAX_ATTEMPTS - waiting 5 seconds..."
-                        sleep 5
-                      done
-                      
-                      # List deployed resources
-                      echo ""
-                      echo "Deployed resources:"
-                      az resource list --resource-group "$RESOURCE_GROUP" --output table
-                      
-                      echo "=========================================="
-                      echo "Validation completed successfully"
-                      echo "=========================================="
+            - task: AzureCLI@2
               displayName: "Post-Deployment Validation"
+              inputs:
+                azureSubscription: "${{ parameters.serviceConnection }}"
+                scriptType: "bash"
+                scriptLocation: "inlineScript"
+                inlineScript: |
+                  echo "=========================================="
+                  echo "Post-Deployment Validation"
+                  echo "=========================================="
+
+                  RESOURCE_GROUP="pcpc-rg-${{ parameters.environment }}"
+                  echo "Checking resource group: $RESOURCE_GROUP"
+                  echo "Subscription: $(az account show --query name -o tsv)"
+
+                  # Wait for eventual consistency
+                  MAX_ATTEMPTS=10
+                  for i in $(seq 1 $MAX_ATTEMPTS); do
+                    if az group show --name "$RESOURCE_GROUP" &>/dev/null; then
+                      echo "✓ Resource group exists"
+                      break
+                    fi
+                    if [ $i -eq $MAX_ATTEMPTS ]; then
+                      echo "✗ Resource group not found after $MAX_ATTEMPTS attempts"
+                      exit 1
+                    fi
+                    echo "Attempt $i/$MAX_ATTEMPTS - waiting 5 seconds..."
+                    sleep 5
+                  done
+
+                  # List deployed resources
+                  echo ""
+                  echo "Deployed resources:"
+                  az resource list --resource-group "$RESOURCE_GROUP" --output table
+
+                  echo "=========================================="
+                  echo "Validation completed successfully"
+                  echo "=========================================="
               condition: succeeded()
-              env:
-                AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
 
             # Display deployment summary
             - script: |
