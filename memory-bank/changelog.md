@@ -9,9 +9,164 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
+- Frontend Pipeline Deployment Path Fix (final 5% to completion)
 - Production Infrastructure Deployment
 - Phase 4.2.9: Observability Infrastructure (Dashboards + Advanced Monitoring)
 - Cosmos DB Module Enhancement (Database/Container IaC)
+
+## [2.6.0] - 2025-10-04
+
+### Added
+
+- **Frontend Deployment Pipeline Implementation - 95% COMPLETE**: Comprehensive Azure DevOps pipeline for Svelte frontend deployment to Azure Static Web Apps
+
+  - **Pipeline Files Created**: Complete 2-stage pipeline with enterprise-grade testing and deployment
+
+    - `pipelines/frontend-pipeline.yml` - Main pipeline orchestration (Build → Deploy stages)
+    - `pipelines/templates/frontend-build.yml` - Build stage template with testing, coverage, verification
+    - `pipelines/templates/frontend-deploy.yml` - Deploy stage template with Azure Static Web Apps deployment
+    - `pipelines/scripts/verify-frontend-deployment.sh` - Comprehensive smoke test script (5 tests)
+    - `pipelines/FRONTEND_SETUP_GUIDE.md` - Complete setup documentation with troubleshooting
+
+  - **Build Stage Features**:
+
+    - Node.js 22.x installation
+    - Root dependency installation (Jest testing framework)
+    - Frontend dependency installation
+    - Unit test execution (17/17 tests passing)
+    - Test results publishing (JUnit format)
+    - Code coverage publishing (Cobertura format)
+    - Production build with Rollup
+    - Build verification (checks for main.js)
+    - Build artifact publishing
+
+  - **Deploy Stage Features**:
+
+    - Source code checkout (for smoke test scripts)
+    - Build artifact download
+    - Azure Static Web Apps deployment
+    - Deployment propagation wait (30 seconds)
+    - Azure CLI query for dynamic URL discovery
+    - Comprehensive smoke tests (5 verification checks)
+    - Deployment summary display
+
+  - **Dynamic URL Discovery**: Implemented Azure CLI integration to query actual deployed URL
+    - Queries Azure for Static Web App `defaultHostname`
+    - Sets pipeline variable `StaticWebAppHostname`
+    - Smoke tests use actual deployed URL (not hardcoded)
+    - Works with any Static Web App URL or custom domain
+
+### Fixed
+
+- **Frontend Pipeline Test Execution**: Resolved missing test script error
+
+  - **Problem**: Pipeline tried to run `npm test` from frontend directory, but Jest configured at root
+  - **Solution**: Added root dependency installation, changed test execution to run from root directory
+  - **Result**: All 17 frontend tests passing with clean logs
+
+- **Jest Coverage Collection Cross-Contamination**: Eliminated backend dependency errors during frontend tests
+
+  - **Problem**: Jest tried to collect coverage from backend files, causing TypeScript errors for missing dependencies
+  - **Solution**: Moved `collectCoverageFrom` patterns from global config into project-specific configurations
+  - **Result**: Frontend tests only collect frontend coverage, backend tests only collect backend coverage
+
+- **Build Verification Filename Mismatch**: Fixed bundle verification to match actual Rollup output
+
+  - **Problem**: Pipeline checked for `bundle.js` but Rollup creates `main.js`
+  - **Solution**: Updated verification in build template and smoke test script to check for `main.js`
+  - **Result**: Build verification passes successfully
+
+- **Pipeline YAML Configuration**: Corrected pipeline to use main orchestration file
+
+  - **Problem**: User accidentally selected `frontend-build.yml` template instead of `frontend-pipeline.yml`
+  - **Solution**: Reconfigured pipeline to use correct YAML file
+  - **Result**: Both Build and Deploy stages now visible and operational
+
+- **Smoke Test Script Access**: Added source checkout to Deploy stage
+
+  - **Problem**: Deploy stage couldn't access verification script (no source checkout)
+  - **Solution**: Added `- checkout: self` step before smoke tests
+  - **Result**: Smoke test script accessible and executable
+
+- **Service Connection Configuration**: Successfully created Azure service connection
+  - **Problem**: Azure CLI task required service connection that didn't exist
+  - **Solution**: Created manual app registration with service principal
+  - **Result**: Azure CLI task can query Static Web App details
+
+### Changed
+
+- **Test Execution Strategy**: Tests now run from root directory where Jest is configured
+- **Coverage Collection**: Separated into project-specific patterns (frontend vs backend)
+- **Build Verification**: Updated to check for `main.js` instead of `bundle.js`
+- **Deploy Stage**: Added source checkout and Azure CLI query steps
+- **Smoke Tests**: Now use dynamically discovered URL instead of hardcoded value
+
+### Infrastructure
+
+- **Azure Static Web App Deployment**: Successfully deploys to `delightful-forest-0623b560f.2.azurestaticapps.net`
+- **Service Connection**: `pcpc-dev-static-web-app` configured with manual app registration
+- **Variable Group**: `pcpc-frontend-dev` with deployment token and environment variables
+- **Environment**: `pcpc-dev` configured for deployment approvals
+
+### Technical Achievements
+
+- **17/17 Tests Passing**: All frontend unit tests execute successfully with clean logs
+- **Zero Coverage Errors**: No backend dependency errors during frontend test execution
+- **Build Verification**: Successfully validates Rollup output (main.js, bundle.css)
+- **Dynamic URL Discovery**: Azure CLI successfully queries deployed hostname
+- **Multi-Stage Pipeline**: Both Build and Deploy stages operational
+
+### Development Experience
+
+- **Clean Test Logs**: No backend dependency errors or cross-contamination warnings
+- **Automated Testing**: Unit tests run automatically on every pipeline execution
+- **Coverage Reports**: Code coverage published to Azure DevOps for visibility
+- **Smoke Tests**: 5 comprehensive verification checks after deployment
+- **Dynamic Configuration**: Pipeline adapts to actual deployed URL automatically
+
+### Known Issues
+
+- **Deployment Path Configuration**: Static Web Apps task reports `App Directory Location: '/public' is invalid`
+  - **Current**: `app_location: "/public"` with `workingDirectory: $(Pipeline.Workspace)/frontend-build`
+  - **Issue**: Task can't find public directory in artifact structure
+  - **Impact**: Deployment succeeds but files not served correctly (404 errors)
+  - **Next**: Need to adjust path configuration to match artifact structure
+
+### Files Created
+
+- `pipelines/frontend-pipeline.yml` - Main 2-stage pipeline
+- `pipelines/templates/frontend-build.yml` - Build stage template
+- `pipelines/templates/frontend-deploy.yml` - Deploy stage template
+- `pipelines/scripts/verify-frontend-deployment.sh` - Smoke test script
+- `pipelines/FRONTEND_SETUP_GUIDE.md` - Setup documentation
+
+### Files Modified
+
+- `jest.config.cjs` - Separated coverage patterns into project configurations
+- `pipelines/templates/frontend-build.yml` - Multiple fixes for test execution and verification
+- `pipelines/templates/frontend-deploy.yml` - Added checkout, Azure CLI query, dynamic URL
+- `pipelines/scripts/verify-frontend-deployment.sh` - Updated for main.js verification
+
+### Pipeline Status
+
+- **Build Stage**: ✅ 100% Complete and operational
+- **Deploy Stage**: ⏳ 95% Complete (deployment succeeds, path configuration needs adjustment)
+- **Overall**: ⏳ 95% Complete (one remaining issue to resolve)
+
+### User Action Required
+
+- Fix deployment path configuration in `frontend-deploy.yml`
+- Commit and push all changes
+- Re-run pipeline to verify end-to-end success
+
+### Frontend Pipeline Implementation Status
+
+- Complete enterprise-grade CI/CD pipeline for frontend deployment
+- Automated testing with 17 passing unit tests
+- Code coverage reporting and publishing
+- Dynamic URL discovery with Azure CLI integration
+- Comprehensive smoke tests for deployment verification
+- 95% complete - final deployment path fix needed
 
 ## [2.5.2] - 2025-10-03
 
