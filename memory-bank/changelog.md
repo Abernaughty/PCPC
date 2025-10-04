@@ -1,11 +1,61 @@
 # PCPC Changelog
 
-All notable changes to the Pokemon Card Price Checker (PCPC) project will be documented in this file.
+All notable changes to the PCPC project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### [2025-10-04] - Enterprise CI/CD Architecture Planning
+
+#### Added
+
+- Comprehensive enterprise CI/CD pipeline architecture design
+- Two-pipeline approach: PR Validation + Multi-Stage CD
+- Multi-environment deployment strategy (Dev → Staging → Prod)
+- Build-once, promote-many artifact strategy
+- APIOps integration plan for API Management
+- Gated promotion pattern with approval gates
+- Path-smart deployment (only changed components redeploy)
+
+#### Changed
+
+- Project goal updated to focus on enterprise CI/CD implementation
+- Environment terminology standardized to Dev/Staging/Prod (not Test)
+- APIM deployment strategy: APIOps publisher/extractor pattern
+- Repository structure plan: Create `.ado/` directory for pipelines
+
+#### Planned
+
+- `.ado/azure-pipelines-pr.yml` - PR validation pipeline (fast feedback, no deployments)
+- `.ado/azure-pipelines.yml` - Multi-stage CD pipeline (Build → Dev → Staging → Prod)
+- `.ado/templates/` - 9 reusable job templates
+- `apim/apiops.yaml` - APIOps configuration
+- `infra/terraform/{dev,staging,prod}.tfvars` - Per-environment variables
+- `tests/smoke/` - Health check scripts for deployment validation
+- Azure DevOps setup: 3 Environments, Service Connection, 3 Variable Groups
+
+#### Technical Details
+
+- **PR Pipeline**: Frontend/Functions/Infrastructure/APIM validation, security scan
+- **CD Pipeline**: Unified artifact (swa/, functions.zip, apim/, infra/)
+- **Dev Stage**: Auto-deploy with smoke tests
+- **Staging Stage**: Approval-gated with smoke + API tests
+- **Prod Stage**: Approval-gated with smoke + API + E2E tests
+- **Portfolio Value**: Demonstrates enterprise DevOps maturity and controlled release management
+
+#### Blocked By
+
+- APIM SKU issue (Developer tier provisioning, needs deletion and Consumption tier redeployment)
+
+#### Next Steps
+
+1. Wait for APIM provisioning to complete
+2. Delete Developer SKU APIM instance
+3. Begin Azure DevOps foundation setup (Environments, Service Connection, Variable Groups)
+4. Implement PR validation pipeline
+5. Implement multi-stage CD pipeline
 
 ### Planned
 
