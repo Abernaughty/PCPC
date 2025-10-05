@@ -1,0 +1,59 @@
+# test-service-connections.yml
+trigger: none
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  - stage: TestDev
+    displayName: Test Dev Connection
+    jobs:
+      - job: TestDevConnection
+        steps:
+          - task: AzureCLI@2
+            displayName: Test Dev Service Connection
+            inputs:
+              azureSubscription: "az-pcpc-dev"
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                echo "Testing Dev service connection..."
+                az account show
+                az group show --name pcpc-rg-dev
+                echo "✅ Dev connection works!"
+
+  - stage: TestStaging
+    displayName: Test Staging Connection
+    dependsOn: TestDev
+    jobs:
+      - job: TestStagingConnection
+        steps:
+          - task: AzureCLI@2
+            displayName: Test Staging Service Connection
+            inputs:
+              azureSubscription: "az-pcpc-staging"
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                echo "Testing Staging service connection..."
+                az account show
+                az group show --name pcpc-rg-staging
+                echo "✅ Staging connection works!"
+
+  - stage: TestProd
+    displayName: Test Prod Connection
+    dependsOn: TestStaging
+    jobs:
+      - job: TestProdConnection
+        steps:
+          - task: AzureCLI@2
+            displayName: Test Prod Service Connection
+            inputs:
+              azureSubscription: "az-pcpc-prod"
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                echo "Testing Prod service connection..."
+                az account show
+                az group show --name pcpc-rg-prod
+                echo "✅ Prod connection works!"
