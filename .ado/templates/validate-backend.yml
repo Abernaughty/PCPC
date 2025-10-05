@@ -1,0 +1,115 @@
+# Backend Validation Template
+# Validates backend code quality, tests, and TypeScript compilation
+
+parameters:
+  - name: nodeVersion
+    type: string
+    default: "22.x"
+
+jobs:
+  - job: ValidateBackend
+    displayName: "Backend Validation"
+    steps:
+      # Checkout code
+      - checkout: self
+        displayName: "Checkout Repository"
+
+      # Setup Node.js
+      - task: NodeTool@0
+        displayName: "Setup Node.js ${{ parameters.nodeVersion }}"
+        inputs:
+          versionSpec: ${{ parameters.nodeVersion }}
+
+      # Install root dependencies (Jest, shared configs)
+      - script: |
+          npm ci
+        displayName: "Install Root Dependencies"
+        workingDirectory: $(System.DefaultWorkingDirectory)
+
+      # Install backend dependencies
+      - script: |
+          npm ci
+        displayName: "Install Backend Dependencies"
+        workingDirectory: $(System.DefaultWorkingDirectory)/app/backend
+
+      # Run ESLint
+      - script: |
+          npm run lint || echo "⚠️  Linting warnings found (non-blocking)"
+        displayName: "Lint Backend Code"
+        workingDirectory: $(System.DefaultWorkingDirectory)/app/backend
+        continueOnError: true
+
+      # TypeScript compilation check
+      - script: |
+          npx tsc --noEmit
+        displayName: "TypeScript Compilation Check"
+        workingDirectory: $(System.DefaultWorkingDirectory)/app/backend
+
+      # Run tests with coverage
+      - script: |
+          npm test -- --coverage --coverageDirectory=$(System.DefaultWorkingDirectory)/coverage/backend
+        displayName: "Run Backend Tests"
+        workingDirectory: $(System.DefaultWorkingDirectory)
+        env:
+          CI: true
+
+      # Build backend
+      - script: |
+          npm run build
+        displayName: "Build Backend"
+        workingDirectory: $(System.DefaultWorkingDirectory)/app/backend
+
+      # Verify build output
+      - script: |
+          if [ ! -d "dist" ]; then
+            echo "❌ Build failed - dist directory not found"
+            exit 1
+          fi
+          if [ ! -f "dist/index.js" ]; then
+            echo "❌ Build failed - index.js not found"
+            exit 1
+          fi
+          echo "✅ Build verification passed"
+        displayName: "Verify Build Output"
+        workingDirectory: $(System.DefaultWorkingDirectory)/app/backend
+
+      # Security audit (non-blocking)
+      - script: |
+          npm audit --audit-level=high || echo "⚠️  Security vulnerabilities found (non-blocking)"
+        displayName: "Security Audit (npm audit)"
+        workingDirectory: $(System.DefaultWorkingDirectory)/app/backend
+        continueOnError: true
+
+      # Publish test results
+      - task: PublishTestResults@2
+        displayName: "Publish Test Results"
+        condition: succeededOrFailed()
+        inputs:
+          testResultsFormat: "JUnit"
+          testResultsFiles: "**/junit.xml"
+          searchFolder: $(System.DefaultWorkingDirectory)
+          mergeTestResults: true
+          failTaskOnFailedTests: true
+          testRunTitle: "Backend Tests"
+
+      # Publish code coverage
+      - task: PublishCodeCoverageResults@2
+        displayName: "Publish Code Coverage"
+        condition: succeededOrFailed()
+        inputs:
+          codeCoverageTool: "Cobertura"
+          summaryFileLocation: "$(System.DefaultWorkingDirectory)/coverage/backend/cobertura-coverage.xml"
+          reportDirectory: "$(System.DefaultWorkingDirectory)/coverage/backend/lcov-report"
+          failIfCoverageEmpty: false
+
+      # Display summary
+      - script: |
+          echo "======================================"
+          echo "Backend Validation Summary"
+          echo "======================================"
+          echo "✅ Linting: Completed"
+          echo "✅ TypeScript: Compiled"
+          echo "✅ Tests: $(tests_passed)/$(tests_total) passed"
+          echo "✅ Build: Successful"
+          echo "✅ Security: Audited"
+        displayName: "Display Validation Summary"

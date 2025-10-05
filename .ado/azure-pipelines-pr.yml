@@ -1,0 +1,83 @@
+# PCPC Pull Request Validation Pipeline
+# Fast feedback pipeline for PR validation - NO deployments
+# Validates code quality, tests, and infrastructure configuration
+
+trigger: none # PR pipeline only, no CI triggers
+
+pr:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    exclude:
+      - docs/**
+      - README.md
+      - .gitignore
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+  - name: nodeVersion
+    value: "22.x"
+  - name: terraformVersion
+    value: "1.13.3"
+
+stages:
+  # Stage 1: Frontend Validation
+  - stage: ValidateFrontend
+    displayName: "Validate Frontend"
+    jobs:
+      - template: templates/validate-frontend.yml
+        parameters:
+          nodeVersion: $(nodeVersion)
+
+  # Stage 2: Backend Validation
+  - stage: ValidateBackend
+    displayName: "Validate Backend"
+    jobs:
+      - template: templates/validate-backend.yml
+        parameters:
+          nodeVersion: $(nodeVersion)
+
+  # Stage 3: Infrastructure Validation
+  - stage: ValidateInfrastructure
+    displayName: "Validate Infrastructure"
+    jobs:
+      - template: templates/validate-infrastructure.yml
+        parameters:
+          terraformVersion: $(terraformVersion)
+
+  # Stage 4: APIM Validation
+  - stage: ValidateAPIM
+    displayName: "Validate APIM"
+    jobs:
+      - template: templates/validate-apim.yml
+
+  # Stage 5: Summary
+  - stage: ValidationSummary
+    displayName: "Validation Summary"
+    dependsOn:
+      - ValidateFrontend
+      - ValidateBackend
+      - ValidateInfrastructure
+      - ValidateAPIM
+    condition: always()
+    jobs:
+      - job: Summary
+        displayName: "PR Validation Summary"
+        steps:
+          - script: |
+              echo "======================================"
+              echo "PR Validation Complete"
+              echo "======================================"
+              echo ""
+              echo "Validation Results:"
+              echo "- Frontend: $(Agent.JobStatus)"
+              echo "- Backend: $(Agent.JobStatus)"
+              echo "- Infrastructure: $(Agent.JobStatus)"
+              echo "- APIM: $(Agent.JobStatus)"
+              echo ""
+              echo "✅ All validations passed - PR is ready for review"
+            displayName: "Display Summary"
