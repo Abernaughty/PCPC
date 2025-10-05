@@ -2,41 +2,89 @@
 
 ## Current Work Focus
 
-**Primary Task**: Enterprise CI/CD Pipeline Architecture Implementation  
-**Date**: October 5, 2025  
-**Status**: PR Validation Pipeline MERGED - Multi-Stage CD Pipeline Next  
-**Priority**: Critical - Implementing portfolio-ready deployment automation
+**Primary Task**: Enterprise CI/CD Multi-Stage Pipeline Implementation  
+**Date**: October 5, 2025 - 10:12 PM  
+**Status**: Architecture Planning Complete - Implementation Starting  
+**Priority**: Critical - Building portfolio-ready deployment automation
 
-**NEW PROJECT GOAL**: Implement enterprise-grade CI/CD architecture with PR validation and multi-environment deployment (Dev → Staging → Prod) using build-once, promote-many pattern with APIOps integration.
+**PROJECT GOAL**: Implement enterprise-grade CI/CD architecture with PR validation and multi-environment deployment (Dev → Staging → Prod) using build-once-deploy-many pattern with unified artifact promotion.
 
-**PR VALIDATION PIPELINE MERGED**: Successfully merged comprehensive PR validation pipeline from `origin/test/pr-pipeline` branch into `main` on October 5, 2025 at 9:48 PM. Pipeline includes 4 validation stages (frontend, backend, infrastructure, APIM) with 5-10 minute feedback time. All files now in `.ado/` directory with complete documentation. Ready for Azure DevOps configuration and testing.
+## CI/CD Architecture Overview
 
-**PHASE 4.1 COMPLETE**: Successfully implemented complete enterprise-grade documentation suite with 36,000+ words across 5 comprehensive tiers, establishing PCPC as a showcase of enterprise software engineering excellence.
+**Two-Pipeline Strategy**:
 
-**PHASE 4.2.1 INFRASTRUCTURE FOUNDATION COMPLETE**: Successfully implemented complete monitoring infrastructure foundation with Log Analytics workspace, Application Insights, automated alerting, and Function App integration.
+1. **PR Validation Pipeline** (`.ado/azure-pipelines-pr.yml`) - ✅ MERGED, needs Azure DevOps configuration
+2. **Multi-Stage CD Pipeline** (`.ado/azure-pipelines.yml`) - ⚠️ TO BE CREATED
 
-**PHASE 4.2 BACKEND MONITORING COMPLETE**: All 6 Azure Functions enhanced with comprehensive Application Insights monitoring, pagination validation, data completeness tracking, and enhancement monitoring.
+**Key Architecture Decisions**:
 
-**CURRENT PHASE 4.2.8 PROGRESS**: 35% Complete (2.25 of 7 sub-phases)
+- ✅ **Unified Artifact**: Single `drop/` artifact with swa/, functions.zip, apim/, release.json
+- ✅ **Directory Structure**: `.ado/` for new pipelines, `pipelines/legacy/` for deprecated files
+- ✅ **Environment Flow**: Dev (auto-deploy) → Staging (approval) → Prod (approval)
+- ✅ **APIM Strategy**: Terraform provider approach (DevOps Resource Kit retired)
+- ✅ **Build-Once-Deploy-Many**: Same artifact promoted through all environments
+- ✅ **Path-Based Deployment**: Only deploy components that changed
 
-- **Phase 4.2.8.1** ✅ COMPLETE: Application Insights Web SDK Integration
-- **Phase 4.2.8.2** ✅ COMPLETE: Core Web Vitals Tracking
-- **Phase 4.2.8.3** ⏳ IN PROGRESS: User Experience & Business Metrics (25% complete)
-  - ✅ cloudDataService.js telemetry complete (all 5 methods)
-  - ⏳ hybridDataService.js telemetry (next)
-  - ⏳ storage/db.js telemetry
-  - ⏳ Component interaction tracking
-- **Phase 4.2.8.4** ⏳ PLANNED: Error Tracking & Diagnostics Enhancement
-- **Phase 4.2.8.5** ⏳ PLANNED: Performance Optimization Integration
-- **Phase 4.2.8.6** ⏳ PLANNED: Testing & Validation
-- **Phase 4.2.8.7** ⏳ PLANNED: Documentation & Completion
+## Unified Artifact Structure
 
-**OVERALL PHASE 4.2 PROGRESS**: 89% Complete
+```
+drop/
+  release.json           # Build manifest with checksums & provenance
+  swa/                   # Built Svelte app (from app/frontend/dist/)
+  functions.zip          # Compiled backend (from app/backend/dist/)
+  apim/                  # API specs + policies snapshot
+    apis/
+    policies/
+    specs/
+```
 
-- **Phase 4.2.1** ✅ COMPLETE: Infrastructure Foundation (Log Analytics + Application Insights)
-- **Phase 4.2.2-4.2.6** ✅ COMPLETE: Backend Monitoring (All 6 Azure Functions)
-- **Phase 4.2.7** ⏳ IN PROGRESS: Frontend Enterprise Monitoring (35% complete)
-- **Phase 4.2.8** ⏳ PLANNED: Observability Infrastructure (Dashboards + Advanced Monitoring)
+## Implementation Roadmap (37 Tasks, 13 Days)
+
+### Phase 0: Planning & Documentation ⏳ (Current - 60% Complete)
+
+- [x] Define CI/CD architecture and strategy
+- [x] Document unified artifact approach
+- [x] Plan legacy pipeline deprecation
+- [ ] Update all memory bank files with implementation plan
+- [ ] Move legacy pipelines to `pipelines/legacy/`
+
+### Phase 1: Foundation Setup (3-4 days)
+
+- [ ] Create unified build template (`.ado/templates/build.yml`)
+- [ ] Create backend deployment template (`.ado/templates/deploy-functions.yml`)
+- [ ] Create staging/prod infrastructure configs (`infra/envs/staging/`, `infra/envs/prod/`)
+- [ ] Refactor infrastructure template for multi-env (`.ado/templates/deploy-infra.yml`)
+- [ ] Create smoke tests template (`.ado/templates/smoke-tests.yml`)
+- [ ] Create health check scripts (3 scripts in `.ado/scripts/`)
+
+### Phase 2: Pipeline Integration (3-4 days)
+
+- [ ] Create main orchestrator pipeline (`.ado/azure-pipelines.yml`)
+- [ ] Add path filters and intelligent triggers
+- [ ] Refactor SWA template for multi-env (`.ado/templates/deploy-swa.yml`)
+- [ ] Configure Staging environment in Azure DevOps
+- [ ] Test artifact promotion Dev → Staging → Prod
+
+### Phase 3: Production & APIM (3-4 days)
+
+- [ ] Add Deploy_Prod stage with approval gates
+- [ ] Enhance APIM Terraform with API definitions
+- [ ] Create APIM deployment template (`.ado/templates/deploy-apim.yml`)
+- [ ] Create API contract tests template (`.ado/templates/api-tests.yml`)
+- [ ] Create comprehensive documentation
+
+### Phase 4: PR Pipeline Configuration (1 day)
+
+- [ ] Configure PR pipeline in Azure DevOps
+- [ ] Set up branch policies
+- [ ] Test PR validation end-to-end
+
+## Previous Work (Completed Phases)
+
+**PHASE 4.1 COMPLETE**: Enterprise-grade documentation suite (36,000+ words, 5 tiers)
+**PHASE 4.2 BACKEND MONITORING COMPLETE**: All 6 Azure Functions with comprehensive telemetry
+**PHASE 4.2.8 FRONTEND MONITORING**: 35% Complete (Application Insights SDK + Core Web Vitals)
+**PR VALIDATION PIPELINE**: ✅ MERGED into main (October 5, 2025)
 
 ### Completed Objectives
 

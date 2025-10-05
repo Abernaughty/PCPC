@@ -2,14 +2,23 @@
 
 ## Current Status
 
-**Overall Progress**: Phase 1-4.1 Complete + Phase 4.2 Backend Monitoring Complete + Phase 4.2.8 Frontend Foundation Complete + PR Validation Pipeline MERGED  
-**Completion**: 100% of Phase 1 + Phase 2 + Phase 3 + Phase 4.1 Complete + 92% of Phase 4.2 Complete + PR Pipeline Implemented & Merged  
-**Last Updated**: October 5, 2025 - 9:48 PM  
-**Next Milestone**: Configure PR Pipeline in Azure DevOps + Implement Multi-Stage CD Pipeline
+**Overall Progress**: Phases 1-4.1 Complete + Phase 4.2 Backend Complete + CI/CD Architecture Planning Complete  
+**Completion**: 100% of Phases 1-3 + Phase 4.1 + Phase 4.2 Backend + CI/CD Planning (3/37 tasks, 8%)  
+**Last Updated**: October 5, 2025 - 10:13 PM  
+**Next Milestone**: Implement Multi-Stage CD Pipeline with Unified Artifact Strategy
 
-**PR VALIDATION PIPELINE MERGED**: Successfully merged enterprise-grade PR validation pipeline from `origin/test/pr-pipeline` branch into `main`. Pipeline includes comprehensive validation across frontend, backend, infrastructure, and APIM with 5-10 minute feedback time. All 4 validation templates created with enterprise documentation. Ready for Azure DevOps configuration.
+**CURRENT PROJECT GOAL**: Implement enterprise-grade CI/CD architecture with PR validation and multi-environment deployment (Dev → Staging → Prod) using build-once-deploy-many pattern with unified artifact promotion.
 
-**NEW PROJECT GOAL**: Implement enterprise-grade CI/CD architecture with PR validation and multi-environment deployment (Dev → Staging → Prod) using build-once, promote-many pattern with APIOps integration.
+**CI/CD ARCHITECTURE DECISIONS FINALIZED**:
+
+- ✅ **Two-Pipeline Strategy**: PR Validation (merged) + Multi-Stage CD (to be created)
+- ✅ **Unified Artifact**: Single `drop/` artifact with swa/, functions.zip, apim/, release.json
+- ✅ **Directory Structure**: `.ado/` for new pipelines, `pipelines/legacy/` for deprecated files
+- ✅ **Environment Flow**: Dev (auto-deploy) → Staging (approval) → Prod (approval)
+- ✅ **APIM Strategy**: Terraform provider approach (DevOps Resource Kit retired)
+- ✅ **Build-Once-Deploy-Many**: Same artifact promoted through all environments
+
+**PR VALIDATION PIPELINE MERGED**: Successfully merged enterprise-grade PR validation pipeline from `origin/test/pr-pipeline` branch into `main`. Pipeline includes comprehensive validation across frontend, backend, infrastructure, and APIM with 5-10 minute feedback time. Ready for Azure DevOps configuration.
 
 **FRONTEND PIPELINE URL HANDLING FIXED**: Successfully resolved frontend pipeline verification script URL handling issues. Enhanced script to intelligently detect and handle three URL formats (full URL, hostname, app name). Restored Azure CLI query for dynamic URL discovery. Service principal granted Contributor role for proper permissions. Pipeline now correctly queries Azure for actual hostname and runs comprehensive smoke tests.
 

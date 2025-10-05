@@ -1,8 +1,27 @@
 # PCPC Azure DevOps Pipelines
 
+## ⚠️ IMPORTANT: Pipeline Architecture Migration
+
+**The pipelines in this directory have been deprecated and moved to `pipelines/legacy/`.**
+
+**New CI/CD architecture is located in the `.ado/` directory at the repository root.**
+
+For current pipeline documentation, see:
+
+- **`.ado/README.md`** - Complete pipeline documentation
+- **`.ado/SETUP_GUIDE.md`** - Azure DevOps setup instructions
+- **`pipelines/legacy/README.md`** - Information about deprecated files
+
 ## Overview
 
-This directory contains Azure DevOps pipeline configurations for the PCPC project. The pipelines are organized by deployment type, following DevOps best practices with separation of concerns between infrastructure and application deployments.
+This directory now contains only:
+
+- **`scripts/`** - Reusable deployment and validation scripts (still in use)
+- **`legacy/`** - Deprecated pipeline files (retained for 2 sprints)
+- **`README.md`** - This file (updated to point to new architecture)
+- **`test-service-connections.yml`** - Service connection testing (still in use)
+
+The legacy pipelines were organized by deployment type with separation of concerns between infrastructure and application deployments. The new architecture uses a unified multi-stage CD pipeline with build-once-deploy-many pattern.
 
 ## Available Pipelines
 

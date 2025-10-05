@@ -7,6 +7,126 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### [2025-10-05] - CI/CD Multi-Stage Pipeline Architecture Planning Complete (10:13 PM)
+
+#### Added
+
+- **Comprehensive CI/CD Architecture Planning Session**: Complete enterprise-grade pipeline architecture designed and documented
+
+  - **Two-Pipeline Strategy Finalized**: PR Validation (merged) + Multi-Stage CD (to be created)
+  - **Unified Artifact Strategy**: Single `drop/` artifact with swa/, functions.zip, apim/, release.json manifest
+  - **Environment Flow Defined**: Dev (auto-deploy) → Staging (approval) → Prod (approval)
+  - **APIM Strategy Clarified**: Terraform provider approach (Azure APIM DevOps Resource Kit retired)
+  - **Build-Once-Deploy-Many**: Same artifact promoted through all environments with path-based deployment
+  - **Implementation Roadmap**: 37 tasks across 5 phases, estimated 13 days (10-13 days)
+
+- **Unified Artifact Structure Defined**: Complete artifact layout for build-once-deploy-many pattern
+
+  ```
+  drop/
+    release.json           # Build manifest with checksums & provenance
+    swa/                   # Built Svelte app (from app/frontend/dist/)
+    functions.zip          # Compiled backend (from app/backend/dist/)
+    apim/                  # API specs + policies snapshot
+      apis/
+      policies/
+      specs/
+  ```
+
+- **Complete Implementation Plan Created**: Detailed 5-phase roadmap with specific deliverables
+
+  - **Phase 0**: Planning & Documentation (3/37 tasks complete, 8%)
+  - **Phase 1**: Foundation Setup (6 tasks, 3-4 days) - Unified build, backend deployment, multi-env configs
+  - **Phase 2**: Pipeline Integration (8 tasks, 3-4 days) - Main orchestrator, SWA refactor, staging deployment
+  - **Phase 3**: Production & APIM (9 tasks, 3-4 days) - Prod deployment, APIM enhancement, API tests
+  - **Phase 4**: PR Pipeline Configuration (4 tasks, 1 day) - Azure DevOps setup, branch policies
+  - **Phase 5**: Migration & Cleanup (5 tasks) - Legacy deprecation, documentation updates
+
+#### Changed
+
+- **Project Goal Updated**: Shifted from frontend monitoring to CI/CD multi-stage pipeline implementation
+- **Directory Structure Decision**: Use `.ado/` for new pipelines, `pipelines/legacy/` for deprecated files
+- **Environment Naming Standardized**: Dev → Staging → Prod (not Test)
+- **APIM Deployment Strategy**: Terraform provider (Option 1) selected over retired DevOps Resource Kit
+
+#### Technical Decisions
+
+- **Artifact Strategy**: Single unified artifact per build for atomic promotions and simple rollback
+  - Rationale: No version drift, dead-simple rollback, fewer moving parts, cleaner portfolio story
+  - Alternative: Separate artifacts per component (only if teams ship independently or artifacts huge)
+- **Directory Structure**: `.ado/` for new CD pipeline to keep separate from legacy `pipelines/`
+- **Environment Configuration**: Environment-specific config lives outside artifact (App Settings, Key Vault, policies)
+- **APIM Approach**: Terraform provider for API definitions (DevOps Resource Kit retired, APIOps community option available)
+- **Legacy Pipeline Deprecation**: Move to `pipelines/legacy/` after new pipeline validated (keep 1-2 sprints as backup)
+
+#### Files to Create (15+ files)
+
+- **Main Pipelines**: `.ado/azure-pipelines.yml` (orchestrator), `.ado/azure-pipelines-pr.yml` (already merged)
+- **Build Templates**: `.ado/templates/build.yml` (unified build)
+- **Deployment Templates**: deploy-infra.yml, deploy-functions.yml, deploy-apim.yml, deploy-swa.yml
+- **Testing Templates**: smoke-tests.yml, api-tests.yml
+- **Scripts**: create-release-manifest.sh, verify-functions-health.sh, verify-swa-health.sh, verify-apim-health.sh
+- **Infrastructure**: `infra/envs/staging/`, `infra/envs/prod/` environment configs
+- **Documentation**: CD_PIPELINE_GUIDE.md, MIGRATION_FROM_LEGACY.md
+
+#### Files to Deprecate (7 files)
+
+- `pipelines/azure-pipelines.yml` → `pipelines/legacy/` (infrastructure-only pipeline)
+- `pipelines/frontend-pipeline.yml` → `pipelines/legacy/` (frontend-only pipeline)
+- `pipelines/templates/frontend-build.yml` → superseded by unified build
+- `pipelines/templates/frontend-deploy.yml` → superseded by new deploy-swa
+- `pipelines/templates/terraform-validate.yml` → move to `.ado/templates/`
+- `pipelines/templates/terraform-plan.yml` → move to `.ado/templates/`
+- `pipelines/templates/terraform-apply.yml` → refactor to deploy-infra.yml
+
+#### Architecture Overview
+
+- **PR Validation Pipeline** (`.ado/azure-pipelines-pr.yml`): ✅ MERGED
+  - Fast feedback (5-10 minutes), no deployments
+  - Frontend, backend, infrastructure, APIM validation
+  - Security scanning (npm audit, Checkov, TFLint)
+- **Multi-Stage CD Pipeline** (`.ado/azure-pipelines.yml`): ⚠️ TO BE CREATED
+  - Build Stage: Create unified `drop/` artifact once
+  - Dev Stage: Auto-deploy all components + smoke tests
+  - Staging Stage: Approval-gated + smoke + API tests
+  - Prod Stage: Approval-gated + smoke + API + E2E tests
+
+#### Memory Bank Updates
+
+- **activeContext.md**: Updated with CI/CD architecture overview, unified artifact structure, implementation roadmap
+- **progress.md**: Updated current status to reflect CI/CD planning complete, 3/37 tasks (8%) complete
+- **changelog.md**: This entry documenting comprehensive planning session
+
+#### Development Experience
+
+- **Clear Roadmap**: 37 specific tasks with estimated timelines and dependencies
+- **Unified Artifact**: Simple promotion strategy eliminates version drift and rollback complexity
+- **Path-Based Deployment**: Only changed components redeploy, optimizing pipeline execution time
+- **Enterprise Patterns**: Build-once-deploy-many, approval gates, comprehensive testing at each stage
+
+#### Portfolio Value
+
+- **Enterprise CI/CD**: Demonstrates professional deployment automation and release management
+- **Build-Once-Deploy-Many**: Shows understanding of artifact promotion and reproducible deployments
+- **Approval Gates**: Demonstrates controlled release management and change control
+- **Comprehensive Testing**: Smoke tests, API tests, E2E tests at appropriate stages
+- **Infrastructure as Code**: Complete automation of infrastructure and application deployment
+
+#### Next Steps
+
+- Update remaining memory bank files (projectBrief.md, systemPatterns.md)
+- Move legacy pipelines to `pipelines/legacy/`
+- Begin Phase 1: Foundation Setup with unified build template creation
+- User to toggle to Act mode for implementation
+
+#### CI/CD Planning Session Impact
+
+- Complete architecture designed with clear implementation path
+- All key decisions documented with rationale
+- Unified artifact strategy eliminates common deployment pitfalls
+- Ready for systematic implementation across 5 phases
+- Portfolio-ready enterprise CI/CD demonstration planned
+
 ### [2025-10-05] - PR Validation Pipeline Merged to Main (09:48 PM)
 
 #### Added
