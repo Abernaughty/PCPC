@@ -1,454 +1,141 @@
-# PCPC Azure DevOps Pipelines
+# PCPC CI/CD Pipelines
 
-## ⚠️ IMPORTANT: Pipeline Architecture Migration
+## ⚠️ MIGRATION NOTICE
 
-**The pipelines in this directory have been deprecated and moved to `pipelines/legacy/`.**
+**The CI/CD architecture has been modernized and moved to the `.ado/` directory.**
 
-**New CI/CD architecture is located in the `.ado/` directory at the repository root.**
-
-For current pipeline documentation, see:
-
-- **`.ado/README.md`** - Complete pipeline documentation
-- **`.ado/SETUP_GUIDE.md`** - Azure DevOps setup instructions
-- **`pipelines/legacy/README.md`** - Information about deprecated files
-
-## Overview
-
-This directory now contains only:
+This directory now contains:
 
 - **`scripts/`** - Reusable deployment and validation scripts (still in use)
-- **`legacy/`** - Deprecated pipeline files (retained for 2 sprints)
-- **`README.md`** - This file (updated to point to new architecture)
-- **`test-service-connections.yml`** - Service connection testing (still in use)
+- **`legacy/`** - Deprecated pipeline files (see [legacy/README.md](legacy/README.md))
 
-The legacy pipelines were organized by deployment type with separation of concerns between infrastructure and application deployments. The new architecture uses a unified multi-stage CD pipeline with build-once-deploy-many pattern.
+## New CI/CD Architecture
 
-## Available Pipelines
+The PCPC project now uses an enterprise-grade CI/CD architecture with:
 
-### 1. Infrastructure Pipeline (`azure-pipelines.yml`)
+- **Two-Pipeline Strategy**: PR validation + Multi-stage CD
+- **Unified Artifact**: Build-once-deploy-many pattern
+- **Multi-Environment**: Dev → Staging → Prod with approval gates
+- **Path-Based Deployment**: Only deploy components that changed
 
-Deploys Azure infrastructure using Terraform with automated validation, planning, and deployment stages.
-
-**What it deploys:**
-
-- Azure Resource Groups
-- Cosmos DB accounts
-- Function Apps (empty shells)
-- Static Web Apps (empty shells)
-- Storage Accounts
-- Application Insights
-- Log Analytics workspaces
-
-**Documentation:** See [SETUP_GUIDE.md](SETUP_GUIDE.md)
-
-### 2. Frontend Pipeline (`frontend-pipeline.yml`)
-
-Builds and deploys the Svelte application to Azure Static Web Apps with comprehensive testing.
-
-**What it deploys:**
-
-- Svelte application code
-- Static assets (CSS, images)
-- JavaScript bundles
-- Application configuration
-
-**Documentation:** See [FRONTEND_SETUP_GUIDE.md](FRONTEND_SETUP_GUIDE.md)
-
-### 3. Backend Pipeline (Coming Soon)
-
-Will deploy Azure Functions code to the Function App created by infrastructure pipeline.
-
-## Infrastructure Pipeline Architecture
+### Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│              Infrastructure Pipeline (Terraform)             │
+│                   PR Validation Pipeline                     │
+│              (.ado/azure-pipelines-pr.yml)                   │
 ├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  Stage 1: Validate                                           │
-│  ├─ Terraform Format Check                                   │
-│  ├─ Terraform Validate                                       │
-│  └─ Terraform Lint (tflint)                                  │
-│                                                               │
-│  Stage 2: Plan                                               │
-│  ├─ Terraform Init (with backend)                            │
-│  ├─ Terraform Plan                                           │
-│  ├─ Publish Plan Artifact                                    │
-│  └─ Display Plan Summary                                     │
-│                                                               │
-│  Stage 3: Apply                                              │
-│  ├─ Download Plan Artifact                                   │
-│  ├─ Terraform Init (with backend)                            │
-│  ├─ Terraform Apply                                          │
-│  ├─ Display Outputs                                          │
-│  └─ Post-Deployment Validation                               │
-│                                                               │
+│  Fast feedback on pull requests (5-10 minutes)              │
+│  ├─ Frontend validation (lint, test, build)                 │
+│  ├─ Backend validation (lint, test, compile)                │
+│  ├─ Infrastructure validation (fmt, validate, lint)         │
+│  ├─ APIM validation (OpenAPI lint, policy check)            │
+│  └─ Security scan (npm audit)                               │
 └─────────────────────────────────────────────────────────────┘
-```
 
-## Frontend Pipeline Architecture
-
-```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Frontend Pipeline                         │
+│                Multi-Stage CD Pipeline                       │
+│                (.ado/azure-pipelines.yml)                    │
 ├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  Stage 1: Build & Test                                       │
-│  ├─ Install Node.js 22.x                                     │
-│  ├─ Install Dependencies (npm ci)                            │
-│  ├─ Run Unit Tests (Jest)                                    │
-│  ├─ Publish Test Results                                     │
-│  ├─ Publish Code Coverage                                    │
-│  ├─ Build Production Bundle (Rollup)                         │
-│  ├─ Verify Build Output                                      │
-│  └─ Publish Build Artifacts                                  │
-│                                                               │
-│  Stage 2: Deploy                                             │
-│  ├─ Download Build Artifacts                                 │
-│  ├─ Deploy to Static Web App                                 │
-│  ├─ Wait for Propagation (30s)                               │
-│  ├─ Run Smoke Tests                                          │
-│  └─ Display Deployment Summary                               │
-│                                                               │
+│  Build Stage                                                 │
+│  ├─ Build frontend (Svelte → dist/)                         │
+│  ├─ Build backend (TypeScript → functions.zip)              │
+│  ├─ Snapshot APIM configs                                   │
+│  ├─ Generate release.json manifest                          │
+│  └─ Publish unified drop/ artifact                          │
+│                                                              │
+│  Deploy_Dev Stage (auto-deploy)                             │
+│  ├─ Deploy infrastructure (Terraform)                       │
+│  ├─ Deploy frontend (Static Web App)                        │
+│  ├─ Deploy backend (Azure Functions)                        │
+│  ├─ Deploy APIM (API Management)                            │
+│  └─ Run smoke tests                                         │
+│                                                              │
+│  Deploy_Staging Stage (approval gate)                       │
+│  ├─ Deploy infrastructure                                   │
+│  ├─ Deploy applications                                     │
+│  ├─ Run smoke tests                                         │
+│  └─ Run API contract tests                                  │
+│                                                              │
+│  Deploy_Prod Stage (approval gate)                          │
+│  ├─ Deploy infrastructure                                   │
+│  ├─ Deploy applications                                     │
+│  ├─ Run smoke tests                                         │
+│  ├─ Run API contract tests                                  │
+│  └─ Run E2E tests                                           │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## Directory Structure
-
-```
-pipelines/
-├── azure-pipelines.yml              # Infrastructure pipeline (Terraform)
-├── frontend-pipeline.yml            # Frontend deployment pipeline
-├── templates/
-│   ├── terraform-validate.yml       # Terraform validation template
-│   ├── terraform-plan.yml           # Terraform plan template
-│   ├── terraform-apply.yml          # Terraform apply template
-│   ├── frontend-build.yml           # Frontend build template
-│   └── frontend-deploy.yml          # Frontend deploy template
-├── scripts/
-│   ├── setup-backend.sh             # Terraform backend validation
-│   ├── validate-deployment.sh       # Infrastructure validation
-│   └── verify-frontend-deployment.sh # Frontend smoke tests
-├── README.md                        # This file (overview)
-├── SETUP_GUIDE.md                   # Infrastructure pipeline setup
-└── FRONTEND_SETUP_GUIDE.md          # Frontend pipeline setup
-```
-
-## Pipeline Separation Strategy
-
-The PCPC project uses **separate pipelines** for infrastructure and applications, following DevOps best practices:
-
-**Why Separate Pipelines?**
-
-- ✅ **Faster deployments** - Only rebuild what changed
-- ✅ **Independent scaling** - Deploy frontend 10x/day, infrastructure 1x/month
-- ✅ **Clear ownership** - Platform team owns infra, dev teams own apps
-- ✅ **Reduced risk** - App bugs don't affect infrastructure
-- ✅ **Better CI/CD performance** - Smaller, focused pipelines
-
-**Pipeline Relationships:**
-
-```
-Infrastructure Pipeline (Terraform)
-    ↓ Creates resources
-    ├─→ Function App (empty) ──→ Backend Pipeline deploys code
-    └─→ Static Web App (empty) ──→ Frontend Pipeline deploys code
-```
-
-## Quick Start
-
-### For Infrastructure Deployment
-
-See [SETUP_GUIDE.md](SETUP_GUIDE.md) for complete infrastructure pipeline setup.
-
-### For Frontend Deployment
-
-See [FRONTEND_SETUP_GUIDE.md](FRONTEND_SETUP_GUIDE.md) for complete frontend pipeline setup.
-
-## Infrastructure Pipeline Prerequisites
-
-### 1. Azure Infrastructure
-
-Before running the infrastructure pipeline, you must create the following Azure resources:
-
-#### Terraform State Storage Account
-
-```bash
-# Set variables
-RESOURCE_GROUP="pcpc-terraform-state-rg"
-STORAGE_ACCOUNT="pcpctfstate$(openssl rand -hex 4)"
-CONTAINER_NAME="tfstate"
-LOCATION="eastus"
-
-# Create resource group
-az group create --name $RESOURCE_GROUP --location $LOCATION
-
-# Create storage account
-az storage account create \
-  --name $STORAGE_ACCOUNT \
-  --resource-group $RESOURCE_GROUP \
-  --location $LOCATION \
-  --sku Standard_LRS \
-  --encryption-services blob \
-  --https-only true \
-  --min-tls-version TLS1_2
-
-# Create container
-az storage container create \
-  --name $CONTAINER_NAME \
-  --account-name $STORAGE_ACCOUNT \
-  --auth-mode login
-
-# Enable versioning
-az storage account blob-service-properties update \
-  --account-name $STORAGE_ACCOUNT \
-  --enable-versioning true
-```
-
-#### Service Principal for Dev Environment
-
-```bash
-# Create service principal
-SP_NAME="pcpc-terraform-dev-sp"
-SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-
-az ad sp create-for-rbac \
-  --name $SP_NAME \
-  --role Contributor \
-  --scopes /subscriptions/$SUBSCRIPTION_ID
+## Documentation
 
-# Grant storage access
-SP_OBJECT_ID=$(az ad sp list --display-name $SP_NAME --query [0].id -o tsv)
+For complete CI/CD documentation, see:
 
-az role assignment create \
-  --assignee $SP_OBJECT_ID \
-  --role "Storage Blob Data Contributor" \
-  --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Storage/storageAccounts/$STORAGE_ACCOUNT
-```
+- **`.ado/README.md`** - Complete pipeline documentation (coming soon)
+- **`.ado/SETUP_GUIDE.md`** - Azure DevOps setup instructions (coming soon)
+- **`pipelines/legacy/README.md`** - Information about deprecated files
 
-### 2. Azure DevOps Configuration
+## Current Status
 
-#### Create Service Connection
+**Phase 0 Complete** (Oct 5, 2025):
 
-1. Navigate to: **Azure DevOps** → **PCPC Project** → **Project Settings** → **Service connections**
-2. Click **New service connection** → **Azure Resource Manager**
-3. Select **Service principal (manual)**
-4. Fill in details:
-   - Service connection name: `pcpc-dev-terraform`
-   - Subscription ID: `<your-subscription-id>`
-   - Service Principal Id: `<appId from SP creation>`
-   - Service Principal Key: `<password from SP creation>`
-   - Tenant ID: `<tenant from SP creation>`
-5. Verify connection and save
+- ✅ CI/CD architecture planning complete
+- ✅ PR validation pipeline merged to main
+- ✅ Azure DevOps foundation setup complete
+- ✅ Legacy pipelines moved to `pipelines/legacy/`
 
-#### Create Variable Group
+**Next Phase** (Phase 1 - Foundation Setup):
 
-1. Navigate to: **Pipelines** → **Library** → **+ Variable group**
-2. Name: `pcpc-terraform-dev`
-3. Add variables:
-   - `ARM_CLIENT_ID`: `<appId>` (Secret)
-   - `ARM_CLIENT_SECRET`: `<password>` (Secret)
-   - `ARM_SUBSCRIPTION_ID`: `<subscription-id>`
-   - `ARM_TENANT_ID`: `<tenant-id>`
-   - `TF_STATE_RESOURCE_GROUP`: `pcpc-terraform-state-rg`
-   - `TF_STATE_STORAGE_ACCOUNT`: `<storage-account-name>`
-   - `TF_STATE_CONTAINER`: `tfstate`
-   - `TF_VAR_environment`: `dev`
-   - `TF_VAR_location`: `eastus`
-4. Save variable group
+- Create unified build template
+- Create deployment templates
+- Create staging/prod infrastructure configs
+- Create smoke tests and health checks
 
-#### Create Environment
+## Reusable Scripts
 
-1. Navigate to: **Pipelines** → **Environments** → **New environment**
-2. Name: `pcpc-dev`
-3. Add approval check:
-   - Approvers: `devops@maber.io`, `mike@maber.io`
-   - Timeout: 30 days
-   - Instructions: "Review Terraform plan before approving"
+The `scripts/` directory contains reusable scripts used by both legacy and new pipelines:
 
-## Pipeline Configuration
+### Deployment Scripts
 
-### Main Pipeline (`azure-pipelines.yml`)
+- **`setup-backend.sh`** - Terraform backend validation
+- **`validate-deployment.sh`** - Infrastructure validation
 
-The main pipeline orchestrates three stages:
+### Verification Scripts
 
-1. **Validate**: Checks Terraform syntax, formatting, and best practices
-2. **Plan**: Generates execution plan and publishes artifacts
-3. **Apply**: Applies infrastructure changes with approval gates
+- **`verify-frontend-deployment.sh`** - Frontend smoke tests (5 comprehensive checks)
 
-### Triggers
+These scripts are environment-agnostic and can be used in any pipeline.
 
-- **Branch Trigger**: Runs on commits to `main` branch
-- **Path Trigger**: Only runs when changes are made to:
-  - `infra/**`
-  - `pipelines/**`
-- **Pull Request**: Runs validation on PRs to `main`
+## Migration Timeline
 
-### Variables
+| Phase                             | Status         | Completion Date |
+| --------------------------------- | -------------- | --------------- |
+| Phase 0: Planning & Documentation | ✅ Complete    | Oct 5, 2025     |
+| Phase 1: Foundation Setup         | 🔄 In Progress | Oct 6-9, 2025   |
+| Phase 2: Pipeline Integration     | ⏳ Planned     | Oct 10-13, 2025 |
+| Phase 3: Production & APIM        | ⏳ Planned     | Oct 14-17, 2025 |
+| Phase 4: PR Pipeline Config       | ⏳ Planned     | Oct 18, 2025    |
 
-- `terraformVersion`: `1.13.3`
-- `workingDirectory`: `$(System.DefaultWorkingDirectory)/infra/envs/dev`
-- Variable group: `pcpc-terraform-dev`
+## Legacy Pipelines
 
-## Usage
+The following pipelines have been deprecated and moved to `pipelines/legacy/`:
 
-### Running the Pipeline
+- `azure-pipelines.yml` - Infrastructure-only pipeline
+- `frontend-pipeline.yml` - Frontend-only pipeline
+- `test-service-connections.yml` - Service connection testing
+- All pipeline templates
 
-1. **Commit Changes**: Push changes to `main` branch or create a PR
-2. **Monitor Pipeline**: Navigate to **Pipelines** → **PCPC Infrastructure**
-3. **Review Plan**: Check plan output in the Plan stage
-4. **Approve Deployment**: Approve in the `pcpc-dev` environment (if required)
-5. **Verify Deployment**: Check Apply stage outputs and validation
-
-### Manual Pipeline Run
-
-1. Navigate to **Pipelines** → **PCPC Infrastructure**
-2. Click **Run pipeline**
-3. Select branch: `main`
-4. Click **Run**
-
-### Viewing Terraform Outputs
-
-After successful deployment:
-
-1. Navigate to the completed pipeline run
-2. Go to **Apply** stage → **Display Terraform Outputs** step
-3. View JSON output with resource details
-
-Alternatively, download the `terraform-outputs-dev` artifact.
-
-## Helper Scripts
-
-### Backend Validation (`scripts/setup-backend.sh`)
-
-Validates Terraform backend configuration:
-
-```bash
-# Run locally
-export TF_STATE_RESOURCE_GROUP="pcpc-terraform-state-rg"
-export TF_STATE_STORAGE_ACCOUNT="pcpctfstate1a2b3c4d"
-export TF_STATE_CONTAINER="tfstate"
-
-./pipelines/scripts/setup-backend.sh
-```
-
-### Deployment Validation (`scripts/validate-deployment.sh`)
-
-Validates deployed infrastructure:
-
-```bash
-# Run locally
-./pipelines/scripts/validate-deployment.sh dev
-```
-
-## Troubleshooting
-
-### Common Issues
-
-#### 1. State Lock Errors
-
-**Symptom**: "Error acquiring the state lock"
-
-**Solution**:
-
-```bash
-# Check for existing lease
-az storage blob lease break \
-  --account-name $STORAGE_ACCOUNT \
-  --container-name tfstate \
-  --blob-name pcpc.dev.tfstate
-```
-
-#### 2. Authentication Failures
-
-**Symptom**: "Error: building AzureRM Client: obtain subscription"
-
-**Solution**:
-
-- Verify service principal credentials in variable group
-- Check service principal has Contributor role
-- Ensure service connection is working
-
-#### 3. Plan Artifact Not Found
-
-**Symptom**: "Artifact 'tfplan-dev' not found"
-
-**Solution**:
-
-- Check Plan stage completed successfully
-- Verify artifact was published
-- Ensure Apply stage depends on Plan stage
-
-#### 4. Backend Initialization Fails
-
-**Symptom**: "Error: Failed to get existing workspaces"
-
-**Solution**:
-
-- Verify storage account exists
-- Check service principal has Storage Blob Data Contributor role
-- Validate backend configuration variables
-
-### Debug Mode
-
-Enable debug logging:
-
-```bash
-# Set system debug variable in pipeline
-variables:
-  - name: system.debug
-    value: true
-```
-
-## Security Best Practices
-
-1. **Service Principal**: Use dedicated service principal per environment
-2. **Secrets**: Store all credentials in Azure Key Vault or variable groups
-3. **State File**: Enable blob versioning and soft delete
-4. **Approval Gates**: Require manual approval for production deployments
-5. **Audit Logging**: Enable Azure Monitor for pipeline activity
-
-## Notifications
-
-Email notifications are configured for:
-
-- Pipeline failures
-- Deployment completions
-- Approval requests
-
-Recipients:
-
-- devops@maber.io
-- mike@maber.io
-
-## Next Steps
-
-### Adding Staging Environment
-
-1. Create staging service principal
-2. Create `pcpc-terraform-staging` variable group
-3. Create `pcpc-staging` environment
-4. Update `azure-pipelines.yml` to add staging stages
-
-### Adding Production Environment
-
-1. Create production service principal
-2. Create `pcpc-terraform-prod` variable group
-3. Create `pcpc-prod` environment with multiple approvers
-4. Update `azure-pipelines.yml` to add production stages
-5. Add change advisory board (CAB) approval process
+See [legacy/README.md](legacy/README.md) for details on deprecated files and migration rationale.
 
 ## Support
 
-For issues or questions:
+For questions about the new CI/CD architecture:
 
-- Create an issue in the PCPC repository
+- See: `.ado/README.md` for complete documentation (coming soon)
 - Contact: devops@maber.io
-- Documentation: See `docs/deployment-guide.md`
+- GitHub Issues: Tag with `cicd` label
 
 ## References
 
-- [Terraform Azure Provider](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs)
-- [Azure DevOps Pipelines](https://docs.microsoft.com/en-us/azure/devops/pipelines/)
-- [Terraform Backend Configuration](https://www.terraform.io/docs/language/settings/backends/azurerm.html)
+- [Azure DevOps Pipelines Documentation](https://docs.microsoft.com/en-us/azure/devops/pipelines/)
 - [PCPC Architecture Documentation](../docs/architecture.md)
+- [PCPC Deployment Guide](../docs/deployment-guide.md)

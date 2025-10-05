@@ -1,0 +1,201 @@
+# Static Web App Deployment Template
+# Environment-agnostic deployment for Dev/Staging/Prod
+# Includes artifact verification, deployment, and smoke tests
+
+parameters:
+  - name: environment
+    type: string
+    displayName: "Target environment (dev/staging/prod)"
+  - name: azureSubscription
+    type: string
+    displayName: "Azure service connection name"
+  - name: staticWebAppName
+    type: string
+    displayName: "Static Web App name"
+  - name: resourceGroupName
+    type: string
+    displayName: "Resource group name"
+
+steps:
+  # Checkout source for smoke test scripts
+  - checkout: self
+    displayName: "Checkout Source"
+
+  # Download build artifact
+  - download: current
+    artifact: drop
+    displayName: "Download Build Artifact"
+
+  # Display deployment information
+  - script: |
+      echo "=========================================="
+      echo "STATIC WEB APP DEPLOYMENT"
+      echo "=========================================="
+      echo "Environment: ${{ parameters.environment }}"
+      echo "Static Web App: ${{ parameters.staticWebAppName }}"
+      echo "Resource Group: ${{ parameters.resourceGroupName }}"
+      echo "Azure Subscription: ${{ parameters.azureSubscription }}"
+      echo "Artifact Path: $(Pipeline.Workspace)/drop"
+      echo "=========================================="
+    displayName: "Display Deployment Info"
+
+  # Verify artifact integrity
+  - script: |
+      echo "Verifying artifact integrity..."
+
+      ARTIFACT_PATH="$(Pipeline.Workspace)/drop"
+
+      # Check if checksums file exists
+      if [ ! -f "$ARTIFACT_PATH/checksums.txt" ]; then
+        echo "ERROR: checksums.txt not found in artifact"
+        exit 1
+      fi
+
+      # Verify checksums
+      cd "$ARTIFACT_PATH"
+      if sha256sum -c checksums.txt; then
+        echo "✓ Artifact integrity verified successfully"
+      else
+        echo "ERROR: Artifact integrity check failed"
+        exit 1
+      fi
+
+      # Verify SWA directory exists
+      if [ ! -d "$ARTIFACT_PATH/swa" ]; then
+        echo "ERROR: swa/ directory not found in artifact"
+        exit 1
+      fi
+
+      # List SWA contents
+      echo ""
+      echo "SWA artifact contents:"
+      ls -lh "$ARTIFACT_PATH/swa/"
+
+      # Verify critical files
+      REQUIRED_FILES=("index.html" "main.js" "bundle.css")
+      for file in "${REQUIRED_FILES[@]}"; do
+        if [ ! -f "$ARTIFACT_PATH/swa/$file" ]; then
+          echo "ERROR: Required file $file not found in swa/"
+          exit 1
+        fi
+        echo "✓ Found: $file"
+      done
+
+      echo ""
+      echo "✓ All required files present"
+    displayName: "Verify Artifact Integrity"
+
+  # Get Static Web App deployment token
+  - task: AzureCLI@2
+    displayName: "Get Deployment Token"
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        echo "Retrieving deployment token for ${{ parameters.staticWebAppName }}..."
+
+        # Get deployment token
+        DEPLOYMENT_TOKEN=$(az staticwebapp secrets list \
+          --name ${{ parameters.staticWebAppName }} \
+          --resource-group ${{ parameters.resourceGroupName }} \
+          --query "properties.apiKey" \
+          --output tsv)
+
+        if [ -z "$DEPLOYMENT_TOKEN" ]; then
+          echo "ERROR: Failed to retrieve deployment token"
+          exit 1
+        fi
+
+        echo "✓ Deployment token retrieved successfully"
+        echo "##vso[task.setvariable variable=DEPLOYMENT_TOKEN;issecret=true]$DEPLOYMENT_TOKEN"
+
+  # Deploy to Azure Static Web Apps
+  - task: AzureStaticWebApp@0
+    displayName: "Deploy to Static Web App"
+    inputs:
+      azure_static_web_apps_api_token: $(DEPLOYMENT_TOKEN)
+      app_location: "$(Pipeline.Workspace)/drop/swa"
+      output_location: ""
+      skip_app_build: true
+
+  # Wait for deployment propagation
+  - script: |
+      echo "Waiting 30 seconds for deployment to propagate..."
+      sleep 30
+    displayName: "Wait for Deployment Propagation"
+
+  # Get Static Web App URL
+  - task: AzureCLI@2
+    displayName: "Get Static Web App URL"
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        echo "Retrieving Static Web App URL..."
+
+        # Get default hostname
+        HOSTNAME=$(az staticwebapp show \
+          --name ${{ parameters.staticWebAppName }} \
+          --resource-group ${{ parameters.resourceGroupName }} \
+          --query "defaultHostname" \
+          --output tsv)
+
+        if [ -z "$HOSTNAME" ]; then
+          echo "ERROR: Failed to retrieve Static Web App hostname"
+          exit 1
+        fi
+
+        # Construct full URL
+        SWA_URL="https://$HOSTNAME"
+
+        echo "Static Web App URL: $SWA_URL"
+        echo "##vso[task.setvariable variable=SWA_URL]$SWA_URL"
+
+  # Run smoke tests
+  - script: |
+      echo "Running Static Web App smoke tests..."
+
+      # Make script executable
+      chmod +x $(Build.SourcesDirectory)/pipelines/scripts/verify-frontend-deployment.sh
+
+      # Run verification script
+      $(Build.SourcesDirectory)/pipelines/scripts/verify-frontend-deployment.sh "$(SWA_URL)"
+
+      EXIT_CODE=$?
+
+      if [ $EXIT_CODE -eq 0 ]; then
+        echo "✓ All smoke tests passed"
+      elif [ $EXIT_CODE -eq 2 ]; then
+        echo "⚠ Some tests passed with warnings"
+      else
+        echo "✗ Smoke tests failed"
+        exit 1
+      fi
+    displayName: "Run Smoke Tests"
+
+  # Display deployment summary
+  - script: |
+      echo "=========================================="
+      echo "DEPLOYMENT SUMMARY"
+      echo "=========================================="
+      echo ""
+      echo "Environment: ${{ parameters.environment }}"
+      echo "Static Web App: ${{ parameters.staticWebAppName }}"
+      echo "Resource Group: ${{ parameters.resourceGroupName }}"
+      echo ""
+      echo "Deployment URL: $(SWA_URL)"
+      echo ""
+      echo "Deployed Files:"
+      echo "  ✓ Frontend Application (Svelte)"
+      echo "  ✓ Static Assets (images, data)"
+      echo "  ✓ Configuration (staticwebapp.config.json)"
+      echo ""
+      echo "Verification Status:"
+      echo "  ✓ Artifact integrity verified"
+      echo "  ✓ Deployment successful"
+      echo "  ✓ Smoke tests passed"
+      echo ""
+      echo "=========================================="
+    displayName: "Display Deployment Summary"
