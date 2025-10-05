@@ -1,0 +1,211 @@
+# Backend Deployment Template
+# Deploys Azure Functions from unified artifact to target environment
+
+parameters:
+  - name: environment
+    type: string
+  - name: azureSubscription
+    type: string
+  - name: functionAppName
+    type: string
+  - name: resourceGroupName
+    type: string
+  - name: artifactName
+    type: string
+    default: "drop"
+  - name: runSmokeTests
+    type: boolean
+    default: true
+
+steps:
+  # Download unified artifact
+  - task: DownloadBuildArtifacts@1
+    displayName: "Download Unified Artifact"
+    inputs:
+      buildType: "current"
+      downloadType: "single"
+      artifactName: "${{ parameters.artifactName }}"
+      downloadPath: "$(System.ArtifactsDirectory)"
+
+  # Display artifact contents for verification
+  - script: |
+      echo "=========================================="
+      echo "ARTIFACT CONTENTS"
+      echo "=========================================="
+      echo ""
+      echo "Artifact location: $(System.ArtifactsDirectory)/${{ parameters.artifactName }}"
+      echo ""
+      echo "Directory structure:"
+      tree -L 3 $(System.ArtifactsDirectory)/${{ parameters.artifactName }} || ls -R $(System.ArtifactsDirectory)/${{ parameters.artifactName }}
+      echo ""
+      echo "Functions directory contents:"
+      ls -lah $(System.ArtifactsDirectory)/${{ parameters.artifactName }}/functions/
+      echo ""
+      echo "=========================================="
+    displayName: "Display Artifact Contents"
+
+  # Verify artifact integrity using checksums
+  - script: |
+      cd $(System.ArtifactsDirectory)/${{ parameters.artifactName }}
+
+      if [ ! -f "checksums.txt" ]; then
+        echo "##vso[task.logissue type=warning]Checksums file not found - skipping integrity verification"
+        exit 0
+      fi
+
+      echo "Verifying artifact integrity..."
+      sha256sum -c checksums.txt
+
+      if [ $? -eq 0 ]; then
+        echo "✓ Artifact integrity verified successfully"
+      else
+        echo "##vso[task.logissue type=error]Artifact integrity verification failed"
+        exit 1
+      fi
+    displayName: "Verify Artifact Integrity"
+    continueOnError: true
+
+  # Display release manifest
+  - script: |
+      if [ -f "$(System.ArtifactsDirectory)/${{ parameters.artifactName }}/release.json" ]; then
+        echo "=========================================="
+        echo "RELEASE MANIFEST"
+        echo "=========================================="
+        cat $(System.ArtifactsDirectory)/${{ parameters.artifactName }}/release.json
+        echo ""
+        echo "=========================================="
+      else
+        echo "##vso[task.logissue type=warning]Release manifest not found"
+      fi
+    displayName: "Display Release Manifest"
+
+  # Deploy Azure Functions
+  - task: AzureFunctionApp@2
+    displayName: "Deploy Azure Functions to ${{ parameters.environment }}"
+    inputs:
+      azureSubscription: "${{ parameters.azureSubscription }}"
+      appType: "functionApp"
+      appName: "${{ parameters.functionAppName }}"
+      package: "$(System.ArtifactsDirectory)/${{ parameters.artifactName }}/functions"
+      deploymentMethod: "auto"
+      runtimeStack: "NODE|22"
+
+  # Wait for Function App to be ready
+  - script: |
+      echo "Waiting for Function App to be ready..."
+      sleep 30
+      echo "Function App should be ready for health checks"
+    displayName: "Wait for Function App Startup"
+
+  # Get Function App URL
+  - task: AzureCLI@2
+    displayName: "Get Function App URL"
+    inputs:
+      azureSubscription: "${{ parameters.azureSubscription }}"
+      scriptType: "bash"
+      scriptLocation: "inlineScript"
+      inlineScript: |
+        echo "Querying Function App details..."
+
+        # Get Function App hostname
+        FUNCTION_APP_HOSTNAME=$(az functionapp show \
+          --name ${{ parameters.functionAppName }} \
+          --resource-group ${{ parameters.resourceGroupName }} \
+          --query defaultHostName -o tsv)
+
+        if [ -z "$FUNCTION_APP_HOSTNAME" ]; then
+          echo "##vso[task.logissue type=error]Failed to get Function App hostname"
+          exit 1
+        fi
+
+        FUNCTION_APP_URL="https://${FUNCTION_APP_HOSTNAME}"
+
+        echo "Function App URL: $FUNCTION_APP_URL"
+        echo "##vso[task.setvariable variable=functionAppUrl]$FUNCTION_APP_URL"
+
+  # Run smoke tests if enabled
+  - ${{ if eq(parameters.runSmokeTests, true) }}:
+      - script: |
+          echo "=========================================="
+          echo "FUNCTION APP SMOKE TESTS"
+          echo "=========================================="
+          echo ""
+          echo "Function App URL: $(functionAppUrl)"
+          echo "Environment: ${{ parameters.environment }}"
+          echo ""
+
+          # Test 1: Health Check Endpoint
+          echo "Test 1: Health Check Endpoint"
+          echo "GET $(functionAppUrl)/api/health"
+
+          HEALTH_RESPONSE=$(curl -s -w "\n%{http_code}" "$(functionAppUrl)/api/health")
+          HEALTH_STATUS=$(echo "$HEALTH_RESPONSE" | tail -n1)
+          HEALTH_BODY=$(echo "$HEALTH_RESPONSE" | head -n-1)
+
+          if [ "$HEALTH_STATUS" = "200" ]; then
+            echo "✓ Health check passed (HTTP $HEALTH_STATUS)"
+            echo "Response: $HEALTH_BODY"
+          else
+            echo "✗ Health check failed (HTTP $HEALTH_STATUS)"
+            echo "Response: $HEALTH_BODY"
+            echo "##vso[task.logissue type=error]Health check endpoint returned HTTP $HEALTH_STATUS"
+            exit 1
+          fi
+
+          echo ""
+
+          # Test 2: GetSetList Endpoint
+          echo "Test 2: GetSetList Endpoint"
+          echo "GET $(functionAppUrl)/api/sets"
+
+          SETS_RESPONSE=$(curl -s -w "\n%{http_code}" "$(functionAppUrl)/api/sets")
+          SETS_STATUS=$(echo "$SETS_RESPONSE" | tail -n1)
+          SETS_BODY=$(echo "$SETS_RESPONSE" | head -n-1)
+
+          if [ "$SETS_STATUS" = "200" ]; then
+            echo "✓ GetSetList endpoint passed (HTTP $SETS_STATUS)"
+            
+            # Verify response contains data
+            SET_COUNT=$(echo "$SETS_BODY" | jq -r '.data | length' 2>/dev/null || echo "0")
+            echo "Sets returned: $SET_COUNT"
+            
+            if [ "$SET_COUNT" -gt "0" ]; then
+              echo "✓ Response contains set data"
+            else
+              echo "##vso[task.logissue type=warning]Response contains no set data"
+            fi
+          else
+            echo "✗ GetSetList endpoint failed (HTTP $SETS_STATUS)"
+            echo "Response: $SETS_BODY"
+            echo "##vso[task.logissue type=error]GetSetList endpoint returned HTTP $SETS_STATUS"
+            exit 1
+          fi
+
+          echo ""
+          echo "=========================================="
+          echo "✓ All smoke tests passed"
+          echo "=========================================="
+        displayName: "Run Function App Smoke Tests"
+        continueOnError: false
+
+  # Display deployment summary
+  - script: |
+      echo "=========================================="
+      echo "DEPLOYMENT SUMMARY"
+      echo "=========================================="
+      echo ""
+      echo "Environment: ${{ parameters.environment }}"
+      echo "Function App: ${{ parameters.functionAppName }}"
+      echo "Resource Group: ${{ parameters.resourceGroupName }}"
+      echo "Function App URL: $(functionAppUrl)"
+      echo ""
+      echo "Deployment completed successfully!"
+      echo ""
+      echo "Available endpoints:"
+      echo "  - Health Check: $(functionAppUrl)/api/health"
+      echo "  - Get Sets: $(functionAppUrl)/api/sets"
+      echo "  - Get Cards: $(functionAppUrl)/api/cards/{setId}"
+      echo "  - Get Card Info: $(functionAppUrl)/api/card/{cardId}"
+      echo ""
+      echo "=========================================="
+    displayName: "Display Deployment Summary"

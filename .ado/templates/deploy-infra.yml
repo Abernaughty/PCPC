@@ -1,0 +1,248 @@
+parameters:
+  - name: environment
+    type: string
+    values:
+      - dev
+      - staging
+      - prod
+  - name: serviceConnection
+    type: string
+  - name: variableGroup
+    type: string
+  - name: workingDirectory
+    type: string
+    default: "infra/envs"
+  - name: approvalRequired
+    type: boolean
+    default: false
+
+jobs:
+  - job: Deploy_Infrastructure_${{ parameters.environment }}
+    displayName: "Deploy Infrastructure - ${{ upper(parameters.environment) }}"
+    pool:
+      vmImage: "ubuntu-latest"
+    variables:
+      - group: ${{ parameters.variableGroup }}
+
+    steps:
+      - checkout: self
+        displayName: "Checkout Source Code"
+
+      - task: TerraformInstaller@0
+        displayName: "Install Terraform"
+        inputs:
+          terraformVersion: "1.13.3"
+
+      - task: AzureCLI@2
+        displayName: "Verify Backend Storage"
+        inputs:
+          azureSubscription: ${{ parameters.serviceConnection }}
+          scriptType: "bash"
+          scriptLocation: "inlineScript"
+          inlineScript: |
+            echo "Verifying Terraform backend storage..."
+
+            # Check if storage account exists
+            if az storage account show \
+              --name $(TF_STATE_STORAGE_ACCOUNT) \
+              --resource-group $(TF_STATE_RESOURCE_GROUP) &>/dev/null; then
+              echo "✓ Storage account exists: $(TF_STATE_STORAGE_ACCOUNT)"
+            else
+              echo "✗ Storage account not found: $(TF_STATE_STORAGE_ACCOUNT)"
+              exit 1
+            fi
+
+            # Check if container exists
+            if az storage container show \
+              --name $(TF_STATE_CONTAINER) \
+              --account-name $(TF_STATE_STORAGE_ACCOUNT) \
+              --auth-mode login &>/dev/null; then
+              echo "✓ Container exists: $(TF_STATE_CONTAINER)"
+            else
+              echo "✗ Container not found: $(TF_STATE_CONTAINER)"
+              exit 1
+            fi
+
+            echo "Backend storage verification complete"
+
+      - task: AzureCLI@2
+        displayName: "Terraform Init"
+        inputs:
+          azureSubscription: ${{ parameters.serviceConnection }}
+          scriptType: "bash"
+          scriptLocation: "inlineScript"
+          workingDirectory: "${{ parameters.workingDirectory }}/${{ parameters.environment }}"
+          inlineScript: |
+            echo "Initializing Terraform for ${{ parameters.environment }} environment..."
+
+            terraform init \
+              -backend-config="resource_group_name=$(TF_STATE_RESOURCE_GROUP)" \
+              -backend-config="storage_account_name=$(TF_STATE_STORAGE_ACCOUNT)" \
+              -backend-config="container_name=$(TF_STATE_CONTAINER)" \
+              -backend-config="key=${{ parameters.environment }}.terraform.tfstate"
+
+            echo "Terraform initialization complete"
+
+      - task: AzureCLI@2
+        displayName: "Terraform Validate"
+        inputs:
+          azureSubscription: ${{ parameters.serviceConnection }}
+          scriptType: "bash"
+          scriptLocation: "inlineScript"
+          workingDirectory: "${{ parameters.workingDirectory }}/${{ parameters.environment }}"
+          inlineScript: |
+            echo "Validating Terraform configuration..."
+            terraform validate
+            echo "Validation complete"
+
+      - task: AzureCLI@2
+        displayName: "Terraform Plan"
+        inputs:
+          azureSubscription: ${{ parameters.serviceConnection }}
+          scriptType: "bash"
+          scriptLocation: "inlineScript"
+          workingDirectory: "${{ parameters.workingDirectory }}/${{ parameters.environment }}"
+          inlineScript: |
+            echo "Generating Terraform execution plan for ${{ parameters.environment }}..."
+
+            terraform plan \
+              -var="environment=${{ parameters.environment }}" \
+              -out=tfplan \
+              -detailed-exitcode || EXIT_CODE=$?
+
+            # Exit codes: 0 = no changes, 1 = error, 2 = changes present
+            if [ "${EXIT_CODE}" == "1" ]; then
+              echo "✗ Terraform plan failed"
+              exit 1
+            elif [ "${EXIT_CODE}" == "2" ]; then
+              echo "✓ Changes detected - plan generated"
+              echo "##vso[task.setvariable variable=HasChanges;isOutput=true]true"
+            else
+              echo "✓ No changes detected"
+              echo "##vso[task.setvariable variable=HasChanges;isOutput=true]false"
+            fi
+
+      - task: AzureCLI@2
+        displayName: "Terraform Apply"
+        inputs:
+          azureSubscription: ${{ parameters.serviceConnection }}
+          scriptType: "bash"
+          scriptLocation: "inlineScript"
+          workingDirectory: "${{ parameters.workingDirectory }}/${{ parameters.environment }}"
+          inlineScript: |
+            echo "Applying Terraform changes for ${{ parameters.environment }}..."
+
+            terraform apply -auto-approve tfplan
+
+            echo "Terraform apply complete"
+
+      - task: AzureCLI@2
+        displayName: "Capture Terraform Outputs"
+        inputs:
+          azureSubscription: ${{ parameters.serviceConnection }}
+          scriptType: "bash"
+          scriptLocation: "inlineScript"
+          workingDirectory: "${{ parameters.workingDirectory }}/${{ parameters.environment }}"
+          inlineScript: |
+            echo "Capturing Terraform outputs..."
+
+            # Get all outputs in JSON format
+            terraform output -json > outputs.json
+
+            # Extract key outputs and set as pipeline variables
+            RESOURCE_GROUP=$(terraform output -raw resource_group_name 2>/dev/null || echo "")
+            FUNCTION_APP=$(terraform output -raw function_app_name 2>/dev/null || echo "")
+            STATIC_WEB_APP=$(terraform output -raw static_web_app_name 2>/dev/null || echo "")
+            COSMOS_ENDPOINT=$(terraform output -raw cosmos_db_endpoint 2>/dev/null || echo "")
+            STORAGE_ACCOUNT=$(terraform output -raw storage_account_name 2>/dev/null || echo "")
+
+            # Set pipeline variables for downstream jobs
+            echo "##vso[task.setvariable variable=ResourceGroupName;isOutput=true]$RESOURCE_GROUP"
+            echo "##vso[task.setvariable variable=FunctionAppName;isOutput=true]$FUNCTION_APP"
+            echo "##vso[task.setvariable variable=StaticWebAppName;isOutput=true]$STATIC_WEB_APP"
+            echo "##vso[task.setvariable variable=CosmosEndpoint;isOutput=true]$COSMOS_ENDPOINT"
+            echo "##vso[task.setvariable variable=StorageAccountName;isOutput=true]$STORAGE_ACCOUNT"
+
+            echo "Terraform outputs captured:"
+            echo "  Resource Group: $RESOURCE_GROUP"
+            echo "  Function App: $FUNCTION_APP"
+            echo "  Static Web App: $STATIC_WEB_APP"
+            echo "  Cosmos DB: $COSMOS_ENDPOINT"
+            echo "  Storage Account: $STORAGE_ACCOUNT"
+
+      - task: AzureCLI@2
+        displayName: "Post-Deployment Validation"
+        inputs:
+          azureSubscription: ${{ parameters.serviceConnection }}
+          scriptType: "bash"
+          scriptLocation: "inlineScript"
+          workingDirectory: "${{ parameters.workingDirectory }}/${{ parameters.environment }}"
+          inlineScript: |
+            echo "Validating deployed infrastructure..."
+
+            RESOURCE_GROUP=$(terraform output -raw resource_group_name)
+
+            # Verify resource group exists
+            if az group show --name "$RESOURCE_GROUP" &>/dev/null; then
+              echo "✓ Resource group exists: $RESOURCE_GROUP"
+            else
+              echo "✗ Resource group not found: $RESOURCE_GROUP"
+              exit 1
+            fi
+
+            # Count deployed resources
+            RESOURCE_COUNT=$(az resource list --resource-group "$RESOURCE_GROUP" --query "length(@)")
+            echo "✓ Found $RESOURCE_COUNT resources in resource group"
+
+            # Verify key resources exist
+            FUNCTION_APP=$(terraform output -raw function_app_name 2>/dev/null || echo "")
+            if [ -n "$FUNCTION_APP" ]; then
+              if az functionapp show --name "$FUNCTION_APP" --resource-group "$RESOURCE_GROUP" &>/dev/null; then
+                echo "✓ Function App exists: $FUNCTION_APP"
+              else
+                echo "⚠ Function App not found: $FUNCTION_APP"
+              fi
+            fi
+
+            STATIC_WEB_APP=$(terraform output -raw static_web_app_name 2>/dev/null || echo "")
+            if [ -n "$STATIC_WEB_APP" ]; then
+              if az staticwebapp show --name "$STATIC_WEB_APP" --resource-group "$RESOURCE_GROUP" &>/dev/null; then
+                echo "✓ Static Web App exists: $STATIC_WEB_APP"
+              else
+                echo "⚠ Static Web App not found: $STATIC_WEB_APP"
+              fi
+            fi
+
+            COSMOS_ACCOUNT=$(terraform output -raw cosmos_db_account_name 2>/dev/null || echo "")
+            if [ -n "$COSMOS_ACCOUNT" ]; then
+              if az cosmosdb show --name "$COSMOS_ACCOUNT" --resource-group "$RESOURCE_GROUP" &>/dev/null; then
+                echo "✓ Cosmos DB exists: $COSMOS_ACCOUNT"
+              else
+                echo "⚠ Cosmos DB not found: $COSMOS_ACCOUNT"
+              fi
+            fi
+
+            echo "Post-deployment validation complete"
+
+      - task: PublishPipelineArtifact@1
+        displayName: "Publish Terraform Outputs"
+        inputs:
+          targetPath: "${{ parameters.workingDirectory }}/${{ parameters.environment }}/outputs.json"
+          artifact: "terraform-outputs-${{ parameters.environment }}"
+          publishLocation: "pipeline"
+
+      - script: |
+          echo ""
+          echo "=========================================="
+          echo "Infrastructure Deployment Summary"
+          echo "=========================================="
+          echo "Environment: ${{ upper(parameters.environment) }}"
+          echo "Resource Group: $(terraform output -raw resource_group_name)"
+          echo "Function App: $(terraform output -raw function_app_name 2>/dev/null || echo 'N/A')"
+          echo "Static Web App: $(terraform output -raw static_web_app_name 2>/dev/null || echo 'N/A')"
+          echo "Cosmos DB: $(terraform output -raw cosmos_db_account_name 2>/dev/null || echo 'N/A')"
+          echo "Storage Account: $(terraform output -raw storage_account_name 2>/dev/null || echo 'N/A')"
+          echo "=========================================="
+          echo ""
+        displayName: "Display Deployment Summary"
+        workingDirectory: "${{ parameters.workingDirectory }}/${{ parameters.environment }}"

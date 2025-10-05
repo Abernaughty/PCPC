@@ -62,6 +62,13 @@ The legacy pipelines had several limitations:
   - Replaced by: `.ado/templates/deploy-infra.yml` (multi-environment infrastructure deployment)
   - Limitations: Single environment, no multi-env support
 
+### Utility Pipelines
+
+- **`test-service-connections.yml`** - Service connection validation pipeline
+  - Purpose: Tested Azure DevOps service connections for Dev, Staging, and Prod
+  - Status: Completed successfully on Oct 5, 2025, no longer needed
+  - Replaced by: Service connections are now validated as part of main pipeline
+
 ### Documentation
 
 - **`SETUP_GUIDE.md`** - Infrastructure pipeline setup guide

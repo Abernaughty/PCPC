@@ -1,0 +1,298 @@
+# PCPC Multi-Stage CD Pipeline
+# Build once, deploy to Dev → Staging → Prod with approval gates
+# Uses unified artifact strategy for consistency across environments
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - "app/**"
+      - "infra/**"
+      - "apim/**"
+      - ".ado/**"
+    exclude:
+      - "**/*.md"
+      - "docs/**"
+      - "tests/**"
+
+pr: none # PR validation handled by azure-pipelines-pr.yml
+
+variables:
+  - group: vg-pcpc-dev
+  - group: vg-pcpc-staging
+  - group: vg-pcpc-prod
+  - name: buildConfiguration
+    value: "Release"
+  - name: nodeVersion
+    value: "22.x"
+
+stages:
+  # ============================================================================
+  # STAGE 1: BUILD
+  # Create unified artifact with all components
+  # ============================================================================
+  - stage: Build
+    displayName: "Build Unified Artifact"
+    jobs:
+      - template: templates/build.yml
+        parameters:
+          buildConfiguration: $(buildConfiguration)
+          nodeVersion: $(nodeVersion)
+
+  # ============================================================================
+  # STAGE 2: DEPLOY TO DEV
+  # Automatic deployment to development environment
+  # ============================================================================
+  - stage: Deploy_Dev
+    displayName: "Deploy to Dev"
+    dependsOn: Build
+    condition: succeeded()
+    variables:
+      - group: vg-pcpc-dev
+      - name: environment
+        value: "dev"
+      - name: azureSubscription
+        value: "az-pcpc-dev"
+    jobs:
+      # Deploy Infrastructure
+      - job: Deploy_Infrastructure
+        displayName: "Deploy Infrastructure"
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - template: templates/deploy-infra.yml
+            parameters:
+              environment: $(environment)
+              azureSubscription: $(azureSubscription)
+              terraformVersion: "1.13.3"
+
+      # Deploy Backend Functions
+      - job: Deploy_Functions
+        displayName: "Deploy Azure Functions"
+        dependsOn: Deploy_Infrastructure
+        condition: succeeded()
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - template: templates/deploy-functions.yml
+            parameters:
+              environment: $(environment)
+              azureSubscription: $(azureSubscription)
+              functionAppName: "pcpc-func-dev"
+              resourceGroupName: "pcpc-rg-dev"
+
+      # Deploy Frontend Static Web App
+      - job: Deploy_Frontend
+        displayName: "Deploy Static Web App"
+        dependsOn: Deploy_Infrastructure
+        condition: succeeded()
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - template: templates/deploy-swa.yml
+            parameters:
+              environment: $(environment)
+              azureSubscription: $(azureSubscription)
+              staticWebAppName: "pcpc-swa-dev"
+              resourceGroupName: "pcpc-rg-dev"
+
+      # Run Smoke Tests
+      - job: Smoke_Tests
+        displayName: "Run Smoke Tests"
+        dependsOn:
+          - Deploy_Functions
+          - Deploy_Frontend
+        condition: succeeded()
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - template: templates/smoke-tests.yml
+            parameters:
+              environment: $(environment)
+              azureSubscription: $(azureSubscription)
+              resourceGroupName: "pcpc-rg-dev"
+
+  # ============================================================================
+  # STAGE 3: DEPLOY TO STAGING
+  # Approval-gated deployment to staging environment
+  # ============================================================================
+  - stage: Deploy_Staging
+    displayName: "Deploy to Staging"
+    dependsOn: Deploy_Dev
+    condition: succeeded()
+    variables:
+      - group: vg-pcpc-staging
+      - name: environment
+        value: "staging"
+      - name: azureSubscription
+        value: "az-pcpc-staging"
+    jobs:
+      # Deploy Infrastructure
+      - deployment: Deploy_Infrastructure
+        displayName: "Deploy Infrastructure"
+        environment: pcpc-staging # Approval gate configured in Azure DevOps
+        pool:
+          vmImage: "ubuntu-latest"
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - template: templates/deploy-infra.yml
+                  parameters:
+                    environment: $(environment)
+                    azureSubscription: $(azureSubscription)
+                    terraformVersion: "1.13.3"
+
+      # Deploy Backend Functions
+      - job: Deploy_Functions
+        displayName: "Deploy Azure Functions"
+        dependsOn: Deploy_Infrastructure
+        condition: succeeded()
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - template: templates/deploy-functions.yml
+            parameters:
+              environment: $(environment)
+              azureSubscription: $(azureSubscription)
+              functionAppName: "pcpc-func-staging"
+              resourceGroupName: "pcpc-rg-staging"
+
+      # Deploy Frontend Static Web App
+      - job: Deploy_Frontend
+        displayName: "Deploy Static Web App"
+        dependsOn: Deploy_Infrastructure
+        condition: succeeded()
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - template: templates/deploy-swa.yml
+            parameters:
+              environment: $(environment)
+              azureSubscription: $(azureSubscription)
+              staticWebAppName: "pcpc-swa-staging"
+              resourceGroupName: "pcpc-rg-staging"
+
+      # Run Smoke Tests
+      - job: Smoke_Tests
+        displayName: "Run Smoke Tests"
+        dependsOn:
+          - Deploy_Functions
+          - Deploy_Frontend
+        condition: succeeded()
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - template: templates/smoke-tests.yml
+            parameters:
+              environment: $(environment)
+              azureSubscription: $(azureSubscription)
+              resourceGroupName: "pcpc-rg-staging"
+
+  # ============================================================================
+  # STAGE 4: DEPLOY TO PRODUCTION
+  # Approval-gated deployment to production environment
+  # ============================================================================
+  - stage: Deploy_Prod
+    displayName: "Deploy to Production"
+    dependsOn: Deploy_Staging
+    condition: succeeded()
+    variables:
+      - group: vg-pcpc-prod
+      - name: environment
+        value: "prod"
+      - name: azureSubscription
+        value: "az-pcpc-prod"
+    jobs:
+      # Deploy Infrastructure
+      - deployment: Deploy_Infrastructure
+        displayName: "Deploy Infrastructure"
+        environment: pcpc-prod # Approval gate configured in Azure DevOps
+        pool:
+          vmImage: "ubuntu-latest"
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - template: templates/deploy-infra.yml
+                  parameters:
+                    environment: $(environment)
+                    azureSubscription: $(azureSubscription)
+                    terraformVersion: "1.13.3"
+
+      # Deploy Backend Functions
+      - job: Deploy_Functions
+        displayName: "Deploy Azure Functions"
+        dependsOn: Deploy_Infrastructure
+        condition: succeeded()
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - template: templates/deploy-functions.yml
+            parameters:
+              environment: $(environment)
+              azureSubscription: $(azureSubscription)
+              functionAppName: "pcpc-func-prod"
+              resourceGroupName: "pcpc-rg-prod"
+
+      # Deploy Frontend Static Web App
+      - job: Deploy_Frontend
+        displayName: "Deploy Static Web App"
+        dependsOn: Deploy_Infrastructure
+        condition: succeeded()
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - template: templates/deploy-swa.yml
+            parameters:
+              environment: $(environment)
+              azureSubscription: $(azureSubscription)
+              staticWebAppName: "pcpc-swa-prod"
+              resourceGroupName: "pcpc-rg-prod"
+
+      # Run Smoke Tests
+      - job: Smoke_Tests
+        displayName: "Run Smoke Tests"
+        dependsOn:
+          - Deploy_Functions
+          - Deploy_Frontend
+        condition: succeeded()
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - template: templates/smoke-tests.yml
+            parameters:
+              environment: $(environment)
+              azureSubscription: $(azureSubscription)
+              resourceGroupName: "pcpc-rg-prod"
+
+      # Final Deployment Summary
+      - job: Deployment_Summary
+        displayName: "Deployment Summary"
+        dependsOn: Smoke_Tests
+        condition: succeeded()
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - checkout: none
+          - script: |
+              echo "=========================================="
+              echo "PRODUCTION DEPLOYMENT COMPLETE"
+              echo "=========================================="
+              echo ""
+              echo "Environment: Production"
+              echo "Build ID: $(Build.BuildId)"
+              echo "Build Number: $(Build.BuildNumber)"
+              echo "Source Branch: $(Build.SourceBranch)"
+              echo "Source Version: $(Build.SourceVersion)"
+              echo ""
+              echo "Deployed Components:"
+              echo "  ✓ Infrastructure (Terraform)"
+              echo "  ✓ Azure Functions Backend"
+              echo "  ✓ Static Web App Frontend"
+              echo ""
+              echo "All smoke tests passed successfully."
+              echo "=========================================="
+            displayName: "Display Deployment Summary"
