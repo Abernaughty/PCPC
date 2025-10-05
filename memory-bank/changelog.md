@@ -7,6 +7,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### [2025-10-05] - APIM SKU Deployment Troubleshooting
+
+#### Investigated
+
+- **APIM SKU Deployment Issue**: Comprehensive troubleshooting of persistent Developer SKU deployment despite Consumption SKU configuration
+  - Verified `variables.tf` correctly set to `default = "Consumption_0"` (line 119)
+  - Confirmed no pipeline variable overrides in Azure DevOps variable group
+  - Analyzed Terraform plan output showing correct SKU but deploying wrong one
+  - Investigated state lock issues and successfully resolved
+
+#### Root Cause Identified
+
+- **Terraform State Drift**: State file out of sync with Azure reality
+- **Zombie Resource**: APIM resource exists in Azure (possibly still provisioning/deleting) but Terraform thinks it needs to create it
+- **Azure Resource Manager Behavior**: When Terraform tries to "create" APIM, Azure returns existing Developer SKU instance
+- **Deployment Timeline**: APIM deployments take 45+ minutes (Developer SKU), making iteration extremely slow
+
+#### Key Discoveries
+
+- Canceling Azure DevOps pipeline does NOT stop Azure Resource Manager deployments
+- APIM deletions can take 15-30 minutes to complete
+- Function App updates take 5-10 minutes due to app restart (not just tag changes)
+- Function App changes include Application Insights settings additions triggering full restart
+- State lock can be broken with `az storage blob lease break` command
+
+#### Recommended Solutions
+
+1. **Verify APIM Status**: Check if APIM still exists in Azure Portal or via `az apim show`
+2. **Force Delete APIM**: Use `az apim delete --name pcpc-apim-dev --resource-group pcpc-rg-dev --yes --no-wait`
+3. **Clean Terraform State**: Remove APIM from state with `terraform state rm`
+4. **Temporary Disable**: Set `enable_api_management = false` to stop deployment attempts
+5. **Wait for Deletion**: Allow 15-30 minutes for complete APIM deletion
+6. **Re-enable with Consumption**: Set `enable_api_management = true` and redeploy
+
+#### Alternative Approach
+
+- Temporarily disable APIM in Terraform configuration
+- Manually delete APIM in Azure Portal
+- Run pipeline without APIM (fast - just tag updates)
+- Wait for deletion to complete
+- Re-enable APIM with Consumption SKU
+- Run pipeline again for clean deployment
+
+#### Technical Insights
+
+- **Pipeline Cancellation**: Stops Terraform but not Azure deployments
+- **State Lock**: Can be broken with Azure CLI blob lease break command
+- **Deployment Times**: APIM (45 min Developer, 5-15 min Consumption), Function App (5-10 min), Static Web App (2-3 min)
+- **State Management**: Critical to keep Terraform state in sync with Azure reality
+
+#### Cost Impact
+
+- Developer SKU: ~$50/month fixed cost
+- Consumption SKU: $0 base + pay-per-call
+- Each failed deployment wastes 45+ minutes
+
+#### Lessons Learned
+
+- Always verify Azure resource status before Terraform operations
+- State drift requires manual intervention to resolve
+- Long deployment times make iteration expensive
+- Temporary disabling resources can speed up troubleshooting
+- Pipeline cancellation doesn't stop Azure Resource Manager operations
+
 ### [2025-10-04] - Enterprise CI/CD Architecture Planning
 
 #### Added

@@ -54,6 +54,74 @@
 
 ## Recent Changes (Last 10 Events)
 
+### 2025-10-05 00:01 - APIM SKU Deployment Troubleshooting - ONGOING
+
+- **Action**: Comprehensive troubleshooting session for persistent Developer SKU deployment despite Consumption SKU configuration
+- **Impact**: Identified complex state management issue requiring manual intervention to resolve
+- **Problem**: Pipeline continues deploying Developer SKU APIM even after changing default value to `Consumption_0` in `variables.tf`
+- **Initial Investigation**:
+  - Verified `variables.tf` correctly set to `default = "Consumption_0"` (line 119)
+  - Confirmed no pipeline variable overrides in Azure DevOps variable group `pcpc-terraform-dev`
+  - Terraform plan output shows `sku_name = "Consumption_0"` but actual deployment creates Developer SKU
+  - State lock was successfully broken before deployment attempt
+- **Root Cause Analysis**:
+  - **Terraform State Drift**: State file out of sync with Azure reality
+  - **Zombie Resource**: APIM resource exists in Azure (possibly still provisioning/deleting) but Terraform thinks it needs to create it
+  - **Azure Resource Manager Behavior**: When Terraform tries to "create" APIM, Azure returns existing Developer SKU instance
+  - **Deployment Timeline**: APIM deployments take 45+ minutes (Developer SKU), making iteration extremely slow
+- **Key Discoveries**:
+  - Canceling Azure DevOps pipeline does NOT stop Azure Resource Manager deployments
+  - APIM deletions can take 15-30 minutes to complete
+  - Function App updates take 5-10 minutes due to app restart (not just tag changes)
+  - Function App changes include Application Insights settings additions triggering full restart
+- **Troubleshooting Steps Taken**:
+  1. Verified variable configuration in `variables.tf` (correct: `Consumption_0`)
+  2. Checked for pipeline variable overrides (none found)
+  3. Analyzed Terraform plan output (shows correct SKU but deploys wrong one)
+  4. Investigated state lock issues (successfully resolved)
+  5. Discussed state drift and Azure resource status
+- **Recommended Solutions**:
+  1. **Verify APIM Status**: Check if APIM still exists in Azure Portal or via `az apim show`
+  2. **Force Delete APIM**: Use `az apim delete --name pcpc-apim-dev --resource-group pcpc-rg-dev --yes --no-wait`
+  3. **Clean Terraform State**: Remove APIM from state with `terraform state rm`
+  4. **Temporary Disable**: Set `enable_api_management = false` to stop deployment attempts
+  5. **Wait for Deletion**: Allow 15-30 minutes for complete APIM deletion
+  6. **Re-enable with Consumption**: Set `enable_api_management = true` and redeploy
+- **Alternative Approach (Nuclear Option)**:
+  - Temporarily disable APIM in Terraform configuration
+  - Manually delete APIM in Azure Portal
+  - Run pipeline without APIM (fast - just tag updates)
+  - Wait for deletion to complete
+  - Re-enable APIM with Consumption SKU
+  - Run pipeline again for clean deployment
+- **Technical Insights**:
+  - **Pipeline Cancellation**: Stops Terraform but not Azure deployments
+  - **State Lock**: Can be broken with `az storage blob lease break`
+  - **Deployment Times**: APIM (45 min Developer, 5-15 min Consumption), Function App (5-10 min), Static Web App (2-3 min)
+  - **State Management**: Critical to keep Terraform state in sync with Azure reality
+- **Cost Impact**:
+  - Developer SKU: ~$50/month fixed cost
+  - Consumption SKU: $0 base + pay-per-call
+  - Each failed deployment wastes 45+ minutes
+- **Files Involved**:
+  - `infra/envs/dev/variables.tf` - APIM SKU configuration (correctly set)
+  - `infra/envs/dev/main.tf` - APIM module configuration
+  - `pipelines/azure-pipelines.yml` - Pipeline triggering deployments
+- **Current Status**: Pipeline deployment in progress (likely deploying Developer SKU again)
+- **User Decision Pending**: Whether to cancel current deployment and use temporary disable approach
+- **Next Steps**:
+  1. Cancel current pipeline run
+  2. Verify APIM status in Azure
+  3. Implement temporary disable approach
+  4. Clean up state and Azure resources
+  5. Re-enable with Consumption SKU
+- **Lessons Learned**:
+  - Always verify Azure resource status before Terraform operations
+  - State drift requires manual intervention to resolve
+  - Long deployment times make iteration expensive
+  - Temporary disabling resources can speed up troubleshooting
+  - Pipeline cancellation doesn't stop Azure Resource Manager operations
+
 ### 2025-10-04 23:06 - Enterprise CI/CD Architecture Planning Session - IN PROGRESS
 
 - **Action**: Comprehensive planning session for enterprise-grade CI/CD pipeline architecture
