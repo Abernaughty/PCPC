@@ -56,7 +56,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Alternative: Separate artifacts per component (only if teams ship independently or artifacts huge)
 - **Directory Structure**: `.ado/` for new CD pipeline to keep separate from legacy `pipelines/`
 - **Environment Configuration**: Environment-specific config lives outside artifact (App Settings, Key Vault, policies)
-- **APIM Approach**: Terraform provider for API definitions (DevOps Resource Kit retired, APIOps community option available)
+- **APIM Approach**: APIOps Toolkit (Extractor + Publisher pattern)
+  - **Extractor**: Run once to bootstrap repository from Dev APIM instance
+  - **Publisher**: Use in CI/CD pipeline for automated APIM deployments
+  - **Rationale**: Treat APIM as code, version control all API definitions and policies
+  - **Alternative Considered**: Terraform provider (rejected - APIOps is Microsoft's recommended modern approach)
 - **Legacy Pipeline Deprecation**: Move to `pipelines/legacy/` after new pipeline validated (keep 1-2 sprints as backup)
 
 #### Files to Create (15+ files)

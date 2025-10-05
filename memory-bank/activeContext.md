@@ -21,7 +21,10 @@
 - ✅ **Unified Artifact**: Single `drop/` artifact with swa/, functions.zip, apim/, release.json
 - ✅ **Directory Structure**: `.ado/` for new pipelines, `pipelines/legacy/` for deprecated files
 - ✅ **Environment Flow**: Dev (auto-deploy) → Staging (approval) → Prod (approval)
-- ✅ **APIM Strategy**: Terraform provider approach (DevOps Resource Kit retired)
+- ✅ **APIM Strategy**: APIOps Toolkit (Extractor + Publisher pattern)
+  - **Extractor**: Run once to bootstrap repo from Dev APIM instance
+  - **Publisher**: Use in CI/CD pipeline for automated APIM deployments
+  - **Rationale**: Treat APIM as code, version control all API definitions and policies
 - ✅ **Build-Once-Deploy-Many**: Same artifact promoted through all environments
 - ✅ **Path-Based Deployment**: Only deploy components that changed
 
