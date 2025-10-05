@@ -1,0 +1,108 @@
+# Frontend Validation Template
+# Validates frontend code quality, tests, and build
+
+parameters:
+  - name: nodeVersion
+    type: string
+    default: "22.x"
+
+jobs:
+  - job: ValidateFrontend
+    displayName: "Frontend Validation"
+    steps:
+      # Checkout code
+      - checkout: self
+        displayName: "Checkout Repository"
+
+      # Setup Node.js
+      - task: NodeTool@0
+        displayName: "Setup Node.js ${{ parameters.nodeVersion }}"
+        inputs:
+          versionSpec: ${{ parameters.nodeVersion }}
+
+      # Install root dependencies (Jest, shared configs)
+      - script: |
+          npm ci
+        displayName: "Install Root Dependencies"
+        workingDirectory: $(System.DefaultWorkingDirectory)
+
+      # Install frontend dependencies
+      - script: |
+          npm ci
+        displayName: "Install Frontend Dependencies"
+        workingDirectory: $(System.DefaultWorkingDirectory)/app/frontend
+
+      # Run ESLint
+      - script: |
+          npm run lint || echo "⚠️  Linting warnings found (non-blocking)"
+        displayName: "Lint Frontend Code"
+        workingDirectory: $(System.DefaultWorkingDirectory)/app/frontend
+        continueOnError: true
+
+      # Run tests with coverage
+      - script: |
+          npm test -- --coverage --coverageDirectory=$(System.DefaultWorkingDirectory)/coverage/frontend
+        displayName: "Run Frontend Tests"
+        workingDirectory: $(System.DefaultWorkingDirectory)
+        env:
+          CI: true
+
+      # Build frontend
+      - script: |
+          npm run build
+        displayName: "Build Frontend"
+        workingDirectory: $(System.DefaultWorkingDirectory)/app/frontend
+
+      # Verify build output
+      - script: |
+          if [ ! -f "dist/main.js" ]; then
+            echo "❌ Build failed - main.js not found"
+            exit 1
+          fi
+          if [ ! -f "dist/bundle.css" ]; then
+            echo "❌ Build failed - bundle.css not found"
+            exit 1
+          fi
+          echo "✅ Build verification passed"
+        displayName: "Verify Build Output"
+        workingDirectory: $(System.DefaultWorkingDirectory)/app/frontend
+
+      # Security audit (non-blocking)
+      - script: |
+          npm audit --audit-level=high || echo "⚠️  Security vulnerabilities found (non-blocking)"
+        displayName: "Security Audit (npm audit)"
+        workingDirectory: $(System.DefaultWorkingDirectory)/app/frontend
+        continueOnError: true
+
+      # Publish test results
+      - task: PublishTestResults@2
+        displayName: "Publish Test Results"
+        condition: succeededOrFailed()
+        inputs:
+          testResultsFormat: "JUnit"
+          testResultsFiles: "**/junit.xml"
+          searchFolder: $(System.DefaultWorkingDirectory)
+          mergeTestResults: true
+          failTaskOnFailedTests: true
+          testRunTitle: "Frontend Tests"
+
+      # Publish code coverage
+      - task: PublishCodeCoverageResults@2
+        displayName: "Publish Code Coverage"
+        condition: succeededOrFailed()
+        inputs:
+          codeCoverageTool: "Cobertura"
+          summaryFileLocation: "$(System.DefaultWorkingDirectory)/coverage/frontend/cobertura-coverage.xml"
+          reportDirectory: "$(System.DefaultWorkingDirectory)/coverage/frontend/lcov-report"
+          failIfCoverageEmpty: false
+
+      # Display summary
+      - script: |
+          echo "======================================"
+          echo "Frontend Validation Summary"
+          echo "======================================"
+          echo "✅ Linting: Completed"
+          echo "✅ Tests: $(tests_passed)/$(tests_total) passed"
+          echo "✅ Build: Successful"
+          echo "✅ Security: Audited"
+        displayName: "Display Validation Summary"
