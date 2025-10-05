@@ -21,7 +21,9 @@ Before starting, ensure you have:
 - ✅ Azure subscription with appropriate permissions
 - ✅ Service principals created for each environment (dev, staging, prod)
 - ✅ Azure Key Vaults created and populated with secrets
-- ✅ Repository pushed to Azure DevOps or GitHub
+- ✅ Repository pushed to GitHub (https://github.com/Abernaughty/PCPC.git)
+
+**Note**: This guide covers setup for **GitHub repositories**. Azure Pipelines integrates seamlessly with GitHub through OAuth authentication.
 
 ## Azure DevOps Configuration
 
@@ -34,14 +36,28 @@ Before starting, ensure you have:
    - **Repositories** → Default branch: `main`
    - **Pipelines** → Settings → Disable creation of classic pipelines
 
-### 2. Repository Connection
+### 2. Repository Connection (GitHub)
 
-If using GitHub:
+Since you're using a GitHub repository, you'll need to set up the GitHub service connection:
 
 1. Go to **Project Settings** → **Service connections**
-2. Create a new **GitHub** service connection
-3. Authorize Azure DevOps to access your repository
-4. Name it: `github-pcpc`
+2. Click **New service connection** → **GitHub**
+3. Select **Grant authorization** (recommended) or **Personal access token**
+4. If using Grant authorization:
+   - Click **Authorize** button
+   - Sign in to GitHub if prompted
+   - Authorize Azure Pipelines to access your repositories
+5. Name the connection: `github-pcpc`
+6. Check **Grant access permission to all pipelines**
+7. Click **Save**
+
+**Important**: This connection allows Azure Pipelines to:
+
+- Read your repository code
+- Report build status to pull requests
+- Trigger builds on commits and PRs
+
+**Verification**: After setup, you should see your GitHub repositories when creating new pipelines.
 
 ## Service Connections Setup
 
@@ -207,45 +223,70 @@ Create three environments with approval gates:
 
 1. Go to **Pipelines** → **Pipelines**
 2. Click **New pipeline**
-3. Select your repository source (Azure Repos Git or GitHub)
-4. Select **Existing Azure Pipelines YAML file**
-5. Branch: `main`
-6. Path: `/.ado/azure-pipelines-pr.yml`
-7. Click **Continue**
-8. Click **Save** (don't run yet)
-9. Click **⋮** → **Rename/move**
-10. Name: `PCPC-PR-Validation`
-11. Click **Save**
+3. Select **GitHub** as your repository source
+4. Select your repository: **Abernaughty/PCPC**
+   - If this is your first time, you'll be prompted to authorize Azure Pipelines
+   - Click **Approve & Install** to grant access
+5. Select **Existing Azure Pipelines YAML file**
+6. Branch: `main`
+7. Path: `/.ado/azure-pipelines-pr.yml`
+8. Click **Continue**
+9. Review the YAML, then click **Save** (don't run yet)
+10. Click **⋮** → **Rename/move**
+11. Name: `PCPC-PR-Validation`
+12. Click **Save**
 
-### 2. Configure Branch Policies
+**GitHub Integration**: This pipeline will automatically:
 
-1. Go to **Repos** → **Branches**
-2. Find `main` branch → Click **⋮** → **Branch policies**
-3. Under **Build Validation**:
-   - Click **+** to add build policy
-   - Build pipeline: `PCPC-PR-Validation`
-   - Display name: `PR Validation`
-   - Trigger: Automatic
-   - Policy requirement: Required
-   - Build expiration: Immediately
-   - Click **Save**
-4. Under **Require a minimum number of reviewers**:
-   - Enable and set to 1 reviewer
-   - Check **Allow requestors to approve their own changes** (for solo development)
+- Trigger on pull requests to `main`
+- Report status back to GitHub
+- Block PR merging if validation fails (once branch protection is configured)
+
+### 2. Configure Branch Protection Rules (GitHub)
+
+Since you're using GitHub, branch policies are configured in GitHub (not Azure DevOps):
+
+1. Go to your GitHub repository: https://github.com/Abernaughty/PCPC
+2. Click **Settings** → **Branches**
+3. Under **Branch protection rules**, click **Add rule**
+4. Configure the rule:
+   - **Branch name pattern**: `main`
+   - Check **Require a pull request before merging**
+   - Check **Require status checks to pass before merging**
+   - **Important**: The status check name will appear after the first pipeline run. Look for it in the search box - it will be something like `{Organization}.PCPC-PR-Validation` or similar
+   - Check **Require branches to be up to date before merging**
+   - Optional: Check **Require approvals** and set to 1 (for solo dev, you can approve your own PRs)
+   - Click **Create** or **Save changes**
+
+**How it works**:
+
+- When you create a PR, GitHub triggers the Azure Pipeline
+- The pipeline status is reported back to GitHub
+- GitHub blocks merging until the pipeline passes
+- This ensures all code is validated before reaching main
+
+**Note**: The exact status check name won't appear in the list until the pipeline has run at least once. After creating a test PR and seeing the pipeline run, check the PR's "Checks" tab to see the exact name, then add it to branch protection.
 
 ### 3. Create Multi-Stage CD Pipeline
 
 1. Go to **Pipelines** → **Pipelines**
 2. Click **New pipeline**
-3. Select your repository source
-4. Select **Existing Azure Pipelines YAML file**
-5. Branch: `main`
-6. Path: `/.ado/azure-pipelines.yml`
-7. Click **Continue**
-8. Click **Save** (don't run yet)
-9. Click **⋮** → **Rename/move**
-10. Name: `PCPC-Multi-Stage-CD`
-11. Click **Save**
+3. Select **GitHub** as your repository source
+4. Select your repository: **Abernaughty/PCPC**
+5. Select **Existing Azure Pipelines YAML file**
+6. Branch: `main`
+7. Path: `/.ado/azure-pipelines.yml`
+8. Click **Continue**
+9. Review the YAML, then click **Save** (don't run yet)
+10. Click **⋮** → **Rename/move**
+11. Name: `PCPC-Multi-Stage-CD`
+12. Click **Save**
+
+**GitHub Integration**: This pipeline will automatically:
+
+- Trigger on commits to `main` branch
+- Trigger when PRs are merged
+- Report deployment status to GitHub
 
 ### 4. Configure Pipeline Permissions
 
