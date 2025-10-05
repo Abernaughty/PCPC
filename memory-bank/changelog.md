@@ -7,6 +7,89 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### [2025-10-05] - Enterprise CI/CD Architecture Foundation Setup
+
+#### Added
+
+- **Azure DevOps Variable Groups Created - 6 GROUPS ESTABLISHED**: Complete variable group structure for multi-environment CI/CD pipeline
+
+  - **Variable Groups Created**:
+    - `vg-pcpc-dev-secrets` - Key Vault linked secrets for Dev environment
+    - `vg-pcpc-dev-config` - Regular configuration variables for Dev environment
+    - `vg-pcpc-staging-secrets` - Key Vault linked secrets for Staging environment
+    - `vg-pcpc-staging-config` - Regular configuration variables for Staging environment
+    - `vg-pcpc-prod-secrets` - Key Vault linked secrets for Prod environment
+    - `vg-pcpc-prod-config` - Regular configuration variables for Prod environment
+  - **Architecture Decision**: Two-group pattern per environment (secrets + config)
+    - **Rationale**: Azure DevOps UI limitation prevents mixing Key Vault secrets and regular variables in single group
+    - **Benefits**: Clear separation of concerns, easier management, better security, enterprise standard pattern
+    - **Usage Pattern**: Pipelines reference both groups: `- group: vg-pcpc-dev-secrets` and `- group: vg-pcpc-dev-config`
+
+- **Enterprise CI/CD Architecture Planning Complete**: Comprehensive pipeline architecture designed and documented
+
+  - **Two-Pipeline Strategy**: PR Validation (fast CI, no deployments) + Multi-Stage CD (build-once, promote-many)
+  - **Environment Flow**: Dev (auto-deploy) → Staging (approval gate) → Prod (approval gate)
+  - **Build Strategy**: Single unified artifact promoted through all environments
+  - **APIM Strategy**: APIOps publisher/extractor pattern for modern API management
+  - **Testing Strategy**: Smoke tests (all envs) + API tests (staging+) + E2E tests (prod)
+  - **Implementation Timeline**: 4-week phased approach (Foundation, Build+Dev, APIOps, Multi-env)
+
+- **Service Principal Configuration**: Created service principals for multi-environment deployment
+  - `pcpc-sp-dev` (AppId: d5733acf-bbe0-461e-b170-349dbe264501) - Dev environment access
+  - `pcpc-sp-prod` (AppId: 0d3b2c37-7945-4cbc-910b-879c70906d1c) - Prod environment access
+  - Contributor role granted on respective resource groups
+  - Storage Blob Data Contributor role for Terraform state access (pending)
+  - Key Vault permissions for secret management (pending)
+
+#### Changed
+
+- **Variable Configuration Strategy**: Verified all variable names against actual code
+
+  - Backend variables verified from `app/backend/local.settings.json.example`
+  - Frontend variables verified from `app/frontend/.env.example`
+  - Terraform variables verified from `infra/envs/dev/variables.tf`
+  - Confirmed 4 pre-deployment secrets + ~30 configuration variables per environment
+
+- **Secret Management Approach**: Clarified dynamic secret creation strategy
+  - **Pre-deployment Secrets** (4): POKEMON-TCG-API-KEY, POKEDATA-API-KEY, ARM-CLIENT-ID, ARM-CLIENT-SECRET
+  - **Terraform-Created Secrets** (3): COSMOS-DB-CONNECTION-STRING, BLOB-STORAGE-CONNECTION-STRING, APPLICATIONINSIGHTS-CONNECTION-STRING
+  - **Pipeline Flow**: Terraform creates resources → Extracts connection strings → Stores in Key Vault → Function App reads from Key Vault
+
+#### Technical Insights
+
+- **Storage Account Clarification**: BLOB-STORAGE-CONNECTION-STRING is for application storage (images), not Terraform state storage
+- **Key Vault Naming**: Secrets use hyphens (COSMOS-DB-CONNECTION-STRING) but Azure DevOps converts to underscores for code
+- **Dynamic Configuration**: Connection strings created by Terraform and stored in Key Vault during pipeline execution
+- **Two-Group Pattern**: Enterprise standard for separating secrets (Key Vault) from configuration (Azure DevOps)
+
+#### Completed
+
+- ✅ Created all 3 Key Vaults (pcpc-kv-dev, pcpc-kv-staging, pcpc-kv-prod)
+- ✅ Created pcpc-sp-staging service principal
+- ✅ Granted service principals Key Vault permissions (get, list on secrets)
+- ✅ Added all 4 pre-deployment secrets to all Key Vaults
+- ✅ Linked all secrets variable groups to respective Key Vaults
+- ✅ Added all ~30 regular variables to all config variable groups
+- ✅ Created all 3 Azure DevOps Service Connections (az-pcpc-dev, az-pcpc-staging, az-pcpc-prod)
+- ✅ Verified all service connections with test pipeline
+- ✅ Created all 3 Azure DevOps Environments (pcpc-dev, pcpc-staging, pcpc-prod)
+
+#### Next Steps
+
+- Configure approval gates on Staging and Prod environments
+- Implement PR validation pipeline (azure-pipelines-pr.yml)
+- Create validation templates (5 templates)
+- Implement multi-stage CD pipeline (azure-pipelines.yml)
+- Create deployment templates (4 templates)
+- Create smoke test scripts
+
+#### Phase 1 Status
+
+- **Overall Completion**: 85% (27 of 32 tasks complete)
+- **Remaining**: Approval gates configuration + PR pipeline implementation
+- **Major Achievement**: Complete Azure DevOps foundation operational and tested
+- **Ready For**: PR validation pipeline and multi-stage CD pipeline implementation
+
 ### [2025-10-05] - APIM SKU Deployment Troubleshooting
 
 #### Investigated

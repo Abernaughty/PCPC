@@ -54,6 +54,106 @@
 
 ## Recent Changes (Last 10 Events)
 
+### 2025-10-05 01:56 - Azure DevOps Foundation Setup Complete - MAJOR MILESTONE
+
+- **Action**: Successfully completed comprehensive Azure DevOps foundation setup for enterprise CI/CD pipeline
+- **Impact**: Established complete infrastructure for multi-environment deployment with secure secret management
+- **Major Achievement**: Phase 1 Foundation nearly complete - all Azure DevOps components configured and operational
+- **Components Completed**:
+  - ✅ **Service Principals**: All 3 created (pcpc-sp-dev, pcpc-sp-staging, pcpc-sp-prod)
+  - ✅ **Variable Groups**: All 6 created and configured (2 per environment: secrets + config)
+  - ✅ **Key Vaults**: All 3 created (pcpc-kv-dev, pcpc-kv-staging, pcpc-kv-prod)
+  - ✅ **Key Vault Integration**: All secrets variable groups linked to respective Key Vaults
+  - ✅ **Service Principal Permissions**: Key Vault access configured for all service principals
+  - ✅ **Secrets Populated**: All 4 pre-deployment secrets added to each Key Vault
+  - ✅ **Configuration Variables**: All ~30 regular variables added to each config variable group
+  - ✅ **Service Connections**: All 3 created and verified (az-pcpc-dev, az-pcpc-staging, az-pcpc-prod)
+  - ✅ **Environments**: All 3 created (pcpc-dev, pcpc-staging, pcpc-prod)
+  - ✅ **Service Connection Testing**: Test pipeline successfully validated all connections
+- **Architecture Implementation**:
+  - **Two-Group Pattern**: Successfully implemented secrets (Key Vault) + config (Azure DevOps) separation
+  - **Multi-Environment**: Complete Dev, Staging, Prod infrastructure established
+  - **Secure Secret Management**: All sensitive data in Key Vault with proper RBAC
+  - **Service Principal RBAC**: Contributor on resource groups, Key Vault access, Terraform state access
+- **Variable Configuration**:
+  - **Secrets (4 per environment)**: POKEMON-TCG-API-KEY, POKEDATA-API-KEY, ARM-CLIENT-ID, ARM-CLIENT-SECRET
+  - **Config Variables (~30 per environment)**: Terraform settings, backend config, frontend config, resource names
+  - **Variable names verified** against actual code in `local.settings.json.example`, `.env.example`, `variables.tf`
+- **Service Connections Verified**:
+  - `az-pcpc-dev` - Successfully tested with Azure CLI query
+  - `az-pcpc-staging` - Successfully tested with Azure CLI query
+  - `az-pcpc-prod` - Successfully tested with Azure CLI query
+  - All connections can query resource groups and execute Azure operations
+- **Remaining Work**:
+  - Configure approval gates on Staging and Prod environments
+  - Implement PR validation pipeline
+  - Implement multi-stage CD pipeline
+- **Key Insights**:
+  - **Two-Group Pattern**: Enterprise standard successfully implemented despite Azure DevOps UI limitations
+  - **Key Vault Integration**: Seamless integration between Key Vault secrets and Azure DevOps variable groups
+  - **Service Connection Testing**: Test pipeline validates all connections work correctly
+  - **Multi-Environment Ready**: Complete foundation for Dev → Staging → Prod deployment flow
+- **Files Referenced**:
+  - `app/backend/local.settings.json.example` - Backend variable names verified
+  - `app/frontend/.env.example` - Frontend variable names verified
+  - `infra/envs/dev/variables.tf` - Terraform variable names verified
+  - `pipelines/test-service-connections.yml` - Service connection validation
+- **Status**: Azure DevOps Foundation Setup COMPLETE ✅ - Ready for approval gates and pipeline implementation
+- **Next**: Configure approval gates on Staging/Prod environments, then implement PR validation pipeline
+
+### 2025-10-05 01:20 - Enterprise CI/CD Architecture Planning Complete - COMPREHENSIVE PLAN READY
+
+- **Action**: Completed comprehensive CI/CD architecture planning session with detailed implementation strategy
+- **Impact**: Defined complete enterprise-grade CI/CD pipeline architecture ready for implementation
+- **Architecture Overview**:
+  - **Two-Pipeline Strategy**: PR Validation (fast CI) + Multi-Stage CD (build-once, promote-many)
+  - **Environment Flow**: Dev (auto-deploy) → Staging (approval gate) → Prod (approval gate)
+  - **Build Strategy**: Single artifact promoted through all environments
+  - **APIM Strategy**: APIOps publisher/extractor pattern for API management
+  - **Testing Strategy**: Smoke tests (all envs) + API tests (staging+) + E2E tests (prod)
+- **PR Validation Pipeline** (`.ado/azure-pipelines-pr.yml`):
+  - Fast feedback on pull requests (no deployments)
+  - Frontend validation: lint, test, build check
+  - Backend validation: lint, test, compile check
+  - Infrastructure validation: terraform fmt, validate, tflint
+  - APIM validation: Spectral OpenAPI lint, XML well-formedness
+  - Security scan: npm audit (non-blocking)
+- **Multi-Stage CD Pipeline** (`.ado/azure-pipelines.yml`):
+  - **Build Stage**: Create unified artifact (swa/, functions.zip, apim/, infra/)
+  - **Dev Stage**: Auto-deploy all components + smoke tests
+  - **Staging Stage**: Approval-gated + smoke + API tests
+  - **Prod Stage**: Approval-gated + smoke + API + E2E tests
+- **Implementation Phases** (4 weeks):
+  - **Week 1**: Azure DevOps foundation + PR validation pipeline
+  - **Week 2**: Build stage + Dev deployment
+  - **Week 3**: APIOps migration
+  - **Week 4**: Multi-environment deployment + polish
+- **Azure DevOps Configuration Required**:
+  - 3 Environments (pcpc-dev, pcpc-staging, pcpc-prod) with approval gates
+  - 3 Service Connections (az-pcpc-dev, az-pcpc-staging, az-pcpc-prod)
+  - 6 Variable Groups (2 per environment: secrets + config)
+  - Service principals with proper RBAC permissions
+- **Key Technical Decisions**:
+  - Use Staging (not Test) for consistency with existing infrastructure
+  - Separate infrastructure pipeline from application pipelines
+  - APIOps for APIM (modern approach, Microsoft recommended)
+  - Path-smart deployments (only deploy changed components)
+  - Terraform outputs stored in Key Vault for dynamic configuration
+- **Portfolio Value**:
+  - Clear CI/CD separation (fast PR validation vs gated CD)
+  - Build-once, promote-many ensures reproducibility
+  - Approval gates demonstrate controlled release management
+  - APIOps shows modern API management practices
+  - Enterprise-grade security with Key Vault integration
+- **Files to Create** (20+ files):
+  - 2 main pipelines (PR validation, Multi-stage CD)
+  - 13 reusable templates (validate, build, deploy, test)
+  - 3 smoke test scripts
+  - APIOps configuration files
+  - Per-environment Terraform variables
+  - CI/CD documentation
+- **Status**: Planning complete ✅ - Comprehensive architecture designed and documented, ready for implementation
+
 ### 2025-10-05 00:01 - APIM SKU Deployment Troubleshooting - ONGOING
 
 - **Action**: Comprehensive troubleshooting session for persistent Developer SKU deployment despite Consumption SKU configuration
