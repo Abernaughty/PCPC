@@ -161,11 +161,6 @@ resource "azurerm_windows_function_app" "this" {
   # Application settings
   # Note: Application Insights settings are configured in site_config block to prevent drift
   app_settings = local.app_settings
-  lifecycle {
-    ignore_changes = [
-      app_settings["WEBSITE_NODE_DEFAULT_VERSION"],
-    ]
-  }
 
   # Managed identity
   dynamic "identity" {
@@ -232,7 +227,8 @@ resource "azurerm_windows_function_app" "this" {
 
   lifecycle {
     ignore_changes = [
-      tags["CreatedDate"]
+      tags["CreatedDate"],
+      app_settings["WEBSITE_NODE_DEFAULT_VERSION"]
     ]
   }
 }
