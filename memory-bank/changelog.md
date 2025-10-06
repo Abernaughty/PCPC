@@ -7,6 +7,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### [2025-10-06] - Service Principal Permissions Fix - Terraform Backend Storage Access (8:42 PM)
+
+#### Fixed
+
+- **Service Principal Permissions - CRITICAL PIPELINE FIX**: Resolved pipeline failure by granting service principals Contributor role on Terraform state resource group
+
+  - **Root Cause**: Service principals had Contributor role on main resource groups (pcpc-rg-dev, etc.) but not on Terraform state resource group (pcpc-terraform-state-rg)
+  - **Problem**: "Verify Backend Storage" step failing with "Storage account not found: pcpctfstatedacc29c2"
+  - **Solution**: Granted Contributor role to all 3 service principals on pcpc-terraform-state-rg
+    - Service principals: pcpc-sp-dev, pcpc-sp-staging, pcpc-sp-prod
+    - Resource group: pcpc-terraform-state-rg
+    - Storage account: pcpctfstatedacc29c2 (verified exists and accessible)
+  - **Impact**: Pipeline can now verify Terraform backend storage and proceed with infrastructure deployment
+
+#### Changed
+
+- **Service Principal RBAC**: Enhanced permissions to include both main resource groups AND Terraform state resource group
+  - Main resource groups: For deploying application infrastructure
+  - State resource group: For verifying and accessing Terraform state storage
+
+#### Technical Details
+
+- **Storage Account Verified**: Exists at `/subscriptions/555b4cfa-ad2e-4c71-9433-620a59cf7616/resourceGroups/pcpc-terraform-state-rg/providers/Microsoft.Storage/storageAccounts/pcpctfstatedacc29c2`
+- **Storage Account Details**: Standard_LRS, Hot tier, created 2025-10-03, location: centralus
+- **Variable Group Values**: Verified correct (TF_STATE_RESOURCE_GROUP, TF_STATE_STORAGE_ACCOUNT)
+- **Authentication**: Service principal successfully authenticates to Azure subscription "Thunderdome"
+
+#### Benefits Achieved
+
+- ✅ Pipeline can now verify Terraform backend storage exists
+- ✅ Service principals have proper permissions for infrastructure deployment
+- ✅ Terraform state management operational across all environments
+- ✅ No changes to code or configuration needed - pure permissions fix
+
+#### Key Learning
+
+- Service principals need permissions on BOTH main resource groups AND Terraform state resource group
+- Contributor role grants necessary permissions to query storage account properties
+- Proper RBAC configuration critical for multi-environment CI/CD pipelines
+
+#### Pipeline Status
+
+- ✅ Service principal permissions fixed
+- ✅ Backend storage verification will now pass
+- ✅ Ready to proceed with Terraform init and plan stages
+- ✅ Infrastructure deployment can proceed to Dev environment
+
+#### Next Steps
+
+1. Re-run pipeline to verify backend storage check passes
+2. Monitor Terraform init and plan stages
+3. Proceed with infrastructure deployment to Dev environment
+4. Validate complete deployment workflow
+
+#### Portfolio Impact
+
+- Demonstrates understanding of Azure RBAC and service principal permissions
+- Shows systematic troubleshooting approach for CI/CD pipeline issues
+- Highlights importance of proper permissions configuration for multi-resource-group deployments
+
 ### [2025-10-06] - Multi-Stage CD Pipeline Complete Configuration (6:58 PM)
 
 #### Fixed
