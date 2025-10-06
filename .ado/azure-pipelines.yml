@@ -65,7 +65,7 @@ stages:
           - template: templates/deploy-infra.yml
             parameters:
               environment: dev
-              azureSubscription: $(ARM_SUBSCRIPTION_ID)
+              azureSubscription: "az-pcpc-dev"
               terraformVersion: "1.13.3"
 
       # Deploy Backend Functions
@@ -79,7 +79,7 @@ stages:
           - template: templates/deploy-functions.yml
             parameters:
               environment: dev
-              azureSubscription: $(ARM_SUBSCRIPTION_ID)
+              azureSubscription: "az-pcpc-dev"
               functionAppName: $(FUNCTION_APP_NAME)
               resourceGroupName: $(APIM_RESOURCE_GROUP)
 
@@ -94,7 +94,7 @@ stages:
           - template: templates/deploy-swa.yml
             parameters:
               environment: dev
-              azureSubscription: $(ARM_SUBSCRIPTION_ID)
+              azureSubscription: "az-pcpc-dev"
               staticWebAppName: $(STATIC_WEB_APP_NAME)
               resourceGroupName: $(APIM_RESOURCE_GROUP)
 
@@ -111,7 +111,7 @@ stages:
           - template: templates/smoke-tests.yml
             parameters:
               environment: dev
-              azureSubscription: $(ARM_SUBSCRIPTION_ID)
+              azureSubscription: "az-pcpc-dev"
               resourceGroupName: $(APIM_RESOURCE_GROUP)
               functionAppName: $(FUNCTION_APP_NAME)
               staticWebAppName: $(STATIC_WEB_APP_NAME)
@@ -141,7 +141,7 @@ stages:
                 - template: templates/deploy-infra.yml
                   parameters:
                     environment: staging
-                    azureSubscription: $(ARM_SUBSCRIPTION_ID)
+                    azureSubscription: "az-pcpc-staging"
                     terraformVersion: "1.13.3"
 
       # Deploy Backend Functions
@@ -155,7 +155,7 @@ stages:
           - template: templates/deploy-functions.yml
             parameters:
               environment: staging
-              azureSubscription: $(ARM_SUBSCRIPTION_ID)
+              azureSubscription: "az-pcpc-staging"
               functionAppName: $(FUNCTION_APP_NAME)
               resourceGroupName: $(APIM_RESOURCE_GROUP)
 
@@ -170,7 +170,7 @@ stages:
           - template: templates/deploy-swa.yml
             parameters:
               environment: staging
-              azureSubscription: $(ARM_SUBSCRIPTION_ID)
+              azureSubscription: "az-pcpc-staging"
               staticWebAppName: $(STATIC_WEB_APP_NAME)
               resourceGroupName: $(APIM_RESOURCE_GROUP)
 
@@ -187,7 +187,7 @@ stages:
           - template: templates/smoke-tests.yml
             parameters:
               environment: staging
-              azureSubscription: $(ARM_SUBSCRIPTION_ID)
+              azureSubscription: "az-pcpc-staging"
               resourceGroupName: $(APIM_RESOURCE_GROUP)
               functionAppName: $(FUNCTION_APP_NAME)
               staticWebAppName: $(STATIC_WEB_APP_NAME)
@@ -217,7 +217,7 @@ stages:
                 - template: templates/deploy-infra.yml
                   parameters:
                     environment: prod
-                    azureSubscription: $(ARM_SUBSCRIPTION_ID)
+                    azureSubscription: "az-pcpc-prod"
                     terraformVersion: "1.13.3"
 
       # Deploy Backend Functions
@@ -231,7 +231,7 @@ stages:
           - template: templates/deploy-functions.yml
             parameters:
               environment: prod
-              azureSubscription: $(ARM_SUBSCRIPTION_ID)
+              azureSubscription: "az-pcpc-prod"
               functionAppName: $(FUNCTION_APP_NAME)
               resourceGroupName: $(APIM_RESOURCE_GROUP)
 
@@ -246,7 +246,7 @@ stages:
           - template: templates/deploy-swa.yml
             parameters:
               environment: prod
-              azureSubscription: $(ARM_SUBSCRIPTION_ID)
+              azureSubscription: "az-pcpc-prod"
               staticWebAppName: $(STATIC_WEB_APP_NAME)
               resourceGroupName: $(APIM_RESOURCE_GROUP)
 
@@ -263,7 +263,7 @@ stages:
           - template: templates/smoke-tests.yml
             parameters:
               environment: prod
-              azureSubscription: $(ARM_SUBSCRIPTION_ID)
+              azureSubscription: "az-pcpc-prod"
               resourceGroupName: $(APIM_RESOURCE_GROUP)
               functionAppName: $(FUNCTION_APP_NAME)
               staticWebAppName: $(STATIC_WEB_APP_NAME)
