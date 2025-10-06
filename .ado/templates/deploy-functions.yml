@@ -199,8 +199,8 @@ steps:
           if [ "$SETS_STATUS" = "200" ]; then
             echo "✓ GetSetList endpoint passed (HTTP $SETS_STATUS)"
             
-            # Verify response contains data
-            SET_COUNT=$(echo "$SETS_BODY" | jq -r '.data | length' 2>/dev/null || echo "0")
+            # Verify response contains data (array returned directly, not wrapped in .data)
+            SET_COUNT=$(echo "$SETS_BODY" | jq -r 'length' 2>/dev/null || echo "0")
             echo "Sets returned: $SET_COUNT"
             
             if [ "$SET_COUNT" -gt "0" ]; then
