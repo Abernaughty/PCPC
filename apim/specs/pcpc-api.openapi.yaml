@@ -1,0 +1,105 @@
+openapi: 3.0.1
+info:
+  title: Pokedata API
+  description: ''
+  version: '1.0'
+servers:
+  - url: https://maber-apim-test.azure-api.net/pokedata-api
+paths:
+  /sets:
+    get:
+      summary: Get Set List
+      description: Returns a list of all Pokémon card sets
+      operationId: get-set-list
+      parameters:
+        - name: forceRefresh
+          in: query
+          schema:
+            enum:
+              - true
+            type: boolean
+            default: true
+        - name: groupByExpansion
+          in: query
+          schema:
+            enum:
+              - true
+            type: boolean
+            default: true
+        - name: all
+          in: query
+          schema:
+            enum:
+              - true
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: ''
+  '/sets/{setCode}/cards':
+    get:
+      summary: Get Cards By Set
+      description: Returns cards for a specific set
+      operationId: get-cards-by-set
+      parameters:
+        - name: setCode
+          in: path
+          required: true
+          schema:
+            type: String
+        - name: forceRefresh
+          in: query
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ''
+  '/sets/{setId}/cards/{cardId}':
+    get:
+      summary: Get Card Info
+      description: "Returns detailed information for a specific card\n"
+      operationId: get-card-info
+      parameters:
+        - name: setId
+          in: path
+          required: true
+          schema:
+            type: ''
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: ''
+        - name: forceRefresh
+          in: query
+          schema:
+            type: boolean
+        - name: setId
+          in: query
+          required: true
+          schema:
+            type: ''
+      responses:
+        '200':
+          description: ''
+components:
+  securitySchemes:
+    apiKeyHeader:
+      type: apiKey
+      name: Ocp-Apim-Subscription-Key
+      in: header
+    apiKeyQuery:
+      type: apiKey
+      name: subscription-key
+      in: query
+security:
+  - apiKeyHeader: [ ]
+  - apiKeyQuery: [ ]
