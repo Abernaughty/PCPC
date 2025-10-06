@@ -61,6 +61,8 @@ stages:
         displayName: "Deploy Infrastructure"
         pool:
           vmImage: "ubuntu-latest"
+        variables:
+          - group: vg-pcpc-dev
         steps:
           - template: templates/deploy-infra.yml
             parameters:
@@ -113,6 +115,8 @@ stages:
               environment: $(environment)
               azureSubscription: $(azureSubscription)
               resourceGroupName: "pcpc-rg-dev"
+              functionAppName: "pcpc-func-dev"
+              staticWebAppName: "pcpc-swa-dev"
 
   # ============================================================================
   # STAGE 3: DEPLOY TO STAGING
@@ -135,6 +139,8 @@ stages:
         environment: pcpc-staging # Approval gate configured in Azure DevOps
         pool:
           vmImage: "ubuntu-latest"
+        variables:
+          - group: vg-pcpc-staging
         strategy:
           runOnce:
             deploy:
@@ -190,6 +196,8 @@ stages:
               environment: $(environment)
               azureSubscription: $(azureSubscription)
               resourceGroupName: "pcpc-rg-staging"
+              functionAppName: "pcpc-func-staging"
+              staticWebAppName: "pcpc-swa-staging"
 
   # ============================================================================
   # STAGE 4: DEPLOY TO PRODUCTION
@@ -212,6 +220,8 @@ stages:
         environment: pcpc-prod # Approval gate configured in Azure DevOps
         pool:
           vmImage: "ubuntu-latest"
+        variables:
+          - group: vg-pcpc-prod
         strategy:
           runOnce:
             deploy:
@@ -267,6 +277,8 @@ stages:
               environment: $(environment)
               azureSubscription: $(azureSubscription)
               resourceGroupName: "pcpc-rg-prod"
+              functionAppName: "pcpc-func-prod"
+              staticWebAppName: "pcpc-swa-prod"
 
       # Final Deployment Summary
       - job: Deployment_Summary
