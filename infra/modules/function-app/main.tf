@@ -51,7 +51,14 @@ locals {
     "WEBSITE_RUN_FROM_PACKAGE" = "1"
   }
 
-  app_settings = merge(local.default_app_settings, var.app_settings)
+  # Transform hyphenated variable names to underscores for Node.js compatibility
+  # Azure Key Vault requires hyphens, but Node.js environment variables need underscores
+  transformed_app_settings = {
+    for key, value in var.app_settings :
+    replace(key, "-", "_") => value
+  }
+
+  app_settings = merge(local.default_app_settings, local.transformed_app_settings)
 }
 
 # -----------------------------------------------------------------------------
