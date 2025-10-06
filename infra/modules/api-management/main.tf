@@ -63,12 +63,12 @@ resource "azurerm_api_management" "this" {
 
   # Security configuration
   security {
-    enable_backend_ssl30  = false
-    enable_backend_tls10  = var.tls_10_enabled
-    enable_backend_tls11  = var.tls_11_enabled
-    enable_frontend_ssl30 = false
-    enable_frontend_tls10 = var.tls_10_enabled
-    enable_frontend_tls11 = var.tls_11_enabled
+    backend_ssl30_enabled  = false
+    backend_tls10_enabled  = var.tls_10_enabled
+    backend_tls11_enabled  = var.tls_11_enabled
+    frontend_ssl30_enabled = false
+    frontend_tls10_enabled = var.tls_10_enabled
+    frontend_tls11_enabled = var.tls_11_enabled
 
     # Disable weak ciphers
     tls_ecdhe_ecdsa_with_aes128_cbc_sha_ciphers_enabled = false

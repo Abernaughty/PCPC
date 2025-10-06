@@ -112,7 +112,7 @@ jobs:
           TargetFolder: "$(Build.ArtifactStagingDirectory)/drop/swa"
           CleanTargetFolder: false
 
-      # Copy backend build output and dependencies
+      # Copy backend build output and package files (node_modules excluded - restored at deployment)
       - task: CopyFiles@2
         displayName: "Copy Backend Build to Artifact"
         inputs:
