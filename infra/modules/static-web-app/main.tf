@@ -48,6 +48,12 @@ resource "azurerm_static_web_app" "this" {
   configuration_file_changes_enabled = var.configuration_file_changes_enabled
 
   tags = local.common_tags
+
+  lifecycle {
+    ignore_changes = [
+      tags["CreatedDate"]
+    ]
+  }
 }
 
 # -----------------------------------------------------------------------------

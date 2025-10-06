@@ -1,16 +1,23 @@
 #!/bin/bash
 
 # Health Check Script for Azure Functions
-# Usage: ./health-check-functions.sh <FUNCTION_APP_URL>
+# Usage: ./health-check-functions.sh <FUNCTION_APP_URL> [FUNCTION_KEY]
 # Exit codes: 0 = success, 1 = failure, 2 = warning
 
 set -e
 
 FUNCTION_APP_URL=$1
+FUNCTION_KEY=$2
 
 if [ -z "$FUNCTION_APP_URL" ]; then
   echo "Error: Function App URL is required"
-  echo "Usage: $0 <FUNCTION_APP_URL>"
+  echo "Usage: $0 <FUNCTION_APP_URL> [FUNCTION_KEY]"
+  echo ""
+  echo "Parameters:"
+  echo "  FUNCTION_APP_URL  - The base URL of the Function App (required)"
+  echo "  FUNCTION_KEY      - Function key for authenticated endpoints (optional)"
+  echo ""
+  echo "Note: If FUNCTION_KEY is not provided, only anonymous endpoints will be tested"
   exit 1
 fi
 
@@ -86,43 +93,54 @@ echo ""
 # Test 2: GetSetList endpoint
 echo "Test 2: GetSetList Endpoint"
 echo "----------------------------"
-SETLIST_URL="${FUNCTION_APP_URL}/api/GetSetList?all=true"
-echo "Testing: $SETLIST_URL"
 
-RESPONSE=$(curl -s -w "\n%{http_code}" "$SETLIST_URL" || echo "000")
-HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-BODY=$(echo "$RESPONSE" | sed '$d')
+if [ -z "$FUNCTION_KEY" ]; then
+  echo "⚠ Skipping GetSetList test - no function key provided"
+  echo "  (This endpoint requires authentication)"
+  ((WARNINGS++))
+else
+  SETLIST_URL="${FUNCTION_APP_URL}/api/GetSetList?all=true&code=${FUNCTION_KEY}"
+  echo "Testing: ${FUNCTION_APP_URL}/api/GetSetList?all=true&code=***"
 
-if [ "$HTTP_CODE" == "200" ]; then
-  echo "✓ GetSetList endpoint returned 200 OK"
-  
-  # Verify response is valid JSON array
-  if echo "$BODY" | jq -e 'type == "array"' > /dev/null 2>&1; then
-    SET_COUNT=$(echo "$BODY" | jq 'length')
-    echo "  Set count: $SET_COUNT"
+  RESPONSE=$(curl -s -w "\n%{http_code}" "$SETLIST_URL" || echo "000")
+  HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+  BODY=$(echo "$RESPONSE" | sed '$d')
+
+  if [ "$HTTP_CODE" == "200" ]; then
+    echo "✓ GetSetList endpoint returned 200 OK"
     
-    if [ "$SET_COUNT" -gt 0 ]; then
-      echo "✓ Response contains sets"
+    # Verify response is valid JSON array
+    if echo "$BODY" | jq -e 'type == "array"' > /dev/null 2>&1; then
+      SET_COUNT=$(echo "$BODY" | jq 'length')
+      echo "  Set count: $SET_COUNT"
       
-      # Verify first set has required fields
-      FIRST_SET=$(echo "$BODY" | jq '.[0]')
-      if echo "$FIRST_SET" | jq -e '.id and .name and .series' > /dev/null 2>&1; then
-        echo "✓ Set data structure is valid"
+      if [ "$SET_COUNT" -gt 0 ]; then
+        echo "✓ Response contains sets"
+        
+        # Verify first set has required fields
+        FIRST_SET=$(echo "$BODY" | jq '.[0]')
+        if echo "$FIRST_SET" | jq -e '.id and .name and .series' > /dev/null 2>&1; then
+          echo "✓ Set data structure is valid"
+        else
+          echo "⚠ Set data structure may be incomplete"
+          ((WARNINGS++))
+        fi
       else
-        echo "⚠ Set data structure may be incomplete"
+        echo "⚠ No sets returned"
         ((WARNINGS++))
       fi
     else
-      echo "⚠ No sets returned"
-      ((WARNINGS++))
+      echo "✗ Response is not a valid JSON array"
+      ((ERRORS++))
     fi
+  elif [ "$HTTP_CODE" == "401" ]; then
+    echo "✗ GetSetList endpoint returned 401 Unauthorized"
+    echo "  This likely means the function key is invalid or expired"
+    ((ERRORS++))
   else
-    echo "✗ Response is not a valid JSON array"
+    echo "✗ GetSetList endpoint returned $HTTP_CODE (expected 200)"
     ((ERRORS++))
   fi
-else
-  echo "✗ GetSetList endpoint returned $HTTP_CODE (expected 200)"
-  ((ERRORS++))
 fi
 echo ""
 

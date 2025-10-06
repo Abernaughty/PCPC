@@ -71,6 +71,12 @@ resource "azurerm_storage_account" "this" {
   min_tls_version          = "TLS1_2"
 
   tags = local.common_tags
+
+  lifecycle {
+    ignore_changes = [
+      tags["CreatedDate"]
+    ]
+  }
 }
 
 # -----------------------------------------------------------------------------
@@ -91,6 +97,12 @@ resource "azurerm_service_plan" "this" {
   worker_count                 = var.sku_name != "Y1" ? var.elastic_instance_minimum : null
 
   tags = local.common_tags
+
+  lifecycle {
+    ignore_changes = [
+      tags["CreatedDate"]
+    ]
+  }
 }
 
 # -----------------------------------------------------------------------------
@@ -107,6 +119,12 @@ resource "azurerm_application_insights" "this" {
   retention_in_days   = var.environment == "prod" ? 90 : 30
 
   tags = local.common_tags
+
+  lifecycle {
+    ignore_changes = [
+      tags["CreatedDate"]
+    ]
+  }
 }
 
 # -----------------------------------------------------------------------------
@@ -143,11 +161,6 @@ resource "azurerm_windows_function_app" "this" {
   # Application settings
   # Note: Application Insights settings are configured in site_config block to prevent drift
   app_settings = local.app_settings
-  lifecycle {
-    ignore_changes = [
-      app_settings["WEBSITE_NODE_DEFAULT_VERSION"],
-    ]
-  }
 
   # Managed identity
   dynamic "identity" {
@@ -211,6 +224,13 @@ resource "azurerm_windows_function_app" "this" {
   }
 
   tags = local.common_tags
+
+  lifecycle {
+    ignore_changes = [
+      tags["CreatedDate"],
+      app_settings["WEBSITE_NODE_DEFAULT_VERSION"]
+    ]
+  }
 }
 
 # -----------------------------------------------------------------------------

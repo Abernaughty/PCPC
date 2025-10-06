@@ -43,6 +43,12 @@ resource "azurerm_storage_account" "main" {
   }
 
   tags = var.tags
+
+  lifecycle {
+    ignore_changes = [
+      tags["CreatedDate"]
+    ]
+  }
 }
 
 # Storage containers
@@ -50,7 +56,7 @@ resource "azurerm_storage_container" "containers" {
   for_each = var.containers
 
   name                  = each.key
-  storage_account_name  = azurerm_storage_account.main.name
+  storage_account_id    = azurerm_storage_account.main.id
   container_access_type = each.value.access_type
 }
 
@@ -58,8 +64,8 @@ resource "azurerm_storage_container" "containers" {
 resource "azurerm_storage_queue" "queues" {
   for_each = var.queues
 
-  name                 = each.key
-  storage_account_name = azurerm_storage_account.main.name
+  name               = each.key
+  storage_account_id = azurerm_storage_account.main.id
 }
 
 # Storage tables (if needed)
