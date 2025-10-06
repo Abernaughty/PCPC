@@ -20,9 +20,12 @@ trigger:
 pr: none # PR validation handled by azure-pipelines-pr.yml
 
 variables:
-  - group: vg-pcpc-dev
-  - group: vg-pcpc-staging
-  - group: vg-pcpc-prod
+  - group: vg-pcpc-dev-config
+  - group: vg-pcpc-dev-secrets
+  - group: vg-pcpc-staging-config
+  - group: vg-pcpc-staging-secrets
+  - group: vg-pcpc-prod-config
+  - group: vg-pcpc-prod-secrets
   - name: buildConfiguration
     value: "Release"
   - name: nodeVersion
@@ -50,24 +53,19 @@ stages:
     dependsOn: Build
     condition: succeeded()
     variables:
-      - group: vg-pcpc-dev
-      - name: environment
-        value: "dev"
-      - name: azureSubscription
-        value: "az-pcpc-dev"
+      - group: vg-pcpc-dev-config
+      - group: vg-pcpc-dev-secrets
     jobs:
       # Deploy Infrastructure
       - job: Deploy_Infrastructure
         displayName: "Deploy Infrastructure"
         pool:
           vmImage: "ubuntu-latest"
-        variables:
-          - group: vg-pcpc-dev
         steps:
           - template: templates/deploy-infra.yml
             parameters:
               environment: dev
-              azureSubscription: $(azureSubscription)
+              azureSubscription: $(ARM_SUBSCRIPTION_ID)
               terraformVersion: "1.13.3"
 
       # Deploy Backend Functions
@@ -81,9 +79,9 @@ stages:
           - template: templates/deploy-functions.yml
             parameters:
               environment: dev
-              azureSubscription: $(azureSubscription)
-              functionAppName: "pcpc-func-dev"
-              resourceGroupName: "pcpc-rg-dev"
+              azureSubscription: $(ARM_SUBSCRIPTION_ID)
+              functionAppName: $(FUNCTION_APP_NAME)
+              resourceGroupName: $(APIM_RESOURCE_GROUP)
 
       # Deploy Frontend Static Web App
       - job: Deploy_Frontend
@@ -96,9 +94,9 @@ stages:
           - template: templates/deploy-swa.yml
             parameters:
               environment: dev
-              azureSubscription: $(azureSubscription)
-              staticWebAppName: "pcpc-swa-dev"
-              resourceGroupName: "pcpc-rg-dev"
+              azureSubscription: $(ARM_SUBSCRIPTION_ID)
+              staticWebAppName: $(STATIC_WEB_APP_NAME)
+              resourceGroupName: $(APIM_RESOURCE_GROUP)
 
       # Run Smoke Tests
       - job: Smoke_Tests
@@ -113,10 +111,10 @@ stages:
           - template: templates/smoke-tests.yml
             parameters:
               environment: dev
-              azureSubscription: $(azureSubscription)
-              resourceGroupName: "pcpc-rg-dev"
-              functionAppName: "pcpc-func-dev"
-              staticWebAppName: "pcpc-swa-dev"
+              azureSubscription: $(ARM_SUBSCRIPTION_ID)
+              resourceGroupName: $(APIM_RESOURCE_GROUP)
+              functionAppName: $(FUNCTION_APP_NAME)
+              staticWebAppName: $(STATIC_WEB_APP_NAME)
 
   # ============================================================================
   # STAGE 3: DEPLOY TO STAGING
@@ -127,11 +125,8 @@ stages:
     dependsOn: Deploy_Dev
     condition: succeeded()
     variables:
-      - group: vg-pcpc-staging
-      - name: environment
-        value: "staging"
-      - name: azureSubscription
-        value: "az-pcpc-staging"
+      - group: vg-pcpc-staging-config
+      - group: vg-pcpc-staging-secrets
     jobs:
       # Deploy Infrastructure
       - deployment: Deploy_Infrastructure
@@ -139,8 +134,6 @@ stages:
         environment: pcpc-staging # Approval gate configured in Azure DevOps
         pool:
           vmImage: "ubuntu-latest"
-        variables:
-          - group: vg-pcpc-staging
         strategy:
           runOnce:
             deploy:
@@ -148,7 +141,7 @@ stages:
                 - template: templates/deploy-infra.yml
                   parameters:
                     environment: staging
-                    azureSubscription: $(azureSubscription)
+                    azureSubscription: $(ARM_SUBSCRIPTION_ID)
                     terraformVersion: "1.13.3"
 
       # Deploy Backend Functions
@@ -162,9 +155,9 @@ stages:
           - template: templates/deploy-functions.yml
             parameters:
               environment: staging
-              azureSubscription: $(azureSubscription)
-              functionAppName: "pcpc-func-staging"
-              resourceGroupName: "pcpc-rg-staging"
+              azureSubscription: $(ARM_SUBSCRIPTION_ID)
+              functionAppName: $(FUNCTION_APP_NAME)
+              resourceGroupName: $(APIM_RESOURCE_GROUP)
 
       # Deploy Frontend Static Web App
       - job: Deploy_Frontend
@@ -177,9 +170,9 @@ stages:
           - template: templates/deploy-swa.yml
             parameters:
               environment: staging
-              azureSubscription: $(azureSubscription)
-              staticWebAppName: "pcpc-swa-staging"
-              resourceGroupName: "pcpc-rg-staging"
+              azureSubscription: $(ARM_SUBSCRIPTION_ID)
+              staticWebAppName: $(STATIC_WEB_APP_NAME)
+              resourceGroupName: $(APIM_RESOURCE_GROUP)
 
       # Run Smoke Tests
       - job: Smoke_Tests
@@ -194,10 +187,10 @@ stages:
           - template: templates/smoke-tests.yml
             parameters:
               environment: staging
-              azureSubscription: $(azureSubscription)
-              resourceGroupName: "pcpc-rg-staging"
-              functionAppName: "pcpc-func-staging"
-              staticWebAppName: "pcpc-swa-staging"
+              azureSubscription: $(ARM_SUBSCRIPTION_ID)
+              resourceGroupName: $(APIM_RESOURCE_GROUP)
+              functionAppName: $(FUNCTION_APP_NAME)
+              staticWebAppName: $(STATIC_WEB_APP_NAME)
 
   # ============================================================================
   # STAGE 4: DEPLOY TO PRODUCTION
@@ -208,11 +201,8 @@ stages:
     dependsOn: Deploy_Staging
     condition: succeeded()
     variables:
-      - group: vg-pcpc-prod
-      - name: environment
-        value: "prod"
-      - name: azureSubscription
-        value: "az-pcpc-prod"
+      - group: vg-pcpc-prod-config
+      - group: vg-pcpc-prod-secrets
     jobs:
       # Deploy Infrastructure
       - deployment: Deploy_Infrastructure
@@ -220,8 +210,6 @@ stages:
         environment: pcpc-prod # Approval gate configured in Azure DevOps
         pool:
           vmImage: "ubuntu-latest"
-        variables:
-          - group: vg-pcpc-prod
         strategy:
           runOnce:
             deploy:
@@ -229,7 +217,7 @@ stages:
                 - template: templates/deploy-infra.yml
                   parameters:
                     environment: prod
-                    azureSubscription: $(azureSubscription)
+                    azureSubscription: $(ARM_SUBSCRIPTION_ID)
                     terraformVersion: "1.13.3"
 
       # Deploy Backend Functions
@@ -243,9 +231,9 @@ stages:
           - template: templates/deploy-functions.yml
             parameters:
               environment: prod
-              azureSubscription: $(azureSubscription)
-              functionAppName: "pcpc-func-prod"
-              resourceGroupName: "pcpc-rg-prod"
+              azureSubscription: $(ARM_SUBSCRIPTION_ID)
+              functionAppName: $(FUNCTION_APP_NAME)
+              resourceGroupName: $(APIM_RESOURCE_GROUP)
 
       # Deploy Frontend Static Web App
       - job: Deploy_Frontend
@@ -258,9 +246,9 @@ stages:
           - template: templates/deploy-swa.yml
             parameters:
               environment: prod
-              azureSubscription: $(azureSubscription)
-              staticWebAppName: "pcpc-swa-prod"
-              resourceGroupName: "pcpc-rg-prod"
+              azureSubscription: $(ARM_SUBSCRIPTION_ID)
+              staticWebAppName: $(STATIC_WEB_APP_NAME)
+              resourceGroupName: $(APIM_RESOURCE_GROUP)
 
       # Run Smoke Tests
       - job: Smoke_Tests
@@ -275,10 +263,10 @@ stages:
           - template: templates/smoke-tests.yml
             parameters:
               environment: prod
-              azureSubscription: $(azureSubscription)
-              resourceGroupName: "pcpc-rg-prod"
-              functionAppName: "pcpc-func-prod"
-              staticWebAppName: "pcpc-swa-prod"
+              azureSubscription: $(ARM_SUBSCRIPTION_ID)
+              resourceGroupName: $(APIM_RESOURCE_GROUP)
+              functionAppName: $(FUNCTION_APP_NAME)
+              staticWebAppName: $(STATIC_WEB_APP_NAME)
 
       # Final Deployment Summary
       - job: Deployment_Summary
