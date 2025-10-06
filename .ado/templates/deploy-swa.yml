@@ -115,9 +115,10 @@ steps:
     displayName: "Deploy to Static Web App"
     inputs:
       azure_static_web_apps_api_token: $(DEPLOYMENT_TOKEN)
-      app_location: "$(Pipeline.Workspace)/drop/swa"
+      app_location: "swa"
       output_location: ""
       skip_app_build: true
+      working_directory: "$(Pipeline.Workspace)/drop"
 
   # Wait for deployment propagation
   - script: |

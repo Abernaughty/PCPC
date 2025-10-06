@@ -95,6 +95,7 @@ console.log("✅ [STARTUP] All services initialized successfully!");
 import { getCardInfo } from "./functions/GetCardInfo";
 import { getCardsBySet } from "./functions/GetCardsBySet";
 import { getSetList } from "./functions/GetSetList";
+import { healthCheck } from "./functions/HealthCheck";
 import { monitorCredits } from "./functions/MonitorCredits";
 import { refreshData } from "./functions/RefreshData";
 
@@ -118,6 +119,13 @@ app.http("getCardsBySet", {
   authLevel: "function",
   route: "sets/{setId}/cards",
   handler: getCardsBySet,
+});
+
+app.http("healthCheck", {
+  methods: ["GET"],
+  authLevel: "anonymous",
+  route: "health",
+  handler: healthCheck,
 });
 
 // Register timer-triggered functions
