@@ -79,6 +79,26 @@ steps:
       fi
     displayName: "Display Release Manifest"
 
+  # Install production dependencies (node_modules excluded from artifact)
+  - script: |
+      cd $(System.ArtifactsDirectory)/${{ parameters.artifactName }}/functions
+      
+      echo "Installing production dependencies..."
+      npm ci --production --no-audit --no-fund
+      
+      if [ $? -ne 0 ]; then
+        echo "##vso[task.logissue type=error]Failed to install dependencies"
+        exit 1
+      fi
+      
+      echo "Dependencies installed successfully"
+      echo "node_modules size:"
+      du -sh node_modules 2>/dev/null || echo "node_modules directory created"
+      
+      echo "Total files in functions directory:"
+      find . -type f | wc -l
+    displayName: "Install Backend Dependencies"
+
   # Deploy Azure Functions
   - task: AzureFunctionApp@2
     displayName: "Deploy Azure Functions to ${{ parameters.environment }}"
