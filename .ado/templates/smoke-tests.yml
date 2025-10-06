@@ -16,141 +16,135 @@ parameters:
   - name: apimName
     type: string
     default: ""
-  - name: serviceConnection
+  - name: azureSubscription
     type: string
 
-jobs:
-  - job: Smoke_Tests_${{ parameters.environment }}
-    displayName: "Smoke Tests - ${{ upper(parameters.environment) }}"
-    pool:
-      vmImage: "ubuntu-latest"
+steps:
+  - checkout: self
+    displayName: "Checkout Source Code"
 
-    steps:
-      - checkout: self
-        displayName: "Checkout Source Code"
+  - task: AzureCLI@2
+    displayName: "Run Health Checks"
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: "bash"
+      scriptLocation: "inlineScript"
+      inlineScript: |
+        echo "=========================================="
+        echo "Running Smoke Tests - ${{ upper(parameters.environment) }}"
+        echo "=========================================="
+        echo ""
 
-      - task: AzureCLI@2
-        displayName: "Run Health Checks"
-        inputs:
-          azureSubscription: ${{ parameters.serviceConnection }}
-          scriptType: "bash"
-          scriptLocation: "inlineScript"
-          inlineScript: |
-            echo "=========================================="
-            echo "Running Smoke Tests - ${{ upper(parameters.environment) }}"
-            echo "=========================================="
+        PASSED=0
+        FAILED=0
+        WARNINGS=0
+
+        # Function to run health check and track results
+        run_health_check() {
+          local component=$1
+          local script=$2
+          local args=$3
+
+          echo "Testing $component..."
+          if bash "$script" $args; then
+            echo "✓ $component health check passed"
+            ((PASSED++))
+          else
+            EXIT_CODE=$?
+            if [ $EXIT_CODE -eq 2 ]; then
+              echo "⚠ $component health check passed with warnings"
+              ((WARNINGS++))
+            else
+              echo "✗ $component health check failed"
+              ((FAILED++))
+            fi
+          fi
+          echo ""
+        }
+
+        # Test Function App if provided
+        if [ -n "${{ parameters.functionAppName }}" ]; then
+          FUNCTION_APP_URL="https://${{ parameters.functionAppName }}.azurewebsites.net"
+          run_health_check "Function App" ".ado/scripts/health-check-functions.sh" "$FUNCTION_APP_URL"
+        else
+          echo "⊘ Function App not configured - skipping"
+          echo ""
+        fi
+
+        # Test Static Web App if provided
+        if [ -n "${{ parameters.staticWebAppName }}" ]; then
+          # Get Static Web App URL from Azure
+          SWA_URL=$(az staticwebapp show \
+            --name "${{ parameters.staticWebAppName }}" \
+            --resource-group "${{ parameters.resourceGroupName }}" \
+            --query "defaultHostname" -o tsv 2>/dev/null || echo "")
+
+          if [ -n "$SWA_URL" ]; then
+            run_health_check "Static Web App" ".ado/scripts/health-check-swa.sh" "https://$SWA_URL"
+          else
+            echo "⚠ Could not retrieve Static Web App URL"
+            ((WARNINGS++))
             echo ""
+          fi
+        else
+          echo "⊘ Static Web App not configured - skipping"
+          echo ""
+        fi
 
-            PASSED=0
-            FAILED=0
-            WARNINGS=0
+        # Test APIM if provided
+        if [ -n "${{ parameters.apimName }}" ]; then
+          APIM_URL=$(az apim show \
+            --name "${{ parameters.apimName }}" \
+            --resource-group "${{ parameters.resourceGroupName }}" \
+            --query "gatewayUrl" -o tsv 2>/dev/null || echo "")
 
-            # Function to run health check and track results
-            run_health_check() {
-              local component=$1
-              local script=$2
-              local args=$3
-
-              echo "Testing $component..."
-              if bash "$script" $args; then
-                echo "✓ $component health check passed"
-                ((PASSED++))
-              else
-                EXIT_CODE=$?
-                if [ $EXIT_CODE -eq 2 ]; then
-                  echo "⚠ $component health check passed with warnings"
-                  ((WARNINGS++))
-                else
-                  echo "✗ $component health check failed"
-                  ((FAILED++))
-                fi
-              fi
-              echo ""
-            }
-
-            # Test Function App if provided
-            if [ -n "${{ parameters.functionAppName }}" ]; then
-              FUNCTION_APP_URL="https://${{ parameters.functionAppName }}.azurewebsites.net"
-              run_health_check "Function App" ".ado/scripts/health-check-functions.sh" "$FUNCTION_APP_URL"
-            else
-              echo "⊘ Function App not configured - skipping"
-              echo ""
-            fi
-
-            # Test Static Web App if provided
-            if [ -n "${{ parameters.staticWebAppName }}" ]; then
-              # Get Static Web App URL from Azure
-              SWA_URL=$(az staticwebapp show \
-                --name "${{ parameters.staticWebAppName }}" \
-                --resource-group "${{ parameters.resourceGroupName }}" \
-                --query "defaultHostname" -o tsv 2>/dev/null || echo "")
-
-              if [ -n "$SWA_URL" ]; then
-                run_health_check "Static Web App" ".ado/scripts/health-check-swa.sh" "https://$SWA_URL"
-              else
-                echo "⚠ Could not retrieve Static Web App URL"
-                ((WARNINGS++))
-                echo ""
-              fi
-            else
-              echo "⊘ Static Web App not configured - skipping"
-              echo ""
-            fi
-
-            # Test APIM if provided
-            if [ -n "${{ parameters.apimName }}" ]; then
-              APIM_URL=$(az apim show \
-                --name "${{ parameters.apimName }}" \
-                --resource-group "${{ parameters.resourceGroupName }}" \
-                --query "gatewayUrl" -o tsv 2>/dev/null || echo "")
-
-              if [ -n "$APIM_URL" ]; then
-                run_health_check "API Management" ".ado/scripts/health-check-apim.sh" "$APIM_URL"
-              else
-                echo "⚠ Could not retrieve APIM URL"
-                ((WARNINGS++))
-                echo ""
-              fi
-            else
-              echo "⊘ API Management not configured - skipping"
-              echo ""
-            fi
-
-            # Display summary
-            echo "=========================================="
-            echo "Smoke Tests Summary - ${{ upper(parameters.environment) }}"
-            echo "=========================================="
-            echo "Passed:   $PASSED"
-            echo "Warnings: $WARNINGS"
-            echo "Failed:   $FAILED"
-            echo "=========================================="
+          if [ -n "$APIM_URL" ]; then
+            run_health_check "API Management" ".ado/scripts/health-check-apim.sh" "$APIM_URL"
+          else
+            echo "⚠ Could not retrieve APIM URL"
+            ((WARNINGS++))
             echo ""
+          fi
+        else
+          echo "⊘ API Management not configured - skipping"
+          echo ""
+        fi
 
-            # Set pipeline variables for reporting
-            echo "##vso[task.setvariable variable=TestsPassed;isOutput=true]$PASSED"
-            echo "##vso[task.setvariable variable=TestsWarnings;isOutput=true]$WARNINGS"
-            echo "##vso[task.setvariable variable=TestsFailed;isOutput=true]$FAILED"
+        # Display summary
+        echo "=========================================="
+        echo "Smoke Tests Summary - ${{ upper(parameters.environment) }}"
+        echo "=========================================="
+        echo "Passed:   $PASSED"
+        echo "Warnings: $WARNINGS"
+        echo "Failed:   $FAILED"
+        echo "=========================================="
+        echo ""
 
-            # Exit with appropriate code
-            if [ $FAILED -gt 0 ]; then
-              echo "❌ Smoke tests failed - $FAILED component(s) unhealthy"
-              exit 1
-            elif [ $WARNINGS -gt 0 ]; then
-              echo "⚠️  Smoke tests passed with warnings - $WARNINGS component(s) need attention"
-              exit 0
-            else
-              echo "✅ All smoke tests passed successfully"
-              exit 0
-            fi
+        # Set pipeline variables for reporting
+        echo "##vso[task.setvariable variable=TestsPassed;isOutput=true]$PASSED"
+        echo "##vso[task.setvariable variable=TestsWarnings;isOutput=true]$WARNINGS"
+        echo "##vso[task.setvariable variable=TestsFailed;isOutput=true]$FAILED"
 
-      - task: PublishTestResults@2
-        displayName: "Publish Test Results"
-        condition: always()
-        inputs:
-          testResultsFormat: "JUnit"
-          testResultsFiles: "**/smoke-test-results.xml"
-          searchFolder: "$(System.DefaultWorkingDirectory)"
-          mergeTestResults: true
-          failTaskOnFailedTests: false
-          testRunTitle: "Smoke Tests - ${{ upper(parameters.environment) }}"
-          publishRunAttachments: true
+        # Exit with appropriate code
+        if [ $FAILED -gt 0 ]; then
+          echo "❌ Smoke tests failed - $FAILED component(s) unhealthy"
+          exit 1
+        elif [ $WARNINGS -gt 0 ]; then
+          echo "⚠️  Smoke tests passed with warnings - $WARNINGS component(s) need attention"
+          exit 0
+        else
+          echo "✅ All smoke tests passed successfully"
+          exit 0
+        fi
+
+  - task: PublishTestResults@2
+    displayName: "Publish Test Results"
+    condition: always()
+    inputs:
+      testResultsFormat: "JUnit"
+      testResultsFiles: "**/smoke-test-results.xml"
+      searchFolder: "$(System.DefaultWorkingDirectory)"
+      mergeTestResults: true
+      failTaskOnFailedTests: false
+      testRunTitle: "Smoke Tests - ${{ upper(parameters.environment) }}"
+      publishRunAttachments: true
