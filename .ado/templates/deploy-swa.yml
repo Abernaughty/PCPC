@@ -85,6 +85,52 @@ steps:
       echo "✓ All required files present"
     displayName: "Verify Artifact Integrity"
 
+  # Verify deployment paths and environment
+  - script: |
+      echo "=========================================="
+      echo "PRE-DEPLOYMENT DIAGNOSTICS"
+      echo "=========================================="
+      echo ""
+      echo "Pipeline Variables:"
+      echo "  Pipeline.Workspace: $(Pipeline.Workspace)"
+      echo "  System.DefaultWorkingDirectory: $(System.DefaultWorkingDirectory)"
+      echo "  Build.SourcesDirectory: $(Build.SourcesDirectory)"
+      echo ""
+      echo "Current Working Directory:"
+      pwd
+      echo ""
+      echo "Pipeline Workspace Contents:"
+      ls -lah "$(Pipeline.Workspace)/" || echo "Pipeline.Workspace not accessible"
+      echo ""
+      echo "Drop Artifact Contents:"
+      ls -lah "$(Pipeline.Workspace)/drop/" || echo "drop/ directory not found"
+      echo ""
+      echo "SWA Directory Contents:"
+      if [ -d "$(Pipeline.Workspace)/drop/swa" ]; then
+        echo "✓ SWA directory found at: $(Pipeline.Workspace)/drop/swa"
+        ls -lah "$(Pipeline.Workspace)/drop/swa/"
+        echo ""
+        echo "SWA Directory Size:"
+        du -sh "$(Pipeline.Workspace)/drop/swa"
+        echo ""
+        echo "Critical Files Check:"
+        for file in index.html main.js bundle.css staticwebapp.config.json; do
+          if [ -f "$(Pipeline.Workspace)/drop/swa/$file" ]; then
+            echo "  ✓ $file"
+          else
+            echo "  ✗ $file (missing)"
+          fi
+        done
+      else
+        echo "✗ SWA directory NOT found at: $(Pipeline.Workspace)/drop/swa"
+        echo ""
+        echo "Searching for swa directory..."
+        find "$(Pipeline.Workspace)" -type d -name "swa" 2>/dev/null || echo "No swa directory found"
+      fi
+      echo ""
+      echo "=========================================="
+    displayName: "Pre-Deployment Diagnostics"
+
   # Get Static Web App deployment token
   - task: AzureCLI@2
     displayName: "Get Deployment Token"
@@ -118,7 +164,7 @@ steps:
       app_location: "swa"
       output_location: ""
       skip_app_build: true
-      working_directory: "$(Pipeline.Workspace)/drop"
+      cwd: "$(Pipeline.Workspace)/drop"
 
   # Wait for deployment propagation
   - script: |
