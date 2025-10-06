@@ -243,6 +243,38 @@ export class CardService {
 - State management with remote backend
 - Automated deployment pipelines
 - Lifecycle management for computed tag values
+- Variable name transformation for platform compatibility
+
+**Azure Key Vault Naming Transformation Pattern** ✅ IMPLEMENTED:
+
+**Problem**: Azure Key Vault requires hyphens in secret names, but Node.js requires underscores in environment variables
+
+**Solution**: Terraform transformation layer in Function App module
+
+```hcl
+locals {
+  # Transform hyphenated variable names to underscores for Node.js compatibility
+  # Azure Key Vault requires hyphens, but Node.js environment variables need underscores
+  transformed_app_settings = {
+    for key, value in var.app_settings :
+    replace(key, "-", "_") => value
+  }
+
+  app_settings = merge(local.default_app_settings, local.transformed_app_settings)
+}
+```
+
+**Benefits**:
+
+- ✅ Meets Azure Key Vault naming requirements (hyphens only)
+- ✅ Follows Node.js environment variable conventions (underscores)
+- ✅ Automatic transformation in Terraform (no manual intervention)
+- ✅ Works across all environments (dev, staging, prod)
+- ✅ Single source of truth in Key Vault
+
+**Implementation**: Applied to function-app module (`infra/modules/function-app/main.tf`)
+
+**Documentation**: Complete guide at `docs/azure-key-vault-naming-transformation.md`
 
 **Module Structure**:
 

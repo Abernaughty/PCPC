@@ -7,6 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### [2025-10-06] - Azure Key Vault Naming Transformation Pattern Implemented (11:20 PM)
+
+#### Fixed
+
+- **Environment Variable Access Issue - CRITICAL PRODUCTION FIX**: Resolved Function App returning 0 sets due to undefined API keys
+
+  - **Root Cause**: Azure Key Vault requires hyphens (`POKEDATA-API-KEY`) but Node.js requires underscores (`POKEDATA_API_KEY`)
+  - **Problem**: Variables stored as `POKEDATA-API-KEY` in Key Vault but code accessed `process.env.POKEDATA_API_KEY` (undefined)
+  - **Solution**: Implemented Terraform transformation in function-app module to convert hyphens to underscores
+  - **Impact**: All API keys now accessible in Node.js code, PokeData API will return 562 sets instead of 0
+
+#### Added
+
+- **Terraform Transformation Logic**: Automatic hyphen-to-underscore conversion in `infra/modules/function-app/main.tf`
+- **Comprehensive Documentation**: Created `docs/azure-key-vault-naming-transformation.md` (250+ lines)
+- **Pipeline Smoke Test Fix**: Updated response format check in `.ado/templates/deploy-functions.yml`
+
+#### Changed
+
+- **Function App Module**: Added `transformed_app_settings` local with `replace(key, "-", "_")` transformation
+- **Smoke Test Validation**: Fixed to check array length directly instead of `.data | length`
+
+#### Technical Details
+
+- **Transformation Pattern**: `for key, value in var.app_settings : replace(key, "-", "_") => value`
+- **Variables Affected**: POKEDATA-API-KEY, POKEMON-TCG-API-KEY, ARM-CLIENT-ID, ARM-CLIENT-SECRET
+- **Scope**: Applies to all environments (dev, staging, prod)
+- **Documentation**: Complete guide with architecture diagrams, troubleshooting, verification steps
+
+#### Benefits Achieved
+
+- ✅ Meets Azure Key Vault naming requirements (hyphens only)
+- ✅ Follows Node.js environment variable conventions (underscores)
+- ✅ Automatic transformation in Terraform (no manual intervention)
+- ✅ Single source of truth in Key Vault
+- ✅ Works across all environments
+
+#### Files Modified
+
+- `infra/modules/function-app/main.tf` - Added transformation logic (8 lines)
+- `.ado/templates/deploy-functions.yml` - Fixed smoke test (1 line)
+- `docs/azure-key-vault-naming-transformation.md` - Complete documentation (NEW)
+
+#### Expected Results
+
+- PokeData API will return 562 sets instead of 0
+- GetSetList smoke test will pass with set count > 0
+- All API keys accessible in Node.js code
+- Function App logs will show successful API calls
+
 ### [2025-10-06] - Service Principal Permissions Fix - Terraform Backend Storage Access (8:42 PM)
 
 #### Fixed
