@@ -66,7 +66,7 @@ stages:
         steps:
           - template: templates/deploy-infra.yml
             parameters:
-              environment: $(environment)
+              environment: dev
               azureSubscription: $(azureSubscription)
               terraformVersion: "1.13.3"
 
@@ -80,7 +80,7 @@ stages:
         steps:
           - template: templates/deploy-functions.yml
             parameters:
-              environment: $(environment)
+              environment: dev
               azureSubscription: $(azureSubscription)
               functionAppName: "pcpc-func-dev"
               resourceGroupName: "pcpc-rg-dev"
@@ -95,7 +95,7 @@ stages:
         steps:
           - template: templates/deploy-swa.yml
             parameters:
-              environment: $(environment)
+              environment: dev
               azureSubscription: $(azureSubscription)
               staticWebAppName: "pcpc-swa-dev"
               resourceGroupName: "pcpc-rg-dev"
@@ -112,7 +112,7 @@ stages:
         steps:
           - template: templates/smoke-tests.yml
             parameters:
-              environment: $(environment)
+              environment: dev
               azureSubscription: $(azureSubscription)
               resourceGroupName: "pcpc-rg-dev"
               functionAppName: "pcpc-func-dev"
@@ -147,7 +147,7 @@ stages:
               steps:
                 - template: templates/deploy-infra.yml
                   parameters:
-                    environment: $(environment)
+                    environment: staging
                     azureSubscription: $(azureSubscription)
                     terraformVersion: "1.13.3"
 
@@ -161,7 +161,7 @@ stages:
         steps:
           - template: templates/deploy-functions.yml
             parameters:
-              environment: $(environment)
+              environment: staging
               azureSubscription: $(azureSubscription)
               functionAppName: "pcpc-func-staging"
               resourceGroupName: "pcpc-rg-staging"
@@ -176,7 +176,7 @@ stages:
         steps:
           - template: templates/deploy-swa.yml
             parameters:
-              environment: $(environment)
+              environment: staging
               azureSubscription: $(azureSubscription)
               staticWebAppName: "pcpc-swa-staging"
               resourceGroupName: "pcpc-rg-staging"
@@ -193,7 +193,7 @@ stages:
         steps:
           - template: templates/smoke-tests.yml
             parameters:
-              environment: $(environment)
+              environment: staging
               azureSubscription: $(azureSubscription)
               resourceGroupName: "pcpc-rg-staging"
               functionAppName: "pcpc-func-staging"
@@ -228,7 +228,7 @@ stages:
               steps:
                 - template: templates/deploy-infra.yml
                   parameters:
-                    environment: $(environment)
+                    environment: prod
                     azureSubscription: $(azureSubscription)
                     terraformVersion: "1.13.3"
 
@@ -242,7 +242,7 @@ stages:
         steps:
           - template: templates/deploy-functions.yml
             parameters:
-              environment: $(environment)
+              environment: prod
               azureSubscription: $(azureSubscription)
               functionAppName: "pcpc-func-prod"
               resourceGroupName: "pcpc-rg-prod"
@@ -257,7 +257,7 @@ stages:
         steps:
           - template: templates/deploy-swa.yml
             parameters:
-              environment: $(environment)
+              environment: prod
               azureSubscription: $(azureSubscription)
               staticWebAppName: "pcpc-swa-prod"
               resourceGroupName: "pcpc-rg-prod"
@@ -274,7 +274,7 @@ stages:
         steps:
           - template: templates/smoke-tests.yml
             parameters:
-              environment: $(environment)
+              environment: prod
               azureSubscription: $(azureSubscription)
               resourceGroupName: "pcpc-rg-prod"
               functionAppName: "pcpc-func-prod"
