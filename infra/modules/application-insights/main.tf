@@ -33,6 +33,12 @@ resource "azurerm_application_insights" "this" {
       "ManagedBy"   = "Terraform"
     }
   )
+
+  lifecycle {
+    ignore_changes = [
+      tags["CreatedDate"]
+    ]
+  }
 }
 
 # Optional: Create action groups for alerting

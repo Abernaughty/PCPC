@@ -27,6 +27,12 @@ resource "azurerm_log_analytics_workspace" "this" {
       "ManagedBy"   = "Terraform"
     }
   )
+
+  lifecycle {
+    ignore_changes = [
+      tags["CreatedDate"]
+    ]
+  }
 }
 
 # Optional: Create data collection rules for custom logs
