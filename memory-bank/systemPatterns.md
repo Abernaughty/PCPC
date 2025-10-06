@@ -242,6 +242,7 @@ export class CardService {
 - Environment-specific configurations
 - State management with remote backend
 - Automated deployment pipelines
+- Lifecycle management for computed tag values
 
 **Module Structure**:
 
@@ -256,6 +257,44 @@ infra/modules/
 ├── application-insights/
 └── networking/
 ```
+
+**Tag Lifecycle Management Pattern** ✅ IMPLEMENTED:
+
+**Problem**: Computed tag values (like `timestamp()`) cause unnecessary resource updates on every Terraform run
+
+**Solution**: Use `ignore_changes` lifecycle rule to preserve creation metadata
+
+```hcl
+resource "azurerm_resource_group" "this" {
+  name     = var.name
+  location = var.location
+
+  tags = merge(
+    var.tags,
+    {
+      "Environment" = var.environment
+      "Project"     = var.project_name
+      "ManagedBy"   = "Terraform"
+      "CreatedDate" = formatdate("YYYY-MM-DD", timestamp())
+    }
+  )
+
+  lifecycle {
+    ignore_changes = [
+      tags["CreatedDate"]
+    ]
+  }
+}
+```
+
+**Benefits**:
+
+- ✅ New resources get accurate creation timestamp
+- ✅ Existing resources preserve original creation date
+- ✅ No unnecessary tag updates on every run
+- ✅ Cleaner Terraform plans showing only real changes
+
+**Implementation**: Applied to all 8 modules (resource-group, storage-account, cosmos-db, function-app, static-web-app, log-analytics, application-insights, api-management)
 
 ### 2. Environment Promotion Pattern
 

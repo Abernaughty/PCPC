@@ -21,10 +21,19 @@ resource "azurerm_resource_group" "this" {
     }
   )
 
+  lifecycle {
+    ignore_changes = [
+      tags["CreatedDate"]
+    ]
+  }
+
   # Note: prevent_destroy must be a literal value, not a variable
-  # Uncomment the lifecycle block below if you want to prevent accidental deletion
+  # Uncomment and add to lifecycle block above if you want to prevent accidental deletion
   # lifecycle {
   #   prevent_destroy = true
+  #   ignore_changes = [
+  #     tags["CreatedDate"]
+  #   ]
   # }
 }
 
