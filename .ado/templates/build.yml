@@ -13,204 +13,208 @@ parameters:
     type: boolean
     default: true
 
-steps:
-  # Setup Node.js environment
-  - task: NodeTool@0
-    displayName: "Setup Node.js $(nodeVersion)"
-    inputs:
-      versionSpec: "${{ parameters.nodeVersion }}"
+jobs:
+  - job: Build
+    displayName: "Build Unified Artifact"
+    pool:
+      vmImage: "ubuntu-latest"
+    steps:
+      # Setup Node.js environment
+      - task: NodeTool@0
+        displayName: "Setup Node.js ${{ parameters.nodeVersion }}"
+        inputs:
+          versionSpec: "${{ parameters.nodeVersion }}"
 
-  # Install root dependencies (for Jest testing framework)
-  - script: |
-      npm ci
-    displayName: "Install Root Dependencies"
-    workingDirectory: $(System.DefaultWorkingDirectory)
+      # Install root dependencies (for Jest testing framework)
+      - script: |
+          npm ci
+        displayName: "Install Root Dependencies"
+        workingDirectory: $(System.DefaultWorkingDirectory)
 
-  # ============================================================================
-  # FRONTEND BUILD
-  # ============================================================================
+      # ============================================================================
+      # FRONTEND BUILD
+      # ============================================================================
 
-  - script: |
-      echo "Building frontend application..."
-      npm ci
-    displayName: "Install Frontend Dependencies"
-    workingDirectory: $(System.DefaultWorkingDirectory)/app/frontend
+      - script: |
+          echo "Building frontend application..."
+          npm ci
+        displayName: "Install Frontend Dependencies"
+        workingDirectory: $(System.DefaultWorkingDirectory)/app/frontend
 
-  - script: |
-      npm run build
-    displayName: "Build Frontend (Svelte)"
-    workingDirectory: $(System.DefaultWorkingDirectory)/app/frontend
-    env:
-      NODE_ENV: production
+      - script: |
+          npm run build
+        displayName: "Build Frontend (Svelte)"
+        workingDirectory: $(System.DefaultWorkingDirectory)/app/frontend
+        env:
+          NODE_ENV: production
 
-  - script: |
-      if [ ! -d "dist" ]; then
-        echo "##vso[task.logissue type=error]Frontend build failed - dist/ directory not found"
-        exit 1
-      fi
-      if [ ! -f "dist/main.js" ]; then
-        echo "##vso[task.logissue type=error]Frontend build failed - main.js not found"
-        exit 1
-      fi
-      echo "Frontend build verification passed"
-      ls -lah dist/
-    displayName: "Verify Frontend Build"
-    workingDirectory: $(System.DefaultWorkingDirectory)/app/frontend
+      - script: |
+          if [ ! -d "dist" ]; then
+            echo "##vso[task.logissue type=error]Frontend build failed - dist/ directory not found"
+            exit 1
+          fi
+          if [ ! -f "dist/main.js" ]; then
+            echo "##vso[task.logissue type=error]Frontend build failed - main.js not found"
+            exit 1
+          fi
+          echo "Frontend build verification passed"
+          ls -lah dist/
+        displayName: "Verify Frontend Build"
+        workingDirectory: $(System.DefaultWorkingDirectory)/app/frontend
 
-  # ============================================================================
-  # BACKEND BUILD
-  # ============================================================================
+      # ============================================================================
+      # BACKEND BUILD
+      # ============================================================================
 
-  - script: |
-      echo "Building backend application..."
-      npm ci
-    displayName: "Install Backend Dependencies"
-    workingDirectory: $(System.DefaultWorkingDirectory)/app/backend
+      - script: |
+          echo "Building backend application..."
+          npm ci
+        displayName: "Install Backend Dependencies"
+        workingDirectory: $(System.DefaultWorkingDirectory)/app/backend
 
-  - script: |
-      npm run build
-    displayName: "Build Backend (TypeScript)"
-    workingDirectory: $(System.DefaultWorkingDirectory)/app/backend
+      - script: |
+          npm run build
+        displayName: "Build Backend (TypeScript)"
+        workingDirectory: $(System.DefaultWorkingDirectory)/app/backend
 
-  - script: |
-      if [ ! -d "dist" ]; then
-        echo "##vso[task.logissue type=error]Backend build failed - dist/ directory not found"
-        exit 1
-      fi
-      echo "Backend build verification passed"
-      ls -lah dist/
-    displayName: "Verify Backend Build"
-    workingDirectory: $(System.DefaultWorkingDirectory)/app/backend
+      - script: |
+          if [ ! -d "dist" ]; then
+            echo "##vso[task.logissue type=error]Backend build failed - dist/ directory not found"
+            exit 1
+          fi
+          echo "Backend build verification passed"
+          ls -lah dist/
+        displayName: "Verify Backend Build"
+        workingDirectory: $(System.DefaultWorkingDirectory)/app/backend
 
-  # ============================================================================
-  # CREATE UNIFIED ARTIFACT
-  # ============================================================================
+      # ============================================================================
+      # CREATE UNIFIED ARTIFACT
+      # ============================================================================
 
-  - script: |
-      echo "Creating unified artifact structure..."
+      - script: |
+          echo "Creating unified artifact structure..."
 
-      # Create artifact directory structure
-      mkdir -p $(Build.ArtifactStagingDirectory)/drop/swa
-      mkdir -p $(Build.ArtifactStagingDirectory)/drop/functions
-      mkdir -p $(Build.ArtifactStagingDirectory)/drop/apim
+          # Create artifact directory structure
+          mkdir -p $(Build.ArtifactStagingDirectory)/drop/swa
+          mkdir -p $(Build.ArtifactStagingDirectory)/drop/functions
+          mkdir -p $(Build.ArtifactStagingDirectory)/drop/apim
 
-      echo "Artifact structure created:"
-      tree -L 2 $(Build.ArtifactStagingDirectory)/drop || ls -R $(Build.ArtifactStagingDirectory)/drop
-    displayName: "Create Artifact Structure"
+          echo "Artifact structure created:"
+          tree -L 2 $(Build.ArtifactStagingDirectory)/drop || ls -R $(Build.ArtifactStagingDirectory)/drop
+        displayName: "Create Artifact Structure"
 
-  # Copy frontend build output
-  - task: CopyFiles@2
-    displayName: "Copy Frontend Build to Artifact"
-    inputs:
-      SourceFolder: "$(System.DefaultWorkingDirectory)/app/frontend/dist"
-      Contents: "**"
-      TargetFolder: "$(Build.ArtifactStagingDirectory)/drop/swa"
-      CleanTargetFolder: false
+      # Copy frontend build output
+      - task: CopyFiles@2
+        displayName: "Copy Frontend Build to Artifact"
+        inputs:
+          SourceFolder: "$(System.DefaultWorkingDirectory)/app/frontend/dist"
+          Contents: "**"
+          TargetFolder: "$(Build.ArtifactStagingDirectory)/drop/swa"
+          CleanTargetFolder: false
 
-  # Copy backend build output and dependencies
-  - task: CopyFiles@2
-    displayName: "Copy Backend Build to Artifact"
-    inputs:
-      SourceFolder: "$(System.DefaultWorkingDirectory)/app/backend"
-      Contents: |
-        dist/**
-        node_modules/**
-        host.json
-        package.json
-        package-lock.json
-      TargetFolder: "$(Build.ArtifactStagingDirectory)/drop/functions"
-      CleanTargetFolder: false
+      # Copy backend build output and dependencies
+      - task: CopyFiles@2
+        displayName: "Copy Backend Build to Artifact"
+        inputs:
+          SourceFolder: "$(System.DefaultWorkingDirectory)/app/backend"
+          Contents: |
+            dist/**
+            node_modules/**
+            host.json
+            package.json
+            package-lock.json
+          TargetFolder: "$(Build.ArtifactStagingDirectory)/drop/functions"
+          CleanTargetFolder: false
 
-  # Copy APIM configuration
-  - task: CopyFiles@2
-    displayName: "Copy APIM Config to Artifact"
-    inputs:
-      SourceFolder: "$(System.DefaultWorkingDirectory)/apim"
-      Contents: |
-        specs/**
-        policies/**
-        terraform/**
-        environments/**
-      TargetFolder: "$(Build.ArtifactStagingDirectory)/drop/apim"
-      CleanTargetFolder: false
+      # Copy APIM configuration
+      - task: CopyFiles@2
+        displayName: "Copy APIM Config to Artifact"
+        inputs:
+          SourceFolder: "$(System.DefaultWorkingDirectory)/apim"
+          Contents: |
+            specs/**
+            policies/**
+            terraform/**
+            environments/**
+          TargetFolder: "$(Build.ArtifactStagingDirectory)/drop/apim"
+          CleanTargetFolder: false
 
-  # Create release manifest with build metadata
-  - script: |
-      cat > $(Build.ArtifactStagingDirectory)/drop/release.json << EOF
-      {
-        "buildId": "$(Build.BuildId)",
-        "buildNumber": "$(Build.BuildNumber)",
-        "sourceVersion": "$(Build.SourceVersion)",
-        "sourceBranch": "$(Build.SourceBranch)",
-        "buildTimestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-        "buildConfiguration": "${{ parameters.buildConfiguration }}",
-        "repository": "$(Build.Repository.Name)",
-        "commitMessage": "$(Build.SourceVersionMessage)",
-        "triggeredBy": "$(Build.RequestedFor)",
-        "components": {
-          "frontend": {
-            "path": "swa/",
-            "technology": "Svelte",
-            "nodeVersion": "${{ parameters.nodeVersion }}"
-          },
-          "backend": {
-            "path": "functions/",
-            "technology": "Azure Functions v4",
-            "runtime": "Node.js ${{ parameters.nodeVersion }}"
-          },
-          "apim": {
-            "path": "apim/",
-            "technology": "Terraform + OpenAPI"
+      # Create release manifest with build metadata
+      - script: |
+          cat > $(Build.ArtifactStagingDirectory)/drop/release.json << EOF
+          {
+            "buildId": "$(Build.BuildId)",
+            "buildNumber": "$(Build.BuildNumber)",
+            "sourceVersion": "$(Build.SourceVersion)",
+            "sourceBranch": "$(Build.SourceBranch)",
+            "buildTimestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+            "buildConfiguration": "${{ parameters.buildConfiguration }}",
+            "repository": "$(Build.Repository.Name)",
+            "commitMessage": "$(Build.SourceVersionMessage)",
+            "triggeredBy": "$(Build.RequestedFor)",
+            "components": {
+              "frontend": {
+                "path": "swa/",
+                "technology": "Svelte",
+                "nodeVersion": "${{ parameters.nodeVersion }}"
+              },
+              "backend": {
+                "path": "functions/",
+                "technology": "Azure Functions v4",
+                "runtime": "Node.js ${{ parameters.nodeVersion }}"
+              },
+              "apim": {
+                "path": "apim/",
+                "technology": "Terraform + OpenAPI"
+              }
+            }
           }
-        }
-      }
-      EOF
+          EOF
 
-      echo "Release manifest created:"
-      cat $(Build.ArtifactStagingDirectory)/drop/release.json
-    displayName: "Create Release Manifest"
+          echo "Release manifest created:"
+          cat $(Build.ArtifactStagingDirectory)/drop/release.json
+        displayName: "Create Release Manifest"
 
-  # Create checksums for artifact integrity verification
-  - script: |
-      cd $(Build.ArtifactStagingDirectory)/drop
+      # Create checksums for artifact integrity verification
+      - script: |
+          cd $(Build.ArtifactStagingDirectory)/drop
 
-      echo "Generating checksums for artifact integrity..."
-      find . -type f -not -name "checksums.txt" -exec sha256sum {} \; > checksums.txt
+          echo "Generating checksums for artifact integrity..."
+          find . -type f -not -name "checksums.txt" -exec sha256sum {} \; > checksums.txt
 
-      echo "Checksums generated:"
-      head -20 checksums.txt
-      echo "..."
-      echo "Total files: $(wc -l < checksums.txt)"
-    displayName: "Generate Artifact Checksums"
+          echo "Checksums generated:"
+          head -20 checksums.txt
+          echo "..."
+          echo "Total files: $(wc -l < checksums.txt)"
+        displayName: "Generate Artifact Checksums"
 
-  # Display artifact summary
-  - script: |
-      echo "=========================================="
-      echo "UNIFIED ARTIFACT SUMMARY"
-      echo "=========================================="
-      echo ""
-      echo "Artifact Location: $(Build.ArtifactStagingDirectory)/drop"
-      echo ""
-      echo "Directory Structure:"
-      tree -L 3 $(Build.ArtifactStagingDirectory)/drop || ls -R $(Build.ArtifactStagingDirectory)/drop
-      echo ""
-      echo "Artifact Size:"
-      du -sh $(Build.ArtifactStagingDirectory)/drop
-      echo ""
-      echo "Component Sizes:"
-      du -sh $(Build.ArtifactStagingDirectory)/drop/swa
-      du -sh $(Build.ArtifactStagingDirectory)/drop/functions
-      du -sh $(Build.ArtifactStagingDirectory)/drop/apim
-      echo ""
-      echo "=========================================="
-    displayName: "Display Artifact Summary"
+      # Display artifact summary
+      - script: |
+          echo "=========================================="
+          echo "UNIFIED ARTIFACT SUMMARY"
+          echo "=========================================="
+          echo ""
+          echo "Artifact Location: $(Build.ArtifactStagingDirectory)/drop"
+          echo ""
+          echo "Directory Structure:"
+          tree -L 3 $(Build.ArtifactStagingDirectory)/drop || ls -R $(Build.ArtifactStagingDirectory)/drop
+          echo ""
+          echo "Artifact Size:"
+          du -sh $(Build.ArtifactStagingDirectory)/drop
+          echo ""
+          echo "Component Sizes:"
+          du -sh $(Build.ArtifactStagingDirectory)/drop/swa
+          du -sh $(Build.ArtifactStagingDirectory)/drop/functions
+          du -sh $(Build.ArtifactStagingDirectory)/drop/apim
+          echo ""
+          echo "=========================================="
+        displayName: "Display Artifact Summary"
 
-  # Publish unified artifact
-  - ${{ if eq(parameters.publishArtifact, true) }}:
+      # Publish unified artifact
       - task: PublishBuildArtifacts@1
         displayName: "Publish Unified Artifact"
         inputs:
           PathtoPublish: "$(Build.ArtifactStagingDirectory)/drop"
           ArtifactName: "drop"
           publishLocation: "Container"
-        condition: succeeded()
+        condition: and(succeeded(), eq('${{ parameters.publishArtifact }}', 'true'))
