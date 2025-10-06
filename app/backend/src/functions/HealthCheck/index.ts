@@ -1,5 +1,4 @@
 import {
-  app,
   HttpRequest,
   HttpResponseInit,
   InvocationContext,
@@ -322,11 +321,3 @@ function determineOverallStatus(
   // All components are healthy
   return "healthy";
 }
-
-// Register the function with Azure Functions runtime
-app.http("healthCheck", {
-  methods: ["GET"],
-  authLevel: "anonymous",
-  route: "health",
-  handler: healthCheck,
-});
