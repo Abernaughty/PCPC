@@ -98,12 +98,26 @@ stages:
               staticWebAppName: $(STATIC_WEB_APP_NAME)
               resourceGroupName: $(APIM_RESOURCE_GROUP)
 
+      # Deploy APIM APIs and Policies
+      - job: Deploy_APIM
+        displayName: "Deploy APIM APIs & Policies"
+        dependsOn: Deploy_Functions
+        condition: succeeded()
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - template: templates/deploy-apim.yml
+            parameters:
+              environment: dev
+              azureSubscription: "az-pcpc-dev"
+
       # Run Smoke Tests
       - job: Smoke_Tests
         displayName: "Run Smoke Tests"
         dependsOn:
           - Deploy_Functions
           - Deploy_Frontend
+          - Deploy_APIM
         condition: succeeded()
         pool:
           vmImage: "ubuntu-latest"
@@ -174,12 +188,26 @@ stages:
               staticWebAppName: $(STATIC_WEB_APP_NAME)
               resourceGroupName: $(APIM_RESOURCE_GROUP)
 
+      # Deploy APIM APIs and Policies
+      - job: Deploy_APIM
+        displayName: "Deploy APIM APIs & Policies"
+        dependsOn: Deploy_Functions
+        condition: succeeded()
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - template: templates/deploy-apim.yml
+            parameters:
+              environment: staging
+              azureSubscription: "az-pcpc-staging"
+
       # Run Smoke Tests
       - job: Smoke_Tests
         displayName: "Run Smoke Tests"
         dependsOn:
           - Deploy_Functions
           - Deploy_Frontend
+          - Deploy_APIM
         condition: succeeded()
         pool:
           vmImage: "ubuntu-latest"
@@ -250,12 +278,26 @@ stages:
               staticWebAppName: $(STATIC_WEB_APP_NAME)
               resourceGroupName: $(APIM_RESOURCE_GROUP)
 
+      # Deploy APIM APIs and Policies
+      - job: Deploy_APIM
+        displayName: "Deploy APIM APIs & Policies"
+        dependsOn: Deploy_Functions
+        condition: succeeded()
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - template: templates/deploy-apim.yml
+            parameters:
+              environment: prod
+              azureSubscription: "az-pcpc-prod"
+
       # Run Smoke Tests
       - job: Smoke_Tests
         displayName: "Run Smoke Tests"
         dependsOn:
           - Deploy_Functions
           - Deploy_Frontend
+          - Deploy_APIM
         condition: succeeded()
         pool:
           vmImage: "ubuntu-latest"
@@ -292,6 +334,7 @@ stages:
               echo "  ✓ Infrastructure (Terraform)"
               echo "  ✓ Azure Functions Backend"
               echo "  ✓ Static Web App Frontend"
+              echo "  ✓ APIM APIs & Policies"
               echo ""
               echo "All smoke tests passed successfully."
               echo "=========================================="

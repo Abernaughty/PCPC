@@ -1,0 +1,250 @@
+parameters:
+  - name: environment
+    type: string
+    values:
+      - dev
+      - staging
+      - prod
+  - name: azureSubscription
+    type: string
+  - name: workingDirectory
+    type: string
+    default: "apim/terraform"
+  - name: terraformVersion
+    type: string
+    default: "1.13.3"
+
+steps:
+  - checkout: self
+    displayName: "Checkout Source Code"
+
+  - task: DownloadPipelineArtifact@2
+    displayName: "Download Build Artifact"
+    inputs:
+      buildType: "current"
+      artifactName: "drop"
+      targetPath: "$(Pipeline.Workspace)/drop"
+
+  - task: TerraformInstaller@0
+    displayName: "Install Terraform"
+    inputs:
+      terraformVersion: ${{ parameters.terraformVersion }}
+
+  - task: AzureCLI@2
+    displayName: "Get Function App Key"
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: "bash"
+      scriptLocation: "inlineScript"
+      inlineScript: |
+        echo "Retrieving Function App key for APIM backend configuration..."
+
+        FUNCTION_APP_NAME="$(FUNCTION_APP_NAME)"
+        RESOURCE_GROUP="$(APIM_RESOURCE_GROUP)"
+
+        # Get the default function key
+        FUNCTION_KEY=$(az functionapp keys list \
+          --name "$FUNCTION_APP_NAME" \
+          --resource-group "$RESOURCE_GROUP" \
+          --query "functionKeys.default" \
+          --output tsv)
+
+        if [ -z "$FUNCTION_KEY" ]; then
+          echo "✗ Failed to retrieve function key"
+          exit 1
+        fi
+
+        echo "✓ Function key retrieved successfully"
+        echo "##vso[task.setvariable variable=FUNCTION_APP_KEY;issecret=true]$FUNCTION_KEY"
+
+  - task: AzureCLI@2
+    displayName: "Terraform Init"
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: "bash"
+      scriptLocation: "inlineScript"
+      workingDirectory: "${{ parameters.workingDirectory }}"
+      inlineScript: |
+        echo "Initializing Terraform for APIM configuration..."
+
+        # APIM Terraform uses local state (not remote backend)
+        # This is intentional - API/policy changes are fast and don't need shared state
+        terraform init
+
+        echo "Terraform initialization complete"
+
+  - task: AzureCLI@2
+    displayName: "Terraform Validate"
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: "bash"
+      scriptLocation: "inlineScript"
+      workingDirectory: "${{ parameters.workingDirectory }}"
+      inlineScript: |
+        echo "Validating Terraform configuration..."
+        terraform validate
+        echo "Validation complete"
+
+  - task: AzureCLI@2
+    displayName: "Terraform Plan"
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: "bash"
+      scriptLocation: "inlineScript"
+      workingDirectory: "${{ parameters.workingDirectory }}"
+      inlineScript: |
+        echo "Generating Terraform execution plan for APIM APIs and policies..."
+        echo ""
+        echo "Environment: ${{ parameters.environment }}"
+        echo "APIM Instance: $(APIM_NAME)"
+        echo "Resource Group: $(APIM_RESOURCE_GROUP)"
+        echo "Function App: $(FUNCTION_APP_NAME)"
+        echo ""
+
+        terraform plan \
+          -var="environment=${{ parameters.environment }}" \
+          -var="api_management_name=$(APIM_NAME)" \
+          -var="resource_group_name=$(APIM_RESOURCE_GROUP)" \
+          -var="function_app_name=$(FUNCTION_APP_NAME)" \
+          -var="function_app_key=$(FUNCTION_APP_KEY)" \
+          -var="api_version=$(APIM_API_VERSION)" \
+          -var="cors_origins=$(APIM_CORS_ORIGINS)" \
+          -var="rate_limit_calls=$(APIM_RATE_LIMIT_CALLS)" \
+          -var="rate_limit_period=$(APIM_RATE_LIMIT_PERIOD)" \
+          -var="cache_duration_sets=$(APIM_CACHE_DURATION_SETS)" \
+          -var="backend_timeout=$(APIM_BACKEND_TIMEOUT)" \
+          -out=tfplan \
+          -detailed-exitcode || EXIT_CODE=$?
+
+        # Exit codes: 0 = no changes, 1 = error, 2 = changes present
+        if [ "${EXIT_CODE}" == "1" ]; then
+          echo "✗ Terraform plan failed"
+          exit 1
+        elif [ "${EXIT_CODE}" == "2" ]; then
+          echo "✓ Changes detected - plan generated"
+          echo "##vso[task.setvariable variable=HasChanges;isOutput=true]true"
+        else
+          echo "✓ No changes detected"
+          echo "##vso[task.setvariable variable=HasChanges;isOutput=true]false"
+        fi
+
+  - task: AzureCLI@2
+    displayName: "Terraform Apply"
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: "bash"
+      scriptLocation: "inlineScript"
+      workingDirectory: "${{ parameters.workingDirectory }}"
+      inlineScript: |
+        echo "Applying APIM API and policy configuration..."
+        echo ""
+
+        terraform apply -auto-approve tfplan
+
+        echo ""
+        echo "✓ APIM configuration applied successfully"
+
+  - task: AzureCLI@2
+    displayName: "Verify APIM Configuration"
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: "bash"
+      scriptLocation: "inlineScript"
+      inlineScript: |
+        echo "Verifying APIM configuration..."
+
+        APIM_NAME="$(APIM_NAME)"
+        RESOURCE_GROUP="$(APIM_RESOURCE_GROUP)"
+        API_NAME="pcpc-api-${{ parameters.environment }}"
+
+        # Verify APIM instance exists
+        if az apim show --name "$APIM_NAME" --resource-group "$RESOURCE_GROUP" &>/dev/null; then
+          echo "✓ APIM instance exists: $APIM_NAME"
+        else
+          echo "✗ APIM instance not found: $APIM_NAME"
+          exit 1
+        fi
+
+        # Verify API exists
+        if az apim api show \
+          --api-id "$API_NAME" \
+          --service-name "$APIM_NAME" \
+          --resource-group "$RESOURCE_GROUP" &>/dev/null; then
+          echo "✓ API exists: $API_NAME"
+        else
+          echo "✗ API not found: $API_NAME"
+          exit 1
+        fi
+
+        # Get API operations count
+        OPERATIONS_COUNT=$(az apim api operation list \
+          --api-id "$API_NAME" \
+          --service-name "$APIM_NAME" \
+          --resource-group "$RESOURCE_GROUP" \
+          --query "length(@)" \
+          --output tsv)
+
+        echo "✓ API has $OPERATIONS_COUNT operations configured"
+
+        # Verify backend exists
+        BACKEND_NAME="pcpc-function-backend-${{ parameters.environment }}"
+        if az apim backend show \
+          --backend-id "$BACKEND_NAME" \
+          --service-name "$APIM_NAME" \
+          --resource-group "$RESOURCE_GROUP" &>/dev/null; then
+          echo "✓ Backend exists: $BACKEND_NAME"
+        else
+          echo "✗ Backend not found: $BACKEND_NAME"
+          exit 1
+        fi
+
+        echo ""
+        echo "APIM configuration verification complete"
+
+  - task: AzureCLI@2
+    displayName: "Get APIM Gateway URL"
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: "bash"
+      scriptLocation: "inlineScript"
+      inlineScript: |
+        echo "Retrieving APIM gateway URL..."
+
+        APIM_NAME="$(APIM_NAME)"
+        RESOURCE_GROUP="$(APIM_RESOURCE_GROUP)"
+
+        GATEWAY_URL=$(az apim show \
+          --name "$APIM_NAME" \
+          --resource-group "$RESOURCE_GROUP" \
+          --query "gatewayUrl" \
+          --output tsv)
+
+        if [ -z "$GATEWAY_URL" ]; then
+          echo "✗ Failed to retrieve gateway URL"
+          exit 1
+        fi
+
+        echo "✓ APIM Gateway URL: $GATEWAY_URL"
+        echo "##vso[task.setvariable variable=APIM_GATEWAY_URL;isOutput=true]$GATEWAY_URL"
+
+  - script: |
+      echo ""
+      echo "=========================================="
+      echo "APIM Deployment Summary"
+      echo "=========================================="
+      echo "Environment: ${{ upper(parameters.environment) }}"
+      echo "APIM Instance: $(APIM_NAME)"
+      echo "Resource Group: $(APIM_RESOURCE_GROUP)"
+      echo "API Name: pcpc-api-${{ parameters.environment }}"
+      echo "Gateway URL: $(APIM_GATEWAY_URL)"
+      echo "Backend: $(FUNCTION_APP_NAME)"
+      echo ""
+      echo "Deployed Components:"
+      echo "  ✓ API Definition (OpenAPI spec)"
+      echo "  ✓ API Operations (3 endpoints)"
+      echo "  ✓ Backend Configuration (Azure Functions)"
+      echo "  ✓ Global Policies (CORS, rate limiting)"
+      echo "  ✓ Operation Policies (caching, routing)"
+      echo "=========================================="
+      echo ""
+    displayName: "Display Deployment Summary"
