@@ -196,6 +196,7 @@ output "project_name" {
 # Debug Output - App Settings Keys
 output "debug_function_app_settings_keys" {
   description = "DEBUG: List of app setting keys being passed to Function App (for troubleshooting)"
+  sensitive   = true
   value = keys(merge(
     var.function_app_secrets,
     var.function_app_config,
@@ -214,6 +215,7 @@ output "debug_function_app_settings_keys" {
 
 output "debug_secrets_keys_received" {
   description = "DEBUG: Keys from function_app_secrets variable (should have 4 keys with hyphens)"
+  sensitive   = true
   value       = keys(var.function_app_secrets)
 }
 
