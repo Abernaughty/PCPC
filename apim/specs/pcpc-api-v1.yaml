@@ -4,8 +4,8 @@ info:
   description: "API for retrieving Pokemon card sets, cards, and pricing information"
   version: "1.0"
   contact:
-    name: PCPC API Support
-    email: support@pcpc.example.com
+    name: PCPC Admin
+    email: mike@maber.io
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT

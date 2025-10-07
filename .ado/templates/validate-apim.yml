@@ -22,9 +22,13 @@ jobs:
 
       # Validate OpenAPI specification
       - script: |
-          if [ -f "apim/specs/pcpc-api-v1.yaml" ]; then
+          FILE="apim/specs/pcpc-api-v1.yaml"
+          if [ -f "$FILE" ]; then
             echo "Validating OpenAPI specification..."
-            spectral lint apim/specs/pcpc-api-v1.yaml --ruleset spectral:oas || echo "⚠️  OpenAPI validation warnings (non-blocking)"
+            npx -y @stoplight/spectral-cli@6.11.1 lint "$FILE" \
+              --ruleset "spectral:oas" \
+              --fail-severity=error \
+            || echo "⚠️  OpenAPI validation warnings (non-blocking)"
           else
             echo "⚠️  OpenAPI spec not found, skipping validation"
           fi
@@ -52,14 +56,14 @@ jobs:
       # Check for required APIM files
       - script: |
           echo "Checking for required APIM configuration files..."
-          
+
           # Check for OpenAPI spec
           if [ -f "apim/specs/pcpc-api-v1.yaml" ]; then
             echo "✅ OpenAPI specification found"
           else
             echo "⚠️  OpenAPI specification not found"
           fi
-          
+
           # Check for policies
           if [ -d "apim/policies" ]; then
             policy_count=$(find apim/policies -name "*.xml" | wc -l)
@@ -67,7 +71,7 @@ jobs:
           else
             echo "⚠️  No APIM policies directory found"
           fi
-          
+
           # Check for Terraform or APIOps config
           if [ -d "apim/terraform" ]; then
             echo "✅ Terraform APIM configuration found"
