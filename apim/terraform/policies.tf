@@ -8,7 +8,7 @@ resource "azurerm_api_management_api_policy" "pcpc_api_global" {
   api_management_name = var.api_management_name
   resource_group_name = var.resource_group_name
 
-  xml_content = data.template_file.global_policy.rendered
+  xml_content = local.rendered_global_policy
 
   depends_on = [azurerm_api_management_api.pcpc_api]
 }
@@ -26,7 +26,7 @@ resource "azurerm_api_management_api_operation_policy" "get_sets_cache" {
   resource_group_name = var.resource_group_name
   operation_id        = azurerm_api_management_api_operation.get_sets.operation_id
 
-  xml_content = data.template_file.cache_sets_policy.rendered
+  xml_content = local.rendered_cache_policy
 
   depends_on = [azurerm_api_management_api_operation.get_sets]
 }
@@ -70,7 +70,7 @@ resource "azurerm_api_management_api_operation_policy" "get_sets_backend" {
   resource_group_name = var.resource_group_name
   operation_id        = azurerm_api_management_api_operation.get_sets.operation_id
 
-  xml_content = data.template_file.backend_policy.rendered
+  xml_content = local.rendered_backend_policy
 
   depends_on = [
     azurerm_api_management_api_operation.get_sets,
@@ -84,7 +84,7 @@ resource "azurerm_api_management_api_operation_policy" "get_cards_backend" {
   resource_group_name = var.resource_group_name
   operation_id        = azurerm_api_management_api_operation.get_cards_by_set.operation_id
 
-  xml_content = data.template_file.backend_policy.rendered
+  xml_content = local.rendered_backend_policy
 
   depends_on = [
     azurerm_api_management_api_operation.get_cards_by_set,
@@ -98,7 +98,7 @@ resource "azurerm_api_management_api_operation_policy" "get_card_info_backend" {
   resource_group_name = var.resource_group_name
   operation_id        = azurerm_api_management_api_operation.get_card_info.operation_id
 
-  xml_content = data.template_file.backend_policy.rendered
+  xml_content = local.rendered_backend_policy
 
   depends_on = [
     azurerm_api_management_api_operation.get_card_info,
