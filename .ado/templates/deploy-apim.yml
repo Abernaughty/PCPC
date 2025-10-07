@@ -96,14 +96,44 @@ steps:
         echo "Generating Terraform execution plan for APIM APIs and policies..."
         echo ""
         echo "Environment: ${{ parameters.environment }}"
-        echo "APIM Instance: $(APIM_NAME)"
-        echo "Resource Group: $(APIM_RESOURCE_GROUP)"
-        echo "Function App: $(FUNCTION_APP_NAME)"
+        echo "APIM Instance: ${APIM_NAME}"
+        echo "Resource Group: ${APIM_RESOURCE_GROUP}"
+        echo "Function App: ${FUNCTION_APP_NAME}"
         echo ""
 
+        set -eo pipefail
+
+        append_tf_var() {
+          local name="$1"
+          local value="$2"
+
+          # Trim leading/trailing whitespace
+          value="$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+
+          # Ignore unset Azure Pipeline variables (rendered as $(VAR_NAME)) or empty values
+          if [[ -z "$value" || "$value" =~ ^\$\(.+\)$ ]]; then
+            return
+          fi
+
+          TF_PLAN_ARGS+=("-var=${name}=${value}")
+        }
+
+        TF_PLAN_ARGS=(
+          "-var=environment=${{ parameters.environment }}"
+          "-var=api_management_name=${APIM_NAME}"
+          "-var=resource_group_name=${APIM_RESOURCE_GROUP}"
+          "-var=function_app_name=${FUNCTION_APP_NAME}"
+          "-var=function_app_key=${FUNCTION_APP_KEY}"
+        )
+
+        VAR_FILES=()
+
+        # Ensure we do not reuse a stale override file between runs
+        trap 'rm -f cors-origins.auto.tfvars.json' EXIT
+        rm -f cors-origins.auto.tfvars.json
+
         # Get CORS origins from pipeline variable
-        CORS_ORIGINS_RAW='$(APIM_CORS_ORIGINS)'
-        VAR_ARGS=()
+        CORS_ORIGINS_RAW="${APIM_CORS_ORIGINS}"
 
         if [ -n "$CORS_ORIGINS_RAW" ]; then
           echo "Using custom CORS origins override supplied by pipeline variable"
@@ -149,10 +179,10 @@ steps:
 
           # Write the JSON file with proper formatting
           cat <<'JSONEOF' > cors-origins.auto.tfvars.json
-{
-  "cors_origins": CORS_PLACEHOLDER
-}
-JSONEOF
+          {
+            "cors_origins": CORS_PLACEHOLDER
+          }
+          JSONEOF
 
           # Replace placeholder with actual JSON array
           sed -i "s|CORS_PLACEHOLDER|$ORIGINS_JSON|g" cors-origins.auto.tfvars.json
@@ -169,22 +199,24 @@ JSONEOF
           fi
           
           echo "✓ JSON validation passed"
-          VAR_ARGS+=("-var-file=cors-origins.auto.tfvars.json")
+          VAR_FILES+=("-var-file=cors-origins.auto.tfvars.json")
+        else
+          echo "No custom CORS origins supplied; Terraform defaults will be used"
         fi
 
+        append_tf_var "api_version" "${APIM_API_VERSION}"
+        append_tf_var "rate_limit_calls" "${APIM_RATE_LIMIT_CALLS}"
+        append_tf_var "rate_limit_period" "${APIM_RATE_LIMIT_PERIOD}"
+        append_tf_var "cache_duration_sets" "${APIM_CACHE_DURATION_SETS}"
+        append_tf_var "cache_duration_cards" "${APIM_CACHE_DURATION_CARDS}"
+        append_tf_var "cache_duration_card_info" "${APIM_CACHE_DURATION_CARD_INFO}"
+        append_tf_var "backend_timeout" "${APIM_BACKEND_TIMEOUT}"
+
         # Run Terraform plan
+        EXIT_CODE=0
         terraform plan \
-          -var="environment=${{ parameters.environment }}" \
-          -var="api_management_name=$(APIM_NAME)" \
-          -var="resource_group_name=$(APIM_RESOURCE_GROUP)" \
-          -var="function_app_name=$(FUNCTION_APP_NAME)" \
-          -var="function_app_key=$(FUNCTION_APP_KEY)" \
-          -var="api_version=$(APIM_API_VERSION)" \
-          -var="rate_limit_calls=$(APIM_RATE_LIMIT_CALLS)" \
-          -var="rate_limit_period=$(APIM_RATE_LIMIT_PERIOD)" \
-          -var="cache_duration_sets=$(APIM_CACHE_DURATION_SETS)" \
-          -var="backend_timeout=$(APIM_BACKEND_TIMEOUT)" \
-          "${VAR_ARGS[@]}" \
+          "${TF_PLAN_ARGS[@]}" \
+          "${VAR_FILES[@]}" \
           -out=tfplan \
           -detailed-exitcode || EXIT_CODE=$?
 
