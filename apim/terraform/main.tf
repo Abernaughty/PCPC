@@ -9,9 +9,9 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 4.0"
     }
-    template = {
-      source  = "hashicorp/template"
-      version = "~> 2.2"
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.4"
     }
   }
 }
@@ -71,28 +71,21 @@ locals {
     environment         = var.environment
     backend_timeout     = var.backend_timeout
   }
-}
 
-# -----------------------------------------------------------------------------
-# POLICY TEMPLATE RENDERING
-# -----------------------------------------------------------------------------
+  rendered_global_policy = templatefile(
+    "${path.module}/../policies/templates/global-policy.xml.tpl",
+    local.policy_vars
+  )
 
-# Render global policy template
-data "template_file" "global_policy" {
-  template = file("${path.module}/../policies/templates/global-policy.xml.tpl")
-  vars     = local.policy_vars
-}
+  rendered_cache_policy = templatefile(
+    "${path.module}/../policies/templates/cache-sets-response.xml.tpl",
+    local.policy_vars
+  )
 
-# Render cache policy template for sets endpoint
-data "template_file" "cache_sets_policy" {
-  template = file("${path.module}/../policies/templates/cache-sets-response.xml.tpl")
-  vars     = local.policy_vars
-}
-
-# Render backend integration policy template
-data "template_file" "backend_policy" {
-  template = file("${path.module}/../policies/templates/azure-functions-backend.xml.tpl")
-  vars     = local.policy_vars
+  rendered_backend_policy = templatefile(
+    "${path.module}/../policies/templates/azure-functions-backend.xml.tpl",
+    local.policy_vars
+  )
 }
 
 # -----------------------------------------------------------------------------
@@ -101,16 +94,16 @@ data "template_file" "backend_policy" {
 
 # Save rendered policies to generated directory for reference
 resource "local_file" "rendered_global_policy" {
-  content  = data.template_file.global_policy.rendered
+  content  = local.rendered_global_policy
   filename = "${path.module}/../policies/generated/global-policy-${var.environment}.xml"
 }
 
 resource "local_file" "rendered_cache_policy" {
-  content  = data.template_file.cache_sets_policy.rendered
+  content  = local.rendered_cache_policy
   filename = "${path.module}/../policies/generated/cache-sets-policy-${var.environment}.xml"
 }
 
 resource "local_file" "rendered_backend_policy" {
-  content  = data.template_file.backend_policy.rendered
+  content  = local.rendered_backend_policy
   filename = "${path.module}/../policies/generated/backend-policy-${var.environment}.xml"
 }
