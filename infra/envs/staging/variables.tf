@@ -56,13 +56,19 @@ variable "function_app_sku_name" {
   default     = "Y1" # Consumption plan
 }
 
-variable "function_app_settings" {
-  description = "Additional app settings for the Function App"
+variable "function_app_secrets" {
+  description = "Secrets from Azure Key Vault for the Function App (with hyphens as required by Key Vault)"
+  type        = map(string)
+  sensitive   = true
+  default     = {}
+}
+
+variable "function_app_config" {
+  description = "Non-secret configuration for the Function App"
   type        = map(string)
   default = {
-    "POKEMON_TCG_API_KEY" = ""
-    "ENVIRONMENT"         = "staging"
-    "LOG_LEVEL"           = "info"
+    "ENVIRONMENT" = "staging"
+    "LOG_LEVEL"   = "info"
   }
 }
 
