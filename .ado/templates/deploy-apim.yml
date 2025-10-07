@@ -101,15 +101,78 @@ steps:
         echo "Function App: $(FUNCTION_APP_NAME)"
         echo ""
 
+        # Get CORS origins from pipeline variable
         CORS_ORIGINS_RAW='$(APIM_CORS_ORIGINS)'
         VAR_ARGS=()
 
         if [ -n "$CORS_ORIGINS_RAW" ]; then
           echo "Using custom CORS origins override supplied by pipeline variable"
-          printf '{\n  "cors_origins": %s\n}\n' "$CORS_ORIGINS_RAW" > cors-origins.auto.tfvars.json
+          echo "DEBUG: Raw CORS value: [$CORS_ORIGINS_RAW]"
+
+          # Check if already JSON array format
+          if [[ "$CORS_ORIGINS_RAW" =~ ^\[.*\]$ ]]; then
+            echo "DEBUG: Detected JSON array format"
+            ORIGINS_JSON="$CORS_ORIGINS_RAW"
+          else
+            echo "DEBUG: Converting comma-separated string to JSON array"
+            
+            # Remove any newlines and carriage returns
+            CORS_ORIGINS_SANITIZED="${CORS_ORIGINS_RAW//$'\n'/,}"
+            CORS_ORIGINS_SANITIZED="${CORS_ORIGINS_SANITIZED//$'\r'/}"
+            
+            # Split by comma and build JSON array
+            IFS=',' read -ra ORIGIN_ITEMS <<< "$CORS_ORIGINS_SANITIZED"
+            ORIGINS_JSON="["
+            FIRST_ITEM=1
+            
+            for ITEM in "${ORIGIN_ITEMS[@]}"; do
+              # Trim whitespace
+              TRIMMED_ITEM="$(echo "$ITEM" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+              
+              # Skip empty items
+              if [ -z "$TRIMMED_ITEM" ]; then
+                continue
+              fi
+              
+              # Add comma if not first item
+              if [ $FIRST_ITEM -eq 1 ]; then
+                ORIGINS_JSON+="\"$TRIMMED_ITEM\""
+                FIRST_ITEM=0
+              else
+                ORIGINS_JSON+=", \"$TRIMMED_ITEM\""
+              fi
+            done
+            ORIGINS_JSON+="]"
+          fi
+
+          echo "DEBUG: Generated JSON: $ORIGINS_JSON"
+
+          # Write the JSON file with proper formatting
+          cat <<'JSONEOF' > cors-origins.auto.tfvars.json
+{
+  "cors_origins": CORS_PLACEHOLDER
+}
+JSONEOF
+
+          # Replace placeholder with actual JSON array
+          sed -i "s|CORS_PLACEHOLDER|$ORIGINS_JSON|g" cors-origins.auto.tfvars.json
+
+          echo "DEBUG: Contents of cors-origins.auto.tfvars.json:"
+          cat cors-origins.auto.tfvars.json
+          
+          # Validate the JSON file
+          if ! jq empty cors-origins.auto.tfvars.json 2>/dev/null; then
+            echo "✗ ERROR: Generated JSON is invalid!"
+            echo "DEBUG: Attempting to show JSON content:"
+            cat cors-origins.auto.tfvars.json || echo "Could not read file"
+            exit 1
+          fi
+          
+          echo "✓ JSON validation passed"
           VAR_ARGS+=("-var-file=cors-origins.auto.tfvars.json")
         fi
 
+        # Run Terraform plan
         terraform plan \
           -var="environment=${{ parameters.environment }}" \
           -var="api_management_name=$(APIM_NAME)" \
