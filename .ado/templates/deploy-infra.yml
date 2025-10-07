@@ -100,10 +100,37 @@ steps:
         echo "Environment: ${{ parameters.environment }}"
         echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
         echo ""
+        
+        # DEBUG: Check if variables are available in pipeline
+        echo "DEBUG: Checking pipeline variable availability..."
+        echo "-----------------------------------------------"
+        
+        # Check for Azure DevOps variable syntax $(VAR)
+        echo "Testing Azure DevOps variable expansion:"
+        echo "  POKEDATA-API-KEY: $(if [ -n "$(POKEDATA-API-KEY)" ]; then echo "SET (length: ${#POKEDATA_API_KEY})"; else echo "NOT SET or EMPTY"; fi)"
+        echo "  POKEMON-TCG-API-KEY: $(if [ -n "$(POKEMON-TCG-API-KEY)" ]; then echo "SET (length: ${#POKEMON_TCG_API_KEY})"; else echo "NOT SET or EMPTY"; fi)"
+        echo "  ARM-CLIENT-ID: $(if [ -n "$(ARM-CLIENT-ID)" ]; then echo "SET (length: ${#ARM_CLIENT_ID})"; else echo "NOT SET or EMPTY"; fi)"
+        echo "  ARM-CLIENT-SECRET: $(if [ -n "$(ARM-CLIENT-SECRET)" ]; then echo "SET (length: ${#ARM_CLIENT_SECRET})"; else echo "NOT SET or EMPTY"; fi)"
+        echo ""
+        
+        # Check for environment variable syntax $VAR (with underscores)
+        echo "Testing environment variable access (with underscores):"
+        if [ -z "${POKEDATA_API_KEY}" ]; then
+          echo "  ⚠ POKEDATA_API_KEY is empty or not set"
+        else
+          echo "  ✓ POKEDATA_API_KEY is set (length: ${#POKEDATA_API_KEY})"
+        fi
+        
+        if [ -z "${POKEMON_TCG_API_KEY}" ]; then
+          echo "  ⚠ POKEMON_TCG_API_KEY is empty or not set"
+        else
+          echo "  ✓ POKEMON_TCG_API_KEY is set (length: ${#POKEMON_TCG_API_KEY})"
+        fi
+        echo ""
 
-        # Create secrets.auto.tfvars file
-        # Terraform automatically loads any *.auto.tfvars files
-        cat > secrets.auto.tfvars <<'EOF'
+        # Create secrets.auto.tfvars file WITHOUT single quotes to allow variable expansion
+        echo "Creating secrets.auto.tfvars file..."
+        cat > secrets.auto.tfvars <<EOF
         # Auto-generated secrets file - DO NOT COMMIT
         # Generated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
         # Environment: ${{ parameters.environment }}
@@ -125,10 +152,33 @@ steps:
 
         echo "✓ Secrets configuration file generated"
         echo "  File: secrets.auto.tfvars"
-        echo "  Secrets configured: 4"
         echo ""
 
-        # Verify file was created (without showing contents)
+        # DEBUG: Show file contents with redacted values
+        echo "DEBUG: File contents (first 15 lines, values redacted):"
+        echo "-----------------------------------------------"
+        head -n 15 secrets.auto.tfvars | sed 's/= ".*"/= "[REDACTED]"/'
+        echo "-----------------------------------------------"
+        echo ""
+        
+        # DEBUG: Check for literal variable references
+        echo "DEBUG: Checking for literal variable references..."
+        if grep -q '\$(' secrets.auto.tfvars; then
+          echo "⚠ WARNING: Found literal '\$(' in file - variables NOT expanded"
+          echo "⚠ This means pipeline variables are not being passed correctly"
+          echo "⚠ Possible causes:"
+          echo "   1. Variable group not linked to pipeline"
+          echo "   2. Variable names don't match between Key Vault and variable group"
+          echo "   3. Service connection doesn't have permission to read Key Vault"
+          echo ""
+          echo "DEBUG: Showing lines with literal variable references:"
+          grep '\$(' secrets.auto.tfvars || true
+        else
+          echo "✓ No literal '\$(' found - variables appear to be expanded"
+        fi
+        echo ""
+
+        # Verify file was created and has reasonable size
         if [ -f "secrets.auto.tfvars" ]; then
           FILE_SIZE=$(wc -c < secrets.auto.tfvars)
           echo "✓ File verification passed"
