@@ -335,4 +335,10 @@ resource "azurerm_linux_function_app" "this" {
   }
 
   tags = local.common_tags
+
+  lifecycle {
+    ignore_changes = [
+      tags["CreatedDate"]
+    ]
+  }
 }
