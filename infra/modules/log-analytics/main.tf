@@ -93,6 +93,12 @@ resource "azurerm_monitor_data_collection_rule" "this" {
       "ManagedBy"   = "Terraform"
     }
   )
+
+  lifecycle {
+    ignore_changes = [
+      tags["CreatedDate"]
+    ]
+  }
 }
 
 # Optional: Create saved searches for common queries
@@ -113,4 +119,10 @@ resource "azurerm_log_analytics_saved_search" "this" {
       "ManagedBy"   = "Terraform"
     }
   )
+
+  lifecycle {
+    ignore_changes = [
+      tags["CreatedDate"]
+    ]
+  }
 }
