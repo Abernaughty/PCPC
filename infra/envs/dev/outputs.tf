@@ -196,7 +196,7 @@ output "project_name" {
 # Debug Output - App Settings Keys
 output "debug_function_app_settings_keys" {
   description = "DEBUG: List of app setting keys being passed to Function App (for troubleshooting)"
-  value       = keys(merge(
+  value = keys(merge(
     var.function_app_secrets,
     var.function_app_config,
     {
