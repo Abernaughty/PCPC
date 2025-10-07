@@ -227,7 +227,8 @@ async function checkPokeDataApi(): Promise<ComponentHealth> {
     // Make a simple API call to check availability
     const response = await fetch(`${baseUrl}/sets?limit=1`, {
       headers: {
-        "X-API-Key": apiKey || "",
+        Authorization: `Bearer ${apiKey ?? ""}`,
+        "Content-Type": "application/json",
       },
     });
 
