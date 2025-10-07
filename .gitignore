@@ -92,6 +92,8 @@ local.settings.json
 *.tfstate
 *.tfstate.*
 *.tfvars
+*.auto.tfvars
+secrets.auto.tfvars
 .terraform/
 .terraform.lock.hcl
 terraform.tfplan
