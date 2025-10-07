@@ -182,7 +182,7 @@ steps:
           {
             "cors_origins": CORS_PLACEHOLDER
           }
-          JSONEOF
+        JSONEOF
 
           # Replace placeholder with actual JSON array
           sed -i "s|CORS_PLACEHOLDER|$ORIGINS_JSON|g" cors-origins.auto.tfvars.json
