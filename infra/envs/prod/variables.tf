@@ -68,37 +68,37 @@ variable "function_app_config" {
   type        = map(string)
   default = {
     # Environment Configuration
-    "ENVIRONMENT"                     = "production"
-    "LOG_LEVEL"                       = "warn"
-    "NODE_ENV"                        = "production"
-    "DEBUG_MODE"                      = "false"
-    
+    "ENVIRONMENT" = "production"
+    "LOG_LEVEL"   = "warn"
+    "NODE_ENV"    = "production"
+    "DEBUG_MODE"  = "false"
+
     # Cosmos DB Configuration
-    "COSMOS_DB_DATABASE_NAME"         = "PokemonCards"
-    "COSMOS_DB_CARDS_CONTAINER_NAME"  = "Cards"
-    "COSMOS_DB_SETS_CONTAINER_NAME"   = "Sets"
-    
+    "COSMOS_DB_DATABASE_NAME"        = "PokemonCards"
+    "COSMOS_DB_CARDS_CONTAINER_NAME" = "Cards"
+    "COSMOS_DB_SETS_CONTAINER_NAME"  = "Sets"
+
     # API Configuration
-    "POKEMON_TCG_API_BASE_URL"        = "https://api.pokemontcg.io/v2"
-    "POKEDATA_API_BASE_URL"           = "https://www.pokedata.io/v0"
-    
+    "POKEMON_TCG_API_BASE_URL" = "https://api.pokemontcg.io/v2"
+    "POKEDATA_API_BASE_URL"    = "https://www.pokedata.io/v0"
+
     # Storage Configuration
-    "AZURE_STORAGE_CONTAINER_NAME"    = "images"
-    
+    "AZURE_STORAGE_CONTAINER_NAME" = "images"
+
     # Feature Flags
-    "CREDIT_MONITORING_ENABLED"       = "true"
-    "ENABLE_CACHING"                  = "true"
-    "ENABLE_IMAGE_ENHANCEMENT"        = "true"
-    "ENABLE_CREDIT_MONITORING"        = "true"
-    "ENABLE_REDIS_CACHE"              = "false"
-    
+    "CREDIT_MONITORING_ENABLED" = "true"
+    "ENABLE_CACHING"            = "true"
+    "ENABLE_IMAGE_ENHANCEMENT"  = "true"
+    "ENABLE_CREDIT_MONITORING"  = "true"
+    "ENABLE_REDIS_CACHE"        = "false"
+
     # Credit Monitoring Thresholds
-    "CREDIT_THRESHOLD_WARNING"        = "1000"
-    "CREDIT_THRESHOLD_CRITICAL"       = "100"
-    
+    "CREDIT_THRESHOLD_WARNING"  = "1000"
+    "CREDIT_THRESHOLD_CRITICAL" = "100"
+
     # Cache TTL Settings (in seconds)
-    "CACHE_TTL_SETS"                  = "604800"  # 7 days
-    "CACHE_TTL_CARDS"                 = "86400"   # 1 day
+    "CACHE_TTL_SETS"  = "604800" # 7 days
+    "CACHE_TTL_CARDS" = "86400"  # 1 day
   }
 }
 
