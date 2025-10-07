@@ -116,6 +116,18 @@ if [ -n "$COSMOS_EXISTS" ]; then
     fi
 fi
 
+# Check for API Management
+API_EXISTS=$(echo "$RESOURCES" | jq -r '.[] | select(.type=="Microsoft.ApiManagement/service") | .name')
+if [ -n "$API_EXISTS" ]; then
+    echo -e "${YELLOW}Found API Management: $API_EXISTS${NC}"
+    if ! terraform state show module.api_management.azurerm_api_management.this &>/dev/null; then
+        echo "  To import, run:"
+        echo "  terraform import module.api_management.azurerm_api_management.this /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.ApiManagement/service/$API_EXISTS"
+    else
+        echo -e "  ${GREEN}✓ Already in state${NC}"
+    fi
+fi
+
 # Check for Storage Account
 STORAGE_EXISTS=$(echo "$RESOURCES" | jq -r '.[] | select(.type=="Microsoft.Storage/storageAccounts") | .name')
 if [ -n "$STORAGE_EXISTS" ]; then
