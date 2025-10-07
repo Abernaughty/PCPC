@@ -112,8 +112,8 @@ steps:
         # and contains secrets from Azure Key Vault via variable groups.
         # It is automatically cleaned up after the pipeline completes.
 
-        function_app_settings = {
-          # API Keys from Azure Key Vault
+        function_app_secrets = {
+          # API Keys from Azure Key Vault (with hyphens as required by Key Vault)
           "POKEDATA-API-KEY"     = "$(POKEDATA-API-KEY)"
           "POKEMON-TCG-API-KEY"  = "$(POKEMON-TCG-API-KEY)"
           
