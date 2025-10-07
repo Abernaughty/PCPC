@@ -2,11 +2,11 @@
 <policies>
     <inbound>
         <!-- Set backend service URL dynamically based on environment -->
-        <set-backend-service base-url="{{function_app_url}}" />
+        <set-backend-service base-url="${function_app_url}" />
         
         <!-- Add function key for authentication -->
         <set-header name="x-functions-key" exists-action="override">
-            <value>{{function_app_key}}</value>
+            <value>${function_app_key}</value>
         </set-header>
         
         <!-- Add correlation ID for tracing -->
@@ -16,16 +16,16 @@
         
         <!-- Add environment context -->
         <set-header name="X-Environment" exists-action="override">
-            <value>{{environment}}</value>
+            <value>${environment}</value>
         </set-header>
     </inbound>
     <backend>
-        <forward-request timeout="{{backend_timeout}}" />
+        <forward-request timeout="${backend_timeout}" />
     </backend>
     <outbound>
         <!-- Add response headers for debugging -->
         <set-header name="X-Powered-By" exists-action="override">
-            <value>PCPC-APIM-{{environment}}</value>
+            <value>PCPC-APIM-${environment}</value>
         </set-header>
         
         <!-- Remove sensitive headers from response -->

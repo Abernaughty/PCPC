@@ -26,7 +26,6 @@ jobs:
           if [ -f "$FILE" ]; then
             echo "Validating OpenAPI specification..."
             npx -y @stoplight/spectral-cli@6.11.1 lint "$FILE" \
-              --ruleset "spectral:oas" \
               --fail-severity=error \
             || echo "⚠️  OpenAPI validation warnings (non-blocking)"
           else

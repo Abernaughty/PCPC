@@ -12,7 +12,7 @@
         <forward-request />
     </backend>
     <outbound>
-        <cache-store duration="{{cache_duration_sets}}" />
+        <cache-store duration="${cache_duration_sets}" />
     </outbound>
     <on-error />
 </policies>

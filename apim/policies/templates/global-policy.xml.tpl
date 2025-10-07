@@ -2,9 +2,9 @@
     <inbound>
         <cors>
             <allowed-origins>
-                {{#each cors_origins}}
-                <origin>{{this}}</origin>
-                {{/each}}
+%{ for origin in cors_origins ~}
+                <origin>${origin}</origin>
+%{ endfor }
             </allowed-origins>
             <allowed-methods>
                 <method>GET</method>
@@ -19,7 +19,7 @@
             </expose-headers>
         </cors>
         <!-- Rate limiting with environment-specific configuration -->
-        <rate-limit calls="{{rate_limit_calls}}" renewal-period="{{rate_limit_period}}" 
+        <rate-limit calls="${rate_limit_calls}" renewal-period="${rate_limit_period}" 
                    remaining-calls-header-name="X-RateLimit-Remaining" 
                    remaining-calls-variable-name="remainingCalls" />
     </inbound>
