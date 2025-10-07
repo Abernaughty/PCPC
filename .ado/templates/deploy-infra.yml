@@ -100,11 +100,11 @@ steps:
         echo "Environment: ${{ parameters.environment }}"
         echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
         echo ""
-        
+
         # DEBUG: Check if variables are available in pipeline
         echo "DEBUG: Checking pipeline variable availability..."
         echo "-----------------------------------------------"
-        
+
         # Check for Azure DevOps variable syntax $(VAR)
         echo "Testing Azure DevOps variable expansion:"
         echo "  POKEDATA-API-KEY: $(if [ -n "$(POKEDATA-API-KEY)" ]; then echo "SET (length: ${#POKEDATA_API_KEY})"; else echo "NOT SET or EMPTY"; fi)"
@@ -112,7 +112,7 @@ steps:
         echo "  ARM-CLIENT-ID: $(if [ -n "$(ARM-CLIENT-ID)" ]; then echo "SET (length: ${#ARM_CLIENT_ID})"; else echo "NOT SET or EMPTY"; fi)"
         echo "  ARM-CLIENT-SECRET: $(if [ -n "$(ARM-CLIENT-SECRET)" ]; then echo "SET (length: ${#ARM_CLIENT_SECRET})"; else echo "NOT SET or EMPTY"; fi)"
         echo ""
-        
+
         # Check for environment variable syntax $VAR (with underscores)
         echo "Testing environment variable access (with underscores):"
         if [ -z "${POKEDATA_API_KEY}" ]; then
@@ -120,7 +120,7 @@ steps:
         else
           echo "  ✓ POKEDATA_API_KEY is set (length: ${#POKEDATA_API_KEY})"
         fi
-        
+
         if [ -z "${POKEMON_TCG_API_KEY}" ]; then
           echo "  ⚠ POKEMON_TCG_API_KEY is empty or not set"
         else
@@ -140,13 +140,13 @@ steps:
         # It is automatically cleaned up after the pipeline completes.
 
         function_app_secrets = {
-          # API Keys from Azure Key Vault (with hyphens as required by Key Vault)
-          "POKEDATA-API-KEY"     = "$(POKEDATA-API-KEY)"
-          "POKEMON-TCG-API-KEY"  = "$(POKEMON-TCG-API-KEY)"
+          # API Keys from variable group (with underscores)
+          "POKEDATA_API_KEY"     = "$(POKEDATA_API_KEY)"
+          "POKEMON_TCG_API_KEY"  = "$(POKEMON_TCG_API_KEY)"
           
           # Service Principal Credentials
-          "ARM-CLIENT-ID"        = "$(ARM-CLIENT-ID)"
-          "ARM-CLIENT-SECRET"    = "$(ARM-CLIENT-SECRET)"
+          "ARM_CLIENT_ID"        = "$(ARM_CLIENT_ID)"
+          "ARM_CLIENT_SECRET"    = "$(ARM_CLIENT_SECRET)"
         }
         EOF
 
@@ -160,7 +160,7 @@ steps:
         head -n 15 secrets.auto.tfvars | sed 's/= ".*"/= "[REDACTED]"/'
         echo "-----------------------------------------------"
         echo ""
-        
+
         # DEBUG: Check for literal variable references
         echo "DEBUG: Checking for literal variable references..."
         if grep -q '\$(' secrets.auto.tfvars; then
