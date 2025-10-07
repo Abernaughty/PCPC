@@ -86,6 +86,71 @@ steps:
         echo "Validation complete"
 
   - task: AzureCLI@2
+    displayName: "Generate Secrets Configuration"
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: "bash"
+      scriptLocation: "inlineScript"
+      workingDirectory: "${{ parameters.workingDirectory }}/${{ parameters.environment }}"
+      inlineScript: |
+        echo "=========================================="
+        echo "Generating Secrets Configuration"
+        echo "=========================================="
+        echo ""
+        echo "Environment: ${{ parameters.environment }}"
+        echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+        echo ""
+
+        # Create secrets.auto.tfvars file
+        # Terraform automatically loads any *.auto.tfvars files
+        cat > secrets.auto.tfvars <<'EOF'
+        # Auto-generated secrets file - DO NOT COMMIT
+        # Generated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+        # Environment: ${{ parameters.environment }}
+        # 
+        # This file is automatically created during pipeline execution
+        # and contains secrets from Azure Key Vault via variable groups.
+        # It is automatically cleaned up after the pipeline completes.
+
+        function_app_settings = {
+          # API Keys from Azure Key Vault
+          "POKEDATA-API-KEY"     = "$(POKEDATA-API-KEY)"
+          "POKEMON-TCG-API-KEY"  = "$(POKEMON-TCG-API-KEY)"
+          
+          # Service Principal Credentials
+          "ARM-CLIENT-ID"        = "$(ARM-CLIENT-ID)"
+          "ARM-CLIENT-SECRET"    = "$(ARM-CLIENT-SECRET)"
+        }
+        EOF
+
+        echo "✓ Secrets configuration file generated"
+        echo "  File: secrets.auto.tfvars"
+        echo "  Secrets configured: 4"
+        echo ""
+
+        # Verify file was created (without showing contents)
+        if [ -f "secrets.auto.tfvars" ]; then
+          FILE_SIZE=$(wc -c < secrets.auto.tfvars)
+          echo "✓ File verification passed"
+          echo "  Size: ${FILE_SIZE} bytes"
+          
+          # Verify file is not empty
+          if [ "$FILE_SIZE" -lt 100 ]; then
+            echo "✗ File appears to be empty or incomplete"
+            exit 1
+          fi
+        else
+          echo "✗ File creation failed"
+          exit 1
+        fi
+
+        echo ""
+        echo "=========================================="
+        echo "Secrets configuration ready for Terraform"
+        echo "=========================================="
+        echo ""
+
+  - task: AzureCLI@2
     displayName: "Terraform Plan"
     inputs:
       azureSubscription: ${{ parameters.azureSubscription }}
@@ -94,7 +159,20 @@ steps:
       workingDirectory: "${{ parameters.workingDirectory }}/${{ parameters.environment }}"
       inlineScript: |
         echo "Generating Terraform execution plan for ${{ parameters.environment }}..."
+        echo ""
 
+        # Verify secrets file exists before planning
+        if [ ! -f "secrets.auto.tfvars" ]; then
+          echo "✗ Secrets configuration file not found"
+          echo "  Expected: secrets.auto.tfvars"
+          exit 1
+        fi
+
+        echo "✓ Secrets configuration file found"
+        echo ""
+
+        # Run terraform plan
+        # Note: secrets.auto.tfvars is automatically loaded by Terraform
         terraform plan \
           -var="environment=${{ parameters.environment }}" \
           -out=tfplan \
@@ -121,10 +199,24 @@ steps:
       workingDirectory: "${{ parameters.workingDirectory }}/${{ parameters.environment }}"
       inlineScript: |
         echo "Applying Terraform changes for ${{ parameters.environment }}..."
+        echo ""
 
+        # Verify secrets file exists before applying
+        if [ ! -f "secrets.auto.tfvars" ]; then
+          echo "✗ Secrets configuration file not found"
+          echo "  Expected: secrets.auto.tfvars"
+          exit 1
+        fi
+
+        echo "✓ Secrets configuration file found"
+        echo ""
+
+        # Apply the plan
+        # Note: secrets.auto.tfvars is automatically loaded by Terraform
         terraform apply -auto-approve tfplan
 
-        echo "Terraform apply complete"
+        echo ""
+        echo "✓ Terraform apply complete"
 
   - task: AzureCLI@2
     displayName: "Capture Terraform Outputs"
@@ -221,18 +313,23 @@ steps:
       artifact: "terraform-outputs-${{ parameters.environment }}"
       publishLocation: "pipeline"
 
-  - script: |
-      echo ""
-      echo "=========================================="
-      echo "Infrastructure Deployment Summary"
-      echo "=========================================="
-      echo "Environment: ${{ upper(parameters.environment) }}"
-      echo "Resource Group: $(terraform output -raw resource_group_name)"
-      echo "Function App: $(terraform output -raw function_app_name 2>/dev/null || echo 'N/A')"
-      echo "Static Web App: $(terraform output -raw static_web_app_name 2>/dev/null || echo 'N/A')"
-      echo "Cosmos DB: $(terraform output -raw cosmos_db_account_name 2>/dev/null || echo 'N/A')"
-      echo "Storage Account: $(terraform output -raw storage_account_name 2>/dev/null || echo 'N/A')"
-      echo "=========================================="
-      echo ""
+  - task: AzureCLI@2
     displayName: "Display Deployment Summary"
-    workingDirectory: "${{ parameters.workingDirectory }}/${{ parameters.environment }}"
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: "bash"
+      scriptLocation: "inlineScript"
+      workingDirectory: "${{ parameters.workingDirectory }}/${{ parameters.environment }}"
+      inlineScript: |
+        echo ""
+        echo "=========================================="
+        echo "Infrastructure Deployment Summary"
+        echo "=========================================="
+        echo "Environment: ${{ upper(parameters.environment) }}"
+        echo "Resource Group: $(terraform output -raw resource_group_name)"
+        echo "Function App: $(terraform output -raw function_app_name 2>/dev/null || echo 'N/A')"
+        echo "Static Web App: $(terraform output -raw static_web_app_name 2>/dev/null || echo 'N/A')"
+        echo "Cosmos DB: $(terraform output -raw cosmos_db_account_name 2>/dev/null || echo 'N/A')"
+        echo "Storage Account: $(terraform output -raw storage_account_name 2>/dev/null || echo 'N/A')"
+        echo "=========================================="
+        echo ""
