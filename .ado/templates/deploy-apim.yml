@@ -101,6 +101,15 @@ steps:
         echo "Function App: $(FUNCTION_APP_NAME)"
         echo ""
 
+        CORS_ORIGINS_RAW='$(APIM_CORS_ORIGINS)'
+        VAR_ARGS=()
+
+        if [ -n "$CORS_ORIGINS_RAW" ]; then
+          echo "Using custom CORS origins override supplied by pipeline variable"
+          printf '{\n  "cors_origins": %s\n}\n' "$CORS_ORIGINS_RAW" > cors-origins.auto.tfvars.json
+          VAR_ARGS+=("-var-file=cors-origins.auto.tfvars.json")
+        fi
+
         terraform plan \
           -var="environment=${{ parameters.environment }}" \
           -var="api_management_name=$(APIM_NAME)" \
@@ -108,11 +117,11 @@ steps:
           -var="function_app_name=$(FUNCTION_APP_NAME)" \
           -var="function_app_key=$(FUNCTION_APP_KEY)" \
           -var="api_version=$(APIM_API_VERSION)" \
-          -var="cors_origins=$(APIM_CORS_ORIGINS)" \
           -var="rate_limit_calls=$(APIM_RATE_LIMIT_CALLS)" \
           -var="rate_limit_period=$(APIM_RATE_LIMIT_PERIOD)" \
           -var="cache_duration_sets=$(APIM_CACHE_DURATION_SETS)" \
           -var="backend_timeout=$(APIM_BACKEND_TIMEOUT)" \
+          "${VAR_ARGS[@]}" \
           -out=tfplan \
           -detailed-exitcode || EXIT_CODE=$?
 
