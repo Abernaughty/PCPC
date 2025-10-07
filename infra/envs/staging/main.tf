@@ -118,7 +118,8 @@ module "function_app" {
   sku_name = var.function_app_sku_name
 
   app_settings = merge(
-    var.function_app_settings,
+    var.function_app_secrets, # Secrets from Key Vault (with hyphens)
+    var.function_app_config,  # Non-secret config (with underscores)
     {
       "COSMOS_DB_CONNECTION_STRING"           = module.cosmos_db.primary_sql_connection_string
       "COSMOS_DB_ENDPOINT"                    = module.cosmos_db.endpoint
