@@ -193,6 +193,37 @@ output "project_name" {
   value       = var.project_name
 }
 
+# Debug Output - App Settings Keys
+output "debug_function_app_settings_keys" {
+  description = "DEBUG: List of app setting keys being passed to Function App (for troubleshooting)"
+  sensitive   = true
+  value = keys(merge(
+    var.function_app_secrets,
+    var.function_app_config,
+    {
+      "COSMOS_DB_CONNECTION_STRING"           = "(set)"
+      "COSMOS_DB_ENDPOINT"                    = "(set)"
+      "COSMOS_DB_KEY"                         = "(set)"
+      "WEBSITE_NODE_DEFAULT_VERSION"          = "(set)"
+      "FUNCTIONS_WORKER_RUNTIME"              = "(set)"
+      "FUNCTIONS_EXTENSION_VERSION"           = "(set)"
+      "APPINSIGHTS_INSTRUMENTATIONKEY"        = "(set)"
+      "APPLICATIONINSIGHTS_CONNECTION_STRING" = "(set)"
+    }
+  ))
+}
+
+output "debug_secrets_keys_received" {
+  description = "DEBUG: Keys from function_app_secrets variable (should have 4 keys with hyphens)"
+  sensitive   = true
+  value       = keys(var.function_app_secrets)
+}
+
+output "debug_config_keys_received" {
+  description = "DEBUG: Keys from function_app_config variable"
+  value       = keys(var.function_app_config)
+}
+
 # Deployment Summary
 output "deployment_summary" {
   description = "Summary of deployed resources"
