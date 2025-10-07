@@ -101,34 +101,37 @@ steps:
         echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
         echo ""
 
-        # DEBUG: Check if variables are available in pipeline
-        echo "DEBUG: Checking pipeline variable availability..."
+        # DEBUG: Check if secret variables are available as environment variables
+        echo "DEBUG: Checking secret environment variables..."
         echo "-----------------------------------------------"
 
-        # Check for Azure DevOps variable syntax $(VAR)
-        echo "Testing Azure DevOps variable expansion:"
-        echo "  POKEDATA-API-KEY: $(if [ -n "$(POKEDATA-API-KEY)" ]; then echo "SET (length: ${#POKEDATA_API_KEY})"; else echo "NOT SET or EMPTY"; fi)"
-        echo "  POKEMON-TCG-API-KEY: $(if [ -n "$(POKEMON-TCG-API-KEY)" ]; then echo "SET (length: ${#POKEMON_TCG_API_KEY})"; else echo "NOT SET or EMPTY"; fi)"
-        echo "  ARM-CLIENT-ID: $(if [ -n "$(ARM-CLIENT-ID)" ]; then echo "SET (length: ${#ARM_CLIENT_ID})"; else echo "NOT SET or EMPTY"; fi)"
-        echo "  ARM-CLIENT-SECRET: $(if [ -n "$(ARM-CLIENT-SECRET)" ]; then echo "SET (length: ${#ARM_CLIENT_SECRET})"; else echo "NOT SET or EMPTY"; fi)"
-        echo ""
-
-        # Check for environment variable syntax $VAR (with underscores)
-        echo "Testing environment variable access (with underscores):"
+        # Check each secret variable (mapped via env: parameter)
         if [ -z "${POKEDATA_API_KEY}" ]; then
-          echo "  ⚠ POKEDATA_API_KEY is empty or not set"
+          echo "  ❌ POKEDATA_API_KEY is NOT SET or EMPTY"
         else
-          echo "  ✓ POKEDATA_API_KEY is set (length: ${#POKEDATA_API_KEY})"
+          echo "  ✅ POKEDATA_API_KEY is set (length: ${#POKEDATA_API_KEY})"
         fi
 
         if [ -z "${POKEMON_TCG_API_KEY}" ]; then
-          echo "  ⚠ POKEMON_TCG_API_KEY is empty or not set"
+          echo "  ❌ POKEMON_TCG_API_KEY is NOT SET or EMPTY"
         else
-          echo "  ✓ POKEMON_TCG_API_KEY is set (length: ${#POKEMON_TCG_API_KEY})"
+          echo "  ✅ POKEMON_TCG_API_KEY is set (length: ${#POKEMON_TCG_API_KEY})"
+        fi
+
+        if [ -z "${ARM_CLIENT_ID}" ]; then
+          echo "  ❌ ARM_CLIENT_ID is NOT SET or EMPTY"
+        else
+          echo "  ✅ ARM_CLIENT_ID is set (length: ${#ARM_CLIENT_ID})"
+        fi
+
+        if [ -z "${ARM_CLIENT_SECRET}" ]; then
+          echo "  ❌ ARM_CLIENT_SECRET is NOT SET or EMPTY"
+        else
+          echo "  ✅ ARM_CLIENT_SECRET is set (length: ${#ARM_CLIENT_SECRET})"
         fi
         echo ""
 
-        # Create secrets.auto.tfvars file WITHOUT single quotes to allow variable expansion
+        # Create secrets.auto.tfvars file using bash environment variables
         echo "Creating secrets.auto.tfvars file..."
         cat > secrets.auto.tfvars <<EOF
         # Auto-generated secrets file - DO NOT COMMIT
@@ -136,17 +139,17 @@ steps:
         # Environment: ${{ parameters.environment }}
         # 
         # This file is automatically created during pipeline execution
-        # and contains secrets from Azure Key Vault via variable groups.
+        # and contains secrets from variable group (mapped via env: parameter).
         # It is automatically cleaned up after the pipeline completes.
 
         function_app_secrets = {
           # API Keys from variable group (with underscores)
-          "POKEDATA_API_KEY"     = "$(POKEDATA_API_KEY)"
-          "POKEMON_TCG_API_KEY"  = "$(POKEMON_TCG_API_KEY)"
-          
+          "POKEDATA_API_KEY"     = "$POKEDATA_API_KEY"
+          "POKEMON_TCG_API_KEY"  = "$POKEMON_TCG_API_KEY"
+
           # Service Principal Credentials
-          "ARM_CLIENT_ID"        = "$(ARM_CLIENT_ID)"
-          "ARM_CLIENT_SECRET"    = "$(ARM_CLIENT_SECRET)"
+          "ARM_CLIENT_ID"        = "$ARM_CLIENT_ID"
+          "ARM_CLIENT_SECRET"    = "$ARM_CLIENT_SECRET"
         }
         EOF
 
@@ -154,27 +157,33 @@ steps:
         echo "  File: secrets.auto.tfvars"
         echo ""
 
-        # DEBUG: Show file contents with redacted values
-        echo "DEBUG: File contents (first 15 lines, values redacted):"
+        # DEBUG: Show file structure (values redacted)
+        echo "DEBUG: File structure (values redacted):"
         echo "-----------------------------------------------"
-        head -n 15 secrets.auto.tfvars | sed 's/= ".*"/= "[REDACTED]"/'
+        sed 's/= ".*"/= "[REDACTED]"/' secrets.auto.tfvars | head -n 20
         echo "-----------------------------------------------"
         echo ""
 
-        # DEBUG: Check for literal variable references
-        echo "DEBUG: Checking for literal variable references..."
-        if grep -q '\$(' secrets.auto.tfvars; then
-          echo "⚠ WARNING: Found literal '\$(' in file - variables NOT expanded"
-          echo "⚠ This means pipeline variables are not being passed correctly"
-          echo "⚠ Possible causes:"
-          echo "   1. Variable group not linked to pipeline"
-          echo "   2. Variable names don't match between Key Vault and variable group"
-          echo "   3. Service connection doesn't have permission to read Key Vault"
+        # DEBUG: Check if values are actually present (not empty strings)
+        echo "DEBUG: Verifying secret values are not empty..."
+        EMPTY_COUNT=0
+        while IFS= read -r line; do
+          if [[ $line =~ \"([^\"]+)\"[[:space:]]*=[[:space:]]*\"\"[[:space:]]*$ ]]; then
+            key="${BASH_REMATCH[1]}"
+            echo "  ❌ $key has EMPTY value"
+            EMPTY_COUNT=$((EMPTY_COUNT + 1))
+          elif [[ $line =~ \"([^\"]+)\"[[:space:]]*=[[:space:]]*\"(.+)\" ]]; then
+            key="${BASH_REMATCH[1]}"
+            value="${BASH_REMATCH[2]}"
+            echo "  ✅ $key has value (length: ${#value})"
+          fi
+        done < secrets.auto.tfvars
+
+        if [ $EMPTY_COUNT -gt 0 ]; then
           echo ""
-          echo "DEBUG: Showing lines with literal variable references:"
-          grep '\$(' secrets.auto.tfvars || true
-        else
-          echo "✓ No literal '\$(' found - variables appear to be expanded"
+          echo "❌ ERROR: Found $EMPTY_COUNT empty secret values!"
+          echo "This means the env: mapping is not working correctly."
+          exit 1
         fi
         echo ""
 
@@ -186,11 +195,11 @@ steps:
           
           # Verify file is not empty
           if [ "$FILE_SIZE" -lt 100 ]; then
-            echo "✗ File appears to be empty or incomplete"
+            echo "❌ File appears to be empty or incomplete"
             exit 1
           fi
         else
-          echo "✗ File creation failed"
+          echo "❌ File creation failed"
           exit 1
         fi
 
@@ -199,6 +208,11 @@ steps:
         echo "Secrets configuration ready for Terraform"
         echo "=========================================="
         echo ""
+    env:
+      POKEDATA_API_KEY: $(POKEDATA_API_KEY)
+      POKEMON_TCG_API_KEY: $(POKEMON_TCG_API_KEY)
+      ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+      ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
 
   - task: AzureCLI@2
     displayName: "Terraform Plan"
