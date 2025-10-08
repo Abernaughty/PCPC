@@ -6,6 +6,7 @@ locals {
   default_cors_origins = [
     "https://functions.azure.com",
     "https://functions-staging.azure.com",
+    "https://portal.azure.com",
   ]
   merged_cors_origins = distinct(concat(local.default_cors_origins, var.cors_allowed_origins))
   # Merge default tags with user-provided tags
@@ -79,11 +80,6 @@ resource "azurerm_storage_account" "this" {
 
   tags = local.common_tags
 
-  lifecycle {
-    ignore_changes = [
-      tags["CreatedDate"]
-    ]
-  }
 }
 
 # -----------------------------------------------------------------------------
@@ -105,11 +101,6 @@ resource "azurerm_service_plan" "this" {
 
   tags = local.common_tags
 
-  lifecycle {
-    ignore_changes = [
-      tags["CreatedDate"]
-    ]
-  }
 }
 
 # -----------------------------------------------------------------------------
@@ -127,11 +118,6 @@ resource "azurerm_application_insights" "this" {
 
   tags = local.common_tags
 
-  lifecycle {
-    ignore_changes = [
-      tags["CreatedDate"]
-    ]
-  }
 }
 
 # -----------------------------------------------------------------------------
@@ -234,7 +220,6 @@ resource "azurerm_windows_function_app" "this" {
 
   lifecycle {
     ignore_changes = [
-      tags["CreatedDate"],
       app_settings["WEBSITE_NODE_DEFAULT_VERSION"]
     ]
   }
@@ -336,9 +321,4 @@ resource "azurerm_linux_function_app" "this" {
 
   tags = local.common_tags
 
-  lifecycle {
-    ignore_changes = [
-      tags["CreatedDate"]
-    ]
-  }
 }

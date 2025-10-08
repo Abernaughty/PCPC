@@ -55,7 +55,7 @@ locals {
     Environment = var.environment
     Project     = var.project_name
     ManagedBy   = "Terraform"
-    CreatedDate = formatdate("YYYY-MM-DD", timestamp())
+    # CreatedDate = formatdate("YYYY-MM-DD", timestamp())
     Repository  = "PCPC"
   }
 }

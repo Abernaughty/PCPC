@@ -33,7 +33,7 @@ jobs:
             echo "Validating OpenAPI specification..."
             npx -y @stoplight/spectral-cli@6.11.1 lint "$FILE" \
               --fail-severity=error \
-              --ruleset=spectral:oas \
+              --ruleset=./apim/specs/.spectral.yaml \
             || echo "⚠️  OpenAPI validation warnings (non-blocking)"
           else
             echo "⚠️  OpenAPI spec not found, skipping validation"

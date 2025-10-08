@@ -44,11 +44,6 @@ resource "azurerm_storage_account" "main" {
 
   tags = var.tags
 
-  lifecycle {
-    ignore_changes = [
-      tags["CreatedDate"]
-    ]
-  }
 }
 
 # Storage containers

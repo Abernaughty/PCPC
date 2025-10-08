@@ -1,0 +1,5 @@
+extends:
+  - spectral:oas
+
+# Project-specific OpenAPI lint overrides live here.
+rules: {}
