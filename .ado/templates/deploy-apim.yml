@@ -272,6 +272,7 @@ steps:
         APIM_NAME="$(APIM_NAME)"
         RESOURCE_GROUP="$(APIM_RESOURCE_GROUP)"
         API_NAME="pcpc-api-${{ parameters.environment }}"
+        SUBSCRIPTION_ID=$(az account show --query id -o tsv)
 
         # Verify APIM instance exists
         if az apim show --name "$APIM_NAME" --resource-group "$RESOURCE_GROUP" &>/dev/null; then
@@ -302,15 +303,21 @@ steps:
 
         echo "✓ API has $OPERATIONS_COUNT operations configured"
 
-        # Verify backend exists
+        # Verify backend exists using REST API
         BACKEND_NAME="pcpc-function-backend-${{ parameters.environment }}"
-        if az apim backend show \
-          --backend-id "$BACKEND_NAME" \
-          --service-name "$APIM_NAME" \
-          --resource-group "$RESOURCE_GROUP" &>/dev/null; then
+        echo "Checking backend: $BACKEND_NAME"
+        
+        BACKEND_RESPONSE=$(az rest --method get \
+          --url "https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.ApiManagement/service/${APIM_NAME}/backends/${BACKEND_NAME}?api-version=2024-05-01" \
+          2>&1)
+        
+        if [ $? -eq 0 ]; then
+          BACKEND_URL=$(echo "$BACKEND_RESPONSE" | jq -r '.properties.url')
           echo "✓ Backend exists: $BACKEND_NAME"
+          echo "  Backend URL: $BACKEND_URL"
         else
           echo "✗ Backend not found: $BACKEND_NAME"
+          echo "  Error: $BACKEND_RESPONSE"
           exit 1
         fi
 
