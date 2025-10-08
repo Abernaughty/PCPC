@@ -14,6 +14,8 @@ terraform {
       version = "~> 2.4"
     }
   }
+
+  backend "azurerm" {}
 }
 
 # -----------------------------------------------------------------------------
@@ -35,7 +37,7 @@ data "azurerm_api_management" "existing" {
 }
 
 # Get existing Function App for backend configuration
-data "azurerm_function_app" "backend" {
+data "azurerm_windows_function_app" "backend" {
   name                = var.function_app_name
   resource_group_name = var.resource_group_name
 
@@ -58,7 +60,7 @@ locals {
   )
 
   # Function App URL
-  function_app_url = "https://${data.azurerm_function_app.backend.default_hostname}"
+  function_app_url = "https://${data.azurerm_windows_function_app.backend.default_hostname}"
 
   # Policy template variables
   policy_vars = {
