@@ -35,6 +35,8 @@ steps:
         echo "=========================================="
         echo ""
 
+        source ".ado/scripts/lib/apim.sh"
+
         PASSED=0
         FAILED=0
         WARNINGS=0
@@ -151,25 +153,11 @@ steps:
           echo ""
         fi
 
-        SUBSCRIPTION_ID="${{ parameters.azureSubscription }}"
-        RESOURCE_GROUP="${{ parameters.resourceGroupName }}"
-        APIM_NAME="${{ parameters.apimName }}"
-        APIM_SUBSCRIPTION="master"
-
-        MASTER_KEY=$(
-          az rest \
-            --method post \
-            --url "https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.ApiManagement/service/${APIM_NAME}/subscriptions/${APIM_SUBSCRIPTION}/listSecrets?api-version=2024-05-01" \
-            --query primaryKey \
-            -o tsv
-        )
-
-        if [ -z "$MASTER_KEY" ]; then
-          echo "Could not resolve APIM subscription key" >&2
-          exit 1
+        if [ -n "${{ parameters.apimName }}" ]; then
+          if ! resolve_apim_master_key "${{ parameters.apimName }}" "${{ parameters.resourceGroupName }}"; then
+            exit 1
+          fi
         fi
-
-        export APIM_SUBSCRIPTION_KEY="$MASTER_KEY"
 
 
         # Display summary
