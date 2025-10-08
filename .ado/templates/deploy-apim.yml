@@ -91,6 +91,8 @@ steps:
 
   - task: AzureCLI@2
     displayName: "Terraform Plan"
+    env:
+      FUNCTION_APP_KEY: $(FUNCTION_APP_KEY)
     inputs:
       azureSubscription: ${{ parameters.azureSubscription }}
       scriptType: "bash"
@@ -106,6 +108,8 @@ steps:
         echo ""
 
         set -euo pipefail
+
+        : "${FUNCTION_APP_KEY:?FUNCTION_APP_KEY not set}"
 
         append_tf_var() {
           local name="$1"
