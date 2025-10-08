@@ -51,32 +51,78 @@ if [ "$HTTP_CODE" == "200" ]; then
     # Check individual components
     if echo "$BODY" | jq -e '.checks' > /dev/null 2>&1; then
       echo "  Component Health:"
-      
+
       # Runtime check
-      RUNTIME=$(echo "$BODY" | jq -r '.checks.runtime // "unknown"')
-      echo "    - Runtime: $RUNTIME"
+      RUNTIME_JSON=$(echo "$BODY" | jq -c '.checks.runtime // empty')
+      if [ -n "$RUNTIME_JSON" ]; then
+        RUNTIME_STATUS=$(echo "$RUNTIME_JSON" | jq -r 'if type == "object" then (.status // "unknown") else . end')
+        RUNTIME_MESSAGE=$(echo "$RUNTIME_JSON" | jq -r 'if type == "object" then (.message // empty) else empty end')
+      else
+        RUNTIME_STATUS="unknown"
+        RUNTIME_MESSAGE=""
+      fi
+      echo "    - Runtime: $RUNTIME_STATUS"
+      if [ -n "$RUNTIME_MESSAGE" ]; then
+        echo "      $RUNTIME_MESSAGE"
+      fi
       
       # Cosmos DB check
-      COSMOS=$(echo "$BODY" | jq -r '.checks.cosmosDb // "unknown"')
-      echo "    - Cosmos DB: $COSMOS"
-      if [ "$COSMOS" != "healthy" ] && [ "$COSMOS" != "unknown" ]; then
+      COSMOS_JSON=$(echo "$BODY" | jq -c '.checks.cosmosdb // empty')
+      if [ -n "$COSMOS_JSON" ]; then
+        COSMOS_STATUS=$(echo "$COSMOS_JSON" | jq -r 'if type == "object" then (.status // "unknown") else . end')
+        COSMOS_MESSAGE=$(echo "$COSMOS_JSON" | jq -r 'if type == "object" then (.message // empty) else empty end')
+      else
+        COSMOS_STATUS="not configured"
+        COSMOS_MESSAGE=""
+      fi
+      echo "    - Cosmos DB: $COSMOS_STATUS"
+      if [ -n "$COSMOS_MESSAGE" ]; then
+        echo "      $COSMOS_MESSAGE"
+      fi
+      if [ "$COSMOS_STATUS" != "healthy" ] && [ "$COSMOS_STATUS" != "not configured" ] && [ "$COSMOS_STATUS" != "unknown" ]; then
         echo "      ⚠ Cosmos DB is not healthy"
         ((WARNINGS++))
       fi
       
       # PokeData API check
-      POKEDATA=$(echo "$BODY" | jq -r '.checks.pokeDataApi // "unknown"')
-      echo "    - PokeData API: $POKEDATA"
-      if [ "$POKEDATA" != "healthy" ] && [ "$POKEDATA" != "unknown" ]; then
+      POKEDATA_JSON=$(echo "$BODY" | jq -c '.checks.pokedataApi // empty')
+      if [ -n "$POKEDATA_JSON" ]; then
+        POKEDATA_STATUS=$(echo "$POKEDATA_JSON" | jq -r 'if type == "object" then (.status // "unknown") else . end')
+        POKEDATA_MESSAGE=$(echo "$POKEDATA_JSON" | jq -r 'if type == "object" then (.message // empty) else empty end')
+      else
+        POKEDATA_STATUS="not configured"
+        POKEDATA_MESSAGE=""
+      fi
+      echo "    - PokeData API: $POKEDATA_STATUS"
+      if [ -n "$POKEDATA_MESSAGE" ]; then
+        echo "      $POKEDATA_MESSAGE"
+      fi
+      if [ "$POKEDATA_STATUS" != "healthy" ] && [ "$POKEDATA_STATUS" != "not configured" ] && [ "$POKEDATA_STATUS" != "unknown" ]; then
         echo "      ⚠ PokeData API is not healthy"
         ((WARNINGS++))
       fi
       
       # Redis check (optional)
-      REDIS=$(echo "$BODY" | jq -r '.checks.redis // "not configured"')
-      echo "    - Redis: $REDIS"
-      if [ "$REDIS" != "healthy" ] && [ "$REDIS" != "not configured" ] && [ "$REDIS" != "unknown" ]; then
-        echo "      ⚠ Redis is not healthy"
+      REDIS_JSON=$(echo "$BODY" | jq -c '.checks.redis // empty')
+      if [ -n "$REDIS_JSON" ]; then
+        REDIS_STATUS=$(echo "$REDIS_JSON" | jq -r 'if type == "object" then (.status // "unknown") else . end')
+        REDIS_MESSAGE=$(echo "$REDIS_JSON" | jq -r 'if type == "object" then (.message // empty) else empty end')
+      else
+        REDIS_STATUS="not configured"
+        REDIS_MESSAGE=""
+      fi
+      echo "    - Redis: $REDIS_STATUS"
+      if [ -n "$REDIS_MESSAGE" ]; then
+        echo "      $REDIS_MESSAGE"
+      fi
+      if [ "$REDIS_STATUS" = "degraded" ]; then
+        echo "      ⚠ Redis is degraded"
+        ((WARNINGS++))
+      elif [ "$REDIS_STATUS" = "unhealthy" ]; then
+        echo "      ✗ Redis is unhealthy"
+        ((ERRORS++))
+      elif [ "$REDIS_STATUS" != "healthy" ] && [ "$REDIS_STATUS" != "disabled" ] && [ "$REDIS_STATUS" != "not configured" ] && [ "$REDIS_STATUS" != "unknown" ]; then
+        echo "      ⚠ Redis status: $REDIS_STATUS"
         ((WARNINGS++))
       fi
     fi
