@@ -1,17 +1,23 @@
 #!/bin/bash
 
 # Health Check Script for Azure API Management
-# Usage: ./health-check-apim.sh <APIM_GATEWAY_URL>
+# Usage: ./health-check-apim.sh <APIM_GATEWAY_URL> [APIM_SUBSCRIPTION_KEY]
 # Exit codes: 0 = success, 1 = failure, 2 = warning
 
 set -e
 
 APIM_URL=$1
+SUPPLIED_SUBSCRIPTION_KEY=$2
 
 if [ -z "$APIM_URL" ]; then
   echo "Error: APIM Gateway URL is required"
-  echo "Usage: $0 <APIM_GATEWAY_URL>"
+  echo "Usage: $0 <APIM_GATEWAY_URL> [APIM_SUBSCRIPTION_KEY]"
   exit 1
+fi
+
+# Allow optional subscription key to be passed as argument
+if [ -n "$SUPPLIED_SUBSCRIPTION_KEY" ]; then
+  APIM_SUBSCRIPTION_KEY="$SUPPLIED_SUBSCRIPTION_KEY"
 fi
 
 echo "=========================================="
@@ -145,7 +151,7 @@ echo ""
 # Test 5: CORS headers (if applicable)
 echo "Test 5: CORS Configuration"
 echo "--------------------------"
-HEADERS=$(curl -s -X OPTIONS -H "Origin: https://pokedata.maber.io" -H "Ocp-Apim-Subscription-Key: $APIM_SUBSCRIPTION_KEY" "$APIM_URL" -D - 2>/dev/null || echo "")
+HEADERS=$(curl -s -X OPTIONS -H "Origin: https://pokedata.maber.io" -H "Ocp-Apim-Subscription-Key: $APIM_SUBSCRIPTION_KEY" "$APIM_URL/api/v1/sets" -D - 2>/dev/null || echo "")
 
 if echo "$HEADERS" | grep -qi "access-control-allow-origin"; then
   CORS_ORIGIN=$(echo "$HEADERS" | grep -i "access-control-allow-origin" | cut -d: -f2- | tr -d '\r\n' | xargs)
@@ -160,13 +166,13 @@ echo ""
 # Test 6: Rate limiting headers
 echo "Test 6: Rate Limiting"
 echo "---------------------"
-HEADERS=$(curl -s -I -H "Ocp-Apim-Subscription-Key: $APIM_SUBSCRIPTION_KEY" "$APIM_URL" 2>/dev/null || echo "")
+HEADERS=$(curl -s -H "Ocp-Apim-Subscription-Key: $APIM_SUBSCRIPTION_KEY" -H "Accept: application/json" -H "Origin: https://pokedata.maber.io" "$APIM_URL/api/v1/sets" -D - 2>/dev/null || echo "")
 
-if echo "$HEADERS" | grep -qi "x-rate-limit"; then
-  echo "✓ Rate limiting headers present"
-  
-  RATE_LIMIT=$(echo "$HEADERS" | grep -i "x-rate-limit-limit" | cut -d: -f2- | tr -d '\r\n' | xargs)
-  RATE_REMAINING=$(echo "$HEADERS" | grep -i "x-rate-limit-remaining" | cut -d: -f2- | tr -d '\r\n' | xargs)
+  if echo "$HEADERS" | grep -qiE "x-rate[-]?limit"; then
+    echo "✓ Rate limiting headers present"
+    
+    RATE_LIMIT=$(echo "$HEADERS" | grep -i -e "x-ratelimit-limit" -e "x-rate-limit-limit" | head -n1 | cut -d: -f2- | tr -d '\r\n' | xargs)
+    RATE_REMAINING=$(echo "$HEADERS" | grep -i -e "x-ratelimit-remaining" -e "x-rate-limit-remaining" | head -n1 | cut -d: -f2- | tr -d '\r\n' | xargs)
   
   if [ -n "$RATE_LIMIT" ]; then
     echo "  Rate limit: $RATE_LIMIT"
