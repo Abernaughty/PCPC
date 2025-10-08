@@ -129,6 +129,7 @@ stages:
               resourceGroupName: $(APIM_RESOURCE_GROUP)
               functionAppName: $(FUNCTION_APP_NAME)
               staticWebAppName: $(STATIC_WEB_APP_NAME)
+              apimName: $(APIM_NAME)
 
   # ============================================================================
   # STAGE 3: DEPLOY TO STAGING
@@ -219,6 +220,7 @@ stages:
               resourceGroupName: $(APIM_RESOURCE_GROUP)
               functionAppName: $(FUNCTION_APP_NAME)
               staticWebAppName: $(STATIC_WEB_APP_NAME)
+              apimName: $(APIM_NAME)
 
   # ============================================================================
   # STAGE 4: DEPLOY TO PRODUCTION
@@ -309,6 +311,7 @@ stages:
               resourceGroupName: $(APIM_RESOURCE_GROUP)
               functionAppName: $(FUNCTION_APP_NAME)
               staticWebAppName: $(STATIC_WEB_APP_NAME)
+              apimName: $(APIM_NAME)
 
       # Final Deployment Summary
       - job: Deployment_Summary

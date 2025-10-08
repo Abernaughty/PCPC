@@ -23,6 +23,14 @@ echo ""
 WARNINGS=0
 ERRORS=0
 
+add_warning() {
+  WARNINGS=$((WARNINGS + 1))
+}
+
+add_error() {
+  ERRORS=$((ERRORS + 1))
+}
+
 # Test 1: Gateway accessibility
 echo "Test 1: Gateway Accessibility"
 echo "------------------------------"
@@ -42,7 +50,7 @@ elif [ "$HTTP_CODE" == "401" ] || [ "$HTTP_CODE" == "403" ]; then
   echo "  Note: This is expected behavior for secured APIs"
 else
   echo "✗ Gateway returned unexpected status: $HTTP_CODE"
-  ((ERRORS++))
+  add_error
 fi
 echo ""
 
@@ -79,10 +87,10 @@ elif [ "$HTTP_CODE" == "404" ]; then
   echo "  Note: This is acceptable if APIM is newly deployed"
 elif [ "$HTTP_CODE" == "000" ]; then
   echo "⚠ Could not connect to API endpoint"
-  ((WARNINGS++))
+  add_warning
 else
   echo "⚠ API endpoint returned unexpected status: $HTTP_CODE"
-  ((WARNINGS++))
+  add_warning
 fi
 echo ""
 
@@ -99,10 +107,10 @@ if [ "$RESPONSE_TIME" -lt 1000 ]; then
   echo "✓ Response time is acceptable (< 1s)"
 elif [ "$RESPONSE_TIME" -lt 3000 ]; then
   echo "⚠ Response time is slow (1-3s)"
-  ((WARNINGS++))
+  add_warning
 else
   echo "✗ Response time is too slow (> 3s)"
-  ((ERRORS++))
+  add_error
 fi
 echo ""
 
@@ -126,11 +134,11 @@ if [[ "$APIM_URL" == https://* ]]; then
     fi
   else
     echo "⚠ Could not verify SSL certificate"
-    ((WARNINGS++))
+    add_warning
   fi
 else
   echo "⚠ Gateway is not using HTTPS"
-  ((WARNINGS++))
+  add_warning
 fi
 echo ""
 

@@ -17,8 +17,14 @@ jobs:
 
       # Install Spectral (OpenAPI linter)
       - script: |
-          npm install -g @stoplight/spectral-cli
+          npm install -g @stoplight/spectral-cli@6.11.1
         displayName: "Install Spectral"
+
+      # Install XML validation tooling
+      - script: |
+          sudo apt-get update
+          sudo apt-get install -y libxml2-utils
+        displayName: "Install XML Tools"
 
       # Validate OpenAPI specification
       - script: |
@@ -27,6 +33,7 @@ jobs:
             echo "Validating OpenAPI specification..."
             npx -y @stoplight/spectral-cli@6.11.1 lint "$FILE" \
               --fail-severity=error \
+              --ruleset=spectral:oas \
             || echo "⚠️  OpenAPI validation warnings (non-blocking)"
           else
             echo "⚠️  OpenAPI spec not found, skipping validation"
