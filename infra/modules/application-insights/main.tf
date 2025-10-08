@@ -33,12 +33,6 @@ resource "azurerm_application_insights" "this" {
       "ManagedBy"   = "Terraform"
     }
   )
-
-  lifecycle {
-    ignore_changes = [
-      tags["CreatedDate"]
-    ]
-  }
 }
 
 # Optional: Create action groups for alerting
@@ -73,12 +67,6 @@ resource "azurerm_monitor_action_group" "this" {
       "ManagedBy"   = "Terraform"
     }
   )
-
-  lifecycle {
-    ignore_changes = [
-      tags["CreatedDate"]
-    ]
-  }
 }
 
 # Optional: Create metric alerts
@@ -114,12 +102,6 @@ resource "azurerm_monitor_metric_alert" "this" {
       "ManagedBy"   = "Terraform"
     }
   )
-
-  lifecycle {
-    ignore_changes = [
-      tags["CreatedDate"]
-    ]
-  }
 
   depends_on = [azurerm_monitor_action_group.this]
 }

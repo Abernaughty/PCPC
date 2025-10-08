@@ -28,11 +28,6 @@ resource "azurerm_log_analytics_workspace" "this" {
     }
   )
 
-  lifecycle {
-    ignore_changes = [
-      tags["CreatedDate"]
-    ]
-  }
 }
 
 # Optional: Create data collection rules for custom logs
@@ -94,11 +89,6 @@ resource "azurerm_monitor_data_collection_rule" "this" {
     }
   )
 
-  lifecycle {
-    ignore_changes = [
-      tags["CreatedDate"]
-    ]
-  }
 }
 
 # Optional: Create saved searches for common queries
@@ -120,9 +110,4 @@ resource "azurerm_log_analytics_saved_search" "this" {
     }
   )
 
-  lifecycle {
-    ignore_changes = [
-      tags["CreatedDate"]
-    ]
-  }
 }
