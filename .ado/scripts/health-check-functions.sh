@@ -158,7 +158,7 @@ else
 
   RESPONSE=$(curl -s -w "\n%{http_code}" "$SETLIST_URL" || echo "000")
   HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-  BODY=$(echo "$RESPONSE" | sed '$d')
+  BODY=$(echo "$RESPONSE" | sed '$d' | jq -c '.data.sets // []')
 
   if [ "$HTTP_CODE" == "200" ]; then
     echo "✓ GetSetList endpoint returned 200 OK"
@@ -173,7 +173,7 @@ else
         
         # Verify first set has required fields
         FIRST_SET=$(echo "$BODY" | jq '.[0]')
-        if echo "$FIRST_SET" | jq -e '.id and .name and .series' > /dev/null 2>&1; then
+        if echo "$FIRST_SET" | jq -e '.id and .language and .name' > /dev/null 2>&1; then
           echo "✓ Set data structure is valid"
         else
           echo "⚠ Set data structure may be incomplete"
