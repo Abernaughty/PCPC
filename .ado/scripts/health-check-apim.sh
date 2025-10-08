@@ -145,7 +145,7 @@ echo ""
 # Test 5: CORS headers (if applicable)
 echo "Test 5: CORS Configuration"
 echo "--------------------------"
-HEADERS=$(curl -s -I -H "Origin: https://example.com" "$APIM_URL" 2>/dev/null || echo "")
+HEADERS=$(curl -s -X OPTIONS -H "Origin: https://pokedata.maber.io" -H "Ocp-Apim-Subscription-Key: $APIM_SUBSCRIPTION_KEY" "$APIM_URL" -D - 2>/dev/null || echo "")
 
 if echo "$HEADERS" | grep -qi "access-control-allow-origin"; then
   CORS_ORIGIN=$(echo "$HEADERS" | grep -i "access-control-allow-origin" | cut -d: -f2- | tr -d '\r\n' | xargs)
@@ -160,7 +160,7 @@ echo ""
 # Test 6: Rate limiting headers
 echo "Test 6: Rate Limiting"
 echo "---------------------"
-HEADERS=$(curl -s -I "$APIM_URL" 2>/dev/null || echo "")
+HEADERS=$(curl -s -I -H "Ocp-Apim-Subscription-Key: $APIM_SUBSCRIPTION_KEY" "$APIM_URL" 2>/dev/null || echo "")
 
 if echo "$HEADERS" | grep -qi "x-rate-limit"; then
   echo "✓ Rate limiting headers present"
