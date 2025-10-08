@@ -158,33 +158,39 @@ else
 
   RESPONSE=$(curl -s -w "\n%{http_code}" "$SETLIST_URL" || echo "000")
   HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-  BODY=$(echo "$RESPONSE" | sed '$d')
+  BODY_RAW=$(echo "$RESPONSE" | sed '$d')
 
   if [ "$HTTP_CODE" == "200" ]; then
     echo "✓ GetSetList endpoint returned 200 OK"
     
     # Verify response is valid JSON array
-    if echo "$BODY" | jq -e 'type == "array"' > /dev/null 2>&1; then
-      SET_COUNT=$(echo "$BODY" | jq 'length')
-      echo "  Set count: $SET_COUNT"
-      
-      if [ "$SET_COUNT" -gt 0 ]; then
-        echo "✓ Response contains sets"
-        
-        # Verify first set has required fields
-        FIRST_SET=$(echo "$BODY" | jq '.[0]')
-        if echo "$FIRST_SET" | jq -e '.id and .name and .series' > /dev/null 2>&1; then
-          echo "✓ Set data structure is valid"
+    if echo "$BODY_RAW" | jq empty > /dev/null 2>&1; then
+      BODY=$(echo "$BODY_RAW" | jq -c '.data.sets // []')
+      if echo "$BODY" | jq -e 'type == "array"' > /dev/null 2>&1; then
+        SET_COUNT=$(echo "$BODY" | jq 'length')
+        echo "  Set count: $SET_COUNT"
+
+        if [ "$SET_COUNT" -gt 0 ]; then
+          echo "✓ Response contains sets"
+
+          # Verify first set has required fields
+          FIRST_SET=$(echo "$BODY" | jq '.[0]')
+          if echo "$FIRST_SET" | jq -e '.id and .language and .name' > /dev/null 2>&1; then
+            echo "✓ Set data structure is valid"
+          else
+            echo "⚠ Set data structure may be incomplete"
+            add_warning
+          fi
         else
-          echo "⚠ Set data structure may be incomplete"
+          echo "⚠ No sets returned"
           add_warning
         fi
       else
-        echo "⚠ No sets returned"
-        add_warning
+        echo "✗ Response is not a valid JSON array"
+        add_error
       fi
     else
-      echo "✗ Response is not a valid JSON array"
+      echo "✗ Response is not valid JSON"
       add_error
     fi
   elif [ "$HTTP_CODE" == "401" ]; then
