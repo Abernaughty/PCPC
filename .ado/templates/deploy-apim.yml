@@ -137,7 +137,7 @@ steps:
         rm -f cors-origins.auto.tfvars.json
 
         # Get CORS origins from pipeline variable
-        CORS_ORIGINS_RAW="${APIM_CORS_ORIGINS}"
+        CORS_ORIGINS_RAW="${APIM_CORS_ORIGINS:-}"
 
         if [ -n "$CORS_ORIGINS_RAW" ]; then
           echo "Using custom CORS origins override supplied by pipeline variable"
@@ -208,13 +208,13 @@ steps:
           echo "No custom CORS origins supplied; Terraform defaults will be used"
         fi
 
-        append_tf_var "api_version" "${APIM_API_VERSION}"
-        append_tf_var "rate_limit_calls" "${APIM_RATE_LIMIT_CALLS}"
-        append_tf_var "rate_limit_period" "${APIM_RATE_LIMIT_PERIOD}"
-        append_tf_var "cache_duration_sets" "${APIM_CACHE_DURATION_SETS}"
-        append_tf_var "cache_duration_cards" "${APIM_CACHE_DURATION_CARDS}"
-        append_tf_var "cache_duration_card_info" "${APIM_CACHE_DURATION_CARD_INFO}"
-        append_tf_var "backend_timeout" "${APIM_BACKEND_TIMEOUT}"
+        append_tf_var "api_version" "${APIM_API_VERSION:-}"
+        append_tf_var "rate_limit_calls" "${APIM_RATE_LIMIT_CALLS:-}"
+        append_tf_var "rate_limit_period" "${APIM_RATE_LIMIT_PERIOD:-}"
+        append_tf_var "cache_duration_sets" "${APIM_CACHE_DURATION_SETS:-}"
+        append_tf_var "cache_duration_cards" "${APIM_CACHE_DURATION_CARDS:-}"
+        append_tf_var "cache_duration_card_info" "${APIM_CACHE_DURATION_CARD_INFO:-}"
+        append_tf_var "backend_timeout" "${APIM_BACKEND_TIMEOUT:-}"
 
         # Run Terraform plan
         EXIT_CODE=0
