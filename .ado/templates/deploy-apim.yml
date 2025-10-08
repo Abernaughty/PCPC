@@ -56,6 +56,7 @@ steps:
 
         echo "✓ Function key retrieved successfully"
         echo "##vso[task.setvariable variable=FUNCTION_APP_KEY;issecret=true]$FUNCTION_KEY"
+        echo "##vso[task.setvariable variable=TF_VAR_function_app_key;issecret=true]$FUNCTION_KEY"
 
   - task: AzureCLI@2
     displayName: "Terraform Init"
@@ -93,6 +94,7 @@ steps:
     displayName: "Terraform Plan"
     env:
       FUNCTION_APP_KEY: $(FUNCTION_APP_KEY)
+      TF_VAR_function_app_key: $(TF_VAR_function_app_key)
     inputs:
       azureSubscription: ${{ parameters.azureSubscription }}
       scriptType: "bash"
@@ -242,6 +244,8 @@ steps:
 
   - task: AzureCLI@2
     displayName: "Terraform Apply"
+    env:
+      TF_VAR_function_app_key: $(TF_VAR_function_app_key)
     inputs:
       azureSubscription: ${{ parameters.azureSubscription }}
       scriptType: "bash"

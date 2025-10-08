@@ -35,6 +35,8 @@ steps:
         echo "=========================================="
         echo ""
 
+        source ".ado/scripts/lib/apim.sh"
+
         PASSED=0
         FAILED=0
         WARNINGS=0
@@ -150,6 +152,13 @@ steps:
           echo "⊘ API Management not configured - skipping"
           echo ""
         fi
+
+        if [ -n "${{ parameters.apimName }}" ]; then
+          if ! resolve_apim_master_key "${{ parameters.apimName }}" "${{ parameters.resourceGroupName }}"; then
+            exit 1
+          fi
+        fi
+
 
         # Display summary
         echo "=========================================="
