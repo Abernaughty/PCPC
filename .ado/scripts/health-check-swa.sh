@@ -23,6 +23,14 @@ echo ""
 WARNINGS=0
 ERRORS=0
 
+add_warning() {
+  WARNINGS=$((WARNINGS + 1))
+}
+
+add_error() {
+  ERRORS=$((ERRORS + 1))
+}
+
 # Test 1: Homepage accessibility
 echo "Test 1: Homepage Accessibility"
 echo "-------------------------------"
@@ -50,7 +58,7 @@ if [ "$HTTP_CODE" == "200" ]; then
       echo "✓ JavaScript bundle reference found"
     else
       echo "⚠ JavaScript bundle reference not found"
-      ((WARNINGS++))
+      add_warning
     fi
     
     # Check for bundle.css
@@ -58,15 +66,15 @@ if [ "$HTTP_CODE" == "200" ]; then
       echo "✓ CSS bundle reference found"
     else
       echo "⚠ CSS bundle reference not found"
-      ((WARNINGS++))
+      add_warning
     fi
   else
     echo "✗ Response does not contain valid HTML"
-    ((ERRORS++))
+    add_error
   fi
 else
   echo "✗ Homepage returned $HTTP_CODE (expected 200)"
-  ((ERRORS++))
+  add_error
 fi
 echo ""
 
@@ -92,7 +100,7 @@ if [ "$HTTP_CODE" == "200" ]; then
     echo "✓ Bundle size is reasonable"
   else
     echo "⚠ Bundle size seems too small (< 1KB)"
-    ((WARNINGS++))
+    add_warning
   fi
   
   # Verify it's JavaScript
@@ -100,11 +108,11 @@ if [ "$HTTP_CODE" == "200" ]; then
     echo "✓ Content appears to be JavaScript"
   else
     echo "⚠ Content may not be valid JavaScript"
-    ((WARNINGS++))
+    add_warning
   fi
 else
   echo "✗ JavaScript bundle returned $HTTP_CODE (expected 200)"
-  ((ERRORS++))
+  add_error
 fi
 echo ""
 
@@ -130,7 +138,7 @@ if [ "$HTTP_CODE" == "200" ]; then
     echo "✓ Bundle size is reasonable"
   else
     echo "⚠ Bundle size seems too small (< 100 bytes)"
-    ((WARNINGS++))
+    add_warning
   fi
   
   # Verify it's CSS
@@ -138,11 +146,11 @@ if [ "$HTTP_CODE" == "200" ]; then
     echo "✓ Content appears to be CSS"
   else
     echo "⚠ Content may not be valid CSS"
-    ((WARNINGS++))
+    add_warning
   fi
 else
   echo "⚠ CSS bundle returned $HTTP_CODE (expected 200)"
-  ((WARNINGS++))
+  add_warning
 fi
 echo ""
 
@@ -162,7 +170,7 @@ elif [ "$HTTP_CODE" == "404" ]; then
   echo "⊘ Favicon not found (optional)"
 else
   echo "⚠ Favicon returned unexpected status: $HTTP_CODE"
-  ((WARNINGS++))
+  add_warning
 fi
 echo ""
 
@@ -179,10 +187,10 @@ if [ "$RESPONSE_TIME" -lt 2000 ]; then
   echo "✓ Response time is acceptable (< 2s)"
 elif [ "$RESPONSE_TIME" -lt 5000 ]; then
   echo "⚠ Response time is slow (2-5s)"
-  ((WARNINGS++))
+  add_warning
 else
   echo "✗ Response time is too slow (> 5s)"
-  ((ERRORS++))
+  add_error
 fi
 echo ""
 

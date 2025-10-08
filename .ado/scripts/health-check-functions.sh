@@ -30,6 +30,14 @@ echo ""
 WARNINGS=0
 ERRORS=0
 
+add_warning() {
+  WARNINGS=$((WARNINGS + 1))
+}
+
+add_error() {
+  ERRORS=$((ERRORS + 1))
+}
+
 # Test 1: Health endpoint
 echo "Test 1: Health Endpoint"
 echo "------------------------"
@@ -81,7 +89,7 @@ if [ "$HTTP_CODE" == "200" ]; then
       fi
       if [ "$COSMOS_STATUS" != "healthy" ] && [ "$COSMOS_STATUS" != "not configured" ] && [ "$COSMOS_STATUS" != "unknown" ]; then
         echo "      ⚠ Cosmos DB is not healthy"
-        ((WARNINGS++))
+        add_warning
       fi
       
       # PokeData API check
@@ -99,7 +107,7 @@ if [ "$HTTP_CODE" == "200" ]; then
       fi
       if [ "$POKEDATA_STATUS" != "healthy" ] && [ "$POKEDATA_STATUS" != "not configured" ] && [ "$POKEDATA_STATUS" != "unknown" ]; then
         echo "      ⚠ PokeData API is not healthy"
-        ((WARNINGS++))
+        add_warning
       fi
       
       # Redis check (optional)
@@ -117,22 +125,22 @@ if [ "$HTTP_CODE" == "200" ]; then
       fi
       if [ "$REDIS_STATUS" = "degraded" ]; then
         echo "      ⚠ Redis is degraded"
-        ((WARNINGS++))
+        add_warning
       elif [ "$REDIS_STATUS" = "unhealthy" ]; then
         echo "      ✗ Redis is unhealthy"
-        ((ERRORS++))
+        add_error
       elif [ "$REDIS_STATUS" != "healthy" ] && [ "$REDIS_STATUS" != "disabled" ] && [ "$REDIS_STATUS" != "not configured" ] && [ "$REDIS_STATUS" != "unknown" ]; then
         echo "      ⚠ Redis status: $REDIS_STATUS"
-        ((WARNINGS++))
+        add_warning
       fi
     fi
   else
     echo "  ⚠ Health response is not valid JSON"
-    ((WARNINGS++))
+    add_warning
   fi
 else
   echo "✗ Health endpoint returned $HTTP_CODE (expected 200)"
-  ((ERRORS++))
+  add_error
 fi
 echo ""
 
@@ -143,7 +151,7 @@ echo "----------------------------"
 if [ -z "$FUNCTION_KEY" ]; then
   echo "⚠ Skipping GetSetList test - no function key provided"
   echo "  (This endpoint requires authentication)"
-  ((WARNINGS++))
+  add_warning
 else
   SETLIST_URL="${FUNCTION_APP_URL}/api/GetSetList?all=true&code=${FUNCTION_KEY}"
   echo "Testing: ${FUNCTION_APP_URL}/api/GetSetList?all=true&code=***"
@@ -169,23 +177,23 @@ else
           echo "✓ Set data structure is valid"
         else
           echo "⚠ Set data structure may be incomplete"
-          ((WARNINGS++))
+          add_warning
         fi
       else
         echo "⚠ No sets returned"
-        ((WARNINGS++))
+        add_warning
       fi
     else
       echo "✗ Response is not a valid JSON array"
-      ((ERRORS++))
+      add_error
     fi
   elif [ "$HTTP_CODE" == "401" ]; then
     echo "✗ GetSetList endpoint returned 401 Unauthorized"
     echo "  This likely means the function key is invalid or expired"
-    ((ERRORS++))
+    add_error
   else
     echo "✗ GetSetList endpoint returned $HTTP_CODE (expected 200)"
-    ((ERRORS++))
+    add_error
   fi
 fi
 echo ""
@@ -203,10 +211,10 @@ if [ "$RESPONSE_TIME" -lt 1000 ]; then
   echo "✓ Response time is acceptable (< 1s)"
 elif [ "$RESPONSE_TIME" -lt 3000 ]; then
   echo "⚠ Response time is slow (1-3s)"
-  ((WARNINGS++))
+  add_warning
 else
   echo "✗ Response time is too slow (> 3s)"
-  ((ERRORS++))
+  add_error
 fi
 echo ""
 

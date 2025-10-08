@@ -39,24 +39,36 @@ steps:
         FAILED=0
         WARNINGS=0
 
+        increment_passed() {
+          PASSED=$((PASSED + 1))
+        }
+
+        increment_failed() {
+          FAILED=$((FAILED + 1))
+        }
+
+        increment_warnings() {
+          WARNINGS=$((WARNINGS + 1))
+        }
+
         # Function to run health check and track results
         run_health_check() {
           local component=$1
           local script=$2
-          local args=$3
+          shift 2
 
           echo "Testing $component..."
-          if bash "$script" $args; then
+          if bash "$script" "$@"; then
             echo "✓ $component health check passed"
-            ((PASSED++))
+            increment_passed
           else
             EXIT_CODE=$?
             if [ $EXIT_CODE -eq 2 ]; then
               echo "⚠ $component health check passed with warnings"
-              ((WARNINGS++))
+              increment_warnings
             else
               echo "✗ $component health check failed"
-              ((FAILED++))
+              increment_failed
             fi
           fi
           echo ""
@@ -65,7 +77,36 @@ steps:
         # Test Function App if provided
         if [ -n "${{ parameters.functionAppName }}" ]; then
           FUNCTION_APP_URL="https://${{ parameters.functionAppName }}.azurewebsites.net"
-          run_health_check "Function App" ".ado/scripts/health-check-functions.sh" "$FUNCTION_APP_URL"
+
+          FUNCTION_KEY=$(az functionapp function keys list \
+            --name "${{ parameters.functionAppName }}" \
+            --resource-group "${{ parameters.resourceGroupName }}" \
+            --function-name "GetSetList" \
+            --query "default" -o tsv 2>/dev/null || echo "")
+
+          if [ -z "$FUNCTION_KEY" ]; then
+            FUNCTION_KEY=$(az functionapp function keys list \
+              --name "${{ parameters.functionAppName }}" \
+              --resource-group "${{ parameters.resourceGroupName }}" \
+              --function-name "GetSetList" \
+              --query "_master" -o tsv 2>/dev/null || echo "")
+          fi
+
+          if [ -z "$FUNCTION_KEY" ]; then
+            FUNCTION_KEY=$(az functionapp keys list \
+              --name "${{ parameters.functionAppName }}" \
+              --resource-group "${{ parameters.resourceGroupName }}" \
+              --query "functionKeys.default" -o tsv 2>/dev/null || echo "")
+          fi
+
+          FUNCTION_KEY=$(printf '%s' "$FUNCTION_KEY" | tr -d '\r\n')
+
+          if [ -n "$FUNCTION_KEY" ]; then
+            run_health_check "Function App" ".ado/scripts/health-check-functions.sh" "$FUNCTION_APP_URL" "$FUNCTION_KEY"
+          else
+            echo "⚠ Could not retrieve function key for GetSetList - running anonymous checks only"
+            run_health_check "Function App" ".ado/scripts/health-check-functions.sh" "$FUNCTION_APP_URL"
+          fi
         else
           echo "⊘ Function App not configured - skipping"
           echo ""
@@ -83,7 +124,7 @@ steps:
             run_health_check "Static Web App" ".ado/scripts/health-check-swa.sh" "https://$SWA_URL"
           else
             echo "⚠ Could not retrieve Static Web App URL"
-            ((WARNINGS++))
+            increment_warnings
             echo ""
           fi
         else
@@ -102,7 +143,7 @@ steps:
             run_health_check "API Management" ".ado/scripts/health-check-apim.sh" "$APIM_URL"
           else
             echo "⚠ Could not retrieve APIM URL"
-            ((WARNINGS++))
+            increment_warnings
             echo ""
           fi
         else
