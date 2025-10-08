@@ -6,7 +6,7 @@
         
         <!-- Add function key for authentication -->
         <set-header name="x-functions-key" exists-action="override">
-            <value>${function_app_key}</value>
+            <value>{{function-app-key}}</value>
         </set-header>
         
         <!-- Add correlation ID for tracing -->

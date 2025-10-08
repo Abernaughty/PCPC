@@ -28,6 +28,15 @@ resource "azurerm_api_management_api" "pcpc_api" {
 # -----------------------------------------------------------------------------
 
 # Azure Functions Backend
+resource "azurerm_api_management_named_value" "function_app_key" {
+  name                = "function-app-key"
+  display_name        = "function-app-key"
+  resource_group_name = var.resource_group_name
+  api_management_name = var.api_management_name
+  value               = var.function_app_key
+  secret              = true
+}
+
 resource "azurerm_api_management_backend" "function_app" {
   name                = "pcpc-function-backend-${var.environment}"
   resource_group_name = var.resource_group_name
@@ -38,7 +47,7 @@ resource "azurerm_api_management_backend" "function_app" {
 
   credentials {
     header = {
-      "x-functions-key" = var.function_app_key
+      "x-functions-key" = format("{{%s}}", azurerm_api_management_named_value.function_app_key.name)
     }
   }
 
