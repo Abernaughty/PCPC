@@ -34,9 +34,9 @@ add_error() {
 # Test 1: Gateway accessibility
 echo "Test 1: Gateway Accessibility"
 echo "------------------------------"
-echo "Testing: $APIM_URL"
+echo "Testing: $APIM_URL/internal-status-0123456789abcdef"
 
-RESPONSE=$(curl -s -w "\n%{http_code}" "$APIM_URL" || echo "000")
+RESPONSE=$(curl -s -w "\n%{http_code}" "$APIM_URL/internal-status-0123456789abcdef" || echo "000")
 HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
 BODY=$(echo "$RESPONSE" | sed '$d')
 
@@ -98,7 +98,7 @@ echo ""
 echo "Test 3: Response Time"
 echo "---------------------"
 START_TIME=$(date +%s%N)
-curl -s -o /dev/null "$APIM_URL" 2>/dev/null || true
+curl -s -o /dev/null "$APIM_URL/internal-status-0123456789abcdef" 2>/dev/null || true
 END_TIME=$(date +%s%N)
 RESPONSE_TIME=$(( (END_TIME - START_TIME) / 1000000 ))
 

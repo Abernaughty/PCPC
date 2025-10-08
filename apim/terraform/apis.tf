@@ -93,7 +93,7 @@ resource "azurerm_api_management_api_operation" "get_sets" {
       name          = "all"
       type          = "boolean"
       description   = "Return all sets without pagination"
-      default_value = "false"
+      default_value = "true"
       required      = false
     }
 
@@ -101,7 +101,7 @@ resource "azurerm_api_management_api_operation" "get_sets" {
       name          = "forceRefresh"
       type          = "boolean"
       description   = "Force refresh of cached data"
-      default_value = "false"
+      default_value = "true"
       required      = false
     }
   }
