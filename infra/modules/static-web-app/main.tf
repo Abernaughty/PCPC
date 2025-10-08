@@ -51,7 +51,9 @@ resource "azurerm_static_web_app" "this" {
 
   lifecycle {
     ignore_changes = [
-      tags["CreatedDate"]
+      tags["CreatedDate"],
+      repository_url,
+      repository_branch
     ]
   }
 }
