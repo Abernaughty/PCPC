@@ -22,8 +22,18 @@ This directory contains a complete Infrastructure as Code (IaC) implementation f
    export ARM_CLIENT_SECRET="your-service-principal-client-secret"
    export ARM_SUBSCRIPTION_ID="your-azure-subscription-id"
    export ARM_TENANT_ID="your-azure-tenant-id"
-   export TF_VAR_function_app_key="your-function-app-key"
+
+   # Retrieve the current Function App host key (default key shown)
+   FUNCTION_APP_KEY=$(az functionapp keys list \
+     --name "pcpc-func-<env>-001" \
+     --resource-group "pcpc-<env>-rg" \
+     --query "functionKeys.default" \
+     --output tsv)
+
+   export TF_VAR_function_app_key="$FUNCTION_APP_KEY"
    ```
+
+   > ℹ️ Azure DevOps pipelines use the `.ado/templates/deploy-apim.yml` template to fetch and secure this key automatically between Function App deployment and the Terraform APIM step.
 
 2. **Initialize Development Environment**:
 

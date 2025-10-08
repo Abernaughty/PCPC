@@ -151,6 +151,27 @@ steps:
           echo ""
         fi
 
+        SUBSCRIPTION_ID="${{ parameters.azureSubscription }}"
+        RESOURCE_GROUP="${{ parameters.resourceGroupName }}"
+        APIM_NAME="${{ parameters.apimName }}"
+        APIM_SUBSCRIPTION="master"
+
+        MASTER_KEY=$(
+          az rest \
+            --method post \
+            --url "https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.ApiManagement/service/${APIM_NAME}/subscriptions/${APIM_SUBSCRIPTION}/listSecrets?api-version=2024-05-01" \
+            --query primaryKey \
+            -o tsv
+        )
+
+        if [ -z "$MASTER_KEY" ]; then
+          echo "Could not resolve APIM subscription key" >&2
+          exit 1
+        fi
+
+        export APIM_SUBSCRIPTION_KEY="$MASTER_KEY"
+
+
         # Display summary
         echo "=========================================="
         echo "Smoke Tests Summary - ${{ upper(parameters.environment) }}"

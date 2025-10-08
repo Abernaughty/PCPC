@@ -101,7 +101,9 @@ stages:
       # Deploy APIM APIs and Policies
       - job: Deploy_APIM
         displayName: "Deploy APIM APIs & Policies"
-        dependsOn: Deploy_Infrastructure
+        dependsOn:
+          - Deploy_Infrastructure
+          - Deploy_Functions
         condition: succeeded()
         pool:
           vmImage: "ubuntu-latest"
