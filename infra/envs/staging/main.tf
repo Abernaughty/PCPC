@@ -132,6 +132,10 @@ module "function_app" {
     }
   )
 
+  application_insights_id                = module.application_insights.id
+  application_insights_key               = module.application_insights.instrumentation_key
+  application_insights_connection_string = module.application_insights.connection_string
+
   tags = local.common_tags
 
   depends_on = [module.resource_group, module.storage_account, module.cosmos_db, module.application_insights]
