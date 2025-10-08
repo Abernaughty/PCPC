@@ -34,9 +34,7 @@
     "healthCheckThreshold": 6
   },
   "cors": {
-    "allowedOrigins": [
-      "http://localhost:3000"
-    ],
+    "allowedOrigins": ["http://localhost:3000", "https://portal.azure.com"],
     "supportCredentials": false
   }
 }

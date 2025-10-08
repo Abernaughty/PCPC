@@ -151,10 +151,5 @@ resource "azurerm_cosmosdb_account" "this" {
 
   # Tags
   tags = local.common_tags
-
-  lifecycle {
-    ignore_changes = [
-      tags["CreatedDate"]
-    ]
-  }
+  
 }
