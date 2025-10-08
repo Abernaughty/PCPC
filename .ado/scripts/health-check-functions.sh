@@ -153,8 +153,8 @@ if [ -z "$FUNCTION_KEY" ]; then
   echo "  (This endpoint requires authentication)"
   add_warning
 else
-  SETLIST_URL="${FUNCTION_APP_URL}/api/GetSetList?all=true&code=${FUNCTION_KEY}"
-  echo "Testing: ${FUNCTION_APP_URL}/api/GetSetList?all=true&code=***"
+  SETLIST_URL="${FUNCTION_APP_URL}/sets?all=true&code=${FUNCTION_KEY}"
+  echo "Testing: ${FUNCTION_APP_URL}/sets?all=true&code=***"
 
   RESPONSE=$(curl -s -w "\n%{http_code}" "$SETLIST_URL" || echo "000")
   HTTP_CODE=$(echo "$RESPONSE" | tail -n1)

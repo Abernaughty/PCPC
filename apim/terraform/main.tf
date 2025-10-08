@@ -60,7 +60,7 @@ locals {
   )
 
   # Function App URL
-  function_app_url = "https://${data.azurerm_windows_function_app.backend.default_hostname}"
+  function_app_url = "https://${data.azurerm_windows_function_app.backend.default_hostname}/api"
 
   # Policy template variables
   policy_vars = {
