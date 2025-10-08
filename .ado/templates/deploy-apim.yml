@@ -65,11 +65,15 @@ steps:
       scriptLocation: "inlineScript"
       workingDirectory: "${{ parameters.workingDirectory }}"
       inlineScript: |
+        set -euo pipefail
+
         echo "Initializing Terraform for APIM configuration..."
 
-        # APIM Terraform uses local state (not remote backend)
-        # This is intentional - API/policy changes are fast and don't need shared state
-        terraform init
+        terraform init \
+          -backend-config="resource_group_name=$(TF_STATE_RESOURCE_GROUP)" \
+          -backend-config="storage_account_name=$(TF_STATE_STORAGE_ACCOUNT)" \
+          -backend-config="container_name=$(TF_STATE_CONTAINER)" \
+          -backend-config="key=apim/${{ parameters.environment }}/terraform.tfstate"
 
         echo "Terraform initialization complete"
 
@@ -101,7 +105,7 @@ steps:
         echo "Function App: ${FUNCTION_APP_NAME}"
         echo ""
 
-        set -eo pipefail
+        set -euo pipefail
 
         append_tf_var() {
           local name="$1"
@@ -240,6 +244,8 @@ steps:
       scriptLocation: "inlineScript"
       workingDirectory: "${{ parameters.workingDirectory }}"
       inlineScript: |
+        set -euo pipefail
+
         echo "Applying APIM API and policy configuration..."
         echo ""
 
@@ -255,6 +261,8 @@ steps:
       scriptType: "bash"
       scriptLocation: "inlineScript"
       inlineScript: |
+        set -euo pipefail
+
         echo "Verifying APIM configuration..."
 
         APIM_NAME="$(APIM_NAME)"
