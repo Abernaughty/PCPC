@@ -257,7 +257,7 @@ steps:
 
   - task: AzureCLI@2
     displayName: "Terraform Apply"
-    condition: and(succeeded(), eq(tasks.TerraformPlan.outputs['TerraformPlan.HasChanges'], 'true'))
+    condition: and(succeeded(), eq(variables['TerraformPlan.HasChanges'], 'true'))
     inputs:
       azureSubscription: ${{ parameters.azureSubscription }}
       scriptType: "bash"
