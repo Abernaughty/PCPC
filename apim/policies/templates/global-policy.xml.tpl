@@ -1,5 +1,6 @@
 <policies>
     <inbound>
+        <base />
         <cors>
             <allowed-origins>
 %{ for origin in cors_origins ~}
@@ -20,12 +21,16 @@
         </cors>
         <!-- Rate limiting with environment-specific configuration -->
         <rate-limit calls="${rate_limit_calls}" renewal-period="${rate_limit_period}" 
+                   total-calls-header-name="X-RateLimit-Limit"
                    remaining-calls-header-name="X-RateLimit-Remaining" 
                    remaining-calls-variable-name="remainingCalls" />
     </inbound>
     <backend>
+        <base />
         <forward-request />
     </backend>
     <outbound />
-    <on-error />
+    <on-error>
+        <base />
+    </on-error>
 </policies>
