@@ -6,7 +6,7 @@ jobs:
     displayName: "Validate Terraform Configuration"
     steps:
       # Install Terraform
-      - task: TerraformInstaller@0
+      - task: TerraformInstaller@1
         displayName: "Install Terraform $(terraformVersion)"
         inputs:
           terraformVersion: "$(terraformVersion)"
