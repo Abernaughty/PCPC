@@ -1,6 +1,7 @@
 <!-- Backend integration policy for Azure Functions -->
 <policies>
     <inbound>
+        <base />
         <!-- Set backend service URL dynamically based on environment -->
         <set-backend-service base-url="${function_app_url}" />
         
@@ -20,9 +21,11 @@
         </set-header>
     </inbound>
     <backend>
+        <base />
         <forward-request timeout="${backend_timeout}" />
     </backend>
     <outbound>
+        <base />
         <!-- Add response headers for debugging -->
         <set-header name="X-Powered-By" exists-action="override">
             <value>PCPC-APIM-${environment}</value>
@@ -32,6 +35,7 @@
         <set-header name="x-functions-key" exists-action="delete" />
     </outbound>
     <on-error>
+        <base />
         <!-- Log errors for monitoring -->
         <trace source="APIM-Backend-Error">
             <message>@($"Backend error: {context.LastError.Message}")</message>
