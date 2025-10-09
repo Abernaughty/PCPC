@@ -26,7 +26,6 @@
                    remaining-calls-variable-name="remainingCalls" />
     </inbound>
     <backend>
-        <base />
         <forward-request />
     </backend>
     <outbound />
