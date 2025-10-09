@@ -215,6 +215,7 @@ steps:
       ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
 
   - task: AzureCLI@2
+    name: TerraformPlan
     displayName: "Terraform Plan"
     inputs:
       azureSubscription: ${{ parameters.azureSubscription }}
@@ -256,6 +257,7 @@ steps:
 
   - task: AzureCLI@2
     displayName: "Terraform Apply"
+    condition: and(succeeded(), eq(steps.TerraformPlan.outputs['TerraformPlan.HasChanges'], 'true'))
     inputs:
       azureSubscription: ${{ parameters.azureSubscription }}
       scriptType: "bash"
