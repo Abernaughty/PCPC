@@ -245,7 +245,7 @@ steps:
 
   - task: AzureCLI@2
     displayName: "Terraform Apply"
-    condition: and(succeeded(), eq(steps.TerraformPlan.outputs['TerraformPlan.HasChanges'], 'true'))
+    condition: and(succeeded(), eq(tasks.TerraformPlan.outputs['TerraformPlan.HasChanges'], 'true'))
     env:
       TF_VAR_function_app_key: $(TF_VAR_function_app_key)
     inputs:
