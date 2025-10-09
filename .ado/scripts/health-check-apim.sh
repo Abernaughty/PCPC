@@ -166,7 +166,7 @@ echo ""
 # Test 6: Rate limiting headers
 echo "Test 6: Rate Limiting"
 echo "---------------------"
-HEADERS=$(curl -s -H "Ocp-Apim-Subscription-Key: $APIM_SUBSCRIPTION_KEY" -H "Accept: application/json" -H "Origin: https://pokedata.maber.io" "$APIM_URL/api/v1/sets" -D - 2>/dev/null || echo "")
+HEADERS=$(curl -s -D - -o /dev/null -H "Ocp-Apim-Subscription-Key: $APIM_SUBSCRIPTION_KEY" -H "Accept: application/json" -H "Origin: https://pokedata.maber.io" "$APIM_URL/api/v1/sets" || echo "")
 
   if echo "$HEADERS" | grep -qiE "x-rate[-]?limit"; then
     echo "✓ Rate limiting headers present"

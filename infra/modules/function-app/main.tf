@@ -222,6 +222,8 @@ resource "azurerm_windows_function_app" "this" {
     ignore_changes = [
       app_settings["WEBSITE_NODE_DEFAULT_VERSION"],
       app_settings["WEBSITE_RUN_FROM_PACKAGE"],
+      app_settings["WEBSITE_CONTENTAZUREFILECONNECTIONSTRING"],
+      app_settings["WEBSITE_CONTENTSHARE"]
     ]
   }
 }
