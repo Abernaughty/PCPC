@@ -21,7 +21,6 @@
         </set-header>
     </inbound>
     <backend>
-        <base />
         <forward-request timeout="${backend_timeout}" />
     </backend>
     <outbound>

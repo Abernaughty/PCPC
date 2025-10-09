@@ -10,7 +10,6 @@
         </cache-lookup>
     </inbound>
     <backend>
-        <base />
         <forward-request />
     </backend>
     <outbound>
