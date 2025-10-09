@@ -91,6 +91,7 @@ steps:
         echo "Validation complete"
 
   - task: AzureCLI@2
+    name: TerraformPlan
     displayName: "Terraform Plan"
     env:
       FUNCTION_APP_KEY: $(FUNCTION_APP_KEY)
@@ -244,6 +245,7 @@ steps:
 
   - task: AzureCLI@2
     displayName: "Terraform Apply"
+    condition: and(succeeded(), eq(steps.TerraformPlan.outputs['TerraformPlan.HasChanges'], 'true'))
     env:
       TF_VAR_function_app_key: $(TF_VAR_function_app_key)
     inputs:
