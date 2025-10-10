@@ -48,8 +48,9 @@ locals {
 
   # Build app settings with defaults - simplified for Node.js
   default_app_settings = {
-    "FUNCTIONS_WORKER_RUNTIME" = "node"
-    "WEBSITE_RUN_FROM_PACKAGE" = "1"
+    "FUNCTIONS_WORKER_RUNTIME"     = "node"
+    "WEBSITE_RUN_FROM_PACKAGE"     = "1"
+    "WEBSITE_CORS_ALLOWED_ORIGINS" = join(",", local.merged_cors_origins)
   }
 
   # Transform hyphenated variable names to underscores for Node.js compatibility
