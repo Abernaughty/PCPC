@@ -48,8 +48,9 @@ locals {
 
   # Build app settings with defaults - simplified for Node.js
   default_app_settings = {
-    "FUNCTIONS_WORKER_RUNTIME" = "node"
-    "WEBSITE_RUN_FROM_PACKAGE" = "1"
+    "FUNCTIONS_WORKER_RUNTIME"     = "node"
+    "WEBSITE_RUN_FROM_PACKAGE"     = "1"
+    "WEBSITE_CORS_ALLOWED_ORIGINS" = join(",", local.merged_cors_origins)
   }
 
   # Transform hyphenated variable names to underscores for Node.js compatibility
@@ -326,8 +327,10 @@ resource "azurerm_linux_function_app" "this" {
 
   lifecycle {
     ignore_changes = [
+      app_settings["AzureWebJobsStorage"],
+      app_settings["WEBSITE_CONTENTAZUREFILECONNECTIONSTRING"],
+      app_settings["WEBSITE_CONTENTSHARE"],
       app_settings["WEBSITE_NODE_DEFAULT_VERSION"],
-      app_settings["WEBSITE_RUN_FROM_PACKAGE"],
     ]
   }
 }
