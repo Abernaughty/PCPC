@@ -140,6 +140,12 @@ variable "application_insights_connection_string" {
   sensitive   = true
 }
 
+variable "create_application_insights" {
+  description = "When true, this module provisions a new Application Insights instance if enabled; otherwise an external instance must be supplied."
+  type        = bool
+  default     = true
+}
+
 variable "identity_type" {
   description = "The type of managed identity (SystemAssigned, UserAssigned, SystemAssigned,UserAssigned)"
   type        = string

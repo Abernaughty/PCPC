@@ -136,6 +136,7 @@ module "function_app" {
   application_insights_id                = module.application_insights.id
   application_insights_key               = module.application_insights.instrumentation_key
   application_insights_connection_string = module.application_insights.connection_string
+  create_application_insights            = false
 
   tags = local.common_tags
 
