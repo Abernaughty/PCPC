@@ -326,8 +326,10 @@ resource "azurerm_linux_function_app" "this" {
 
   lifecycle {
     ignore_changes = [
+      app_settings["AzureWebJobsStorage"],
+      app_settings["WEBSITE_CONTENTAZUREFILECONNECTIONSTRING"],
+      app_settings["WEBSITE_CONTENTSHARE"],
       app_settings["WEBSITE_NODE_DEFAULT_VERSION"],
-      app_settings["WEBSITE_RUN_FROM_PACKAGE"],
     ]
   }
 }
