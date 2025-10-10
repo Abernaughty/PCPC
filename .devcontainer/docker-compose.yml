@@ -1,7 +1,7 @@
 services:
   devcontainer:
     image: maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-devcontainer:latest
-    pull_policy: always #Always pull fresh image
+    pull_policy: if_not_present
     volumes:
       - ..:/workspace:cached
       - /var/run/docker.sock:/var/run/docker-host.sock
