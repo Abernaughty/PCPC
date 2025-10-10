@@ -25,6 +25,7 @@ steps:
 
   - task: AzureCLI@2
     displayName: "Run Health Checks"
+    name: SmokeTests
     inputs:
       azureSubscription: ${{ parameters.azureSubscription }}
       scriptType: "bash"
@@ -186,6 +187,55 @@ steps:
           echo "✅ All smoke tests passed successfully"
           exit 0
         fi
+
+  - script: |
+      set -euo pipefail
+
+      RESULTS_DIR="$(System.DefaultWorkingDirectory)/test-results/${ENV_NAME}"
+      mkdir -p "$RESULTS_DIR"
+      RESULTS_FILE="$RESULTS_DIR/smoke-test-results.xml"
+
+      PASSED=${PASSED_COUNT:-0}
+      WARNINGS=${WARNING_COUNT:-0}
+      FAILED=${FAILED_COUNT:-0}
+
+      if ! [[ "$PASSED" =~ ^[0-9]+$ ]]; then PASSED=0; fi
+      if ! [[ "$WARNINGS" =~ ^[0-9]+$ ]]; then WARNINGS=0; fi
+      if ! [[ "$FAILED" =~ ^[0-9]+$ ]]; then FAILED=0; fi
+
+      FAILURES_ATTR=0
+      SKIPPED_ATTR=0
+
+      if [ "$FAILED" -gt 0 ]; then
+        FAILURES_ATTR=1
+      fi
+
+      if [ "$WARNINGS" -gt 0 ] && [ "$FAILED" -eq 0 ]; then
+        SKIPPED_ATTR=1
+      fi
+
+      {
+        echo '<?xml version="1.0" encoding="UTF-8"?>'
+        echo "<testsuite name=\"Smoke Tests - ${ENV_DISPLAY}\" tests=\"1\" failures=\"${FAILURES_ATTR}\" errors=\"0\" skipped=\"${SKIPPED_ATTR}\">"
+        echo "  <testcase classname=\"SmokeTests\" name=\"Environment: ${ENV_DISPLAY}\">"
+
+        if [ "$FAILED" -gt 0 ]; then
+          echo "    <failure message=\"${FAILED} component(s) unhealthy\">See smoke test task log for details. Passed: ${PASSED}, Warnings: ${WARNINGS}, Failed: ${FAILED}</failure>"
+        elif [ "$WARNINGS" -gt 0 ]; then
+          echo "    <skipped message=\"${WARNINGS} component(s) reported warnings\">See smoke test task log for details.</skipped>"
+        fi
+
+        echo "  </testcase>"
+        echo "</testsuite>"
+      } > "$RESULTS_FILE"
+    displayName: "Generate Smoke Test Report"
+    condition: always()
+    env:
+      PASSED_COUNT: $(SmokeTests.TestsPassed)
+      WARNING_COUNT: $(SmokeTests.TestsWarnings)
+      FAILED_COUNT: $(SmokeTests.TestsFailed)
+      ENV_NAME: ${{ parameters.environment }}
+      ENV_DISPLAY: ${{ upper(parameters.environment) }}
 
   - task: PublishTestResults@2
     displayName: "Publish Test Results"
