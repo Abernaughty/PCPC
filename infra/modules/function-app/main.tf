@@ -109,7 +109,7 @@ resource "azurerm_service_plan" "this" {
 # -----------------------------------------------------------------------------
 
 resource "azurerm_application_insights" "this" {
-  count = var.application_insights_enabled && var.application_insights_id == null ? 1 : 0
+  count = var.application_insights_enabled && var.create_application_insights ? 1 : 0
 
   name                = "${var.name}-insights"
   location            = var.location
@@ -189,10 +189,12 @@ resource "azurerm_windows_function_app" "this" {
 
     # Application insights
     application_insights_connection_string = var.application_insights_enabled ? (
-      var.application_insights_connection_string != null ? var.application_insights_connection_string : azurerm_application_insights.this[0].connection_string
+      var.application_insights_connection_string != null ? var.application_insights_connection_string :
+      var.create_application_insights ? azurerm_application_insights.this[0].connection_string : null
     ) : null
     application_insights_key = var.application_insights_enabled ? (
-      var.application_insights_key != null ? var.application_insights_key : azurerm_application_insights.this[0].instrumentation_key
+      var.application_insights_key != null ? var.application_insights_key :
+      var.create_application_insights ? azurerm_application_insights.this[0].instrumentation_key : null
     ) : null
 
     # Runtime stack - simplified for Node.js only
@@ -295,10 +297,12 @@ resource "azurerm_linux_function_app" "this" {
 
     # Application insights
     application_insights_connection_string = var.application_insights_enabled ? (
-      var.application_insights_connection_string != null ? var.application_insights_connection_string : azurerm_application_insights.this[0].connection_string
+      var.application_insights_connection_string != null ? var.application_insights_connection_string :
+      var.create_application_insights ? azurerm_application_insights.this[0].connection_string : null
     ) : null
     application_insights_key = var.application_insights_enabled ? (
-      var.application_insights_key != null ? var.application_insights_key : azurerm_application_insights.this[0].instrumentation_key
+      var.application_insights_key != null ? var.application_insights_key :
+      var.create_application_insights ? azurerm_application_insights.this[0].instrumentation_key : null
     ) : null
 
     # Runtime stack - simplified for Node.js only

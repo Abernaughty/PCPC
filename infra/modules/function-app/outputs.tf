@@ -78,19 +78,25 @@ output "storage_account_primary_key" {
 # Application Insights outputs
 output "application_insights_id" {
   description = "The ID of the Application Insights instance"
-  value       = var.application_insights_enabled && var.application_insights_id == null ? azurerm_application_insights.this[0].id : var.application_insights_id
+  value = var.application_insights_enabled ? (
+    var.create_application_insights ? azurerm_application_insights.this[0].id : var.application_insights_id
+  ) : null
 }
 
 output "application_insights_instrumentation_key" {
   description = "The instrumentation key of the Application Insights instance"
-  value       = var.application_insights_enabled && var.application_insights_id == null ? azurerm_application_insights.this[0].instrumentation_key : var.application_insights_key
-  sensitive   = true
+  value = var.application_insights_enabled ? (
+    var.create_application_insights ? azurerm_application_insights.this[0].instrumentation_key : var.application_insights_key
+  ) : null
+  sensitive = true
 }
 
 output "application_insights_connection_string" {
   description = "The connection string of the Application Insights instance"
-  value       = var.application_insights_enabled && var.application_insights_id == null ? azurerm_application_insights.this[0].connection_string : var.application_insights_connection_string
-  sensitive   = true
+  value = var.application_insights_enabled ? (
+    var.create_application_insights ? azurerm_application_insights.this[0].connection_string : var.application_insights_connection_string
+  ) : null
+  sensitive = true
 }
 
 # Configuration outputs

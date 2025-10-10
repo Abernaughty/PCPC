@@ -37,7 +37,8 @@
         "bradlc.vscode-tailwindcss",
         "svelte.svelte-vscode",
         "github.copilot-chat",
-        "github.vscode-pull-request-github"
+        "github.vscode-pull-request-github",
+        "openai.chatgpt"
       ],
 
       "settings": {

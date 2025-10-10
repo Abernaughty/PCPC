@@ -20,7 +20,6 @@ terraform {
     key                  = "prod.terraform.tfstate"
     tenant_id            = "5f445a68-ec75-42cf-a50f-6ec158ee675c"
     subscription_id      = "555b4cfa-ad2e-4c71-9433-620a59cf7616"
-    lock_timeout         = "5m"
   }
 }
 
@@ -137,6 +136,7 @@ module "function_app" {
   application_insights_id                = module.application_insights.id
   application_insights_key               = module.application_insights.instrumentation_key
   application_insights_connection_string = module.application_insights.connection_string
+  create_application_insights            = false
 
   tags = local.common_tags
 
