@@ -96,6 +96,7 @@ local.settings.json
 secrets.auto.tfvars
 .terraform/
 .terraform.lock.hcl
+*.tfplan
 terraform.tfplan
 terraform.tfplan.json
 
