@@ -131,9 +131,109 @@ steps:
       echo "=========================================="
     displayName: "Pre-Deployment Diagnostics"
 
+  # Calculate deterministic hash for SWA artifact to detect meaningful changes
+  - script: |
+      set -euo pipefail
+
+      ARTIFACT_DIR="$(Pipeline.Workspace)/drop/swa"
+
+      if [ ! -d "$ARTIFACT_DIR" ]; then
+        echo "ERROR: Static Web App artifact directory not found at $ARTIFACT_DIR"
+        exit 1
+      fi
+
+      echo "Calculating Static Web App artifact hash..."
+
+      export ARTIFACT_DIR
+      HASH=$(python3 - <<'PY'
+import hashlib
+import os
+
+root = os.environ["ARTIFACT_DIR"]
+digest = hashlib.sha256()
+
+for dirpath, _, filenames in os.walk(root):
+    filenames.sort()
+    rel_dir = os.path.relpath(dirpath, root)
+    if rel_dir == ".":
+        rel_dir = ""
+    for filename in filenames:
+        rel_path = os.path.normpath(os.path.join(rel_dir, filename))
+        digest.update(rel_path.replace(os.sep, "/").encode("utf-8"))
+        file_path = os.path.join(dirpath, filename)
+        with open(file_path, "rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+
+print(digest.hexdigest())
+PY
+)
+
+      HASH=$(echo "$HASH" | tr -d '\n\r')
+
+      if [ -z "$HASH" ]; then
+        echo "ERROR: Failed to compute Static Web App artifact hash"
+        exit 1
+      fi
+
+      echo "Static Web App artifact hash: $HASH"
+      echo "##vso[task.setvariable variable=SWAArtifactHash]$HASH"
+      echo "##vso[task.setvariable variable=ShouldDeploySWA]true"
+    displayName: "Compute SWA Artifact Hash"
+
+  # Compare artifact hash with deployed hash stored in SWA app settings
+  - task: AzureCLI@2
+    displayName: "Evaluate SWA Deployment Hash"
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        set -euo pipefail
+
+        ARTIFACT_HASH="$(SWAArtifactHash)"
+        APP_NAME="${{ parameters.staticWebAppName }}"
+        RESOURCE_GROUP="${{ parameters.resourceGroupName }}"
+
+        echo "Artifact hash: $ARTIFACT_HASH"
+
+        set +e
+        EXISTING_HASH=$(az staticwebapp appsettings list \
+          --name "$APP_NAME" \
+          --resource-group "$RESOURCE_GROUP" \
+          --query "properties.DEPLOY_PACKAGE_HASH" \
+          -o tsv 2>/dev/null)
+        CLI_EXIT=$?
+        set -e
+
+        if [ $CLI_EXIT -ne 0 ]; then
+          echo "Unable to read existing deployment hash (Static Web App settings unavailable). Defaulting to deploy."
+          SHOULD_DEPLOY=true
+          EXISTING_HASH=""
+        elif [ -z "$EXISTING_HASH" ]; then
+          echo "No deployment hash stored for Static Web App. Proceeding with deployment."
+          SHOULD_DEPLOY=true
+        elif [ "$EXISTING_HASH" = "$ARTIFACT_HASH" ]; then
+          echo "Static Web App artifact hash matches deployed hash. Skipping redeployment."
+          SHOULD_DEPLOY=false
+        else
+          echo "Static Web App artifact hash differs from deployed hash. Redeploying."
+          SHOULD_DEPLOY=true
+        fi
+
+        echo "Current deployed hash: ${EXISTING_HASH:-<none>}"
+        echo "##vso[task.setvariable variable=ExistingSWAHash]$EXISTING_HASH"
+        echo "##vso[task.setvariable variable=ShouldDeploySWA]$SHOULD_DEPLOY"
+
+  - script: |
+      echo "Static Web App artifact unchanged from last deployment. Skipping publish step."
+    displayName: "Skip SWA Deployment"
+    condition: and(succeeded(), eq(variables['ShouldDeploySWA'], 'false'))
+
   # Get Static Web App deployment token
   - task: AzureCLI@2
     displayName: "Get Deployment Token"
+    condition: and(succeeded(), eq(variables['ShouldDeploySWA'], 'true'))
     inputs:
       azureSubscription: ${{ parameters.azureSubscription }}
       scriptType: bash
@@ -159,6 +259,7 @@ steps:
   # Deploy to Azure Static Web Apps
   - task: AzureStaticWebApp@0
     displayName: "Deploy to Static Web App"
+    condition: and(succeeded(), eq(variables['ShouldDeploySWA'], 'true'))
     inputs:
       azure_static_web_apps_api_token: $(DEPLOYMENT_TOKEN)
       app_location: "swa"
@@ -171,6 +272,31 @@ steps:
       echo "Waiting 30 seconds for deployment to propagate..."
       sleep 30
     displayName: "Wait for Deployment Propagation"
+    condition: and(succeeded(), eq(variables['ShouldDeploySWA'], 'true'))
+
+  # Persist newly deployed hash to Static Web App settings
+  - task: AzureCLI@2
+    displayName: "Persist SWA Deployment Hash"
+    condition: and(succeeded(), eq(variables['ShouldDeploySWA'], 'true'))
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        set -euo pipefail
+
+        APP_NAME="${{ parameters.staticWebAppName }}"
+        RESOURCE_GROUP="${{ parameters.resourceGroupName }}"
+        ARTIFACT_HASH="$(SWAArtifactHash)"
+
+        echo "Storing deployment hash on Static Web App..."
+        az staticwebapp appsettings set \
+          --name "$APP_NAME" \
+          --resource-group "$RESOURCE_GROUP" \
+          --setting-names DEPLOY_PACKAGE_HASH="$ARTIFACT_HASH" \
+          --output none
+
+        echo "✓ Deployment hash updated successfully"
 
   # Get Static Web App URL
   - task: AzureCLI@2

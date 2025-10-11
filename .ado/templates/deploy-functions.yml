@@ -79,6 +79,106 @@ steps:
       fi
     displayName: "Display Release Manifest"
 
+  # Calculate deterministic hash for functions artifact to enable diff-based deployments
+  - script: |
+      set -euo pipefail
+
+      ARTIFACT_DIR="$(System.ArtifactsDirectory)/${{ parameters.artifactName }}/functions"
+
+      if [ ! -d "$ARTIFACT_DIR" ]; then
+        echo "##vso[task.logissue type=error]Functions artifact directory not found at $ARTIFACT_DIR"
+        exit 1
+      fi
+
+      echo "Calculating functions artifact hash..."
+
+      export ARTIFACT_DIR
+      HASH=$(python3 - <<'PY'
+import hashlib
+import os
+
+root = os.environ["ARTIFACT_DIR"]
+digest = hashlib.sha256()
+
+for dirpath, _, filenames in os.walk(root):
+    filenames.sort()
+    rel_dir = os.path.relpath(dirpath, root)
+    if rel_dir == ".":
+        rel_dir = ""
+    for filename in filenames:
+        rel_path = os.path.normpath(os.path.join(rel_dir, filename))
+        digest.update(rel_path.replace(os.sep, "/").encode("utf-8"))
+        file_path = os.path.join(dirpath, filename)
+        with open(file_path, "rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+
+print(digest.hexdigest())
+PY
+)
+
+      HASH=$(echo "$HASH" | tr -d '\n\r')
+
+      if [ -z "$HASH" ]; then
+        echo "##vso[task.logissue type=error]Failed to compute artifact hash"
+        exit 1
+      fi
+
+      echo "Functions artifact hash: $HASH"
+      echo "##vso[task.setvariable variable=FunctionsArtifactHash]$HASH"
+      echo "##vso[task.setvariable variable=ShouldDeployFunctions]true"
+    displayName: "Compute Functions Artifact Hash"
+
+  # Compare artifact hash with deployed hash stored in app settings
+  - task: AzureCLI@2
+    displayName: "Evaluate Functions Deployment Hash"
+    inputs:
+      azureSubscription: "${{ parameters.azureSubscription }}"
+      scriptType: "bash"
+      scriptLocation: "inlineScript"
+      inlineScript: |
+        set -euo pipefail
+
+        ARTIFACT_HASH="$(FunctionsArtifactHash)"
+        APP_NAME="${{ parameters.functionAppName }}"
+        RESOURCE_GROUP="${{ parameters.resourceGroupName }}"
+
+        echo "Artifact hash: $ARTIFACT_HASH"
+
+        set +e
+        EXISTING_HASH=$(az functionapp config appsettings list \
+          --name "$APP_NAME" \
+          --resource-group "$RESOURCE_GROUP" \
+          --query "[?name=='DEPLOY_PACKAGE_HASH'].value" \
+          -o tsv 2>/dev/null)
+        CLI_EXIT=$?
+        set -e
+
+        if [ $CLI_EXIT -ne 0 ]; then
+          echo "No existing deployment hash found (function app config unavailable). Defaulting to deploy."
+          SHOULD_DEPLOY=true
+          EXISTING_HASH=""
+        elif [ -z "$EXISTING_HASH" ]; then
+          echo "No previous deployment hash stored. Function app will be updated."
+          SHOULD_DEPLOY=true
+        elif [ "$EXISTING_HASH" = "$ARTIFACT_HASH" ]; then
+          echo "Artifact hash matches deployed hash. Skipping function app redeployment."
+          SHOULD_DEPLOY=false
+        else
+          echo "Artifact hash differs from deployed hash. Function app will be updated."
+          SHOULD_DEPLOY=true
+        fi
+
+        echo "Current deployed hash: ${EXISTING_HASH:-<none>}"
+        echo "##vso[task.setvariable variable=ExistingFunctionsHash]$EXISTING_HASH"
+        echo "##vso[task.setvariable variable=ShouldDeployFunctions]$SHOULD_DEPLOY"
+    continueOnError: false
+
+  - script: |
+      echo "Functions artifact unchanged from last deployment. Skipping publish step."
+    displayName: "Skip Functions Deployment"
+    condition: and(succeeded(), eq(variables['ShouldDeployFunctions'], 'false'))
+
   # Install production dependencies (node_modules excluded from artifact)
   - script: |
       cd $(System.ArtifactsDirectory)/${{ parameters.artifactName }}/functions
@@ -98,10 +198,12 @@ steps:
       echo "Total files in functions directory:"
       find . -type f | wc -l
     displayName: "Install Backend Dependencies"
+    condition: and(succeeded(), eq(variables['ShouldDeployFunctions'], 'true'))
 
   # Deploy Azure Functions
   - task: AzureFunctionApp@2
     displayName: "Deploy Azure Functions to ${{ parameters.environment }}"
+    condition: and(succeeded(), eq(variables['ShouldDeployFunctions'], 'true'))
     inputs:
       azureSubscription: "${{ parameters.azureSubscription }}"
       appType: "functionApp"
@@ -116,6 +218,31 @@ steps:
       sleep 30
       echo "Function App should be ready for health checks"
     displayName: "Wait for Function App Startup"
+    condition: and(succeeded(), eq(variables['ShouldDeployFunctions'], 'true'))
+
+  # Persist newly deployed hash to app settings for future runs
+  - task: AzureCLI@2
+    displayName: "Persist Functions Deployment Hash"
+    condition: and(succeeded(), eq(variables['ShouldDeployFunctions'], 'true'))
+    inputs:
+      azureSubscription: "${{ parameters.azureSubscription }}"
+      scriptType: "bash"
+      scriptLocation: "inlineScript"
+      inlineScript: |
+        set -euo pipefail
+
+        APP_NAME="${{ parameters.functionAppName }}"
+        RESOURCE_GROUP="${{ parameters.resourceGroupName }}"
+        ARTIFACT_HASH="$(FunctionsArtifactHash)"
+
+        echo "Storing deployment hash on function app..."
+        az functionapp config appsettings set \
+          --name "$APP_NAME" \
+          --resource-group "$RESOURCE_GROUP" \
+          --settings DEPLOY_PACKAGE_HASH="$ARTIFACT_HASH" \
+          --output none
+
+        echo "✓ Deployment hash updated successfully"
 
   # Get Function App URL and Function Key
   - task: AzureCLI@2
