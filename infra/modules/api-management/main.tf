@@ -15,8 +15,8 @@ locals {
   # Environment-specific SKU configuration
   sku_config = {
     dev     = "Consumption_0"
-    staging = "Developer_1"
-    prod    = "Standard_1"
+    staging = "Consumption_0"
+    prod    = "Consumption_0"
   }
 
   selected_sku = var.sku_name != "Consumption_0" ? var.sku_name : local.sku_config[var.environment]

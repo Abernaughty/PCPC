@@ -442,7 +442,7 @@ cosmos_db_max_throughput   = 4000
 function_app_plan_sku = "EP1"  # Elastic Premium
 
 # API Management Configuration
-apim_sku_name = "Developer_1"
+apim_sku_name = "Consumption_0"
 
 # Storage Configuration
 storage_account_tier = "Standard"
