@@ -223,10 +223,9 @@ resource "azurerm_windows_function_app" "this" {
 
   lifecycle {
     ignore_changes = [
-      app_settings["WEBSITE_NODE_DEFAULT_VERSION"],
       app_settings["WEBSITE_RUN_FROM_PACKAGE"],
-      app_settings["WEBSITE_CONTENTAZUREFILECONNECTIONSTRING"],
-      app_settings["WEBSITE_CONTENTSHARE"]
+      app_settings["APPINSIGHTS_INSTRUMENTATIONKEY"],
+      app_settings["APPLICATIONINSIGHTS_CONNECTION_STRING"]
     ]
   }
 }
@@ -331,10 +330,9 @@ resource "azurerm_linux_function_app" "this" {
 
   lifecycle {
     ignore_changes = [
-      app_settings["AzureWebJobsStorage"],
-      app_settings["WEBSITE_CONTENTAZUREFILECONNECTIONSTRING"],
-      app_settings["WEBSITE_CONTENTSHARE"],
-      app_settings["WEBSITE_NODE_DEFAULT_VERSION"],
+      app_settings["WEBSITE_RUN_FROM_PACKAGE"],
+      app_settings["APPINSIGHTS_INSTRUMENTATIONKEY"],
+      app_settings["APPLICATIONINSIGHTS_CONNECTION_STRING"]
     ]
   }
 }
