@@ -4,7 +4,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 4.0"
+      version = "~> 4.47.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -88,9 +88,9 @@ module "storage_account" {
 
 # File share to host Function App content (ensures app uses the Terraform-managed storage account)
 resource "azurerm_storage_share" "function_app_content" {
-  name                 = "pcpc-func-${local.environment}"
-  storage_account_id   = module.storage_account.storage_account_id
-  quota                = 1024
+  name               = "pcpc-func-${local.environment}"
+  storage_account_id = module.storage_account.storage_account_id
+  quota              = 1024
 
   depends_on = [module.storage_account]
 }
@@ -131,15 +131,15 @@ module "function_app" {
     var.function_app_secrets, # Secrets from Key Vault (with hyphens)
     var.function_app_config,  # Non-secret config (with underscores)
     {
-      "COSMOS_DB_CONNECTION_STRING"           = module.cosmos_db.primary_sql_connection_string
-      "COSMOS_DB_ENDPOINT"                    = module.cosmos_db.endpoint
-      "COSMOS_DB_KEY"                         = module.cosmos_db.primary_key
-      "WEBSITE_NODE_DEFAULT_VERSION"          = "~22"
-      "FUNCTIONS_WORKER_RUNTIME"              = "node"
-      "FUNCTIONS_EXTENSION_VERSION"           = "~4"
-      "APPINSIGHTS_INSTRUMENTATIONKEY"        = module.application_insights.instrumentation_key
-      "APPLICATIONINSIGHTS_CONNECTION_STRING" = module.application_insights.connection_string
-      "AzureWebJobsStorage"                   = module.storage_account.primary_connection_string
+      "COSMOS_DB_CONNECTION_STRING"              = module.cosmos_db.primary_sql_connection_string
+      "COSMOS_DB_ENDPOINT"                       = module.cosmos_db.endpoint
+      "COSMOS_DB_KEY"                            = module.cosmos_db.primary_key
+      "WEBSITE_NODE_DEFAULT_VERSION"             = "~22"
+      "FUNCTIONS_WORKER_RUNTIME"                 = "node"
+      "FUNCTIONS_EXTENSION_VERSION"              = "~4"
+      "APPINSIGHTS_INSTRUMENTATIONKEY"           = module.application_insights.instrumentation_key
+      "APPLICATIONINSIGHTS_CONNECTION_STRING"    = module.application_insights.connection_string
+      "AzureWebJobsStorage"                      = module.storage_account.primary_connection_string
       "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING" = module.storage_account.primary_connection_string
       "WEBSITE_CONTENTSHARE"                     = azurerm_storage_share.function_app_content.name
     }
