@@ -14,7 +14,7 @@ variable "project_name" {
 variable "location" {
   description = "The Azure region for resources"
   type        = string
-  default     = "East US 2"
+  default     = "Central US"
 }
 
 # Storage Account Configuration
@@ -106,7 +106,7 @@ variable "function_app_config" {
 variable "static_web_app_location" {
   description = "The location for the Static Web App"
   type        = string
-  default     = "East US 2"
+  default     = "Central US"
 }
 
 variable "static_web_app_sku_tier" {

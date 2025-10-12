@@ -36,6 +36,9 @@ echo "[devcontainer] Certificate installed, checking data plane readiness..."
 
 # echo "[devcontainer] Startup seeding complete."
 
+echo "Checking Azure CLI login"
+az account show >/dev/null 2>&1 || az login --use-device-code
+
 echo "Configure git"
 git config --global user.name "Michael Abernathy"
 git config --global user.email "mabernathy87@gmail.com"

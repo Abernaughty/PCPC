@@ -264,6 +264,8 @@ steps:
       scriptLocation: "inlineScript"
       workingDirectory: "${{ parameters.workingDirectory }}/${{ parameters.environment }}"
       inlineScript: |
+        set -euo pipefail
+
         echo "Applying Terraform changes for ${{ parameters.environment }}..."
         echo ""
 
@@ -279,7 +281,12 @@ steps:
 
         # Apply the plan
         # Note: secrets.auto.tfvars is automatically loaded by Terraform
-        terraform apply -auto-approve tfplan
+        if ! terraform apply -auto-approve tfplan; then
+          APPLY_EXIT_CODE=${PIPESTATUS[0]}
+          echo ""
+          echo "✗ Terraform apply failed with exit code ${APPLY_EXIT_CODE}"
+          exit $APPLY_EXIT_CODE
+        fi
 
         echo ""
         echo "✓ Terraform apply complete"
