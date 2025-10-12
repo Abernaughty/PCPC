@@ -37,7 +37,36 @@ echo "[devcontainer] Certificate installed, checking data plane readiness..."
 # echo "[devcontainer] Startup seeding complete."
 
 echo "Checking Azure CLI login"
-az account show >/dev/null 2>&1 || az login --use-device-code
+azure_config_dir="${AZURE_CONFIG_DIR:-$HOME/.azure}"
+usable_azure_dir=""
+
+if [ -d "$azure_config_dir" ]; then
+  if [ -w "$azure_config_dir" ]; then
+    usable_azure_dir="$azure_config_dir"
+  fi
+else
+  if mkdir -p "$azure_config_dir" 2>/dev/null && [ -w "$azure_config_dir" ]; then
+    usable_azure_dir="$azure_config_dir"
+  fi
+fi
+
+if [ -z "$usable_azure_dir" ]; then
+  fallback_dir="$HOME/.azure-config"
+  if mkdir -p "$fallback_dir" 2>/dev/null && [ -w "$fallback_dir" ]; then
+    usable_azure_dir="$fallback_dir"
+    export AZURE_CONFIG_DIR="$fallback_dir"
+    if ! grep -q 'AZURE_CONFIG_DIR=' "$HOME/.bashrc" 2>/dev/null; then
+      echo 'export AZURE_CONFIG_DIR="$HOME/.azure-config"' >> "$HOME/.bashrc"
+    fi
+    echo "[devcontainer] Using fallback Azure config directory at $fallback_dir"
+  else
+    echo "[devcontainer] Skipping Azure CLI login check (no writable Azure config directory)"
+  fi
+fi
+
+if [ -n "$usable_azure_dir" ]; then
+  az account show >/dev/null 2>&1 || az login --use-device-code
+fi
 
 echo "Configure git"
 git config --global user.name "Michael Abernathy"
