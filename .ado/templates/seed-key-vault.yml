@@ -1,0 +1,97 @@
+parameters:
+  - name: environment
+    type: string
+    values:
+      - dev
+      - staging
+      - prod
+  - name: azureSubscription
+    type: string
+  - name: keyVaultName
+    type: string
+    default: ""
+  - name: secretSpecs
+    type: object
+    default:
+      - secretName: "POKEDATA-API-KEY"
+        variableName: "POKEDATA_API_KEY"
+      - secretName: "POKEMON-TCG-API-KEY"
+        variableName: "POKEMON_TCG_API_KEY"
+      - secretName: "ARM-CLIENT-ID"
+        variableName: "ARM_CLIENT_ID"
+      - secretName: "ARM-CLIENT-SECRET"
+        variableName: "ARM_CLIENT_SECRET"
+
+variables:
+  keyVaultNameResolved: ${{ parameters.keyVaultName != '' ? parameters.keyVaultName : format('pcpc-kv-{0}', parameters.environment) }}
+
+stages:
+  - stage: SeedSecrets
+    displayName: "Seed Key Vault Secrets"
+    condition: eq(variables['Build.Reason'], 'Manual')
+    jobs:
+      - deployment: Seed_${{ parameters.environment }}
+        displayName: "Seed ${{ parameters.environment }} secrets"
+        environment: pcpc-${{ parameters.environment }}
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                  displayName: "Checkout repository"
+
+                - task: AzureCLI@2
+                  displayName: "Seed secrets into Key Vault"
+                  inputs:
+                    azureSubscription: ${{ parameters.azureSubscription }}
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      set -euo pipefail
+
+                      kv_name="${KEY_VAULT_NAME}"
+                      echo "Target Key Vault : ${kv_name}"
+                      if [[ -z "${kv_name}" ]]; then
+                        echo "Key Vault name is required. Provide keyVaultName parameter or matching variable." >&2
+                        exit 1
+                      fi
+
+                      echo "Verifying Key Vault access..."
+                      if ! az keyvault show --name "${kv_name}" --query "name" --output tsv >/dev/null 2>&1; then
+                        echo "Unable to access Key Vault '${kv_name}'. Ensure the service connection has set permissions." >&2
+                        exit 1
+                      fi
+                      echo "✓ Key Vault accessible"
+
+                      declare -a secret_names=()
+                      declare -a secret_vars=()
+                      ${{ each secret in parameters.secretSpecs }}:
+                        secret_names+=("${{ secret.secretName }}")
+                        secret_vars+=("${{ secret.variableName }}")
+
+                      total=${#secret_names[@]}
+                      echo "Preparing to seed ${total} secret(s)..."
+
+                      for ((i = 0; i < total; i++)); do
+                        secret_name="${secret_names[$i]}"
+                        variable_name="${secret_vars[$i]}"
+                        value="${!variable_name:-}"
+
+                        if [[ -z "${value}" ]]; then
+                          echo "❌ Missing pipeline variable '${variable_name}' for secret '${secret_name}'." >&2
+                          exit 1
+                        fi
+
+                        echo "  • Setting secret '${secret_name}'"
+                        az keyvault secret set \
+                          --vault-name "${kv_name}" \
+                          --name "${secret_name}" \
+                          --value "${value}" \
+                          --output none
+                      done
+
+                      echo "✓ Secret seeding complete"
+                  env:
+                    KEY_VAULT_NAME: $(keyVaultNameResolved)
+                    ${{ each secret in parameters.secretSpecs }}:
+                      ${{ secret.variableName }}: $({{ secret.variableName }})

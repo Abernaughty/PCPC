@@ -38,6 +38,8 @@ provider "azurerm" {
 
 provider "random" {}
 
+data "azurerm_client_config" "current" {}
+
 # Generate random suffix for unique resource names
 resource "random_string" "suffix" {
   length  = 6
@@ -66,6 +68,31 @@ module "resource_group" {
   environment  = var.environment
   project_name = var.project_name
   tags         = local.common_tags
+}
+
+module "key_vault" {
+  source = "../../modules/key-vault"
+
+  name                = "pcpc-kv-${local.environment}"
+  location            = var.location
+  resource_group_name = module.resource_group.name
+  environment         = var.environment
+  tenant_id           = data.azurerm_client_config.current.tenant_id
+
+  sku_name                        = var.key_vault_sku_name
+  soft_delete_retention_days      = var.key_vault_soft_delete_retention_days
+  purge_protection_enabled        = var.key_vault_purge_protection_enabled
+  public_network_access_enabled   = var.key_vault_public_network_access_enabled
+  enabled_for_deployment          = var.key_vault_enabled_for_deployment
+  enabled_for_disk_encryption     = var.key_vault_enabled_for_disk_encryption
+  enabled_for_template_deployment = var.key_vault_enabled_for_template_deployment
+  network_acls                    = var.key_vault_network_acls
+  access_policies                 = var.key_vault_access_policies
+  rbac_assignments                = var.key_vault_rbac_assignments
+
+  tags = local.common_tags
+
+  depends_on = [module.resource_group]
 }
 
 # Storage Account for Functions and Static Web App
