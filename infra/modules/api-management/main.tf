@@ -61,6 +61,11 @@ resource "azurerm_api_management" "this" {
     type = var.identity_type
   }
 
+  timeouts {
+    create = "60m"
+    delete = "60m"
+  }
+
   # Security configuration
   security {
     backend_ssl30_enabled  = false
