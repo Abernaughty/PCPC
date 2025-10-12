@@ -12,7 +12,7 @@ NC='\033[0m' # No Color
 
 # Configuration
 SUBSCRIPTION_ID="555b4cfa-ad2e-4c71-9433-620a59cf7616"
-ENVIRONMENT="dev"
+ENVIRONMENT="staging"
 RESOURCE_GROUP="pcpc-rg-${ENVIRONMENT}"
 BACKEND_RG="pcpc-terraform-state-rg"
 BACKEND_STORAGE="pcpctfstatedacc29c2"

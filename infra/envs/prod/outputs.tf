@@ -20,6 +20,22 @@ output "resource_group_location" {
   value       = module.resource_group.location
 }
 
+# Key Vault Outputs
+output "key_vault_name" {
+  description = "Name of the Key Vault"
+  value       = module.key_vault.name
+}
+
+output "key_vault_id" {
+  description = "ID of the Key Vault"
+  value       = module.key_vault.id
+}
+
+output "key_vault_uri" {
+  description = "URI of the Key Vault"
+  value       = module.key_vault.vault_uri
+}
+
 # Storage Account Outputs
 output "storage_account_name" {
   description = "Name of the storage account"
