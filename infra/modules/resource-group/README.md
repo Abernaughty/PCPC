@@ -16,7 +16,7 @@ module "resource_group" {
   source = "./modules/resource-group"
 
   name         = "rg-pcpc-dev"
-  location     = "East US 2"
+  location     = "Central US"
   environment  = "dev"
   project_name = "PCPC"
 
@@ -79,7 +79,7 @@ module "basic_rg" {
   source = "./modules/resource-group"
 
   name        = "rg-pcpc-dev"
-  location    = "East US 2"
+  location    = "Central US"
   environment = "dev"
 }
 ```
@@ -91,7 +91,7 @@ module "prod_rg" {
   source = "./modules/resource-group"
 
   name        = "rg-pcpc-prod"
-  location    = "East US 2"
+  location    = "Central US"
   environment = "prod"
 
   lock_level      = "CanNotDelete"
