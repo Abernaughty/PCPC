@@ -192,3 +192,5 @@ tramp
 # Project specific
 memory-bank/migration-log.md
 tools/scripts/*.log
+.snapshot/
+.devcontainer/scripts/snapshot-devcontainer.sh
