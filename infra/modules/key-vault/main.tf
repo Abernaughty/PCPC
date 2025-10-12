@@ -10,12 +10,12 @@ locals {
 
   filtered_access_policies = [
     for policy in var.access_policies :
-    policy if try(trim(policy.object_id), "") != ""
+    policy if trimspace(try(policy.object_id, "")) != ""
   ]
 
   filtered_rbac_assignments = [
     for assignment in var.rbac_assignments :
-    assignment if try(trim(assignment.principal_id), "") != ""
+    assignment if trimspace(try(assignment.principal_id, "")) != ""
   ]
 }
 
@@ -49,12 +49,12 @@ resource "azurerm_key_vault" "this" {
 resource "azurerm_key_vault_access_policy" "this" {
   for_each = {
     for idx, policy in local.filtered_access_policies :
-    format("%03d-%s", idx, trim(policy.object_id)) => policy
+    format("%03d-%s", idx, trimspace(policy.object_id)) => policy
   }
 
   key_vault_id = azurerm_key_vault.this.id
   tenant_id    = var.tenant_id
-  object_id    = trim(each.value.object_id)
+  object_id    = trimspace(each.value.object_id)
 
   secret_permissions      = lookup(each.value, "secret_permissions", [])
   key_permissions         = lookup(each.value, "key_permissions", [])
@@ -65,11 +65,11 @@ resource "azurerm_key_vault_access_policy" "this" {
 resource "azurerm_role_assignment" "this" {
   for_each = {
     for idx, assignment in local.filtered_rbac_assignments :
-    format("%03d-%s", idx, trim(assignment.principal_id)) => assignment
+    format("%03d-%s", idx, trimspace(assignment.principal_id)) => assignment
   }
 
   scope                = coalesce(lookup(each.value, "scope", null), azurerm_key_vault.this.id)
-  principal_id         = trim(each.value.principal_id)
+  principal_id         = trimspace(each.value.principal_id)
   role_definition_id   = lookup(each.value, "role_definition_id", null)
   role_definition_name = lookup(each.value, "role_definition_name", null)
 
