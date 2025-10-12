@@ -17,6 +17,67 @@ variable "location" {
   default     = "Central US"
 }
 
+# Key Vault Configuration
+variable "key_vault_sku_name" {
+  description = "SKU for the Key Vault"
+  type        = string
+  default     = "standard"
+}
+
+variable "key_vault_soft_delete_retention_days" {
+  description = "Soft delete retention for Key Vault secrets"
+  type        = number
+  default     = 90
+}
+
+variable "key_vault_purge_protection_enabled" {
+  description = "Enable purge protection on the Key Vault"
+  type        = bool
+  default     = true
+}
+
+variable "key_vault_public_network_access_enabled" {
+  description = "Allow public network access to the Key Vault"
+  type        = bool
+  default     = true
+}
+
+variable "key_vault_enabled_for_deployment" {
+  description = "Allow Azure Resource Manager to retrieve secrets"
+  type        = bool
+  default     = false
+}
+
+variable "key_vault_enabled_for_disk_encryption" {
+  description = "Allow Azure Disk Encryption to retrieve secrets"
+  type        = bool
+  default     = false
+}
+
+variable "key_vault_enabled_for_template_deployment" {
+  description = "Allow template deployments to retrieve secrets"
+  type        = bool
+  default     = false
+}
+
+variable "key_vault_network_acls" {
+  description = "Optional network ACL configuration for the Key Vault"
+  type        = any
+  default     = null
+}
+
+variable "key_vault_access_policies" {
+  description = "List of Key Vault access policies to apply"
+  type        = list(map(any))
+  default     = []
+}
+
+variable "key_vault_rbac_assignments" {
+  description = "List of RBAC role assignments for the Key Vault"
+  type        = list(map(any))
+  default     = []
+}
+
 # Storage Account Configuration
 variable "storage_account_tier" {
   description = "The tier of the storage account"
