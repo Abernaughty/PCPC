@@ -2,7 +2,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 4.47.0"
+      version = ">= 4.47.0, < 5.0.0"
     }
   }
   required_version = ">= 1.0.0"
@@ -21,6 +21,11 @@ resource "azurerm_storage_account" "main" {
   min_tls_version                 = "TLS1_2"
   allow_nested_items_to_be_public = var.allow_public_access
   public_network_access_enabled   = var.public_network_access_enabled
+
+  timeouts {
+    create = "30m"
+    delete = "30m"
+  }
 
   # Enable blob versioning and soft delete for data protection
   blob_properties {

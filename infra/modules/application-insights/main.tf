@@ -2,7 +2,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 4.47.0"
+      version = ">= 4.47.0, < 5.0.0"
     }
   }
   required_version = ">= 1.0.0"
@@ -24,6 +24,11 @@ resource "azurerm_application_insights" "this" {
   internet_ingestion_enabled            = var.internet_ingestion_enabled
   internet_query_enabled                = var.internet_query_enabled
   force_customer_storage_for_profiler   = var.force_customer_storage_for_profiler
+
+  timeouts {
+    create = "30m"
+    delete = "30m"
+  }
 
   tags = merge(
     var.tags,

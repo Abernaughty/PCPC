@@ -9,7 +9,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 4.47.0"
+      version = ">= 4.47.0, < 5.0.0"
     }
 
     # Random provider for generating unique names if needed
