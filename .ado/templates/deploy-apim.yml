@@ -7,9 +7,6 @@ parameters:
       - prod
   - name: azureSubscription
     type: string
-  - name: workingDirectory
-    type: string
-    default: "apim/terraform"
   - name: terraformVersion
     type: string
     default: "1.13.3"
@@ -64,7 +61,7 @@ steps:
       azureSubscription: ${{ parameters.azureSubscription }}
       scriptType: "bash"
       scriptLocation: "inlineScript"
-      workingDirectory: "${{ parameters.workingDirectory }}"
+      workingDirectory: "apim/environments/${{ parameters.environment }}"
       inlineScript: |
         set -euo pipefail
 
@@ -84,7 +81,7 @@ steps:
       azureSubscription: ${{ parameters.azureSubscription }}
       scriptType: "bash"
       scriptLocation: "inlineScript"
-      workingDirectory: "${{ parameters.workingDirectory }}"
+      workingDirectory: "apim/environments/${{ parameters.environment }}"
       inlineScript: |
         echo "Validating Terraform configuration..."
         terraform validate
@@ -100,7 +97,7 @@ steps:
       azureSubscription: ${{ parameters.azureSubscription }}
       scriptType: "bash"
       scriptLocation: "inlineScript"
-      workingDirectory: "${{ parameters.workingDirectory }}"
+      workingDirectory: "apim/environments/${{ parameters.environment }}"
       inlineScript: |
         echo "Generating Terraform execution plan for APIM APIs and policies..."
         echo ""
@@ -252,7 +249,7 @@ steps:
       azureSubscription: ${{ parameters.azureSubscription }}
       scriptType: "bash"
       scriptLocation: "inlineScript"
-      workingDirectory: "${{ parameters.workingDirectory }}"
+      workingDirectory: "apim/environments/${{ parameters.environment }}"
       inlineScript: |
         set -euo pipefail
 

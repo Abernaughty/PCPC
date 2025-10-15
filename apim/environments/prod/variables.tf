@@ -1,11 +1,11 @@
 # -----------------------------------------------------------------------------
-# DEVELOPMENT ENVIRONMENT VARIABLES
+# PRODUCTION ENVIRONMENT VARIABLES
 # -----------------------------------------------------------------------------
 
 variable "environment" {
   description = "Environment identifier"
   type        = string
-  default     = "dev"
+  default     = "prod"
 }
 
 variable "api_management_name" {
@@ -27,7 +27,6 @@ variable "function_app_key" {
   description = "Function app access key for backend authentication"
   type        = string
   sensitive   = true
-  # This should be provided via environment variable or terraform.tfvars
 }
 
 variable "enable_application_insights" {
@@ -98,7 +97,7 @@ variable "api_version" {
 # -----------------------------------------------------------------------------
 
 variable "additional_cors_origins" {
-  description = "Additional CORS origins specific to development environment"
+  description = "Additional CORS origins specific to production environment"
   type        = list(string)
   default     = []
 }
@@ -120,7 +119,7 @@ variable "override_cache_durations" {
 }
 
 variable "enable_debug_features" {
-  description = "Enable additional debug features for development"
+  description = "Enable additional debug features for production"
   type        = bool
-  default     = true
+  default     = false
 }
