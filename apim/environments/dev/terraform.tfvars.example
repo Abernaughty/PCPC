@@ -4,16 +4,22 @@
 # Copy this file to terraform.tfvars and update the values as needed
 
 # Required variables (update these with your actual values)
-api_management_name = "maber-apim-test"
-resource_group_name = "pokedata-dev-rg"
-function_app_name   = "pokedata-func-dev"
+api_management_name = "pcpc-apim-dev"
+resource_group_name = "pcpc-rg-dev"
+function_app_name   = "pcpc-func-dev"
 
 # SENSITIVE: Function App Key (set via environment variable or uncomment and set)
 # function_app_key = "your-function-app-key-here"
 
 # Application Insights configuration
 enable_application_insights = true
-application_insights_name   = "pokedata-appinsights-dev"
+application_insights_name   = "pcpc-appinsights-dev"
+
+# Optional: Explicit CORS origins (pipeline normally supplies these)
+# cors_origins = [
+#   "http://localhost:3000",
+#   "https://pokedata.maber.io"
+# ]
 
 # Optional: Additional CORS origins for development
 # additional_cors_origins = [
@@ -22,9 +28,16 @@ application_insights_name   = "pokedata-appinsights-dev"
 # ]
 
 # Optional: Override rate limiting for development testing
-# override_rate_limit_calls = 1000
+# rate_limit_calls  = 300
+# rate_limit_period = 60
 
 # Optional: Override cache durations for development testing
+# cache_duration_sets      = 300
+# cache_duration_cards     = 600
+# cache_duration_card_info = 900
+
+# Legacy override examples (prefer the variables above when possible)
+# override_rate_limit_calls = 1000
 # override_cache_durations = {
 #   sets      = 60   # 1 minute for faster testing
 #   cards     = 120  # 2 minutes
