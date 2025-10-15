@@ -1,0 +1,38 @@
+# -----------------------------------------------------------------------------
+# STAGING ENVIRONMENT CONFIGURATION
+# -----------------------------------------------------------------------------
+# Copy this file to terraform.tfvars and update the values as needed
+
+# Required variables (update these with your actual values)
+api_management_name = "pcpc-apim-staging"
+resource_group_name = "pcpc-rg-staging"
+function_app_name   = "pcpc-func-staging"
+
+# SENSITIVE: Function App Key (set via environment variable or uncomment and set)
+# function_app_key = "your-function-app-key-here"
+
+# Application Insights configuration
+enable_application_insights = true
+application_insights_name   = "pcpc-appinsights-staging"
+
+# Optional: Explicit CORS origins (pipeline normally supplies these)
+# cors_origins = [
+#   "https://staging.pokedata.example.com"
+# ]
+
+# Optional: Additional CORS origins for staging
+# additional_cors_origins = [
+#   "https://staging-alt.pokedata.example.com"
+# ]
+
+# Optional: Override rate limiting for staging testing
+# rate_limit_calls  = 300
+# rate_limit_period = 60
+
+# Optional: Override cache durations for staging validation
+# cache_duration_sets      = 900
+# cache_duration_cards     = 1200
+# cache_duration_card_info = 1800
+
+# Enable debug features (detailed logging, etc.)
+enable_debug_features = false

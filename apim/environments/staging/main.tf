@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# DEVELOPMENT ENVIRONMENT CONFIGURATION
+# STAGING ENVIRONMENT CONFIGURATION
 # -----------------------------------------------------------------------------
 
 terraform {
@@ -16,7 +16,7 @@ terraform {
     resource_group_name  = "pcpc-terraform-state-rg"
     storage_account_name = "pcpctfstatedacc29c2"
     container_name       = "tfstate"
-    key                  = "apim/dev/terraform.tfstate"
+    key                  = "apim/staging/terraform.tfstate"
   }
 }
 
@@ -34,10 +34,7 @@ provider "azurerm" {
 
 locals {
   base_cors_origins = [
-    "https://pokedata.maber.io",
-    "http://localhost:3000",
-    "http://localhost:52783",
-    "https://calm-mud-07a7f7a10.6.azurestaticapps.net"
+    "https://pokedata.maber.io"
   ]
 
   configured_cors_origins = length(var.cors_origins) > 0 ? var.cors_origins : local.base_cors_origins
@@ -49,25 +46,26 @@ locals {
   effective_cache_duration_sets = coalesce(
     var.cache_duration_sets,
     lookup(var.override_cache_durations, "sets", null),
-    300
+    900
   )
 
   effective_cache_duration_cards = coalesce(
     var.cache_duration_cards,
     lookup(var.override_cache_durations, "cards", null),
-    600
+    1200
   )
 
   effective_cache_duration_card_info = coalesce(
     var.cache_duration_card_info,
     lookup(var.override_cache_durations, "card_info", null),
-    900
+    1800
   )
 
   effective_backend_timeout = coalesce(var.backend_timeout, 30)
   effective_api_version     = var.api_version != "" ? var.api_version : "v1"
 
   detailed_logging_enabled = var.enable_debug_features
+  log_retention_days       = 14
 }
 
 # -----------------------------------------------------------------------------
@@ -84,14 +82,14 @@ module "pcpc_apim" {
   environment         = var.environment
   function_app_key    = var.function_app_key
 
-  # CORS configuration for development
+  # CORS configuration
   cors_origins = local.effective_cors_origins
 
   # Rate limiting configuration
   rate_limit_calls  = local.effective_rate_limit_calls
   rate_limit_period = local.effective_rate_limit_period
 
-  # Caching configuration (shorter durations for development)
+  # Caching configuration (medium durations for staging)
   cache_duration_sets      = local.effective_cache_duration_sets
   cache_duration_cards     = local.effective_cache_duration_cards
   cache_duration_card_info = local.effective_cache_duration_card_info
@@ -108,34 +106,34 @@ module "pcpc_apim" {
   # API version
   api_version = local.effective_api_version
 
-  # Products configuration for development
+  # Products configuration for staging
   products = {
     starter = {
-      display_name          = "Starter (Dev)"
-      description           = "Starter product for development testing"
+      display_name          = "Starter (Staging)"
+      description           = "Starter product for staging validation"
       published             = true
       approval_required     = false
       subscription_required = true
-      subscriptions_limit   = 5 # Higher limit for dev testing
+      subscriptions_limit   = 3
     }
     premium = {
-      display_name          = "Premium (Dev)"
-      description           = "Premium product for development testing"
+      display_name          = "Premium (Staging)"
+      description           = "Premium product for staging validation"
       published             = true
-      approval_required     = false # No approval required in dev
+      approval_required     = true
       subscription_required = true
-      subscriptions_limit   = 10
+      subscriptions_limit   = 5
     }
   }
 
   # Monitoring configuration
-  log_retention_days = 7 # Shorter retention for dev
+  log_retention_days = local.log_retention_days
 
   # Additional tags
   additional_tags = {
-    Environment = "Development"
-    Purpose     = "API Development and Testing"
-    Owner       = "PCPC Development Team"
-    CostCenter  = "Development"
+    Environment = "Staging"
+    Purpose     = "Pre-Production Validation"
+    Owner       = "PCPC Engineering Team"
+    CostCenter  = "Staging"
   }
 }
