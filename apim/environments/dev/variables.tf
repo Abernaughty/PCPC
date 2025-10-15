@@ -39,6 +39,7 @@ variable "enable_application_insights" {
 variable "application_insights_name" {
   description = "Name of the Application Insights instance"
   type        = string
+  default     = "pcpc-appi-dev"
 }
 
 # -----------------------------------------------------------------------------
