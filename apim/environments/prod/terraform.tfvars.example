@@ -1,0 +1,38 @@
+# -----------------------------------------------------------------------------
+# PRODUCTION ENVIRONMENT CONFIGURATION
+# -----------------------------------------------------------------------------
+# Copy this file to terraform.tfvars and update the values as needed
+
+# Required variables (update these with your actual values)
+api_management_name = "pcpc-apim-prod"
+resource_group_name = "pcpc-rg-prod"
+function_app_name   = "pcpc-func-prod"
+
+# SENSITIVE: Function App Key (set via environment variable or uncomment and set)
+# function_app_key = "your-function-app-key-here"
+
+# Application Insights configuration
+enable_application_insights = true
+application_insights_name   = "pcpc-appinsights-prod"
+
+# Optional: Explicit CORS origins (pipeline normally supplies these)
+# cors_origins = [
+#   "https://pokedata.maber.io"
+# ]
+
+# Optional: Additional CORS origins for production
+# additional_cors_origins = [
+#   "https://app.pokedata.example.com"
+# ]
+
+# Optional: Override rate limiting for production
+# rate_limit_calls  = 300
+# rate_limit_period = 60
+
+# Optional: Override cache durations for production
+# cache_duration_sets      = 1800
+# cache_duration_cards     = 2700
+# cache_duration_card_info = 3600
+
+# Enable debug features sparingly in production
+enable_debug_features = false
