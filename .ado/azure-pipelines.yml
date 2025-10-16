@@ -104,10 +104,32 @@ stages:
         dependsOn:
           - Deploy_Infrastructure
           - Deploy_Functions
+          - Deploy_Frontend
         condition: succeeded()
+        variables:
+          SwaUrl: $[ dependencies.Deploy_Frontend.outputs['GetStaticWebAppUrl.SWA_URL'] ]
         pool:
           vmImage: "ubuntu-latest"
         steps:
+          - script: |
+              set -euo pipefail
+
+              BASE="${APIM_CORS_ORIGINS:-}"
+              SWA="${SWA_URL_FROM_DEPLOY:-}"
+
+              if [ -n "$SWA" ] && [[ "$BASE" != *"$SWA"* ]]; then
+                if [ -n "$BASE" ]; then
+                  BASE="${BASE},${SWA}"
+                else
+                  BASE="$SWA"
+                fi
+              fi
+
+              echo "Using APIM CORS origins: $BASE"
+              echo "##vso[task.setvariable variable=APIM_CORS_ORIGINS]$BASE"
+            displayName: "Append Static Web App origin to APIM CORS list"
+            env:
+              SWA_URL_FROM_DEPLOY: $(SwaUrl)
           - template: templates/deploy-apim.yml
             parameters:
               environment: dev
@@ -194,11 +216,34 @@ stages:
       # Deploy APIM APIs and Policies
       - job: Deploy_APIM
         displayName: "Deploy APIM APIs & Policies"
-        dependsOn: Deploy_Functions
+        dependsOn:
+          - Deploy_Functions
+          - Deploy_Frontend
         condition: succeeded()
+        variables:
+          SwaUrl: $[ dependencies.Deploy_Frontend.outputs['GetStaticWebAppUrl.SWA_URL'] ]
         pool:
           vmImage: "ubuntu-latest"
         steps:
+          - script: |
+              set -euo pipefail
+
+              BASE="${APIM_CORS_ORIGINS:-}"
+              SWA="${SWA_URL_FROM_DEPLOY:-}"
+
+              if [ -n "$SWA" ] && [[ "$BASE" != *"$SWA"* ]]; then
+                if [ -n "$BASE" ]; then
+                  BASE="${BASE},${SWA}"
+                else
+                  BASE="$SWA"
+                fi
+              fi
+
+              echo "Using APIM CORS origins: $BASE"
+              echo "##vso[task.setvariable variable=APIM_CORS_ORIGINS]$BASE"
+            displayName: "Append Static Web App origin to APIM CORS list"
+            env:
+              SWA_URL_FROM_DEPLOY: $(SwaUrl)
           - template: templates/deploy-apim.yml
             parameters:
               environment: staging
@@ -285,11 +330,34 @@ stages:
       # Deploy APIM APIs and Policies
       - job: Deploy_APIM
         displayName: "Deploy APIM APIs & Policies"
-        dependsOn: Deploy_Functions
+        dependsOn:
+          - Deploy_Functions
+          - Deploy_Frontend
         condition: succeeded()
+        variables:
+          SwaUrl: $[ dependencies.Deploy_Frontend.outputs['GetStaticWebAppUrl.SWA_URL'] ]
         pool:
           vmImage: "ubuntu-latest"
         steps:
+          - script: |
+              set -euo pipefail
+
+              BASE="${APIM_CORS_ORIGINS:-}"
+              SWA="${SWA_URL_FROM_DEPLOY:-}"
+
+              if [ -n "$SWA" ] && [[ "$BASE" != *"$SWA"* ]]; then
+                if [ -n "$BASE" ]; then
+                  BASE="${BASE},${SWA}"
+                else
+                  BASE="$SWA"
+                fi
+              fi
+
+              echo "Using APIM CORS origins: $BASE"
+              echo "##vso[task.setvariable variable=APIM_CORS_ORIGINS]$BASE"
+            displayName: "Append Static Web App origin to APIM CORS list"
+            env:
+              SWA_URL_FROM_DEPLOY: $(SwaUrl)
           - template: templates/deploy-apim.yml
             parameters:
               environment: prod

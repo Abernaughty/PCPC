@@ -120,4 +120,5 @@ resource "azurerm_api_management_product" "unlimited" {
   published             = true
   approval_required     = true
   subscription_required = true
+  subscriptions_limit   = 1
 }
