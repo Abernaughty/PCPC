@@ -300,6 +300,7 @@ steps:
 
   # Get Static Web App URL
   - task: AzureCLI@2
+    name: GetStaticWebAppUrl
     displayName: "Get Static Web App URL"
     inputs:
       azureSubscription: ${{ parameters.azureSubscription }}
@@ -324,7 +325,7 @@ steps:
         SWA_URL="https://$HOSTNAME"
 
         echo "Static Web App URL: $SWA_URL"
-        echo "##vso[task.setvariable variable=SWA_URL]$SWA_URL"
+        echo "##vso[task.setvariable variable=SWA_URL;isOutput=true]$SWA_URL"
 
   # Run smoke tests
   - script: |
