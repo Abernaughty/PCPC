@@ -1,5 +1,12 @@
 #!/bin/bash
 
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+export AZURE_CONFIG_DIR="/workspace/.azure"
+mkdir -p "${AZURE_CONFIG_DIR}"
+
 echo "🚀 Initializing PCPC DevContainer v1.3.0 (ACR Optimized)..."
 
 # Verify pre-installed tools from ACR image
@@ -16,7 +23,11 @@ echo "   Python: $(python3 --version) (Expected: 3.12.x)"
 
 # Install devcontainer-specific Node.js dependencies
 echo "📦 Installing DevContainer Node.js dependencies..."
-cd .devcontainer && npm install && cd ..
+if [ -f "${SCRIPT_DIR}/package.json" ]; then
+    (cd "${SCRIPT_DIR}" && npm install)
+else
+    echo "   ⚠️  package.json not found in ${SCRIPT_DIR}, skipping npm install"
+fi
 
 # Wait for emulators to be ready
 # echo "⏳ Waiting for emulators to start..."
@@ -24,7 +35,12 @@ cd .devcontainer && npm install && cd ..
 
 # Verify emulator connectivity
 echo "✅ Verifying emulator connectivity..."
-curl -k https://cosmosdb-emulator:8081/_explorer/emulator.pem > ~/cosmos_emulator.pem 2>/dev/null || echo "   ⚠️  Cosmos DB emulator starting..."
+COSMOS_CERT_PATH="${SCRIPT_DIR}/cosmos_emulator.pem"
+if curl -k https://cosmosdb-emulator:8081/_explorer/emulator.pem > "${COSMOS_CERT_PATH}" 2>/dev/null; then
+    echo "   ✅ Cosmos emulator certificate saved to ${COSMOS_CERT_PATH}"
+else
+    echo "   ⚠️  Cosmos DB emulator starting..."
+fi
 curl -s http://azurite:10000/devstoreaccount1/ > /dev/null && echo "   ✅ Azurite ready" || echo "   ⚠️  Azurite starting..."
 
 echo "🎉 DevContainer ready!"
@@ -41,9 +57,14 @@ echo "🔧 New in v1.3.0: Azure Functions Core Tools v4.x + Terraform 1.13.3"
 
 # Ensure custom dotfiles are in place
 echo "🔧 Setting up custom dotfiles..."
-cp /workspace/.devcontainer/.bashrc ~/.bashrc
-if [ ! -f ~/.bash_profile ]; then
-    cat > ~/.bash_profile << 'EOF'
+DOTFILE_SOURCE="/workspace/.devcontainer/.bashrc"
+DOTFILE_TARGET="${HOME}/.bashrc"
+DOTFILE_WRITE_TEST="${HOME}/.devcontainer_write_test"
+if touch "${DOTFILE_WRITE_TEST}" 2>/dev/null; then
+    rm -f "${DOTFILE_WRITE_TEST}" 2>/dev/null || true
+    cp "${DOTFILE_SOURCE}" "${DOTFILE_TARGET}"
+    if [ ! -f "${HOME}/.bash_profile" ]; then
+        cat <<'EOF' > "${HOME}/.bash_profile"
 #!/bin/bash
 # .bash_profile - Executed for login shells
 
@@ -54,5 +75,8 @@ fi
 
 # Additional login shell configurations can go here
 EOF
+    fi
+    echo "✅ Dotfiles configured"
+else
+    echo "   ⚠️  Dotfiles not updated due to write restrictions."
 fi
-echo "✅ Dotfiles configured"
