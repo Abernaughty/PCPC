@@ -191,6 +191,48 @@ variable "static_web_app_settings" {
   }
 }
 
+variable "enable_custom_domain" {
+  description = "Enable custom domain configuration for the Static Web App"
+  type        = bool
+  default     = true
+}
+
+variable "custom_domain_name" {
+  description = "Custom domain to associate with the Static Web App"
+  type        = string
+  default     = "pcpc.maber.io"
+}
+
+variable "custom_domain_dns_zone" {
+  description = "Authoritative DNS zone for the custom domain"
+  type        = string
+  default     = "maber.io"
+}
+
+variable "custom_domain_validation_type" {
+  description = "Validation method for the custom domain (cname-delegation or dns-txt-token)"
+  type        = string
+  default     = "cname-delegation"
+}
+
+variable "porkbun_dns_record_ttl" {
+  description = "TTL for Porkbun DNS records (seconds)"
+  type        = number
+  default     = 300
+}
+
+variable "porkbun_api_key" {
+  description = "Porkbun API key used by the Terraform provider"
+  type        = string
+  sensitive   = true
+}
+
+variable "porkbun_secret_key" {
+  description = "Porkbun secret API key used by the Terraform provider"
+  type        = string
+  sensitive   = true
+}
+
 # API Management Configuration
 variable "enable_api_management" {
   description = "Whether to enable API Management"

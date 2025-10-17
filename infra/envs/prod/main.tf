@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/azurerm"
       version = ">= 4.47.0, < 5.0.0"
     }
+    porkbun = {
+      source  = "porkbundns/porkbun"
+      version = ">= 1.0.0"
+    }
     random = {
       source  = "hashicorp/random"
       version = "~> 3.5"
@@ -38,6 +42,11 @@ provider "azurerm" {
 
 provider "random" {}
 
+provider "porkbun" {
+  api_key    = var.porkbun_api_key
+  secret_key = var.porkbun_secret_key
+}
+
 data "azurerm_client_config" "current" {}
 
 # Generate random suffix for unique resource names
@@ -59,6 +68,14 @@ locals {
     CostCenter  = "Production"
     Criticality = "High"
   }
+
+  custom_domain_enabled = var.enable_custom_domain && var.custom_domain_name != "" && var.custom_domain_dns_zone != ""
+
+  custom_domain_label = local.custom_domain_enabled ? (
+    var.custom_domain_name == var.custom_domain_dns_zone ?
+    "@" :
+    replace(var.custom_domain_name, ".${var.custom_domain_dns_zone}", "")
+  ) : ""
 }
 
 # Resource Group
@@ -204,6 +221,26 @@ module "static_web_app" {
   tags = local.common_tags
 
   depends_on = [module.resource_group, module.function_app]
+}
+
+resource "porkbun_dns_record" "static_web_app_custom_domain" {
+  count = local.custom_domain_enabled ? 1 : 0
+
+  domain  = var.custom_domain_dns_zone
+  name    = local.custom_domain_label
+  type    = "CNAME"
+  content = module.static_web_app.default_host_name
+  ttl     = var.porkbun_dns_record_ttl
+}
+
+resource "azurerm_static_web_app_custom_domain" "static_web_app" {
+  count = local.custom_domain_enabled ? 1 : 0
+
+  static_web_app_id = module.static_web_app.id
+  domain_name       = var.custom_domain_name
+  validation_type   = var.custom_domain_validation_type
+
+  depends_on = [porkbun_dns_record.static_web_app_custom_domain]
 }
 
 # Log Analytics Workspace
