@@ -334,8 +334,15 @@ steps:
       # Make script executable
       chmod +x $(Build.SourcesDirectory)/pipelines/scripts/verify-frontend-deployment.sh
 
+      SWA_URL_VALUE="$(GetStaticWebAppUrl.SWA_URL)"
+
+      if [ -z "$SWA_URL_VALUE" ]; then
+        echo "ERROR: Static Web App URL not available from previous step"
+        exit 1
+      fi
+
       # Run verification script
-      $(Build.SourcesDirectory)/pipelines/scripts/verify-frontend-deployment.sh "$(SWA_URL)"
+      $(Build.SourcesDirectory)/pipelines/scripts/verify-frontend-deployment.sh "$SWA_URL_VALUE"
 
       EXIT_CODE=$?
 
@@ -359,7 +366,13 @@ steps:
       echo "Static Web App: ${{ parameters.staticWebAppName }}"
       echo "Resource Group: ${{ parameters.resourceGroupName }}"
       echo ""
-      echo "Deployment URL: $(SWA_URL)"
+      SWA_URL_VALUE="$(GetStaticWebAppUrl.SWA_URL)"
+
+      if [ -z "$SWA_URL_VALUE" ]; then
+        echo "Deployment URL: <unavailable>"
+      else
+        echo "Deployment URL: $SWA_URL_VALUE"
+      fi
       echo ""
       echo "Deployed Files:"
       echo "  ✓ Frontend Application (Svelte)"
