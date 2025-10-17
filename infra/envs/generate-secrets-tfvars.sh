@@ -64,6 +64,8 @@ declare -A secrets=(
   ["POKEMON_TCG_API_KEY"]="POKEMON-TCG-API-KEY"
   ["ARM_CLIENT_ID"]="ARM-CLIENT-ID"
   ["ARM_CLIENT_SECRET"]="ARM-CLIENT-SECRET"
+  ["PORKBUN_API_KEY"]="PORKBUN-API-KEY"
+  ["PORKBUN_SECRET_KEY"]="PORKBUN-SECRET-KEY"
 )
 
 declare -A values
@@ -97,11 +99,16 @@ cat >"${tfvars_path}" <<EOF
 # Generated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
 # Environment: ${environment}
 
+porkbun_api_key    = "${values["PORKBUN_API_KEY"]}"
+porkbun_secret_key = "${values["PORKBUN_SECRET_KEY"]}"
+
 function_app_secrets = {
   "POKEDATA_API_KEY"    = "${values["POKEDATA_API_KEY"]}"
   "POKEMON_TCG_API_KEY" = "${values["POKEMON_TCG_API_KEY"]}"
   "ARM_CLIENT_ID"       = "${values["ARM_CLIENT_ID"]}"
   "ARM_CLIENT_SECRET"   = "${values["ARM_CLIENT_SECRET"]}"
+  "PORKBUN_API_KEY"     = "${values["PORKBUN_API_KEY"]}"
+  "PORKBUN_SECRET_KEY"  = "${values["PORKBUN_SECRET_KEY"]}"
 }
 EOF
 

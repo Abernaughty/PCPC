@@ -143,3 +143,7 @@ fi
 if [ -f /etc/bash_completion ]; then
     . /etc/bash_completion
 fi
+
+# Store Azure CLI profile inside the workspace (writable) instead of /home/vscode/.azure
+export AZURE_CONFIG_DIR=/workspace/.azure-cli
+mkdir -p "$AZURE_CONFIG_DIR"

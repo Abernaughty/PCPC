@@ -69,10 +69,9 @@ if [ -n "$usable_azure_dir" ]; then
 fi
 
 echo "Configure git"
+git config --global --add safe.directory /workspace
 git config --global user.name "Michael Abernathy"
 git config --global user.email "mabernathy87@gmail.com"
 git config pull.rebase true
 git config rebase.autoStash true
 
-echo "Fix repository ownership (for mounted volumes)"
-git config --global --add safe.directory /workspace
