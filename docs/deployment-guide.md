@@ -113,6 +113,9 @@ module "resource_group" {
 - Global CDN distribution
 - SSL certificate management
 
+> **Custom domain automation**  
+> The Terraform environment stacks now provision the Porkbun DNS CNAMEs and attach the Azure Static Web App custom domains (`pcpc-dev.maber.io`, `pcpc-staging.maber.io`, `pcpc.maber.io`). Make sure the pipeline exports `PORKBUN_API_KEY` and `PORKBUN_SECRET_KEY` (retrieved from each environment's Key Vault) before running `terraform apply`.
+
 **Configuration**:
 
 ```hcl
