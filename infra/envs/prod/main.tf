@@ -14,6 +14,10 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.5"
     }
+    time = {
+      source  = "hashicorp/time"
+      version = ">= 0.9.1"
+    }
   }
 
   # Remote backend for state management
@@ -46,6 +50,8 @@ provider "porkbun" {
   api_key    = var.porkbun_api_key
   secret_key = var.porkbun_secret_key
 }
+
+provider "time" {}
 
 data "azurerm_client_config" "current" {}
 
@@ -233,6 +239,13 @@ resource "porkbun_dns_record" "static_web_app_custom_domain" {
   ttl     = var.porkbun_dns_record_ttl
 }
 
+resource "time_sleep" "wait_for_custom_domain_dns" {
+  count           = local.custom_domain_enabled ? 1 : 0
+  create_duration = var.custom_domain_dns_propagation_delay
+
+  depends_on = [porkbun_dns_record.static_web_app_custom_domain]
+}
+
 resource "azurerm_static_web_app_custom_domain" "static_web_app" {
   count = local.custom_domain_enabled ? 1 : 0
 
@@ -240,7 +253,7 @@ resource "azurerm_static_web_app_custom_domain" "static_web_app" {
   domain_name       = var.custom_domain_name
   validation_type   = var.custom_domain_validation_type
 
-  depends_on = [porkbun_dns_record.static_web_app_custom_domain]
+  depends_on = [time_sleep.wait_for_custom_domain_dns]
 }
 
 # Log Analytics Workspace
