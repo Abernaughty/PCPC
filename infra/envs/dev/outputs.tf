@@ -133,6 +133,17 @@ output "static_web_app_api_key" {
   sensitive   = true
 }
 
+output "static_web_app_custom_domain" {
+  description = "Custom domain associated with the Static Web App"
+  value       = local.custom_domain_enabled ? var.custom_domain_name : null
+}
+
+output "static_web_app_custom_domain_record" {
+  description = "Porkbun DNS record ID for the Static Web App custom domain"
+  value       = local.custom_domain_enabled ? try(porkbun_dns_record.static_web_app_custom_domain[0].id, null) : null
+  sensitive   = true
+}
+
 # Log Analytics Outputs
 output "log_analytics_workspace_id" {
   description = "ID of the Log Analytics workspace"
