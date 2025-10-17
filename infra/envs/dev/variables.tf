@@ -220,10 +220,21 @@ variable "custom_domain_validation_type" {
   default     = "cname-delegation"
 }
 
+variable "custom_domain_dns_propagation_delay" {
+  description = "Duration terraform should wait after creating the Porkbun DNS record before attempting Azure custom domain validation (e.g. 30s, 1m)"
+  type        = string
+  default     = "45s"
+}
+
 variable "porkbun_dns_record_ttl" {
   description = "TTL for Porkbun DNS records (seconds)"
   type        = number
   default     = 600
+
+  validation {
+    condition     = var.porkbun_dns_record_ttl >= 600
+    error_message = "Porkbun requires TTL to be at least 600 seconds."
+  }
 }
 
 variable "porkbun_api_key" {
