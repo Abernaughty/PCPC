@@ -129,6 +129,18 @@ steps:
         else
           echo "  ✅ ARM_CLIENT_SECRET is set (length: ${#ARM_CLIENT_SECRET})"
         fi
+
+        if [ -z "${PORKBUN_API_KEY}" ]; then
+          echo "  ❌ PORKBUN_API_KEY is NOT SET or EMPTY"
+        else
+          echo "  ✅ PORKBUN_API_KEY is set (length: ${#PORKBUN_API_KEY})"
+        fi
+
+        if [ -z "${PORKBUN_SECRET_KEY}" ]; then
+          echo "  ❌ PORKBUN_SECRET_KEY is NOT SET or EMPTY"
+        else
+          echo "  ✅ PORKBUN_SECRET_KEY is set (length: ${#PORKBUN_SECRET_KEY})"
+        fi
         echo ""
 
         # Create secrets.auto.tfvars file using bash environment variables
@@ -142,10 +154,15 @@ steps:
         # and contains secrets from variable group (mapped via env: parameter).
         # It is automatically cleaned up after the pipeline completes.
 
+        porkbun_api_key    = "$PORKBUN_API_KEY"
+        porkbun_secret_key = "$PORKBUN_SECRET_KEY"
+
         function_app_secrets = {
           # API Keys from variable group (with underscores)
           "POKEDATA_API_KEY"     = "$POKEDATA_API_KEY"
           "POKEMON_TCG_API_KEY"  = "$POKEMON_TCG_API_KEY"
+          "PORKBUN_API_KEY"      = "$PORKBUN_API_KEY"
+          "PORKBUN_SECRET_KEY"   = "$PORKBUN_SECRET_KEY"
 
           # Service Principal Credentials
           "ARM_CLIENT_ID"        = "$ARM_CLIENT_ID"
@@ -213,6 +230,8 @@ steps:
       POKEMON_TCG_API_KEY: $(POKEMON_TCG_API_KEY)
       ARM_CLIENT_ID: $(ARM_CLIENT_ID)
       ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+      PORKBUN_API_KEY: $(PORKBUN-API-KEY)
+      PORKBUN_SECRET_KEY: $(PORKBUN-SECRET-KEY)
 
   - task: AzureCLI@2
     name: TerraformPlan
