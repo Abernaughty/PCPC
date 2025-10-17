@@ -223,7 +223,7 @@ variable "custom_domain_validation_type" {
 variable "porkbun_dns_record_ttl" {
   description = "TTL for Porkbun DNS records (seconds)"
   type        = number
-  default     = 300
+  default     = 600
 }
 
 variable "porkbun_api_key" {
