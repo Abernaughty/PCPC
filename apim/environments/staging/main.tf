@@ -35,7 +35,7 @@ provider "azurerm" {
 
 locals {
   base_cors_origins = [
-    "https://pokedata.maber.io"
+    "https://pcpc-staging.maber.io"
   ]
 
   configured_cors_origins = length(var.cors_origins) > 0 ? var.cors_origins : local.base_cors_origins
@@ -114,7 +114,7 @@ module "pcpc_apim" {
       description           = "Starter product for staging validation"
       published             = true
       approval_required     = false
-      subscription_required = true
+      subscription_required = false
       subscriptions_limit   = 3
     }
     premium = {
@@ -122,7 +122,7 @@ module "pcpc_apim" {
       description           = "Premium product for staging validation"
       published             = true
       approval_required     = true
-      subscription_required = true
+      subscription_required = false
       subscriptions_limit   = 5
     }
   }
