@@ -41,21 +41,25 @@ export const ENV_CONFIG = {
   NODE_ENV: process.env.NODE_ENV || "development",
 
   // API Management configuration
-  APIM_BASE_URL:
-    process.env.APIM_BASE_URL || "https://pcpc-apim-dev.azure-api.net/pcpc-api",
-  APIM_SUBSCRIPTION_KEY: process.env.APIM_SUBSCRIPTION_KEY || "",
+  APIM_BASE_URL: getEnvVar(
+    "APIM_BASE_URL",
+    "https://pcpc-apim-dev.azure-api.net/pcpc-api"
+  ),
+  APIM_SUBSCRIPTION_KEY: getEnvVar("APIM_SUBSCRIPTION_KEY", ""),
 
   // Azure Functions configuration (for direct calls in development/testing)
-  AZURE_FUNCTIONS_BASE_URL:
-    process.env.AZURE_FUNCTIONS_BASE_URL ||
-    "https://pokedata-func.azurewebsites.net/api",
-  AZURE_FUNCTION_KEY: process.env.AZURE_FUNCTION_KEY || "",
+  AZURE_FUNCTIONS_BASE_URL: getEnvVar(
+    "AZURE_FUNCTIONS_BASE_URL",
+    "https://pokedata-func.azurewebsites.net/api"
+  ),
+  AZURE_FUNCTION_KEY: getEnvVar("AZURE_FUNCTION_KEY", ""),
 
   // Feature flags
-  USE_API_MANAGEMENT: (process.env.USE_API_MANAGEMENT || "true") === "true",
+  USE_API_MANAGEMENT: (getEnvVar("USE_API_MANAGEMENT", "false") || "false") ===
+    "true",
 
   // Debug settings
-  DEBUG_API: (process.env.DEBUG_API || "false") === "true",
+  DEBUG_API: (getEnvVar("DEBUG_API", "false") || "false") === "true",
 };
 
 /**
@@ -82,15 +86,17 @@ const isLocalFunctions = (baseUrl) => {
  */
 export const getApiConfig = () => {
   if (ENV_CONFIG.USE_API_MANAGEMENT) {
+    const headers = { "Content-Type": "application/json" };
+    if (ENV_CONFIG.APIM_SUBSCRIPTION_KEY) {
+      headers["Ocp-Apim-Subscription-Key"] = ENV_CONFIG.APIM_SUBSCRIPTION_KEY;
+    }
+
     return {
       baseUrl: ENV_CONFIG.APIM_BASE_URL,
       subscriptionKey: ENV_CONFIG.APIM_SUBSCRIPTION_KEY,
       authType: "subscription",
       getHeaders() {
-        return {
-          "Ocp-Apim-Subscription-Key": this.subscriptionKey,
-          "Content-Type": "application/json",
-        };
+        return headers;
       },
     };
   } else {
@@ -116,12 +122,6 @@ export const getApiConfig = () => {
  */
 export const validateEnvironment = () => {
   const errors = [];
-
-  if (ENV_CONFIG.USE_API_MANAGEMENT && !ENV_CONFIG.APIM_SUBSCRIPTION_KEY) {
-    errors.push(
-      "APIM_SUBSCRIPTION_KEY is required when USE_API_MANAGEMENT is true"
-    );
-  }
 
   // Only require function key for non-local environments
   const isLocal = isLocalFunctions(ENV_CONFIG.AZURE_FUNCTIONS_BASE_URL);
