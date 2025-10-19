@@ -43,6 +43,12 @@ stages:
         parameters:
           buildConfiguration: $(buildConfiguration)
           nodeVersion: $(nodeVersion)
+          azureSubscription: "az-pcpc-dev"
+          apimName: "pcpc-apim-dev"
+          apimResourceGroup: "pcpc-rg-dev"
+          apimBaseUrl: "https://pcpc-apim-dev.azure-api.net/pcpc-api"
+          apimBasePath: "pcpc-api"
+          useApiManagement: "true"
 
   # ============================================================================
   # STAGE 2: DEPLOY TO DEV

@@ -12,7 +12,7 @@ resource "azurerm_api_management_api" "pcpc_api" {
   path                  = "api/${var.api_version}"
   protocols             = ["https"]
   service_url           = local.function_app_url
-  subscription_required = true
+  subscription_required = false
 
   description = "API for retrieving Pokemon card sets, cards, and pricing information"
 
