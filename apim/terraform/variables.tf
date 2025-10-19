@@ -189,7 +189,7 @@ variable "products" {
       description           = "Starter product with limited calls"
       published             = true
       approval_required     = false
-      subscription_required = true
+      subscription_required = false
       subscriptions_limit   = 1
     }
     premium = {
@@ -197,7 +197,7 @@ variable "products" {
       description           = "Premium product with higher limits"
       published             = true
       approval_required     = true
-      subscription_required = true
+      subscription_required = false
       subscriptions_limit   = 5
     }
   }

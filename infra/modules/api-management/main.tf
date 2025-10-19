@@ -105,7 +105,7 @@ resource "azurerm_api_management_product" "starter" {
   description           = "Starter product with limited calls"
   published             = true
   approval_required     = false
-  subscription_required = true
+  subscription_required = false
   subscriptions_limit   = 1
 }
 
@@ -119,6 +119,6 @@ resource "azurerm_api_management_product" "unlimited" {
   description           = "Unlimited product for production"
   published             = true
   approval_required     = true
-  subscription_required = true
+  subscription_required = false
   subscriptions_limit   = 1
 }
