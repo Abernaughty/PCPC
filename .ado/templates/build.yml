@@ -72,14 +72,6 @@ jobs:
           inlineScript: |
             set -euo pipefail
 
-            REPO_ROOT="${SYSTEM_DEFAULTWORKINGDIRECTORY:-$PWD}"
-            source "$REPO_ROOT/.ado/scripts/lib/apim.sh"
-
-            if ! resolve_apim_master_key "${{ parameters.apimName }}" "${{ parameters.apimResourceGroup }}" "${{ parameters.apimSubscriptionName }}"; then
-              echo "##vso[task.logissue type=error]Failed to resolve APIM subscription key"
-              exit 1
-            fi
-
             BASE_URL='${{ parameters.apimBaseUrl }}'
             if [ -z "$BASE_URL" ]; then
               BASE_URL="${APIM_BASE_URL:-}"
@@ -102,11 +94,10 @@ jobs:
               fi
             fi
 
-            echo "Resolved APIM subscription key."
-            echo "##vso[task.setvariable variable=ResolvedApimSubscriptionKey;issecret=true]$APIM_SUBSCRIPTION_KEY"
             echo "Resolved APIM base URL: $BASE_URL"
             echo "##vso[task.setvariable variable=ResolvedApimBaseUrl]$BASE_URL"
             echo "##vso[task.setvariable variable=ResolvedUseApiManagement]${{ parameters.useApiManagement }}"
+            echo "##vso[task.setvariable variable=ResolvedApimSubscriptionKey;issecret=true]"
         env:
           APIM_BASE_URL: $(APIM_BASE_URL)
 
@@ -116,9 +107,14 @@ jobs:
         workingDirectory: $(System.DefaultWorkingDirectory)/app/frontend
         env:
           NODE_ENV: production
-          APIM_SUBSCRIPTION_KEY: ${{ if ne(parameters.apimName, '') }}$(ResolvedApimSubscriptionKey)${{ else }}$(APIM_SUBSCRIPTION_KEY)${{ end }}
-          APIM_BASE_URL: ${{ if ne(parameters.apimName, '') }}$(ResolvedApimBaseUrl)${{ else }}$(APIM_BASE_URL)${{ end }}
-          USE_API_MANAGEMENT: ${{ if ne(parameters.apimName, '') }}$(ResolvedUseApiManagement)${{ else }}$(USE_API_MANAGEMENT)${{ end }}
+          ${{ if ne(parameters.apimName, '') }}:
+            APIM_SUBSCRIPTION_KEY: ""
+            APIM_BASE_URL: $(ResolvedApimBaseUrl)
+            USE_API_MANAGEMENT: $(ResolvedUseApiManagement)
+          ${{ else }}:
+            APIM_SUBSCRIPTION_KEY: ""
+            APIM_BASE_URL: $(APIM_BASE_URL)
+            USE_API_MANAGEMENT: $(USE_API_MANAGEMENT)
 
       - script: |
           if [ ! -d "dist" ]; then
