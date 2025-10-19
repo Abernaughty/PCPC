@@ -35,10 +35,7 @@ provider "azurerm" {
 
 locals {
   base_cors_origins = [
-    "https://pokedata.maber.io",
-    "http://localhost:3000",
-    "http://localhost:52783",
-    "https://calm-mud-07a7f7a10.6.azurestaticapps.net"
+    "https://pcpc-dev.maber.io"
   ]
 
   configured_cors_origins = length(var.cors_origins) > 0 ? var.cors_origins : local.base_cors_origins
@@ -116,7 +113,7 @@ module "pcpc_apim" {
       description           = "Starter product for development testing"
       published             = true
       approval_required     = false
-      subscription_required = true
+      subscription_required = false
       subscriptions_limit   = 5 # Higher limit for dev testing
     }
     premium = {
@@ -124,7 +121,7 @@ module "pcpc_apim" {
       description           = "Premium product for development testing"
       published             = true
       approval_required     = false # No approval required in dev
-      subscription_required = true
+      subscription_required = false
       subscriptions_limit   = 10
     }
   }
