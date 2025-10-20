@@ -97,9 +97,16 @@ jobs:
             echo "Resolved APIM base URL: $BASE_URL"
             echo "##vso[task.setvariable variable=ResolvedApimBaseUrl]$BASE_URL"
             echo "##vso[task.setvariable variable=ResolvedUseApiManagement]${{ parameters.useApiManagement }}"
-            echo "##vso[task.setvariable variable=ResolvedApimSubscriptionKey;issecret=true]"
+            KEY_VALUE="${APIM_SUBSCRIPTION_KEY:-}"
+            if [ -n "$KEY_VALUE" ]; then
+              echo "APIM subscription key supplied via pipeline (length: ${#KEY_VALUE})"
+            else
+              echo "No APIM subscription key supplied; downstream build will omit the header."
+            fi
+            echo "##vso[task.setvariable variable=ResolvedApimSubscriptionKey;issecret=true]$KEY_VALUE"
         env:
           APIM_BASE_URL: $(APIM_BASE_URL)
+          APIM_SUBSCRIPTION_KEY: $(APIM_SUBSCRIPTION_KEY)
 
       - script: |
           npm run build
@@ -108,11 +115,11 @@ jobs:
         env:
           NODE_ENV: production
           ${{ if ne(parameters.apimName, '') }}:
-            APIM_SUBSCRIPTION_KEY: ""
+            APIM_SUBSCRIPTION_KEY: $(ResolvedApimSubscriptionKey)
             APIM_BASE_URL: $(ResolvedApimBaseUrl)
             USE_API_MANAGEMENT: $(ResolvedUseApiManagement)
           ${{ else }}:
-            APIM_SUBSCRIPTION_KEY: ""
+            APIM_SUBSCRIPTION_KEY: $(APIM_SUBSCRIPTION_KEY)
             APIM_BASE_URL: $(APIM_BASE_URL)
             USE_API_MANAGEMENT: $(USE_API_MANAGEMENT)
 
