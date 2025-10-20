@@ -55,8 +55,8 @@ export const ENV_CONFIG = {
   AZURE_FUNCTION_KEY: getEnvVar("AZURE_FUNCTION_KEY", ""),
 
   // Feature flags
-  USE_API_MANAGEMENT: (getEnvVar("USE_API_MANAGEMENT", "false") || "false") ===
-    "true",
+  USE_API_MANAGEMENT:
+    (getEnvVar("USE_API_MANAGEMENT", "true") || "false") === "true",
 
   // Debug settings
   DEBUG_API: (getEnvVar("DEBUG_API", "false") || "false") === "true",
