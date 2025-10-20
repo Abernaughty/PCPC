@@ -121,7 +121,7 @@ module "pcpc_apim" {
       description           = "Premium product for development testing"
       published             = true
       approval_required     = false # No approval required in dev
-      subscription_required = false
+      subscription_required = true
       subscriptions_limit   = 10
     }
   }
