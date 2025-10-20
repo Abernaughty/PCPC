@@ -14,7 +14,7 @@ Options:
   --function-app NAME       Azure Function App backend name (default: pcpc-func-<env>)
   --api-version VERSION     API version segment (default: v1)
   --ai-name NAME            Application Insights name (default: pcpc-appi-<env>)
-  --products LIST           Comma-separated list of API Management product IDs (default: starter,premium)
+  --products LIST           Comma-separated list of API Management product IDs (default: starter,)
   --state-key KEY           Remote state blob key (default: apim-<env>.terraform.tfstate)
   --tfvars FILE             Optional terraform.tfvars file to read overrides from
   -h, --help                Show this help message
@@ -52,7 +52,7 @@ APIM_NAME=""
 FUNCTION_APP_NAME=""
 API_VERSION_SEGMENT="v1"
 APP_INSIGHTS_NAME=""
-PRODUCT_LIST="starter,premium"
+PRODUCT_LIST="starter,"
 STATE_KEY=""
 
 while [[ $# -gt 0 ]]; do
