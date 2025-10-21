@@ -1,195 +1,134 @@
-import * as fs from "fs";
-import * as path from "path";
+import { SetMappingRepository } from "./SetMappingRepository";
+import { SetMapping } from "../models/SetMapping";
 
-interface SetMapping {
-  pokeDataCode: string | null;
-  pokeDataId: number;
-  tcgName: string;
-  pokeDataName: string;
-  matchType: "manual" | "automatic";
-}
+const MIN_CACHE_TTL_SECONDS = 60;
 
-interface SetMappingData {
-  metadata: {
-    generated: string;
-    totalMappings: number;
-    unmappedTcg: number;
-    unmappedPokeData: number;
-  };
-  mappings: Record<string, SetMapping>;
-  unmapped: {
-    pokemonTcg: Array<{ id: string; name: string; ptcgoCode?: string }>;
-    pokeData: Array<{ id: number; code: string | null; name: string }>;
-  };
-}
-
-/**
- * Service for mapping PokeData set IDs to Pokemon TCG set IDs
- * This is the reverse of the existing SetMappingService and is used
- * for the PokeData-first architecture where we need to enhance
- * PokeData cards with Pokemon TCG images.
- */
 export class PokeDataToTcgMappingService {
-  private mappingData: SetMappingData | null = null;
-  private mappingFilePath: string;
-  private reverseMapping: Record<number, string> = {}; // PokeData ID -> TCG Set ID
-  private reverseMappingLoaded: boolean = false;
+  private repository: SetMappingRepository;
+  private cache: Map<number, SetMapping | null> = new Map();
+  private cacheLoadedAt: number | null = null;
+  private readonly cacheTtlMs: number;
 
-  constructor() {
-    this.mappingFilePath = path.join(__dirname, "../../data/set-mapping.json");
+  constructor(
+    repository?: SetMappingRepository,
+    cacheTtlSeconds?: number
+  ) {
+    const connectionString =
+      process.env.COSMOS_DB_CONNECTION_STRING || "";
+    this.repository =
+      repository || new SetMappingRepository(connectionString);
+
+    const ttlSeconds =
+      cacheTtlSeconds ??
+      parseInt(process.env.SET_MAPPING_CACHE_TTL_SECONDS || "900", 10);
+    this.cacheTtlMs =
+      Math.max(ttlSeconds, MIN_CACHE_TTL_SECONDS) * 1000;
   }
 
-  /**
-   * Load the set mapping data from the JSON file
-   */
-  private loadMappingData(): SetMappingData {
-    if (this.mappingData) {
-      return this.mappingData;
+  private isCacheValid(): boolean {
+    if (this.cacheLoadedAt === null) {
+      return false;
     }
-
-    try {
-      const mappingContent = fs.readFileSync(this.mappingFilePath, "utf8");
-      this.mappingData = JSON.parse(mappingContent);
-      return this.mappingData!;
-    } catch (error) {
-      console.error("Failed to load set mapping data:", error);
-      // Return empty mapping data as fallback
-      return {
-        metadata: {
-          generated: new Date().toISOString(),
-          totalMappings: 0,
-          unmappedTcg: 0,
-          unmappedPokeData: 0,
-        },
-        mappings: {},
-        unmapped: {
-          pokemonTcg: [],
-          pokeData: [],
-        },
-      };
-    }
+    return Date.now() - this.cacheLoadedAt < this.cacheTtlMs;
   }
 
-  /**
-   * Generate the reverse mapping from PokeData set ID to Pokemon TCG set ID
-   */
-  private generateReverseMapping(): void {
-    if (this.reverseMappingLoaded) {
+  private async ensureCache(): Promise<void> {
+    if (this.isCacheValid() && this.cache.size > 0) {
       return;
     }
 
-    const mappingData = this.loadMappingData();
-    this.reverseMapping = {};
-
-    // Iterate through all mappings and create reverse lookup
-    Object.entries(mappingData.mappings).forEach(([tcgSetId, mapping]) => {
-      this.reverseMapping[mapping.pokeDataId] = tcgSetId;
+    const mappings = await this.repository.listMappings();
+    this.cache.clear();
+    mappings.forEach((mapping) => {
+      this.cache.set(mapping.pokeDataSetId, mapping);
     });
-
-    this.reverseMappingLoaded = true;
+    this.cacheLoadedAt = Date.now();
     console.log(
-      `[PokeDataToTcgMappingService] Generated reverse mapping for ${
-        Object.keys(this.reverseMapping).length
-      } sets`
+      `[PokeDataToTcgMappingService] Cache refreshed with ${mappings.length} mappings`
     );
   }
 
-  /**
-   * Get Pokemon TCG set ID from PokeData set ID
-   * @param pokeDataSetId - PokeData set ID (e.g., 557)
-   * @returns Pokemon TCG set ID (e.g., "sv8pt5") or null if not found
-   */
-  public getTcgSetId(pokeDataSetId: number): string | null {
-    this.generateReverseMapping();
-
-    const tcgSetId = this.reverseMapping[pokeDataSetId];
-
-    if (tcgSetId) {
-      console.log(
-        `[PokeDataToTcgMappingService] Mapped PokeData set ID ${pokeDataSetId} to TCG set ID ${tcgSetId}`
-      );
-      return tcgSetId;
+  async getTcgSetId(pokeDataSetId: number): Promise<string | null> {
+    if (!this.isCacheValid()) {
+      await this.ensureCache();
     }
 
-    console.log(
-      `[PokeDataToTcgMappingService] No mapping found for PokeData set ID ${pokeDataSetId}`
-    );
-    return null;
-  }
+    if (!this.cache.has(pokeDataSetId)) {
+      const mapping = await this.repository.getMappingByPokeDataSetId(
+        pokeDataSetId
+      );
+      this.cache.set(pokeDataSetId, mapping);
+    }
 
-  /**
-   * Get complete mapping information for a PokeData set ID
-   * @param pokeDataSetId - PokeData set ID (e.g., 557)
-   * @returns Complete mapping information or null if not found
-   */
-  public getSetMapping(pokeDataSetId: number): SetMapping | null {
-    this.generateReverseMapping();
-
-    const tcgSetId = this.reverseMapping[pokeDataSetId];
-    if (!tcgSetId) {
+    const mapping = this.cache.get(pokeDataSetId);
+    if (!mapping) {
+      console.log(
+        `[PokeDataToTcgMappingService] No mapping found for PokeData set ID ${pokeDataSetId}`
+      );
       return null;
     }
 
-    const mappingData = this.loadMappingData();
-    return mappingData.mappings[tcgSetId] || null;
+    if (!mapping.tcgSetId) {
+      console.log(
+        `[PokeDataToTcgMappingService] Mapping for PokeData set ID ${pokeDataSetId} does not have a TCG set`
+      );
+      return null;
+    }
+
+    console.log(
+      `[PokeDataToTcgMappingService] Mapped PokeData set ID ${pokeDataSetId} to TCG set ID ${mapping.tcgSetId}`
+    );
+    return mapping.tcgSetId;
   }
 
-  /**
-   * Check if a PokeData set ID has a mapping to Pokemon TCG
-   * @param pokeDataSetId - PokeData set ID (e.g., 557)
-   * @returns true if mapping exists, false otherwise
-   */
-  public hasMapping(pokeDataSetId: number): boolean {
-    this.generateReverseMapping();
-    return pokeDataSetId in this.reverseMapping;
+  async getSetMapping(pokeDataSetId: number): Promise<SetMapping | null> {
+    const cached = this.cache.get(pokeDataSetId);
+    if (cached) {
+      return cached;
+    }
+
+    const mapping = await this.repository.getMappingByPokeDataSetId(
+      pokeDataSetId
+    );
+    if (mapping) {
+      this.cache.set(pokeDataSetId, mapping);
+    }
+    return mapping;
   }
 
-  /**
-   * Get all available PokeData set IDs that have mappings
-   * @returns Array of PokeData set IDs that can be mapped to Pokemon TCG
-   */
-  public getMappedPokeDataSetIds(): number[] {
-    this.generateReverseMapping();
-    return Object.keys(this.reverseMapping).map((id) => parseInt(id));
+  async hasMapping(pokeDataSetId: number): Promise<boolean> {
+    const mapping = await this.getSetMapping(pokeDataSetId);
+    return !!(mapping && mapping.tcgSetId);
   }
 
-  /**
-   * Get mapping statistics
-   * @returns Mapping metadata
-   */
-  public getMappingStats() {
-    const mappingData = this.loadMappingData();
-    return mappingData.metadata;
+  async getMappedPokeDataSetIds(): Promise<number[]> {
+    await this.ensureCache();
+    return Array.from(this.cache.entries())
+      .filter(([, mapping]) => !!mapping?.tcgSetId)
+      .map(([pokeDataSetId]) => pokeDataSetId);
   }
 
-  /**
-   * Get all unmapped PokeData sets (sets that don't have Pokemon TCG equivalents)
-   * @returns Array of unmapped PokeData sets
-   */
-  public getUnmappedPokeDataSets() {
-    const mappingData = this.loadMappingData();
-    return mappingData.unmapped.pokeData;
+  async reloadMappingData(): Promise<void> {
+    this.cache.clear();
+    this.cacheLoadedAt = null;
+    await this.ensureCache();
   }
 
-  /**
-   * Reload mapping data from file (useful for updates)
-   */
-  public reloadMappingData(): void {
-    this.mappingData = null;
-    this.reverseMappingLoaded = false;
-    this.reverseMapping = {};
-    this.loadMappingData();
+  updateCacheEntry(pokeDataSetId: number, mapping: SetMapping | null): void {
+    if (!mapping) {
+      this.cache.delete(pokeDataSetId);
+    } else {
+      this.cache.set(mapping.pokeDataSetId, mapping);
+    }
+    this.cacheLoadedAt = Date.now();
   }
 
-  /**
-   * Get the reverse mapping object for debugging purposes
-   * @returns The complete reverse mapping object
-   */
-  public getReverseMappingDebug(): Record<number, string> {
-    this.generateReverseMapping();
-    return { ...this.reverseMapping };
+  async getReverseMappingDebug(): Promise<Record<number, string | null>> {
+    await this.ensureCache();
+    const result: Record<number, string | null> = {};
+    this.cache.forEach((mapping, setId) => {
+      result[setId] = mapping?.tcgSetId ?? null;
+    });
+    return result;
   }
 }
-
-// Export a singleton instance
-export const pokeDataToTcgMappingService = new PokeDataToTcgMappingService();

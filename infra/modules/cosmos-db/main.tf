@@ -193,3 +193,17 @@ resource "azurerm_cosmosdb_sql_container" "sets" {
   partition_key_version = 2
   throughput            = var.capacity_mode == "provisioned" && var.sets_container_throughput != null ? var.sets_container_throughput : null
 }
+
+# -----------------------------------------------------------------------------
+# SET MAPPINGS CONTAINER
+# -----------------------------------------------------------------------------
+
+resource "azurerm_cosmosdb_sql_container" "set_mappings" {
+  name                  = var.set_mappings_container_name
+  resource_group_name   = var.resource_group_name
+  account_name          = azurerm_cosmosdb_account.this.name
+  database_name         = azurerm_cosmosdb_sql_database.this.name
+  partition_key_paths   = [var.set_mappings_partition_key_path]
+  partition_key_version = 2
+  throughput            = var.capacity_mode == "provisioned" && var.set_mappings_container_throughput != null ? var.set_mappings_container_throughput : null
+}

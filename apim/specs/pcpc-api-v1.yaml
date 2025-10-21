@@ -219,7 +219,7 @@ paths:
           description: Force refresh of cached pricing data
           schema:
             type: boolean
-            default: false
+            default: true
       responses:
         "200":
           description: Successful response with detailed card information
