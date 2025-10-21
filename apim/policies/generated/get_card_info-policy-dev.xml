@@ -2,6 +2,9 @@
 <policies>
     <inbound>
         <base />
+        <cache-lookup vary-by-developer="false" vary-by-developer-groups="false" downstream-caching-type="none">
+            <vary-by-query-parameter>forceRefresh</vary-by-query-parameter>
+        </cache-lookup>
         <!-- Set backend service URL dynamically based on environment -->
         <set-backend-service base-url="https://pcpc-func-dev.azurewebsites.net/api" />
         
@@ -25,6 +28,7 @@
     </backend>
     <outbound>
         <base />
+        <cache-store duration="900" />
         <!-- Add response headers for debugging -->
         <set-header name="X-Powered-By" exists-action="override">
             <value>PCPC-APIM-dev</value>
