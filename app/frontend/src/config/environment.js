@@ -43,7 +43,7 @@ export const ENV_CONFIG = {
   // API Management configuration
   APIM_BASE_URL: getEnvVar(
     "APIM_BASE_URL",
-    "https://pcpc-apim-dev.azure-api.net/pcpc-api"
+    "https://pcpc-apim-dev.azure-api.net/pcpc-api/v1"
   ),
   APIM_SUBSCRIPTION_KEY: getEnvVar("APIM_SUBSCRIPTION_KEY", ""),
 
