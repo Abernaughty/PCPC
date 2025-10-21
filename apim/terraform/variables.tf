@@ -196,9 +196,16 @@ variable "products" {
       display_name          = "Premium"
       description           = "Premium product with higher limits"
       published             = true
-      approval_required     = true
-      subscription_required = true
+      approval_required     = false
+      subscription_required = false
       subscriptions_limit   = 5
+    }
+    unlimited = {
+      display_name          = "Unlimited"
+      description           = "Unlimited product for trusted consumers"
+      published             = true
+      approval_required     = false
+      subscription_required = false
     }
   }
 }

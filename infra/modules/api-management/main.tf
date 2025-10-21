@@ -108,17 +108,3 @@ resource "azurerm_api_management_product" "starter" {
   subscription_required = false
   subscriptions_limit   = 1
 }
-
-resource "azurerm_api_management_product" "unlimited" {
-  count = var.environment == "prod" ? 1 : 0
-
-  api_management_name   = azurerm_api_management.this.name
-  resource_group_name   = var.resource_group_name
-  product_id            = "unlimited"
-  display_name          = "Unlimited"
-  description           = "Unlimited product for production"
-  published             = true
-  approval_required     = true
-  subscription_required = false
-  subscriptions_limit   = 1
-}
