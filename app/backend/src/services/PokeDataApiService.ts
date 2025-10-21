@@ -3,7 +3,7 @@ import { EnhancedPriceData } from "../models/Card";
 import { CreditMonitoringService } from "./CreditMonitoringService";
 
 // Define interfaces for PokeData API responses
-interface PokeDataSet {
+export interface PokeDataSet {
   code: string | null;
   id: number;
   language: "ENGLISH" | "JAPANESE";
