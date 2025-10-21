@@ -171,17 +171,13 @@ resource "azurerm_cosmosdb_sql_database" "this" {
 # -----------------------------------------------------------------------------
 
 resource "azurerm_cosmosdb_sql_container" "cards" {
-  name                = var.cards_container_name
-  resource_group_name = var.resource_group_name
-  account_name        = azurerm_cosmosdb_account.this.name
-  database_name       = azurerm_cosmosdb_sql_database.this.name
-
-  partition_key {
-    paths   = [var.cards_partition_key_path]
-    version = 2
-  }
-
-  throughput = var.capacity_mode == "provisioned" && var.cards_container_throughput != null ? var.cards_container_throughput : null
+  name                  = var.cards_container_name
+  resource_group_name   = var.resource_group_name
+  account_name          = azurerm_cosmosdb_account.this.name
+  database_name         = azurerm_cosmosdb_sql_database.this.name
+  partition_key_paths   = [var.cards_partition_key_path]
+  partition_key_version = 2
+  throughput            = var.capacity_mode == "provisioned" && var.cards_container_throughput != null ? var.cards_container_throughput : null
 }
 
 # -----------------------------------------------------------------------------
@@ -189,15 +185,11 @@ resource "azurerm_cosmosdb_sql_container" "cards" {
 # -----------------------------------------------------------------------------
 
 resource "azurerm_cosmosdb_sql_container" "sets" {
-  name                = var.sets_container_name
-  resource_group_name = var.resource_group_name
-  account_name        = azurerm_cosmosdb_account.this.name
-  database_name       = azurerm_cosmosdb_sql_database.this.name
-
-  partition_key {
-    paths   = [var.sets_partition_key_path]
-    version = 2
-  }
-
-  throughput = var.capacity_mode == "provisioned" && var.sets_container_throughput != null ? var.sets_container_throughput : null
+  name                  = var.sets_container_name
+  resource_group_name   = var.resource_group_name
+  account_name          = azurerm_cosmosdb_account.this.name
+  database_name         = azurerm_cosmosdb_sql_database.this.name
+  partition_key_paths   = [var.sets_partition_key_path]
+  partition_key_version = 2
+  throughput            = var.capacity_mode == "provisioned" && var.sets_container_throughput != null ? var.sets_container_throughput : null
 }
