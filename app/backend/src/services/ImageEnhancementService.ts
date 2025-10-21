@@ -134,7 +134,7 @@ export class ImageEnhancementService {
 
     try {
       // Step 1: Get Pokemon TCG set ID from PokeData set ID
-      const tcgSetId = this.mappingService.getTcgSetId(pokeDataSetId);
+      const tcgSetId = await this.mappingService.getTcgSetId(pokeDataSetId);
       if (!tcgSetId) {
         console.log(
           `[ImageEnhancementService] No TCG mapping found for PokeData set ID ${pokeDataSetId}`
@@ -201,7 +201,9 @@ export class ImageEnhancementService {
 
     try {
       // Step 1: Get Pokemon TCG set ID from PokeData set ID
-      const tcgSetId = this.mappingService.getTcgSetId(pokeDataPricing.set_id);
+      const tcgSetId = await this.mappingService.getTcgSetId(
+        pokeDataPricing.set_id
+      );
       if (!tcgSetId) {
         console.log(
           `[ImageEnhancementService] No TCG mapping found for PokeData set ID ${pokeDataPricing.set_id}`
@@ -270,7 +272,7 @@ export class ImageEnhancementService {
     );
 
     // Check if mapping exists before processing any cards
-    const tcgSetId = this.mappingService.getTcgSetId(pokeDataSetId);
+    const tcgSetId = await this.mappingService.getTcgSetId(pokeDataSetId);
     if (!tcgSetId) {
       console.log(
         `[ImageEnhancementService] No TCG mapping found for PokeData set ID ${pokeDataSetId}, returning cards without enhancement`
@@ -304,7 +306,7 @@ export class ImageEnhancementService {
    * @param pokeDataSetId - The PokeData set ID to check
    * @returns true if enhancement is possible, false otherwise
    */
-  canEnhanceSet(pokeDataSetId: number): boolean {
+  async canEnhanceSet(pokeDataSetId: number): Promise<boolean> {
     return this.mappingService.hasMapping(pokeDataSetId);
   }
 
@@ -312,17 +314,13 @@ export class ImageEnhancementService {
    * Get enhancement statistics for debugging
    * @returns Object with enhancement capabilities info
    */
-  getEnhancementStats() {
-    const mappedSetIds = this.mappingService.getMappedPokeDataSetIds();
-    const unmappedSets = this.mappingService.getUnmappedPokeDataSets();
-
+  async getEnhancementStats() {
+    const mappedSetIds = await this.mappingService.getMappedPokeDataSetIds();
     return {
       totalMappedSets: mappedSetIds.length,
-      totalUnmappedSets: unmappedSets.length,
-      mappedSetIds: mappedSetIds.slice(0, 10), // First 10 for debugging
-      enhancementCoverage: `${mappedSetIds.length}/${
-        mappedSetIds.length + unmappedSets.length
-      } sets`,
+      totalUnmappedSets: 0,
+      mappedSetIds: mappedSetIds.slice(0, 10),
+      enhancementCoverage: `${mappedSetIds.length} sets mapped`,
     };
   }
 }

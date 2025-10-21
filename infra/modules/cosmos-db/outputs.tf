@@ -100,6 +100,16 @@ output "sets_container_id" {
   value       = azurerm_cosmosdb_sql_container.sets.id
 }
 
+output "set_mappings_container_name" {
+  description = "The name of the set mappings container"
+  value       = azurerm_cosmosdb_sql_container.set_mappings.name
+}
+
+output "set_mappings_container_id" {
+  description = "The resource ID of the set mappings container"
+  value       = azurerm_cosmosdb_sql_container.set_mappings.id
+}
+
 # Useful for other modules
 output "resource_group_name" {
   description = "The resource group name where Cosmos DB is deployed"

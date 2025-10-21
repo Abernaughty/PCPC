@@ -205,6 +205,11 @@ module "cosmos_db" {
       name           = "cards"
       partition_key  = "/setId"
       max_throughput = 4000
+    },
+    {
+      name           = "SetMappings"
+      partition_key  = "/id"
+      max_throughput = 400
     }
   ]
 

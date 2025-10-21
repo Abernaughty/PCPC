@@ -179,7 +179,7 @@ resource "azurerm_api_management_api_operation" "get_cards_by_set" {
       name          = "forceRefresh"
       type          = "boolean"
       description   = "Force refresh of cached data"
-      default_value = "false"
+      default_value = "true"
       required      = false
     }
   }
@@ -239,7 +239,7 @@ resource "azurerm_api_management_api_operation" "get_card_info" {
       name          = "forceRefresh"
       type          = "boolean"
       description   = "Force refresh of cached pricing data"
-      default_value = "false"
+      default_value = "true"
       required      = false
     }
   }

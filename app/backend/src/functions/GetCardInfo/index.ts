@@ -7,12 +7,12 @@ import {
   cosmosDbService,
   monitoringService,
   pokeDataApiService,
+  pokemonTcgApiService,
   redisCacheService,
+  pokeDataToTcgMappingService,
 } from "../../index";
 import { ApiResponse } from "../../models/ApiResponse";
 import { ImageEnhancementService } from "../../services/ImageEnhancementService";
-import { pokeDataToTcgMappingService } from "../../services/PokeDataToTcgMappingService";
-import { PokemonTcgApiService } from "../../services/PokemonTcgApiService";
 import {
   formatCacheEntry,
   getCacheAge,
@@ -26,9 +26,6 @@ import {
 } from "../../utils/errorUtils";
 
 // Initialize services for image enhancement
-const pokemonTcgApiService = new PokemonTcgApiService(
-  process.env.POKEMON_TCG_API_KEY || ""
-);
 const imageEnhancementService = new ImageEnhancementService(
   pokeDataToTcgMappingService,
   pokemonTcgApiService
