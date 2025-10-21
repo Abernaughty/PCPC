@@ -44,6 +44,11 @@ module "cosmos_db" {
   environment   = "dev"
   capacity_mode = "serverless"
 
+  # Application data containers
+  database_name            = "PokemonCards"
+  cards_partition_key_path = "/setId"
+  sets_partition_key_path  = "/code"
+
   # Cost optimization for example
   enable_free_tier = true
   throughput_limit = 1000 # Lower limit for testing
@@ -78,6 +83,16 @@ output "cosmos_name" {
 output "database_name" {
   description = "The example database name (if created)"
   value       = module.cosmos_db.database_name
+}
+
+output "cards_container_name" {
+  description = "Cards container name"
+  value       = module.cosmos_db.cards_container_name
+}
+
+output "sets_container_name" {
+  description = "Sets container name"
+  value       = module.cosmos_db.sets_container_name
 }
 
 output "primary_key" {

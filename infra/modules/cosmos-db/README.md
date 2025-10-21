@@ -14,6 +14,7 @@ This Terraform module creates and configures an Azure Cosmos DB account with sup
 - ✅ **CORS configuration support**
 - ✅ **Comprehensive tagging strategy**
 - ✅ **Sensitive output protection**
+- ✅ **Automatic SQL database and container provisioning (Cards/Sets)**
 
 ## Usage
 
@@ -115,17 +116,29 @@ module "function_app" {
 | resource_group_name | The name of the resource group | `string` | n/a | yes |
 | location | The Azure region | `string` | n/a | yes |
 | environment | Environment name (dev, staging, prod) | `string` | `"dev"` | no |
-| capacity_mode | Capacity mode: 'serverless' or 'provisioned' | `string` | `"serverless"` | no |
+| capacity_mode | Capacity mode: `serverless` or `provisioned` | `string` | `"serverless"` | no |
+| database_name | SQL database name created within the account | `string` | `"PokemonCards"` | no |
+| database_throughput | RU/s to assign to the SQL database (provisioned only) | `number` | `null` | no |
+| cards_container_name | Name of the cards container | `string` | `"Cards"` | no |
+| cards_partition_key_path | Partition key path for the cards container | `string` | `"/setId"` | no |
+| cards_container_throughput | RU/s for the cards container (provisioned only) | `number` | `null` | no |
+| sets_container_name | Name of the sets container | `string` | `"Sets"` | no |
+| sets_partition_key_path | Partition key path for the sets container | `string` | `"/code"` | no |
+| sets_container_throughput | RU/s for the sets container (provisioned only) | `number` | `null` | no |
 | consistency_level | Consistency level for Cosmos DB | `string` | `"Session"` | no |
-| backup_type | Backup type: 'Continuous' or 'Periodic' | `string` | `"Continuous"` | no |
+| backup_type | Backup type: `Continuous` or `Periodic` | `string` | `"Continuous"` | no |
 | backup_tier | Backup tier for continuous backup | `string` | `"Continuous7Days"` | no |
 | enable_automatic_failover | Enable automatic failover | `bool` | `true` | no |
 | enable_multiple_write_locations | Enable multi-master | `bool` | `false` | no |
 | enable_free_tier | Enable free tier | `bool` | `false` | no |
 | public_network_access_enabled | Allow public network access | `bool` | `true` | no |
 | ip_range_filter | List of allowed IP addresses/CIDR blocks | `list(string)` | `[]` | no |
-| throughput_limit | Throughput limit for serverless (RU/s) | `number` | `4000` | no |
+| throughput_limit | Throughput limit for serverless accounts (RU/s) | `number` | `4000` | no |
 | tags | Additional tags | `map(string)` | `{}` | no |
+| virtual_network_rules | Subnet IDs granted access | `list(string)` | `[]` | no |
+| enable_private_endpoint | Enable a private endpoint for Cosmos DB | `bool` | `false` | no |
+| analytical_storage_enabled | Enable analytical storage | `bool` | `false` | no |
+| cors_rules | CORS rules applied to the account | `list(object)` | `[]` | no |
 
 ## Outputs
 
@@ -133,18 +146,31 @@ module "function_app" {
 |------|-------------|-----------|
 | id | The ID of the Cosmos DB account | no |
 | name | The name of the Cosmos DB account | no |
-| endpoint | The endpoint URI | no |
+| endpoint | The endpoint URI of the Cosmos DB account | no |
 | primary_key | Primary access key | yes |
 | secondary_key | Secondary access key | yes |
-| connection_strings | Connection strings | yes |
+| primary_readonly_key | Primary read-only access key | yes |
+| primary_sql_connection_string | Constructed SQL connection string | yes |
 | read_endpoints | List of read endpoints | no |
 | write_endpoints | List of write endpoints | no |
+| consistency_level | Configured consistency level | no |
+| capacity_mode | Capacity mode (serverless or provisioned) | no |
+| location | Primary location of the Cosmos DB account | no |
+| database_name | Name of the SQL database | no |
+| cards_container_name | Name of the cards container | no |
+| cards_container_id | Resource ID of the cards container | no |
+| sets_container_name | Name of the sets container | no |
+| sets_container_id | Resource ID of the sets container | no |
+| resource_group_name | Resource group hosting the Cosmos DB account | no |
+| diagnostic_settings_enabled | Indicates if diagnostic settings should be configured | no |
+| public_network_access_enabled | Whether public network access is enabled | no |
+| ip_range_filter | Applied IP range filter | no |
 
 ## Environment-Specific Behaviors
 
 ### Development
 - Zone redundancy: **Disabled** (cost optimization)
-- Example database and container created automatically
+- Example SQL database and containers created automatically
 - Public network access typically enabled
 
 ### Staging

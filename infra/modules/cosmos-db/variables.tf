@@ -50,6 +50,54 @@ variable "capacity_mode" {
   }
 }
 
+variable "database_name" {
+  description = "SQL database name created within the Cosmos DB account"
+  type        = string
+  default     = "PokemonCards"
+}
+
+variable "database_throughput" {
+  description = "Optional RU/s throughput to assign to the SQL database (provisioned capacity only)"
+  type        = number
+  default     = null
+}
+
+variable "cards_container_name" {
+  description = "Name of the cards container"
+  type        = string
+  default     = "Cards"
+}
+
+variable "cards_partition_key_path" {
+  description = "Partition key path for the cards container"
+  type        = string
+  default     = "/setId"
+}
+
+variable "cards_container_throughput" {
+  description = "Optional RU/s throughput to assign to the cards container (provisioned capacity only)"
+  type        = number
+  default     = null
+}
+
+variable "sets_container_name" {
+  description = "Name of the sets container"
+  type        = string
+  default     = "Sets"
+}
+
+variable "sets_partition_key_path" {
+  description = "Partition key path for the sets container"
+  type        = string
+  default     = "/code"
+}
+
+variable "sets_container_throughput" {
+  description = "Optional RU/s throughput to assign to the sets container (provisioned capacity only)"
+  type        = number
+  default     = null
+}
+
 variable "consistency_level" {
   description = "The consistency level for Cosmos DB (BoundedStaleness, Eventual, Session, Strong, ConsistentPrefix)"
   type        = string
