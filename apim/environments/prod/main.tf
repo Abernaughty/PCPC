@@ -113,7 +113,7 @@ module "pcpc_apim" {
       display_name          = "Starter (Production)"
       description           = "Starter product for production consumers"
       published             = true
-      approval_required     = true
+      approval_required     = false
       subscription_required = false
       subscriptions_limit   = 1
     }
@@ -121,9 +121,16 @@ module "pcpc_apim" {
       display_name          = "Premium (Production)"
       description           = "Premium product for high-volume consumers"
       published             = true
-      approval_required     = true
-      subscription_required = true
+      approval_required     = false
+      subscription_required = false
       subscriptions_limit   = 5
+    }
+    unlimited = {
+      display_name          = "Unlimited (Production)"
+      description           = "Unlimited product for trusted production consumers"
+      published             = true
+      approval_required     = false
+      subscription_required = false
     }
   }
 

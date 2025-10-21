@@ -9,7 +9,7 @@ resource "azurerm_api_management_api" "pcpc_api" {
   api_management_name   = var.api_management_name
   revision              = "1"
   display_name          = "Pokemon Card Price Checker API"
-  path                  = "api/${var.api_version}"
+  path                  = "pcpc-api/${var.api_version}"
   protocols             = ["https"]
   service_url           = local.function_app_url
   subscription_required = false
