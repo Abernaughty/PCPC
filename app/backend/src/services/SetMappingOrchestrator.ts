@@ -252,14 +252,14 @@ export class SetMappingOrchestrator {
     let isUnmatched = false;
 
     if (matchResult.tcgSet) {
-      tcgSetId = matchResult.tcgSet.code || matchResult.tcgSet.id || null;
+      tcgSetId = matchResult.tcgSet.id || matchResult.tcgSet.code || null;
       tcgSetName = matchResult.tcgSet.name || null;
     } else if (
       pokeDataSet.code &&
       tcgSetByCode.has(pokeDataSet.code.toUpperCase())
     ) {
       const tcgSet = tcgSetByCode.get(pokeDataSet.code.toUpperCase())!;
-      tcgSetId = tcgSet.code || tcgSet.id || null;
+      tcgSetId = tcgSet.id || tcgSet.code || null;
       tcgSetName = tcgSet.name || null;
     } else {
       isUnmatched = true;
