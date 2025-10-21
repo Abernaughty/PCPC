@@ -75,6 +75,31 @@ output "location" {
   value       = azurerm_cosmosdb_account.this.location
 }
 
+output "database_name" {
+  description = "The name of the SQL database within the Cosmos DB account"
+  value       = azurerm_cosmosdb_sql_database.this.name
+}
+
+output "cards_container_name" {
+  description = "The name of the cards container"
+  value       = azurerm_cosmosdb_sql_container.cards.name
+}
+
+output "cards_container_id" {
+  description = "The resource ID of the cards container"
+  value       = azurerm_cosmosdb_sql_container.cards.id
+}
+
+output "sets_container_name" {
+  description = "The name of the sets container"
+  value       = azurerm_cosmosdb_sql_container.sets.name
+}
+
+output "sets_container_id" {
+  description = "The resource ID of the sets container"
+  value       = azurerm_cosmosdb_sql_container.sets.id
+}
+
 # Useful for other modules
 output "resource_group_name" {
   description = "The resource group name where Cosmos DB is deployed"

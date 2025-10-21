@@ -18,6 +18,7 @@ STATIC_WEB_APP="pcpc-swa-$ENVIRONMENT"
 COSMOS_DB="pcpc-cosmos-$ENVIRONMENT"
 LOG_ANALYTICS="pcpc-log-$ENVIRONMENT"
 APP_INSIGHTS="pcpc-appi-$ENVIRONMENT"
+COSMOS_DB_DATABASE="${COSMOS_DB_DATABASE_NAME:-PokemonCards}"
 
 echo ""
 echo "Validating resource group..."
@@ -60,7 +61,7 @@ if az cosmosdb show \
   CONTAINERS=$(az cosmosdb sql container list \
     --resource-group "$RESOURCE_GROUP" \
     --account-name "$COSMOS_DB" \
-    --database-name "PokeData" \
+    --database-name "$COSMOS_DB_DATABASE" \
     --query "[].name" -o tsv 2>/dev/null || echo "")
   
   if [ -n "$CONTAINERS" ]; then
