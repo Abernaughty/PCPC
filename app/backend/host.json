@@ -26,7 +26,7 @@
       "dynamicThrottlesEnabled": true
     }
   },
-  "functionTimeout": "00:15:00",
+  "functionTimeout": "00:09:00",
   "healthMonitor": {
     "enabled": true,
     "healthCheckInterval": "00:00:10",
