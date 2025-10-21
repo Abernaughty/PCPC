@@ -68,7 +68,7 @@ paths:
           description: Force refresh of cached data
           schema:
             type: boolean
-            default: false
+            default: true
         - name: groupByExpansion
           in: query
           description: Group sets by expansion (legacy parameter)
@@ -161,7 +161,7 @@ paths:
           description: Force refresh of cached data
           schema:
             type: boolean
-            default: false
+            default: true
       responses:
         "200":
           description: Successful response with cards for the set
