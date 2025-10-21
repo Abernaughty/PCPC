@@ -17,60 +17,14 @@ resource "azurerm_api_management_api_policy" "pcpc_api_global" {
 # OPERATION-SPECIFIC POLICIES
 # -----------------------------------------------------------------------------
 
-# Cache policy for Get Set List operation
-resource "azurerm_api_management_api_operation_policy" "get_sets_cache" {
-  count = var.enable_caching ? 1 : 0
-
-  api_name            = azurerm_api_management_api.pcpc_api.name
-  api_management_name = var.api_management_name
-  resource_group_name = var.resource_group_name
-  operation_id        = azurerm_api_management_api_operation.get_sets.operation_id
-
-  xml_content = local.rendered_cache_policy
-
-  depends_on = [azurerm_api_management_api_operation.get_sets]
-}
-
-# Cache policy for Get Cards By Set operation
-resource "azurerm_api_management_api_operation_policy" "get_cards_cache" {
-  count = var.enable_caching ? 1 : 0
-
-  api_name            = azurerm_api_management_api.pcpc_api.name
-  api_management_name = var.api_management_name
-  resource_group_name = var.resource_group_name
-  operation_id        = azurerm_api_management_api_operation.get_cards_by_set.operation_id
-
-  xml_content = templatefile("${path.module}/../policies/templates/cache-sets-response.xml.tpl", {
-    cache_duration_sets = var.cache_duration_cards
-  })
-
-  depends_on = [azurerm_api_management_api_operation.get_cards_by_set]
-}
-
-# Cache policy for Get Card Info operation
-resource "azurerm_api_management_api_operation_policy" "get_card_info_cache" {
-  count = var.enable_caching ? 1 : 0
-
-  api_name            = azurerm_api_management_api.pcpc_api.name
-  api_management_name = var.api_management_name
-  resource_group_name = var.resource_group_name
-  operation_id        = azurerm_api_management_api_operation.get_card_info.operation_id
-
-  xml_content = templatefile("${path.module}/../policies/templates/cache-sets-response.xml.tpl", {
-    cache_duration_sets = var.cache_duration_card_info
-  })
-
-  depends_on = [azurerm_api_management_api_operation.get_card_info]
-}
-
-# Backend integration policy for all operations
+# Combined backend and caching policy for Get Set List operation
 resource "azurerm_api_management_api_operation_policy" "get_sets_backend" {
   api_name            = azurerm_api_management_api.pcpc_api.name
   api_management_name = var.api_management_name
   resource_group_name = var.resource_group_name
   operation_id        = azurerm_api_management_api_operation.get_sets.operation_id
 
-  xml_content = local.rendered_backend_policy
+  xml_content = local.rendered_operation_policies["get_sets"]
 
   depends_on = [
     azurerm_api_management_api_operation.get_sets,
@@ -78,13 +32,14 @@ resource "azurerm_api_management_api_operation_policy" "get_sets_backend" {
   ]
 }
 
+# Combined backend and caching policy for Get Cards By Set operation
 resource "azurerm_api_management_api_operation_policy" "get_cards_backend" {
   api_name            = azurerm_api_management_api.pcpc_api.name
   api_management_name = var.api_management_name
   resource_group_name = var.resource_group_name
   operation_id        = azurerm_api_management_api_operation.get_cards_by_set.operation_id
 
-  xml_content = local.rendered_backend_policy
+  xml_content = local.rendered_operation_policies["get_cards_by_set"]
 
   depends_on = [
     azurerm_api_management_api_operation.get_cards_by_set,
@@ -92,13 +47,14 @@ resource "azurerm_api_management_api_operation_policy" "get_cards_backend" {
   ]
 }
 
+# Combined backend and caching policy for Get Card Info operation
 resource "azurerm_api_management_api_operation_policy" "get_card_info_backend" {
   api_name            = azurerm_api_management_api.pcpc_api.name
   api_management_name = var.api_management_name
   resource_group_name = var.resource_group_name
   operation_id        = azurerm_api_management_api_operation.get_card_info.operation_id
 
-  xml_content = local.rendered_backend_policy
+  xml_content = local.rendered_operation_policies["get_card_info"]
 
   depends_on = [
     azurerm_api_management_api_operation.get_card_info,

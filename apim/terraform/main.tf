@@ -80,15 +80,44 @@ locals {
     local.policy_vars
   )
 
-  rendered_cache_policy = templatefile(
-    "${path.module}/../policies/templates/cache-sets-response.xml.tpl",
-    local.policy_vars
-  )
+  operation_policy_configs = {
+    get_sets = {
+      cache_enabled  = var.enable_caching
+      cache_duration = var.cache_duration_sets
+      vary_by_query_parameters = var.enable_caching ? [
+        "language",
+        "page",
+        "pageSize",
+        "all",
+        "forceRefresh",
+        "groupByExpansion"
+      ] : []
+    }
+    get_cards_by_set = {
+      cache_enabled  = var.enable_caching
+      cache_duration = var.cache_duration_cards
+      vary_by_query_parameters = var.enable_caching ? [
+        "page",
+        "pageSize",
+        "forceRefresh"
+      ] : []
+    }
+    get_card_info = {
+      cache_enabled  = var.enable_caching
+      cache_duration = var.cache_duration_card_info
+      vary_by_query_parameters = var.enable_caching ? [
+        "forceRefresh"
+      ] : []
+    }
+  }
 
-  rendered_backend_policy = templatefile(
-    "${path.module}/../policies/templates/azure-functions-backend.xml.tpl",
-    local.policy_vars
-  )
+  rendered_operation_policies = {
+    for policy_name, cfg in local.operation_policy_configs :
+    policy_name => templatefile(
+      "${path.module}/../policies/templates/azure-functions-backend.xml.tpl",
+      merge(local.policy_vars, cfg)
+    )
+  }
 }
 
 # -----------------------------------------------------------------------------
@@ -101,12 +130,8 @@ resource "local_file" "rendered_global_policy" {
   filename = "${path.module}/../policies/generated/global-policy-${var.environment}.xml"
 }
 
-resource "local_file" "rendered_cache_policy" {
-  content  = local.rendered_cache_policy
-  filename = "${path.module}/../policies/generated/cache-sets-policy-${var.environment}.xml"
-}
-
-resource "local_file" "rendered_backend_policy" {
-  content  = local.rendered_backend_policy
-  filename = "${path.module}/../policies/generated/backend-policy-${var.environment}.xml"
+resource "local_file" "rendered_operation_policies" {
+  for_each = local.rendered_operation_policies
+  content  = each.value
+  filename = "${path.module}/../policies/generated/${each.key}-policy-${var.environment}.xml"
 }
