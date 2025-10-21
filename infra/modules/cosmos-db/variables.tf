@@ -98,6 +98,24 @@ variable "sets_container_throughput" {
   default     = null
 }
 
+variable "set_mappings_container_name" {
+  description = "Name of the set mappings container"
+  type        = string
+  default     = "SetMappings"
+}
+
+variable "set_mappings_partition_key_path" {
+  description = "Partition key path for the set mappings container"
+  type        = string
+  default     = "/id"
+}
+
+variable "set_mappings_container_throughput" {
+  description = "Optional RU/s throughput to assign to the set mappings container (provisioned capacity only)"
+  type        = number
+  default     = null
+}
+
 variable "consistency_level" {
   description = "The consistency level for Cosmos DB (BoundedStaleness, Eventual, Session, Strong, ConsistentPrefix)"
   type        = string

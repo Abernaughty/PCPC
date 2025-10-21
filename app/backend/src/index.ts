@@ -5,6 +5,11 @@ import { MonitoringService } from "./services/MonitoringService";
 import { PokeDataApiService } from "./services/PokeDataApiService";
 import { PokemonTcgApiService } from "./services/PokemonTcgApiService";
 import { RedisCacheService } from "./services/RedisCacheService";
+import { SetMappingRepository } from "./services/SetMappingRepository";
+import { SetMatchingEngine } from "./services/SetMatchingEngine";
+import { PokeDataToTcgMappingService } from "./services/PokeDataToTcgMappingService";
+import { ImageUrlUpdateService } from "./services/ImageUrlUpdateService";
+import { SetMappingOrchestrator } from "./services/SetMappingOrchestrator";
 const { app } = azureFunctions;
 
 // Enhanced logging for service initialization
@@ -89,6 +94,41 @@ export const pokeDataApiService = new PokeDataApiService(
 console.log("📊 [STARTUP] Initializing Monitoring Service...");
 export const monitoringService = MonitoringService.getInstance();
 
+console.log("🗺️ [STARTUP] Initializing Set Mapping Repository...");
+export const setMappingRepository = new SetMappingRepository(
+  process.env.COSMOS_DB_CONNECTION_STRING || ""
+);
+
+const mappingCacheTtlSeconds = parseInt(
+  process.env.SET_MAPPING_CACHE_TTL_SECONDS || "900",
+  10
+);
+
+console.log("🧭 [STARTUP] Initializing PokeData ↔️ TCG Mapping Service...");
+export const pokeDataToTcgMappingService = new PokeDataToTcgMappingService(
+  setMappingRepository,
+  mappingCacheTtlSeconds
+);
+
+console.log("🖼️ [STARTUP] Initializing Image URL Update Service...");
+export const imageUrlUpdateService = new ImageUrlUpdateService(
+  cosmosDbService,
+  pokeDataToTcgMappingService
+);
+
+const setMatchingEngine = new SetMatchingEngine();
+
+console.log("🧩 [STARTUP] Initializing Set Mapping Orchestrator...");
+export const setMappingOrchestrator = new SetMappingOrchestrator(
+  pokeDataApiService,
+  pokemonTcgApiService,
+  setMappingRepository,
+  setMatchingEngine,
+  pokeDataToTcgMappingService,
+  imageUrlUpdateService,
+  monitoringService
+);
+
 console.log("✅ [STARTUP] All services initialized successfully!");
 
 // Import function handlers
@@ -98,6 +138,7 @@ import { getSetList } from "./functions/GetSetList";
 import { healthCheck } from "./functions/HealthCheck";
 import { monitorCredits } from "./functions/MonitorCredits";
 import { refreshData } from "./functions/RefreshData";
+import { synchronizeSetMappings } from "./functions/SynchronizeSetMappings";
 
 // Register functions
 app.http("getSetList", {
@@ -137,6 +178,11 @@ app.timer("refreshData", {
 app.timer("monitorCredits", {
   schedule: "0 0 */6 * * *",
   handler: monitorCredits,
+});
+
+app.timer("synchronizeSetMappings", {
+  schedule: process.env.SET_MAPPING_SYNC_CRON || "0 0 7 * * *",
+  handler: synchronizeSetMappings,
 });
 
 // Test deployment with path-based triggers - 2025-06-09
