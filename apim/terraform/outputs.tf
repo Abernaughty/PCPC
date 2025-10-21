@@ -118,9 +118,10 @@ output "products" {
 output "rendered_policies" {
   description = "Paths to rendered policy files"
   value = {
-    global_policy  = local_file.rendered_global_policy.filename
-    cache_policy   = local_file.rendered_cache_policy.filename
-    backend_policy = local_file.rendered_backend_policy.filename
+    global_policy = local_file.rendered_global_policy.filename
+    operation_policies = {
+      for key, policy in local_file.rendered_operation_policies : key => policy.filename
+    }
   }
 }
 
