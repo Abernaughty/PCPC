@@ -210,6 +210,37 @@ export class SetMappingOrchestrator {
       pokeDataSet.id
     );
 
+    if (existingMapping?.matchType === "manual") {
+      this.mappingService.updateCacheEntry(
+        pokeDataSet.id,
+        existingMapping
+      );
+
+      let cardsUpdated = 0;
+      let cardsSkipped = 0;
+      let cardsErrored = 0;
+
+      if (existingMapping.tcgSetId) {
+        const updateResult =
+          await this.imageUrlUpdateService.updateSetImageUrls(
+            pokeDataSet.id
+          );
+        cardsUpdated = updateResult.updatedCards;
+        cardsSkipped = updateResult.skippedCards;
+        cardsErrored = updateResult.errors;
+      }
+
+      return {
+        newMappings: 0,
+        updatedMappings: 0,
+        unchangedMappings: 1,
+        unmatched: false,
+        cardsUpdated,
+        cardsSkipped,
+        cardsErrored,
+      };
+    }
+
     const matchResult = this.matchingEngine.match(
       pokeDataSet,
       tcgSets
