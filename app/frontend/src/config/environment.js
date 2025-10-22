@@ -53,28 +53,6 @@ function toBoolean(value, fallback) {
     return value;
   }
 
-<<<<<<< Updated upstream
-  // API Management configuration
-  APIM_BASE_URL: getEnvVar(
-    "APIM_BASE_URL",
-    "https://pcpc-apim-dev.azure-api.net/pcpc-api/v1"
-  ),
-  APIM_SUBSCRIPTION_KEY: getEnvVar("APIM_SUBSCRIPTION_KEY", ""),
-
-  // Azure Functions configuration (for direct calls in development/testing)
-  AZURE_FUNCTIONS_BASE_URL: getEnvVar(
-    "AZURE_FUNCTIONS_BASE_URL",
-    "https://pokedata-func.azurewebsites.net/api"
-  ),
-  AZURE_FUNCTION_KEY: getEnvVar("AZURE_FUNCTION_KEY", ""),
-
-  // Feature flags
-  USE_API_MANAGEMENT:
-    (getEnvVar("USE_API_MANAGEMENT", "true") || "false") === "true",
-
-  // Debug settings
-  DEBUG_API: (getEnvVar("DEBUG_API", "false") || "false") === "true",
-=======
   if (typeof value === "string") {
     const normalized = value.trim().toLowerCase();
     if (normalized === "true") {
@@ -96,7 +74,6 @@ const ENV_DEFAULTS = {
   AZURE_FUNCTION_KEY: "",
   USE_API_MANAGEMENT: "true",
   DEBUG_API: "false",
->>>>>>> Stashed changes
 };
 
 const ENV_READERS = {
