@@ -15,9 +15,6 @@
       id="font-css"
     />
 
-    <!-- Runtime environment configuration -->
-    <script src="./env.js"></script>
-
     <!-- Add dynamic cache busting to CSS links -->
     <script>
       (function () {
@@ -28,6 +25,11 @@
         if (bundleCSS) {
           let href = bundleCSS.getAttribute("href").split("?")[0];
           bundleCSS.setAttribute("href", href + "?v=" + timestamp);
+        }
+        const envScript = document.getElementById("runtime-env");
+        if (envScript) {
+          const src = envScript.getAttribute("data-src");
+          envScript.setAttribute("src", src + "?v=" + timestamp);
         }
       })();
     </script>
@@ -404,3 +406,5 @@
     <div id="app"></div>
   </body>
 </html>
+    <!-- Runtime environment configuration -->
+    <script id="runtime-env" data-src="./env.js"></script>
