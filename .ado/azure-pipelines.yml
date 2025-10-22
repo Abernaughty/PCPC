@@ -49,6 +49,8 @@ stages:
           apimBaseUrl: "https://pcpc-apim-dev.azure-api.net/pcpc-api"
           apimBasePath: "pcpc-api"
           useApiManagement: "true"
+          functionAppName: $(FUNCTION_APP_NAME)
+          functionResourceGroup: $(APIM_RESOURCE_GROUP)
 
   # ============================================================================
   # STAGE 2: DEPLOY TO DEV
