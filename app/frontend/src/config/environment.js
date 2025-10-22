@@ -73,6 +73,7 @@ const ENV_DEFAULTS = {
   AZURE_FUNCTIONS_BASE_URL: "http://localhost:7071/api",
   AZURE_FUNCTION_KEY: "",
   USE_API_MANAGEMENT: "true",
+  APIM_REQUIRE_SUBSCRIPTION_KEY: "false",
   DEBUG_API: "false",
 };
 
@@ -92,6 +93,14 @@ const ENV_READERS = {
     toBoolean(
       getEnvVar("USE_API_MANAGEMENT", ENV_DEFAULTS.USE_API_MANAGEMENT),
       true
+    ),
+  APIM_REQUIRE_SUBSCRIPTION_KEY: () =>
+    toBoolean(
+      getEnvVar(
+        "APIM_REQUIRE_SUBSCRIPTION_KEY",
+        ENV_DEFAULTS.APIM_REQUIRE_SUBSCRIPTION_KEY
+      ),
+      false
     ),
   DEBUG_API: () =>
     toBoolean(getEnvVar("DEBUG_API", ENV_DEFAULTS.DEBUG_API), false),
@@ -209,9 +218,11 @@ export const validateEnvironment = () => {
   }
 
   if (config.USE_API_MANAGEMENT && !config.APIM_SUBSCRIPTION_KEY) {
-    errors.push(
-      "APIM_SUBSCRIPTION_KEY is required when USE_API_MANAGEMENT is true"
-    );
+    if (config.APIM_REQUIRE_SUBSCRIPTION_KEY) {
+      errors.push(
+        "APIM_SUBSCRIPTION_KEY is required when subscription enforcement is enabled"
+      );
+    }
   }
 
   // Only require function key for non-local environments
