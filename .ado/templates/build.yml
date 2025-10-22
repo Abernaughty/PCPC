@@ -33,6 +33,12 @@ parameters:
   - name: useApiManagement
     type: string
     default: "true"
+  - name: functionAppName
+    type: string
+    default: ""
+  - name: functionResourceGroup
+    type: string
+    default: ""
 
 jobs:
   - job: Build
@@ -64,7 +70,7 @@ jobs:
 
       - task: AzureCLI@2
         displayName: "Resolve APIM configuration for frontend build"
-        condition: and(succeeded(), ne('${{ parameters.azureSubscription }}', ''), ne('${{ parameters.apimName }}', ''), ne('${{ parameters.apimResourceGroup }}', ''))
+        condition: and(succeeded(), ne('${{ parameters.azureSubscription }}', ''))
         inputs:
           azureSubscription: ${{ parameters.azureSubscription }}
           scriptType: bash
@@ -108,6 +114,93 @@ jobs:
           APIM_BASE_URL: $(APIM_BASE_URL)
           APIM_SUBSCRIPTION_KEY: $(APIM_SUBSCRIPTION_KEY)
 
+      - task: AzureCLI@2
+        displayName: "Resolve runtime secrets (APIM & Functions)"
+        condition: and(succeeded(), ne('${{ parameters.azureSubscription }}', ''), ne('${{ parameters.apimName }}', ''), ne('${{ parameters.apimResourceGroup }}', ''))
+        inputs:
+          azureSubscription: ${{ parameters.azureSubscription }}
+          scriptType: bash
+          scriptLocation: inlineScript
+          inlineScript: |
+            set -euo pipefail
+
+            echo "Resolving APIM subscription key..."
+            APIM_KEY=""
+            if [ -n "${{ parameters.apimName }}" ] && [ -n "${{ parameters.apimResourceGroup }}" ]; then
+              APIM_KEY=$(az apim list-secrets \
+                --name "${{ parameters.apimName }}" \
+                --resource-group "${{ parameters.apimResourceGroup }}" \
+                --query "primaryKey" \
+                -o tsv 2>/dev/null || echo "")
+            fi
+
+            if [ -z "$APIM_KEY" ] && [ -n "${APIM_SUBSCRIPTION_KEY:-}" ]; then
+              APIM_KEY="${APIM_SUBSCRIPTION_KEY}"
+            fi
+
+            if [ -n "$APIM_KEY" ]; then
+              echo "APIM subscription key resolved (length: ${#APIM_KEY})"
+              echo "##vso[task.setvariable variable=ResolvedApimSubscriptionKey;issecret=true]$APIM_KEY"
+            else
+              echo "##vso[task.logissue type=warning]Unable to resolve APIM subscription key."
+            fi
+
+            APIM_REQUIRE="${APIM_REQUIRE_SUBSCRIPTION_KEY:-}"
+            if [ -z "$APIM_REQUIRE" ]; then
+              APIM_REQUIRE="false"
+            fi
+            echo "APIM subscription enforcement: $APIM_REQUIRE"
+            echo "##vso[task.setvariable variable=ResolvedApimRequireSubscriptionKey]$APIM_REQUIRE"
+
+            echo "Resolving Function App base URL and key..."
+            FUNCTION_BASE=""
+            FUNCTION_KEY=""
+
+            if [ -n "${{ parameters.functionAppName }}" ] && [ -n "${{ parameters.functionResourceGroup }}" ]; then
+              HOSTNAME=$(az functionapp show \
+                --name "${{ parameters.functionAppName }}" \
+                --resource-group "${{ parameters.functionResourceGroup }}" \
+                --query "defaultHostName" \
+                -o tsv 2>/dev/null || echo "")
+
+              if [ -n "$HOSTNAME" ]; then
+                FUNCTION_BASE="https://${HOSTNAME}/api"
+              fi
+
+              FUNCTION_KEY=$(az functionapp keys list \
+                --name "${{ parameters.functionAppName }}" \
+                --resource-group "${{ parameters.functionResourceGroup }}" \
+                --query "functionKeys.default" \
+                -o tsv 2>/dev/null || echo "")
+            fi
+
+            if [ -z "$FUNCTION_BASE" ] && [ -n "${AZURE_FUNCTIONS_BASE_URL:-}" ]; then
+              FUNCTION_BASE="${AZURE_FUNCTIONS_BASE_URL}"
+            fi
+
+            if [ -z "$FUNCTION_KEY" ] && [ -n "${AZURE_FUNCTION_KEY:-}" ]; then
+              FUNCTION_KEY="${AZURE_FUNCTION_KEY}"
+            fi
+
+            if [ -n "$FUNCTION_BASE" ]; then
+              echo "Function base URL resolved: $FUNCTION_BASE"
+              echo "##vso[task.setvariable variable=ResolvedFunctionsBaseUrl]$FUNCTION_BASE"
+            else
+              echo "##vso[task.logissue type=warning]Unable to resolve Function App base URL."
+            fi
+
+            if [ -n "$FUNCTION_KEY" ]; then
+              echo "Function key resolved (length: ${#FUNCTION_KEY})"
+              echo "##vso[task.setvariable variable=ResolvedFunctionKey;issecret=true]$FUNCTION_KEY"
+            else
+              echo "##vso[task.logissue type=warning]Unable to resolve Function App key."
+            fi
+        env:
+          APIM_SUBSCRIPTION_KEY: $(APIM_SUBSCRIPTION_KEY)
+          AZURE_FUNCTIONS_BASE_URL: $(AZURE_FUNCTIONS_BASE_URL)
+          AZURE_FUNCTION_KEY: $(AZURE_FUNCTION_KEY)
+          APIM_REQUIRE_SUBSCRIPTION_KEY: $(APIM_REQUIRE_SUBSCRIPTION_KEY)
+
       - script: |
           npm run build
         displayName: "Build Frontend (Svelte)"
@@ -118,10 +211,16 @@ jobs:
             APIM_SUBSCRIPTION_KEY: $(ResolvedApimSubscriptionKey)
             APIM_BASE_URL: $(ResolvedApimBaseUrl)
             USE_API_MANAGEMENT: $(ResolvedUseApiManagement)
+            APIM_REQUIRE_SUBSCRIPTION_KEY: $(ResolvedApimRequireSubscriptionKey)
+            AZURE_FUNCTIONS_BASE_URL: $(ResolvedFunctionsBaseUrl)
+            AZURE_FUNCTION_KEY: $(ResolvedFunctionKey)
           ${{ else }}:
             APIM_SUBSCRIPTION_KEY: $(APIM_SUBSCRIPTION_KEY)
             APIM_BASE_URL: $(APIM_BASE_URL)
             USE_API_MANAGEMENT: $(USE_API_MANAGEMENT)
+            APIM_REQUIRE_SUBSCRIPTION_KEY: $(APIM_REQUIRE_SUBSCRIPTION_KEY)
+            AZURE_FUNCTIONS_BASE_URL: $(AZURE_FUNCTIONS_BASE_URL)
+            AZURE_FUNCTION_KEY: $(AZURE_FUNCTION_KEY)
 
       - script: |
           if [ ! -d "dist" ]; then
