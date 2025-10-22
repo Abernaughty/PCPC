@@ -12,7 +12,7 @@ export const cloudDataService = {
    * @param {boolean} groupByExpansion - Whether to group sets by expansion series
    * @returns {Promise<Array|Object>} Array of set objects or grouped sets object
    */
-  async getSetList(forceRefresh = false, groupByExpansion = true) {
+  async getSetList(forceRefresh = true, groupByExpansion = true) {
     const timer = monitoringService.startTimer();
 
     try {
@@ -433,7 +433,7 @@ export const cloudDataService = {
    * @param {boolean} forceRefresh - Whether to force refresh from API
    * @returns {Promise<Object>} Paginated card data
    */
-  async fetchCardsPage(setId, page, pageSize, forceRefresh = false) {
+  async fetchCardsPage(setId, page, pageSize, forceRefresh = true) {
     const timer = monitoringService.startTimer();
 
     try {
@@ -566,7 +566,7 @@ export const cloudDataService = {
    * @param {boolean} forceRefresh - Whether to force a refresh from the API
    * @returns {Promise<Object>} Card data with pricing information
    */
-  async getCardPricing(cardId, setId, forceRefresh = false) {
+  async getCardPricing(cardId, setId, forceRefresh = true) {
     const timer = monitoringService.startTimer();
 
     try {
@@ -885,7 +885,7 @@ export const cloudDataService = {
    * @param {boolean} forceRefresh - Whether to force a refresh from the API
    * @returns {Promise<Object>} Card pricing data with metadata
    */
-  async getCardPricingWithMetadata(cardId, setId, forceRefresh = false) {
+  async getCardPricingWithMetadata(cardId, setId, forceRefresh = true) {
     const timer = monitoringService.startTimer();
 
     try {

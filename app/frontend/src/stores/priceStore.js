@@ -68,7 +68,7 @@ export function formatPrice(value) {
  * @param {boolean} forceRefresh - Whether to force a refresh from the API
  * @returns {Promise<void>}
  */
-export async function fetchCardPrice(cardId, forceRefresh = false) {
+export async function fetchCardPrice(cardId, forceRefresh = true) {
     let online;
     isOnline.subscribe(value => { online = value; })();
     
