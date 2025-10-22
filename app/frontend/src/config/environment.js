@@ -202,8 +202,6 @@ export const validateEnvironment = () => {
   const config = getEnvConfig();
   const errors = [];
 
-<<<<<<< Updated upstream
-=======
   if (config.USE_API_MANAGEMENT && !config.APIM_BASE_URL) {
     errors.push(
       "APIM_BASE_URL is required when USE_API_MANAGEMENT is true"
@@ -216,7 +214,6 @@ export const validateEnvironment = () => {
     );
   }
 
->>>>>>> Stashed changes
   // Only require function key for non-local environments
   const isLocal = isLocalFunctions(config.AZURE_FUNCTIONS_BASE_URL);
   if (
