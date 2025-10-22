@@ -55,7 +55,7 @@ export const pokeDataService = {
    * @param {boolean} forceRefresh - Whether to force a refresh from the API
    * @returns {Promise<Array>} Array of set objects
    */
-  async getSetList(forceRefresh = false) {
+  async getSetList(forceRefresh = true) {
     try {
       // First try to load current sets configuration from database
       await setClassifier.loadFromDatabase(dbService);

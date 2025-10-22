@@ -13,7 +13,7 @@ export const hybridDataService = {
    * @param {boolean} forceRefresh - Whether to force a refresh from the API
    * @returns {Promise<Array>} Array of set objects
    */
-  async getSetList(forceRefresh = false) {
+  async getSetList(forceRefresh = true) {
     const timer = monitoringService.startTimer();
     const useCloud = featureFlagService.useCloudApi();
 
@@ -249,7 +249,7 @@ export const hybridDataService = {
    * @param {boolean} forceRefresh - Whether to force a refresh from the API
    * @returns {Promise<Object>} Card pricing data with metadata
    */
-  async getCardPricingWithMetadata(cardId, setId, forceRefresh = false) {
+  async getCardPricingWithMetadata(cardId, setId, forceRefresh = true) {
     const timer = monitoringService.startTimer();
     const useCloud = featureFlagService.useCloudApi();
 

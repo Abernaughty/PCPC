@@ -131,24 +131,77 @@ export class CosmosDbService implements ICosmosDbService {
 
   async getCardsBySetId(setId: string): Promise<Card[]> {
     try {
-      // Convert string to number for database query (database stores setId as number)
-      const setIdNumber = parseInt(setId);
-      console.log(
-        `[CosmosDbService] Querying cards for setId: ${setIdNumber} (converted from "${setId}")`
-      );
+      const normalizedSetId = (setId || "").trim();
+      const setIdNumber = parseInt(normalizedSetId, 10);
+      const hasNumericSetId = !isNaN(setIdNumber);
+      const queryParts: string[] = [];
+      const parameters: { name: string; value: string | number }[] = [];
 
-      // Query cards directly by setId (for PokeData-first approach)
-      const cardsQuerySpec = {
-        query: "SELECT * FROM c WHERE c.setId = @setId",
-        parameters: [{ name: "@setId", value: setIdNumber }],
-      };
+      if (hasNumericSetId) {
+        queryParts.push("c.setId = @setIdNumber");
+        parameters.push({ name: "@setIdNumber", value: setIdNumber });
+      }
+
+      if (normalizedSetId.length > 0) {
+        queryParts.push("c.setId = @setIdString");
+        parameters.push({ name: "@setIdString", value: normalizedSetId });
+
+        const prefixedSetId = normalizedSetId.startsWith("pokedata-")
+          ? null
+          : `pokedata-${normalizedSetId}`;
+
+        if (prefixedSetId) {
+          queryParts.push("c.setId = @prefixedSetId");
+          parameters.push({ name: "@prefixedSetId", value: prefixedSetId });
+        }
+      }
+
+      if (queryParts.length === 0) {
+        console.warn(
+          `[CosmosDbService] No valid setId filters provided for value "${setId}"`
+        );
+        return [];
+      }
+
+      const queryText = `SELECT * FROM c WHERE ${queryParts.join(" OR ")}`;
+
+      console.log(
+        `[CosmosDbService] Querying cards for setId variants - raw: "${setId}", numeric: ${
+          hasNumericSetId ? setIdNumber : "N/A"
+        }, string: "${
+          normalizedSetId || "N/A"
+        }", prefixed included: ${
+          queryParts.some((part) => part.includes("@prefixedSetId")) ? "yes" : "no"
+        }`
+      );
 
       const { resources } = await this.cardContainer.items
-        .query(cardsQuerySpec)
+        .query({
+          query: queryText,
+          parameters,
+        })
         .fetchAll();
+
       console.log(
-        `[CosmosDbService] Found ${resources.length} cards for setId: ${setIdNumber}`
+        `[CosmosDbService] Found ${resources.length} cards for setId "${normalizedSetId ||
+          setId}" (numeric match ${hasNumericSetId ? "enabled" : "disabled"})`
       );
+
+      const warningThreshold = parseInt(
+        process.env.CARD_COUNT_WARNING_THRESHOLD || "10",
+        10
+      );
+
+      if (
+        warningThreshold > 0 &&
+        resources.length > 0 &&
+        resources.length < warningThreshold
+      ) {
+        console.warn(
+          `[CosmosDbService] ⚠️ Low card count (${resources.length}) returned for setId "${normalizedSetId ||
+            setId}". This may indicate legacy data that needs refresh.`
+        );
+      }
 
       return resources as Card[];
     } catch (error) {
