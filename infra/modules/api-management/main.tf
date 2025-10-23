@@ -90,21 +90,3 @@ resource "azurerm_api_management" "this" {
 
   tags = local.common_tags
 }
-
-# -----------------------------------------------------------------------------
-# PRODUCTS (Example - can be extended)
-# -----------------------------------------------------------------------------
-
-resource "azurerm_api_management_product" "starter" {
-  count = var.environment != "prod" ? 1 : 0
-
-  api_management_name   = azurerm_api_management.this.name
-  resource_group_name   = var.resource_group_name
-  product_id            = "starter"
-  display_name          = "Starter"
-  description           = "Starter product with limited calls"
-  published             = true
-  approval_required     = false
-  subscription_required = false
-  subscriptions_limit   = 1
-}
