@@ -230,6 +230,34 @@ steps:
     displayName: "Skip SWA Deployment"
     condition: and(succeeded(), eq(variables['ShouldDeploySWA'], 'false'))
 
+  # Generate runtime configuration file (env-config.js)
+  - task: AzureCLI@2
+    displayName: "Generate Runtime Configuration"
+    condition: and(succeeded(), eq(variables['ShouldDeploySWA'], 'true'))
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        echo "Generating runtime configuration file..."
+
+        # Make script executable
+        chmod +x $(Build.SourcesDirectory)/pipelines/scripts/generate-env-config.sh
+
+        # Generate env-config.js in the SWA directory
+        $(Build.SourcesDirectory)/pipelines/scripts/generate-env-config.sh \
+          "${{ parameters.staticWebAppName }}" \
+          "${{ parameters.resourceGroupName }}" \
+          "$(Pipeline.Workspace)/drop/swa/env-config.js"
+
+        # Verify file was created
+        if [ ! -f "$(Pipeline.Workspace)/drop/swa/env-config.js" ]; then
+          echo "ERROR: Failed to generate env-config.js"
+          exit 1
+        fi
+
+        echo "✓ Runtime configuration file generated successfully"
+
   # Get Static Web App deployment token
   - task: AzureCLI@2
     displayName: "Get Deployment Token"

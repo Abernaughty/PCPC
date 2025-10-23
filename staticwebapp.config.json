@@ -1,0 +1,27 @@
+{
+  "routes": [
+    {
+      "route": "/*",
+      "rewrite": "/index.html",
+      "statusCode": 200
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/images/*.{png,jpg,gif,ico}",
+      "/*.css",
+      "/*.js",
+      "/env-config.js"
+    ]
+  },
+  "globalHeaders": {
+    "Cache-Control": "max-age=3600"
+  },
+  "responseOverrides": {
+    "404": {
+      "rewrite": "/index.html",
+      "statusCode": 200
+    }
+  }
+}
