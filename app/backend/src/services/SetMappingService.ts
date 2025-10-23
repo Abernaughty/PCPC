@@ -1,154 +1,192 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import { SetMapping } from "../models/SetMapping";
+import { SetMappingRepository } from "./SetMappingRepository";
 
-interface SetMapping {
-    pokeDataCode: string | null;
-    pokeDataId: number;
-    tcgName: string;
-    pokeDataName: string;
-    matchType: 'manual' | 'automatic';
-}
-
-interface SetMappingData {
-    metadata: {
-        generated: string;
-        totalMappings: number;
-        unmappedTcg: number;
-        unmappedPokeData: number;
-    };
-    mappings: Record<string, SetMapping>;
-    unmapped: {
-        pokemonTcg: Array<{ id: string; name: string; ptcgoCode?: string }>;
-        pokeData: Array<{ id: number; code: string | null; name: string }>;
-    };
-}
-
+/**
+ * Service for accessing set mappings
+ * MIGRATED: Now uses Cosmos DB as single source of truth instead of static JSON file
+ *
+ * This service provides a compatibility layer for existing code that used the old
+ * JSON-based SetMappingService. All data is now read from and written to Cosmos DB.
+ *
+ * DEPRECATION NOTICE: This service is maintained for backward compatibility.
+ * New code should use SetMappingRepository or PokeDataToTcgMappingService directly.
+ */
 export class SetMappingService {
-    private mappingData: SetMappingData | null = null;
-    private mappingFilePath: string;
+  private repository: SetMappingRepository;
+  private cache: Map<string, SetMapping> = new Map();
+  private cacheLoadedAt: number | null = null;
+  private readonly cacheTtlMs: number = 5 * 60 * 1000; // 5 minutes
 
-    constructor() {
-        this.mappingFilePath = path.join(__dirname, '../../data/set-mapping.json');
+  constructor(repository?: SetMappingRepository) {
+    const connectionString = process.env.COSMOS_DB_CONNECTION_STRING || "";
+    this.repository = repository || new SetMappingRepository(connectionString);
+    console.log(
+      "[SetMappingService] Initialized with Cosmos DB backend (migrated from JSON file)"
+    );
+  }
+
+  /**
+   * Load mappings from Cosmos DB into cache
+   */
+  private async loadMappingData(): Promise<void> {
+    if (
+      this.cacheLoadedAt &&
+      Date.now() - this.cacheLoadedAt < this.cacheTtlMs
+    ) {
+      return; // Cache is still valid
     }
 
-    /**
-     * Load the set mapping data from the JSON file
-     */
-    private loadMappingData(): SetMappingData {
-        if (this.mappingData) {
-            return this.mappingData;
+    try {
+      const mappings = await this.repository.listMappings();
+      this.cache.clear();
+
+      mappings.forEach((mapping) => {
+        // Index by TCG set code (uppercase) for backward compatibility
+        if (mapping.tcgSetId) {
+          this.cache.set(mapping.tcgSetId.toUpperCase(), mapping);
         }
+      });
 
-        try {
-            const mappingContent = fs.readFileSync(this.mappingFilePath, 'utf8');
-            this.mappingData = JSON.parse(mappingContent);
-            return this.mappingData!;
-        } catch (error) {
-            console.error('Failed to load set mapping data:', error);
-            // Return empty mapping data as fallback
-            return {
-                metadata: {
-                    generated: new Date().toISOString(),
-                    totalMappings: 0,
-                    unmappedTcg: 0,
-                    unmappedPokeData: 0
-                },
-                mappings: {},
-                unmapped: {
-                    pokemonTcg: [],
-                    pokeData: []
-                }
-            };
-        }
+      this.cacheLoadedAt = Date.now();
+      console.log(
+        `[SetMappingService] Loaded ${mappings.length} mappings from Cosmos DB`
+      );
+    } catch (error) {
+      console.error("[SetMappingService] Failed to load mapping data:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get PokeData set ID from Pokemon TCG set code
+   * @param tcgSetCode - Pokemon TCG set code (e.g., "sv8pt5")
+   * @returns PokeData set ID or null if not found
+   */
+  public async getPokeDataSetId(tcgSetCode: string): Promise<number | null> {
+    await this.loadMappingData();
+    const mapping = this.cache.get(tcgSetCode.toUpperCase());
+
+    if (mapping) {
+      return mapping.pokeDataSetId;
     }
 
-    /**
-     * Get PokeData set ID from Pokemon TCG set code
-     * @param tcgSetCode - Pokemon TCG set code (e.g., "sv8pt5")
-     * @returns PokeData set ID or null if not found
-     */
-    public getPokeDataSetId(tcgSetCode: string): number | null {
-        const mappingData = this.loadMappingData();
-        const mapping = mappingData.mappings[tcgSetCode];
-        
-        if (mapping) {
-            return mapping.pokeDataId;
-        }
-        
-        return null;
+    // Try direct lookup from database in case cache is stale
+    const allMappings = await this.repository.listMappings();
+    const found = allMappings.find(
+      (m) => m.tcgSetId?.toUpperCase() === tcgSetCode.toUpperCase()
+    );
+
+    return found ? found.pokeDataSetId : null;
+  }
+
+  /**
+   * Get PokeData set code from Pokemon TCG set code
+   * @param tcgSetCode - Pokemon TCG set code (e.g., "sv8pt5")
+   * @returns PokeData set code or null if not found
+   */
+  public async getPokeDataSetCode(tcgSetCode: string): Promise<string | null> {
+    await this.loadMappingData();
+    const mapping = this.cache.get(tcgSetCode.toUpperCase());
+
+    if (mapping) {
+      return mapping.pokeDataSetCode;
     }
 
-    /**
-     * Get PokeData set code from Pokemon TCG set code
-     * @param tcgSetCode - Pokemon TCG set code (e.g., "sv8pt5")
-     * @returns PokeData set code or null if not found
-     */
-    public getPokeDataSetCode(tcgSetCode: string): string | null {
-        const mappingData = this.loadMappingData();
-        const mapping = mappingData.mappings[tcgSetCode];
-        
-        if (mapping) {
-            return mapping.pokeDataCode;
-        }
-        
-        return null;
+    // Try direct lookup from database in case cache is stale
+    const allMappings = await this.repository.listMappings();
+    const found = allMappings.find(
+      (m) => m.tcgSetId?.toUpperCase() === tcgSetCode.toUpperCase()
+    );
+
+    return found ? found.pokeDataSetCode : null;
+  }
+
+  /**
+   * Get complete mapping information for a Pokemon TCG set code
+   * @param tcgSetCode - Pokemon TCG set code (e.g., "sv8pt5")
+   * @returns Complete mapping information or null if not found
+   */
+  public async getSetMapping(tcgSetCode: string): Promise<SetMapping | null> {
+    await this.loadMappingData();
+    const mapping = this.cache.get(tcgSetCode.toUpperCase());
+
+    if (mapping) {
+      return mapping;
     }
 
-    /**
-     * Get complete mapping information for a Pokemon TCG set code
-     * @param tcgSetCode - Pokemon TCG set code (e.g., "sv8pt5")
-     * @returns Complete mapping information or null if not found
-     */
-    public getSetMapping(tcgSetCode: string): SetMapping | null {
-        const mappingData = this.loadMappingData();
-        return mappingData.mappings[tcgSetCode] || null;
-    }
+    // Try direct lookup from database in case cache is stale
+    const allMappings = await this.repository.listMappings();
+    const found = allMappings.find(
+      (m) => m.tcgSetId?.toUpperCase() === tcgSetCode.toUpperCase()
+    );
 
-    /**
-     * Check if a Pokemon TCG set code has a mapping
-     * @param tcgSetCode - Pokemon TCG set code (e.g., "sv8pt5")
-     * @returns true if mapping exists, false otherwise
-     */
-    public hasMapping(tcgSetCode: string): boolean {
-        const mappingData = this.loadMappingData();
-        return tcgSetCode in mappingData.mappings;
-    }
+    return found || null;
+  }
 
-    /**
-     * Get mapping statistics
-     * @returns Mapping metadata
-     */
-    public getMappingStats() {
-        const mappingData = this.loadMappingData();
-        return mappingData.metadata;
-    }
+  /**
+   * Check if a Pokemon TCG set code has a mapping
+   * @param tcgSetCode - Pokemon TCG set code (e.g., "sv8pt5")
+   * @returns true if mapping exists, false otherwise
+   */
+  public async hasMapping(tcgSetCode: string): Promise<boolean> {
+    const mapping = await this.getSetMapping(tcgSetCode);
+    return mapping !== null;
+  }
 
-    /**
-     * Get all unmapped Pokemon TCG sets
-     * @returns Array of unmapped Pokemon TCG sets
-     */
-    public getUnmappedTcgSets() {
-        const mappingData = this.loadMappingData();
-        return mappingData.unmapped.pokemonTcg;
-    }
+  /**
+   * Get mapping statistics
+   * @returns Mapping metadata
+   */
+  public async getMappingStats() {
+    const metadata = await this.repository.getMetadata();
+    const mappings = await this.repository.listMappings();
 
-    /**
-     * Get all unmapped PokeData sets
-     * @returns Array of unmapped PokeData sets
-     */
-    public getUnmappedPokeDataSets() {
-        const mappingData = this.loadMappingData();
-        return mappingData.unmapped.pokeData;
-    }
+    const totalMappings = mappings.length;
+    const unmappedCount = mappings.filter((m) => !m.tcgSetId).length;
 
-    /**
-     * Reload mapping data from file (useful for updates)
-     */
-    public reloadMappingData(): void {
-        this.mappingData = null;
-        this.loadMappingData();
-    }
+    return {
+      generated: metadata?.lastRunAt || new Date().toISOString(),
+      totalMappings,
+      unmappedTcg: 0, // Not tracked in new system
+      unmappedPokeData: unmappedCount,
+      lastPokeDataSetCount: metadata?.lastPokeDataSetCount || 0,
+      lastTcgSetCount: metadata?.lastTcgSetCount || 0,
+    };
+  }
+
+  /**
+   * Get all unmapped PokeData sets
+   * @returns Array of unmapped PokeData sets
+   */
+  public async getUnmappedPokeDataSets() {
+    const mappings = await this.repository.listMappings();
+    return mappings
+      .filter((m) => !m.tcgSetId || m.status === "unmatched")
+      .map((m) => ({
+        id: m.pokeDataSetId,
+        code: m.pokeDataSetCode,
+        name: m.pokeDataSetName,
+      }));
+  }
+
+  /**
+   * Reload mapping data from Cosmos DB (clears cache)
+   */
+  public async reloadMappingData(): Promise<void> {
+    this.cache.clear();
+    this.cacheLoadedAt = null;
+    await this.loadMappingData();
+    console.log("[SetMappingService] Cache reloaded from Cosmos DB");
+  }
+
+  /**
+   * Get all mappings (for migration or debugging purposes)
+   */
+  public async getAllMappings(): Promise<SetMapping[]> {
+    return await this.repository.listMappings();
+  }
 }
 
-// Export a singleton instance
+// Export a singleton instance for backward compatibility
+// DEPRECATION NOTICE: Use dependency injection instead of singleton
 export const setMappingService = new SetMappingService();

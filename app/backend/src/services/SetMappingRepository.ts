@@ -9,6 +9,15 @@ const DEFAULT_DATABASE_NAME = "PokemonCards";
 const DEFAULT_CONTAINER_NAME = "SetMappings";
 const METADATA_ID = "__metadata__";
 
+/**
+ * Partition Key Strategy:
+ * - Partition key path: /id
+ * - Partition key value: String representation of pokeDataSetId
+ * - This ensures even distribution and efficient queries by set ID
+ * - Metadata document uses its own ID as partition key
+ */
+const PARTITION_KEY_PATH = "/id";
+
 interface SetMappingDocument extends SetMapping {
   documentType: "setMapping";
 }
@@ -32,26 +41,27 @@ export class SetMappingRepository {
     this.container = database.container(containerName);
   }
 
-  private toSetMapping(
-    document: SetMappingDocument
-  ): SetMapping {
+  private toSetMapping(document: SetMappingDocument): SetMapping {
     const { documentType, ...mapping } = document;
     return mapping;
   }
 
-  private toMetadata(
-    document: SetMappingMetadataDocument
-  ): SetMappingMetadata {
+  private toMetadata(document: SetMappingMetadataDocument): SetMappingMetadata {
     const { documentType, ...metadata } = document;
     return metadata;
   }
 
+  /**
+   * Get a mapping by PokeData set ID
+   * Uses the partition key for efficient lookup
+   */
   async getMappingByPokeDataSetId(
     pokeDataSetId: number
   ): Promise<SetMapping | null> {
     const id = String(pokeDataSetId);
 
     try {
+      // Partition key must match the document ID for our strategy
       const { resource } = await this.container.item(id, id).read<any>();
       if (!resource || resource.documentType !== "setMapping") {
         return null;
@@ -65,6 +75,10 @@ export class SetMappingRepository {
     }
   }
 
+  /**
+   * List all set mappings
+   * Note: This is a cross-partition query and may be expensive for large datasets
+   */
   async listMappings(): Promise<SetMapping[]> {
     const query = {
       query: "SELECT * FROM c WHERE c.documentType = @type",
@@ -80,6 +94,10 @@ export class SetMappingRepository {
       );
   }
 
+  /**
+   * Upsert a set mapping
+   * Ensures id matches pokeDataSetId for partition key consistency
+   */
   async upsertMapping(
     mapping: Omit<SetMapping, "id" | "createdAt" | "updatedAt"> & {
       id?: string;
@@ -89,18 +107,26 @@ export class SetMappingRepository {
     }
   ): Promise<SetMapping> {
     const now = new Date().toISOString();
-    const id = mapping.id || String(mapping.pokeDataSetId);
+    const id = String(mapping.pokeDataSetId);
+
+    // Validate that if id is provided, it matches pokeDataSetId
+    if (mapping.id && mapping.id !== id) {
+      throw new Error(
+        `Mapping id (${mapping.id}) must match pokeDataSetId (${id}) for partition key consistency`
+      );
+    }
+
     const existing = await this.getMappingByPokeDataSetId(
       mapping.pokeDataSetId
     );
 
     const matchType: SetMatchType =
-      (mapping.matchType as SetMatchType) ||
-      existing?.matchType ||
-      "automatic";
+      (mapping.matchType as SetMatchType) || existing?.matchType || "automatic";
 
     const status =
-      mapping.status || existing?.status || (mapping.tcgSetId ? "active" : "unmatched");
+      mapping.status ||
+      existing?.status ||
+      (mapping.tcgSetId ? "active" : "unmatched");
 
     const document: SetMappingDocument = {
       id,
@@ -124,6 +150,9 @@ export class SetMappingRepository {
       : this.toSetMapping(document);
   }
 
+  /**
+   * Get mapping metadata
+   */
   async getMetadata(): Promise<SetMappingMetadata | null> {
     try {
       const { resource } = await this.container
@@ -141,6 +170,9 @@ export class SetMappingRepository {
     }
   }
 
+  /**
+   * Upsert mapping metadata
+   */
   async upsertMetadata(
     metadata: Partial<Omit<SetMappingMetadata, "id" | "documentType">>
   ): Promise<SetMappingMetadata> {
