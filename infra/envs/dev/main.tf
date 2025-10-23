@@ -215,12 +215,12 @@ module "static_web_app" {
   sku_tier = var.static_web_app_sku_tier
   sku_size = var.static_web_app_sku_size
 
-  app_settings = merge(
-    var.static_web_app_settings,
-    {
-      "API_BASE_URL" = "https://${module.function_app.default_hostname}/api"
-    }
-  )
+  # Runtime configuration injected via Azure Static Web App Application Settings
+  # These values are exposed to the frontend via window.__ENV__ at runtime
+  app_settings = {
+    API_URL = "https://pcpc-apim-dev.azure-api.net/pcpc-api/v1"
+    DEBUG   = "true"
+  }
 
   tags = local.common_tags
 

@@ -1,4 +1,4 @@
-import { API_CONFIG } from "../data/cloudApiConfig";
+import { getRuntimeConfig } from "../config/runtimeConfig";
 import { apiLogger } from "./loggerService";
 import { monitoringService } from "./monitoringService";
 
@@ -16,6 +16,9 @@ export const cloudDataService = {
     const timer = monitoringService.startTimer();
 
     try {
+      // Get runtime configuration
+      const config = getRuntimeConfig();
+
       // Track API call start
       monitoringService.trackEvent("api.getSetList.started", {
         forceRefresh,
@@ -27,7 +30,7 @@ export const cloudDataService = {
         groupByExpansion,
       });
 
-      const url = new URL(API_CONFIG.buildSetsUrl());
+      const url = new URL(`${config.apiUrl}/sets`);
 
       // Add query parameters
       if (forceRefresh) {
@@ -45,7 +48,9 @@ export const cloudDataService = {
       url.searchParams.append("all", "true");
 
       const response = await fetch(url.toString(), {
-        headers: API_CONFIG.getHeaders(),
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
       const duration = timer();
@@ -437,7 +442,12 @@ export const cloudDataService = {
     const timer = monitoringService.startTimer();
 
     try {
-      const url = new URL(API_CONFIG.buildCardsForSetUrl(setId));
+      // Get runtime configuration
+      const config = getRuntimeConfig();
+
+      const url = new URL(
+        `${config.apiUrl}/sets/${encodeURIComponent(setId)}/cards`
+      );
 
       // Add query parameters
       if (forceRefresh) {
@@ -448,7 +458,9 @@ export const cloudDataService = {
       url.searchParams.append("pageSize", pageSize.toString());
 
       const response = await fetch(url.toString(), {
-        headers: API_CONFIG.getHeaders(),
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
       const duration = timer();
@@ -596,7 +608,14 @@ export const cloudDataService = {
         forceRefresh,
       });
 
-      const url = new URL(API_CONFIG.buildCardInfoUrl(cardId, setId));
+      // Get runtime configuration
+      const config = getRuntimeConfig();
+
+      const url = new URL(
+        `${config.apiUrl}/sets/${encodeURIComponent(
+          setId
+        )}/cards/${encodeURIComponent(cardId)}`
+      );
 
       if (forceRefresh) {
         url.searchParams.append("forceRefresh", "true");
@@ -605,7 +624,9 @@ export const cloudDataService = {
       apiLogger.debug("Making pricing request", { url: url.toString() });
 
       const response = await fetch(url.toString(), {
-        headers: API_CONFIG.getHeaders(),
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
       const duration = timer();
@@ -920,14 +941,23 @@ export const cloudDataService = {
         { cardId, setId, forceRefresh }
       );
 
-      const url = new URL(API_CONFIG.buildCardInfoUrl(cardId, setId));
+      // Get runtime configuration
+      const config = getRuntimeConfig();
+
+      const url = new URL(
+        `${config.apiUrl}/sets/${encodeURIComponent(
+          setId
+        )}/cards/${encodeURIComponent(cardId)}`
+      );
 
       if (forceRefresh) {
         url.searchParams.append("forceRefresh", "true");
       }
 
       const response = await fetch(url.toString(), {
-        headers: API_CONFIG.getHeaders(),
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
       const duration = timer();
