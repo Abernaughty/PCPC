@@ -224,6 +224,7 @@ resource "azurerm_windows_function_app" "this" {
   lifecycle {
     ignore_changes = [
       app_settings["WEBSITE_RUN_FROM_PACKAGE"],
+      app_settings["DEPLOY_PACKAGE_HASH"],
       app_settings["APPINSIGHTS_INSTRUMENTATIONKEY"],
       app_settings["APPLICATIONINSIGHTS_CONNECTION_STRING"]
     ]
@@ -331,6 +332,7 @@ resource "azurerm_linux_function_app" "this" {
   lifecycle {
     ignore_changes = [
       app_settings["WEBSITE_RUN_FROM_PACKAGE"],
+      app_settings["DEPLOY_PACKAGE_HASH"],
       app_settings["APPINSIGHTS_INSTRUMENTATIONKEY"],
       app_settings["APPLICATIONINSIGHTS_CONNECTION_STRING"]
     ]

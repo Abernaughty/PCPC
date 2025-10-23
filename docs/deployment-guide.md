@@ -509,6 +509,13 @@ enable_backup         = true
 
 ## Terraform Deployment
 
+> ℹ️ **Required state migration**  
+> The shared infra stack no longer manages the APIM *Starter* product. Before
+> running `terraform apply`, follow the steps in
+> [`docs/apim-product-state-migration.md`](./apim-product-state-migration.md) to
+> migrate the Terraform state and prevent accidental deletion of existing APIM
+> subscriptions.
+
 ### Prerequisites
 
 Before deploying infrastructure, ensure you have:
