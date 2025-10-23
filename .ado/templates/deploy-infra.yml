@@ -164,9 +164,10 @@ steps:
           "PORKBUN_API_KEY"      = "$PORKBUN_API_KEY"
           "PORKBUN_SECRET_KEY"   = "$PORKBUN_SECRET_KEY"
 
-          # Service Principal Credentials
-          "ARM_CLIENT_ID"        = "$ARM_CLIENT_ID"
-          "ARM_CLIENT_SECRET"    = "$ARM_CLIENT_SECRET"
+          # Note: ARM_CLIENT_ID and ARM_CLIENT_SECRET removed
+          # These Service Principal credentials are only needed for Terraform/APIM deployment,
+          # not for Function App runtime. Function App uses direct connection strings and
+          # should use Managed Identity if it needs to access other Azure resources.
         }
         EOF
 
