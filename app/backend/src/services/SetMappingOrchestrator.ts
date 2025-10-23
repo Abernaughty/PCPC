@@ -394,6 +394,12 @@ export class SetMappingOrchestrator {
       existingMapping.tcgSetId !== targetMapping.tcgSetId ||
       existingMapping.matchType !== targetMapping.matchType;
 
+    // Track unmatched status regardless of whether mapping changed
+    // This ensures accurate monitoring even when no changes occur
+    if (isUnmatched || !tcgSetId) {
+      result.unmatchedSets = 1;
+    }
+
     // Transactional processing: Only mark as active if image update succeeds
     if (!isUnmatched && tcgSetId && mappingChanged) {
       try {
@@ -444,20 +450,23 @@ export class SetMappingOrchestrator {
         });
       }
     } else if (mappingChanged) {
-      // Mapping changed but no image update needed (unmatched or no tcgSetId)
+      // Mapping changed but no image update needed
       await this.repository.upsertMapping(targetMapping);
       this.mappingService.updateCacheEntry(pokeDataSet.id, targetMapping);
 
-      if (isUnmatched) {
-        result.unmatchedSets = 1;
-      } else {
+      // Only count as new/updated if not unmatched (unmatched already counted above)
+      if (!isUnmatched) {
         result.newMappings = !existingMapping ? 1 : 0;
         result.updatedMappings = existingMapping ? 1 : 0;
       }
     } else {
       // No changes needed
       this.mappingService.updateCacheEntry(pokeDataSet.id, existingMapping);
-      result.unchangedMappings = 1;
+
+      // Only count as unchanged if not unmatched (unmatched already counted above)
+      if (!isUnmatched && tcgSetId) {
+        result.unchangedMappings = 1;
+      }
     }
 
     return result;
