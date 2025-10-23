@@ -8,19 +8,20 @@
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/images/*.{png,jpg,gif,ico}", "/*.css", "/*.js"]
+    "exclude": [
+      "/images/*.{png,jpg,gif,ico}",
+      "/*.css",
+      "/*.js",
+      "/env-config.js"
+    ]
   },
   "globalHeaders": {
     "Cache-Control": "max-age=3600"
   },
-  "env": {
-    "production": {
-      "API_URL": "https://pcpc-apim-prod.azure-api.net/pcpc-api/v1",
-      "DEBUG": "false"
-    },
-    "staging": {
-      "API_URL": "https://pcpc-apim-staging.azure-api.net/pcpc-api/v1",
-      "DEBUG": "true"
+  "responseOverrides": {
+    "404": {
+      "rewrite": "/index.html",
+      "statusCode": 200
     }
   }
 }
