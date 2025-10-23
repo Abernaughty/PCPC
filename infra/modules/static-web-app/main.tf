@@ -52,7 +52,8 @@ resource "azurerm_static_web_app" "this" {
   lifecycle {
     ignore_changes = [
       repository_url,
-      repository_branch
+      repository_branch,
+      app_settings["DEPLOY_PACKAGE_HASH"]
     ]
   }
 }
