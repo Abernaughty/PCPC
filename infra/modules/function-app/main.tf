@@ -3,6 +3,7 @@
 # -----------------------------------------------------------------------------
 
 data "external" "existing_app_settings" {
+  count   = length(var.external_app_settings_preserve_keys) > 0 ? 1 : 0
   program = ["bash", "${path.module}/scripts/get-app-settings.sh"]
 
   query = {
@@ -75,13 +76,11 @@ locals {
     replace(key, "-", "_") => value
   }
 
-  externally_managed_app_settings = try(data.external.existing_app_settings.result, {})
+  base_app_settings = merge(local.default_app_settings, local.transformed_app_settings)
 
-  app_settings = merge(
-    local.default_app_settings,
-    local.transformed_app_settings,
-    local.externally_managed_app_settings
-  )
+  externally_managed_app_settings = length(data.external.existing_app_settings) > 0 ? try(data.external.existing_app_settings[0].result, {}) : {}
+
+  app_settings = length(local.externally_managed_app_settings) > 0 ? merge(local.base_app_settings, local.externally_managed_app_settings) : local.base_app_settings
 }
 
 # -----------------------------------------------------------------------------
