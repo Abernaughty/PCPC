@@ -193,16 +193,16 @@ module "function_app" {
       "COSMOS_DB_CONNECTION_STRING"              = module.cosmos_db.primary_sql_connection_string
       "COSMOS_DB_ENDPOINT"                       = module.cosmos_db.endpoint
       "COSMOS_DB_KEY"                            = module.cosmos_db.primary_key
-      "WEBSITE_NODE_DEFAULT_VERSION"             = "~22"
       "FUNCTIONS_WORKER_RUNTIME"                 = "node"
-      "FUNCTIONS_EXTENSION_VERSION"              = "~4"
       "APPINSIGHTS_INSTRUMENTATIONKEY"           = module.application_insights.instrumentation_key
       "APPLICATIONINSIGHTS_CONNECTION_STRING"    = module.application_insights.connection_string
-      "AzureWebJobsStorage"                      = module.storage_account.primary_connection_string
       "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING" = module.storage_account.primary_connection_string
       "WEBSITE_CONTENTSHARE"                     = azurerm_storage_share.function_app_content.name
     }
   )
+
+  external_app_settings_preserve_keys = ["DEPLOY_PACKAGE_HASH"]
+  subscription_id                     = data.azurerm_client_config.current.subscription_id
 
   application_insights_id                = module.application_insights.id
   application_insights_key               = module.application_insights.instrumentation_key
