@@ -225,7 +225,7 @@ output "debug_function_app_settings_keys" {
   description = "DEBUG: List of app setting keys being passed to Function App (for troubleshooting)"
   sensitive   = true
   value = keys(merge(
-    var.function_app_secrets,
+    local.function_app_secrets_filtered,
     var.function_app_config,
     {
       "COSMOS_DB_CONNECTION_STRING"           = "(set)"
