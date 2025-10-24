@@ -37,34 +37,33 @@ echo "[devcontainer] Certificate installed, checking data plane readiness..."
 # echo "[devcontainer] Startup seeding complete."
 
 echo "Checking Azure CLI login"
-azure_config_dir="${AZURE_CONFIG_DIR:-$HOME/.azure}"
-usable_azure_dir=""
-
-if [ -d "$azure_config_dir" ]; then
-  if [ -w "$azure_config_dir" ]; then
-    usable_azure_dir="$azure_config_dir"
+ensure_azure_config_dir() {
+  local candidates=()
+  if [ -n "${AZURE_CONFIG_DIR:-}" ]; then
+    candidates+=("$AZURE_CONFIG_DIR")
   fi
-else
-  if mkdir -p "$azure_config_dir" 2>/dev/null && [ -w "$azure_config_dir" ]; then
-    usable_azure_dir="$azure_config_dir"
-  fi
-fi
+  candidates+=("/workspace/.azure-cli" "/tmp/azure-cli" "$HOME/.azure-config")
 
-if [ -z "$usable_azure_dir" ]; then
-  fallback_dir="$HOME/.azure-config"
-  if mkdir -p "$fallback_dir" 2>/dev/null && [ -w "$fallback_dir" ]; then
-    usable_azure_dir="$fallback_dir"
-    export AZURE_CONFIG_DIR="$fallback_dir"
-    if ! grep -q 'AZURE_CONFIG_DIR=' "$HOME/.bashrc" 2>/dev/null; then
-      echo 'export AZURE_CONFIG_DIR="$HOME/.azure-config"' >> "$HOME/.bashrc"
+  local dir
+  for dir in "${candidates[@]}"; do
+    [ -n "$dir" ] || continue
+    if mkdir -p "$dir" 2>/dev/null && [ -w "$dir" ]; then
+      if [ "${AZURE_CONFIG_DIR:-}" != "$dir" ]; then
+        export AZURE_CONFIG_DIR="$dir"
+        echo "[devcontainer] Using Azure config directory at $dir"
+        if [ "$dir" = "$HOME/.azure-config" ] && [ -w "$HOME/.bashrc" ] && ! grep -q 'AZURE_CONFIG_DIR=' "$HOME/.bashrc"; then
+          echo 'export AZURE_CONFIG_DIR="$HOME/.azure-config"' >> "$HOME/.bashrc"
+        fi
+      fi
+      return 0
     fi
-    echo "[devcontainer] Using fallback Azure config directory at $fallback_dir"
-  else
-    echo "[devcontainer] Skipping Azure CLI login check (no writable Azure config directory)"
-  fi
-fi
+  done
 
-if [ -n "$usable_azure_dir" ]; then
+  echo "[devcontainer] Skipping Azure CLI login check (no writable Azure config directory)"
+  return 1
+}
+
+if ensure_azure_config_dir; then
   az account show >/dev/null 2>&1 || az login --use-device-code
 fi
 
@@ -74,4 +73,3 @@ git config --global user.name "Michael Abernathy"
 git config --global user.email "mabernathy87@gmail.com"
 git config pull.rebase true
 git config rebase.autoStash true
-

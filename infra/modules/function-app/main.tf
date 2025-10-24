@@ -1,4 +1,19 @@
 # -----------------------------------------------------------------------------
+# EXISTING APP SETTINGS LOOKUP (for preserving externally-managed keys)
+# -----------------------------------------------------------------------------
+
+data "external" "existing_app_settings" {
+  program = ["bash", "${path.module}/scripts/get-app-settings.sh"]
+
+  query = {
+    function_app_name   = var.name
+    resource_group_name = var.resource_group_name
+    subscription_id     = var.subscription_id != null ? var.subscription_id : ""
+    keys_json           = jsonencode(var.external_app_settings_preserve_keys)
+  }
+}
+
+# -----------------------------------------------------------------------------
 # LOCALS
 # -----------------------------------------------------------------------------
 
@@ -60,7 +75,13 @@ locals {
     replace(key, "-", "_") => value
   }
 
-  app_settings = merge(local.default_app_settings, local.transformed_app_settings)
+  externally_managed_app_settings = try(data.external.existing_app_settings.result, {})
+
+  app_settings = merge(
+    local.default_app_settings,
+    local.transformed_app_settings,
+    local.externally_managed_app_settings
+  )
 }
 
 # -----------------------------------------------------------------------------
