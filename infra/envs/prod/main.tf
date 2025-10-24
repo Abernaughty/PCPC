@@ -82,6 +82,17 @@ locals {
     "@" :
     replace(var.custom_domain_name, ".${var.custom_domain_dns_zone}", "")
   ) : ""
+
+  function_app_secret_exclusions = [
+    "ARM_CLIENT_ID",
+    "ARM_CLIENT_SECRET",
+  ]
+
+  function_app_secrets_filtered = {
+    for key, value in var.function_app_secrets :
+    key => value
+    if !contains(local.function_app_secret_exclusions, replace(key, "-", "_"))
+  }
 }
 
 # Resource Group
@@ -178,8 +189,8 @@ module "function_app" {
   sku_name = var.function_app_sku_name
 
   app_settings = merge(
-    var.function_app_secrets, # Secrets from Key Vault (with hyphens)
-    var.function_app_config,  # Non-secret config (with underscores)
+    local.function_app_secrets_filtered, # Secrets from Key Vault (filtered)
+    var.function_app_config,             # Non-secret config (with underscores)
     {
       "COSMOS_DB_CONNECTION_STRING"              = module.cosmos_db.primary_sql_connection_string
       "COSMOS_DB_ENDPOINT"                       = module.cosmos_db.endpoint
