@@ -89,7 +89,7 @@ locals {
   function_app_secrets_filtered = {
     for key, value in var.function_app_secrets :
     key => value
-    if !contains(local.function_app_secret_exclusions, key)
+    if !contains(local.function_app_secret_exclusions, replace(key, "-", "_"))
   }
 }
 
