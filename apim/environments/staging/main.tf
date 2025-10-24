@@ -121,7 +121,7 @@ module "pcpc_apim" {
       display_name          = "Premium (Staging)"
       description           = "Premium product for staging validation"
       published             = true
-      approval_required     = true
+      approval_required     = false
       subscription_required = true
       subscriptions_limit   = 5
     }
@@ -129,7 +129,7 @@ module "pcpc_apim" {
       display_name          = "Unlimited (Staging)"
       description           = "Unlimited product for trusted staging consumers"
       published             = true
-      approval_required     = true
+      approval_required     = false
       subscription_required = true
     }
   }
