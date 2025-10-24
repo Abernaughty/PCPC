@@ -78,6 +78,18 @@ variable "app_settings" {
   default     = {}
 }
 
+variable "external_app_settings_preserve_keys" {
+  description = "List of Function App setting keys managed outside Terraform whose current values should be preserved to avoid configuration drift."
+  type        = list(string)
+  default     = []
+}
+
+variable "subscription_id" {
+  description = "Azure subscription ID that contains the Function App (required for preserving external app settings)."
+  type        = string
+  default     = null
+}
+
 variable "cors_allowed_origins" {
   description = "List of allowed origins for CORS"
   type        = list(string)
