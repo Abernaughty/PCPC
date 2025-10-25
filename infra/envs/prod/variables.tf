@@ -17,6 +17,12 @@ variable "location" {
   default     = "Central US"
 }
 
+variable "enable_debug_outputs" {
+  description = "When true, emits debug outputs that list function app configuration keys."
+  type        = bool
+  default     = false
+}
+
 # Key Vault Configuration
 variable "key_vault_sku_name" {
   description = "SKU for the Key Vault"
