@@ -1,6 +1,6 @@
 services:
   devcontainer:
-    image: maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-devcontainer:latest
+    image: ghcr.io/abernaughty/pcpc-devcontainer:latest # maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-devcontainer:latest
     pull_policy: if_not_present
     volumes:
       - ..:/workspace:cached

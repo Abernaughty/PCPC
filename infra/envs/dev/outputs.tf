@@ -224,7 +224,7 @@ output "project_name" {
 output "debug_function_app_settings_keys" {
   description = "DEBUG: List of app setting keys being passed to Function App (for troubleshooting)"
   sensitive   = true
-  value = keys(merge(
+  value = var.enable_debug_outputs ? keys(merge(
     local.function_app_secrets_filtered,
     var.function_app_config,
     {
@@ -237,18 +237,18 @@ output "debug_function_app_settings_keys" {
       "APPINSIGHTS_INSTRUMENTATIONKEY"        = "(set)"
       "APPLICATIONINSIGHTS_CONNECTION_STRING" = "(set)"
     }
-  ))
+  )) : []
 }
 
 output "debug_secrets_keys_received" {
   description = "DEBUG: Keys from function_app_secrets variable (should have 4 keys with hyphens)"
   sensitive   = true
-  value       = keys(var.function_app_secrets)
+  value       = var.enable_debug_outputs ? keys(var.function_app_secrets) : []
 }
 
 output "debug_config_keys_received" {
   description = "DEBUG: Keys from function_app_config variable"
-  value       = keys(var.function_app_config)
+  value       = var.enable_debug_outputs ? keys(var.function_app_config) : []
 }
 
 # Deployment Summary
