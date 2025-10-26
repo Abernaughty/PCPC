@@ -1,16 +1,12 @@
 import { InvocationContext, Timer } from "@azure/functions";
-import {
-  monitoringService,
-  setMappingOrchestrator,
-} from "../../index";
+import { monitoringService, setMappingOrchestrator } from "../../index";
 
 export async function synchronizeSetMappings(
   myTimer: Timer,
   context: InvocationContext
 ): Promise<void> {
   const correlationId =
-    monitoringService.createCorrelationId?.() ||
-    `sync-${Date.now()}`;
+    monitoringService.createCorrelationId?.() || `sync-${Date.now()}`;
 
   context.log(
     `${correlationId} Set mapping synchronization triggered. Past due: ${myTimer.isPastDue}`
@@ -22,9 +18,11 @@ export async function synchronizeSetMappings(
   });
 
   try {
+    // Always force synchronization when manually invoked
+    // This ensures the database is populated after deployment
     const summary = await setMappingOrchestrator.synchronize({
       correlationId,
-      force: false,
+      force: true,
     });
 
     context.log(
