@@ -7,8 +7,8 @@ terraform {
       version = ">= 4.47.0, < 5.0.0"
     }
     porkbun = {
-      source  = "cullenmcdermott/porkbun"
-      version = ">= 0.3"
+      source  = "marcfrederick/porkbun"
+      version = ">= 1.3.1"
     }
     random = {
       source  = "hashicorp/random"
