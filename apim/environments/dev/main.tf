@@ -114,7 +114,7 @@ module "pcpc_apim" {
       published             = true
       approval_required     = false
       subscription_required = false
-      subscriptions_limit   = 5 # Higher limit for dev testing
+      subscriptions_limit   = 0
     }
     premium = {
       display_name          = "Premium (Dev)"

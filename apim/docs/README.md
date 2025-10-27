@@ -344,8 +344,8 @@ When enabled, the configuration provides:
 # Check Terraform state
 cd environments/dev && terraform show
 
-# View rendered policies
-cat policies/generated/global-policy-dev.xml
+# View policy template
+cat policies/templates/global-policy.xml.tpl
 
 # Test API endpoints manually
 curl -v -H "Ocp-Apim-Subscription-Key: YOUR_KEY" \
