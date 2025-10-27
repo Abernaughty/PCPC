@@ -7,8 +7,8 @@ terraform {
       version = ">= 4.47.0, < 5.0.0"
     }
     porkbun = {
-      source  = "cullenmcdermott/porkbun"
-      version = ">= 0.3"
+      source  = "marcfrederick/porkbun"
+      version = ">= 1.3.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -47,8 +47,8 @@ provider "azurerm" {
 provider "random" {}
 
 provider "porkbun" {
-  api_key    = var.porkbun_api_key
-  secret_key = var.porkbun_secret_key
+  api_key        = var.porkbun_api_key
+  secret_api_key = var.porkbun_secret_key
 }
 
 provider "time" {}
@@ -243,11 +243,11 @@ module "static_web_app" {
 resource "porkbun_dns_record" "static_web_app_custom_domain" {
   count = local.custom_domain_enabled ? 1 : 0
 
-  domain  = var.custom_domain_dns_zone
-  name    = local.custom_domain_label
-  type    = "CNAME"
-  content = module.static_web_app.default_host_name
-  ttl     = var.porkbun_dns_record_ttl
+  domain    = var.custom_domain_dns_zone
+  subdomain = local.custom_domain_label
+  type      = "CNAME"
+  content   = module.static_web_app.default_host_name
+  ttl       = var.porkbun_dns_record_ttl
 }
 
 resource "time_sleep" "wait_for_custom_domain_dns" {
