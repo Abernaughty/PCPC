@@ -46,7 +46,6 @@ variable "cors_origins" {
   description = "List of allowed CORS origins"
   type        = list(string)
   default = [
-    "https://pokedata.maber.io",
     "http://localhost:3000"
   ]
 
