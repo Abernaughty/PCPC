@@ -119,19 +119,3 @@ locals {
     )
   }
 }
-
-# -----------------------------------------------------------------------------
-# SAVE RENDERED POLICIES
-# -----------------------------------------------------------------------------
-
-# Save rendered policies to generated directory for reference
-resource "local_file" "rendered_global_policy" {
-  content  = local.rendered_global_policy
-  filename = "${path.module}/../policies/generated/global-policy-${var.environment}.xml"
-}
-
-resource "local_file" "rendered_operation_policies" {
-  for_each = local.rendered_operation_policies
-  content  = each.value
-  filename = "${path.module}/../policies/generated/${each.key}-policy-${var.environment}.xml"
-}
