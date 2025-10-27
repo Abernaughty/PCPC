@@ -241,11 +241,11 @@ module "static_web_app" {
 resource "porkbun_dns_record" "static_web_app_custom_domain" {
   count = local.custom_domain_enabled ? 1 : 0
 
-  domain      = var.custom_domain_dns_zone
-  subdomain   = local.custom_domain_label
-  record_type = "CNAME"
-  content     = module.static_web_app.default_host_name
-  ttl         = var.porkbun_dns_record_ttl
+  domain    = var.custom_domain_dns_zone
+  subdomain = local.custom_domain_label
+  type      = "CNAME"
+  content   = module.static_web_app.default_host_name
+  ttl       = var.porkbun_dns_record_ttl
 }
 
 resource "time_sleep" "wait_for_custom_domain_dns" {
