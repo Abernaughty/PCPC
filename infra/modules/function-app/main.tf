@@ -17,7 +17,6 @@ data "external" "existing_app_settings" {
 # -----------------------------------------------------------------------------
 # LOCALS
 # -----------------------------------------------------------------------------
-
 locals {
   default_cors_origins = [
     "https://functions.azure.com",
@@ -141,6 +140,21 @@ resource "azurerm_application_insights" "this" {
 
 }
 
+# Extend function app tags with the hidden Application Insights link when present.
+locals {
+  application_insights_resource_id = var.application_insights_enabled ? (
+    var.application_insights_id != null ? var.application_insights_id : (
+      var.create_application_insights && var.application_insights_id == null ? try(azurerm_application_insights.this[0].id, null) : null
+    )
+  ) : null
+
+  function_app_hidden_link_tag = local.application_insights_resource_id != null ? {
+    "hidden-link: /app-insights-resource-id" = local.application_insights_resource_id
+  } : {}
+
+  function_app_tags = merge(local.common_tags, local.function_app_hidden_link_tag)
+}
+
 # -----------------------------------------------------------------------------
 # FUNCTION APP - WINDOWS
 # -----------------------------------------------------------------------------
@@ -239,7 +253,7 @@ resource "azurerm_windows_function_app" "this" {
     }
   }
 
-  tags = local.common_tags
+  tags = local.function_app_tags
 
   lifecycle {
     ignore_changes = [
@@ -347,7 +361,7 @@ resource "azurerm_linux_function_app" "this" {
     }
   }
 
-  tags = local.common_tags
+  tags = local.function_app_tags
 
   lifecycle {
     ignore_changes = [
