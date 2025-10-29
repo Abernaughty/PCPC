@@ -4,7 +4,7 @@
 
 Welcome to the comprehensive documentation for the Pokemon Card Price Checker (PCPC) project. This documentation suite provides complete coverage of the system architecture, development processes, operational procedures, and technical decisions that power the PCPC application.
 
-**Total Documentation**: 36,000+ words across multiple enterprise-grade components
+This index links the core documents for architecture, development, deployment, and operations.
 
 ## Quick Navigation
 
@@ -57,12 +57,10 @@ Welcome to the comprehensive documentation for the Pokemon Card Price Checker (P
 
 **Specialized documentation for security and performance**
 
-| Document | Purpose | Audience | Word Count |
-|----------|---------|----------|------------|
-| [Security Documentation](./security.md) | Comprehensive security architecture | Security Engineers | 2,500+ |
-| [Performance Documentation](./performance.md) | Performance optimization and monitoring | Performance Engineers | 2,500+ |
-
-**Total Tier 3**: 5,000+ words
+| Document | Purpose | Audience |
+|----------|---------|----------|
+| [Security Documentation](./security.md) | Current security model and planned enhancements | Security/DevOps |
+| [Performance Documentation](./performance.md) | Performance considerations and monitoring | Engineering |
 
 ### Decision & Process Records (Tier 4)
 
@@ -79,12 +77,10 @@ Welcome to the comprehensive documentation for the Pokemon Card Price Checker (P
 
 **System monitoring and observability strategy**
 
-| Document | Purpose | Audience | Word Count |
-|----------|---------|----------|------------|
-| [Monitoring Documentation](./monitoring.md) | Observability and alerting strategy | SRE/DevOps | 2,500+ |
-| [Documentation Index](./README.md) | Complete documentation guide | All users | 1,500+ |
-
-**Total Tier 5**: 4,000+ words
+| Document | Purpose | Audience |
+|----------|---------|----------|
+| [Monitoring Documentation](./monitoring.md) | Observability and alerting strategy | SRE/DevOps |
+| [Documentation Index](./README.md) | Complete documentation guide | All users |
 
 ## Documentation by Audience
 

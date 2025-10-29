@@ -38,12 +38,12 @@ Before you begin, ensure you have the following installed:
 
    - Open VS Code in the project directory
    - When prompted, click "Reopen in Container" or use `Ctrl+Shift+P` → "Dev Containers: Reopen in Container"
-   - **Revolutionary Performance**: First startup ~60 seconds, subsequent startups ~10 seconds (95% improvement over traditional setup)
+   - **Performance**: First startup ~60 seconds, subsequent startups ~10 seconds (95% improvement over traditional setup)
 
 3. **Verify Environment**
 
    ```bash
-   # Check Node.js version (should be 22.19.0 LTS)
+   # Check Node.js version (should be 22.20.0 LTS)
    node --version
 
    # Check npm version
@@ -73,10 +73,10 @@ Before you begin, ensure you have the following installed:
 
    ```bash
    # Start frontend development server
-   make dev-frontend
+   cd app/frontend && npm run dev
 
    # In another terminal, start backend
-   make dev-backend
+   cd app/backend && npm run start
    ```
 
 ### Repository Structure
@@ -128,7 +128,7 @@ The DevContainer includes all necessary development tools:
 
 **Core Development Tools**:
 
-- Node.js 22.19.0 LTS (latest stable)
+- Node.js 22.20.0 LTS
 - npm (package manager, Azure Functions v4 compatible)
 - TypeScript 5.8.3 (latest stable)
 - Azure Functions Core Tools v4.x
@@ -252,11 +252,13 @@ The DevContainer automatically forwards the following ports:
 # Start DevContainer (if not already running)
 # VS Code will automatically start the container
 
-# Verify all services are healthy
-make health-check
-
-# Start development services
-make dev
+# Start development services (examples)
+cd app/frontend && npm run dev
+# In another terminal
+cd app/backend && npm run start
+ 
+# Run unit tests from repo root
+npm test
 ```
 
 #### 2. Frontend Development

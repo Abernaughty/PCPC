@@ -44,14 +44,13 @@ graph TB
     end
 
     subgraph "CI/CD"
-        GITHUB[GitHub Actions]
         AZDO[Azure DevOps]
     end
 
     DEV --> DEVCONTAINER
-    DEVCONTAINER --> GITHUB
-    GITHUB --> SWA
-    GITHUB --> FUNC
+    DEVCONTAINER --> AZDO
+    AZDO --> SWA
+    AZDO --> FUNC
     AZDO --> APIM
     AZDO --> COSMOS
     AZDO --> STORAGE
@@ -71,9 +70,8 @@ graph TB
 
 - **Infrastructure as Code**: Complete Terraform automation
 - **Multi-Environment Support**: Dev, staging, and production environments
-- **Zero-Downtime Deployment**: Blue-green deployment strategies
-- **Automated Rollback**: Automatic rollback on deployment failures
-- **Comprehensive Monitoring**: Application Insights integration
+- **Rollout**: Azure DevOps deployments (no slots/canary yet)
+- **Monitoring**: Application Insights integration
 - **Security**: Azure Key Vault integration and RBAC
 
 ## Infrastructure Overview
@@ -106,30 +104,26 @@ module "resource_group" {
 #### 2. Static Web App (`infra/modules/static-web-app/`)
 
 **Purpose**: Hosts the Svelte frontend application
-**Features**:
+**Features (current)**:
 
-- Custom domain support (pokedata.maber.io)
-- GitHub integration for automatic deployments
-- Global CDN distribution
-- SSL certificate management
+- Managed Azure Static Web Apps resource
+- Configuration via Terraform variables (no repo-binding in TF)
+- Deployed via Azure DevOps template (`.ado/templates/deploy-swa.yml`)
 
-> **Custom domain automation**  
-> The Terraform environment stacks now provision the Porkbun DNS CNAMEs and attach the Azure Static Web App custom domains (`pcpc-dev.maber.io`, `pcpc-staging.maber.io`, `pcpc.maber.io`). Make sure the pipeline exports `PORKBUN_API_KEY` and `PORKBUN_SECRET_KEY` (retrieved from each environment's Key Vault) before running `terraform apply`.
+> Note: Custom domains are provisioned by Terraform when enabled and when Porkbun API credentials are provided. Azure CDN/Front Door is not provisioned at this time and remains a future enhancement.
 
-**Configuration**:
+**Minimal Module Configuration (current)**:
 
 ```hcl
 module "static_web_app" {
   source = "../../modules/static-web-app"
 
-  name                = "pokedata-dev"
+  name                = "pcpc-swa-dev"
   resource_group_name = module.resource_group.name
-  location           = module.resource_group.location
+  location            = module.resource_group.location
 
-  github_repo_url    = "https://github.com/Abernaughty/PCPC"
-  github_branch      = "main"
-  app_location       = "/app/frontend"
-  output_location    = "public"
+  # Build/deploy is handled by Azure DevOps
+  # Optional app_settings or flags can be set here
 
   tags = local.common_tags
 }
@@ -143,7 +137,7 @@ module "static_web_app" {
 - Node.js 22.x runtime
 - Consumption plan for cost optimization
 - Application Insights integration
-- Environment variable management
+- Environment variable management (Key Vault-backed)
 
 **Configuration**:
 
@@ -672,68 +666,13 @@ terraform workspace list
 
 ### Frontend Deployment (Static Web App)
 
-The frontend deployment is automated through GitHub Actions integration with Azure Static Web Apps.
+The frontend deployment is automated through Azure DevOps using the Static Web Apps template.
 
 #### Deployment Configuration
 
-**GitHub Actions Workflow** (`.github/workflows/azure-static-web-apps.yml`):
+**Azure DevOps Template** (`.ado/templates/deploy-swa.yml`)
 
-```yaml
-name: Azure Static Web Apps CI/CD
-
-on:
-  push:
-    branches:
-      - main
-    paths:
-      - "app/frontend/**"
-  pull_request:
-    types: [opened, synchronize, reopened, closed]
-    branches:
-      - main
-    paths:
-      - "app/frontend/**"
-
-jobs:
-  build_and_deploy_job:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
-    runs-on: ubuntu-latest
-    name: Build and Deploy Job
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: true
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "22"
-          cache: "npm"
-          cache-dependency-path: app/frontend/package-lock.json
-
-      - name: Install dependencies
-        run: |
-          cd app/frontend
-          npm ci
-
-      - name: Build application
-        run: |
-          cd app/frontend
-          npm run build
-        env:
-          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
-          VITE_APIM_SUBSCRIPTION_KEY: ${{ secrets.VITE_APIM_SUBSCRIPTION_KEY }}
-
-      - name: Deploy to Azure Static Web Apps
-        id: builddeploy
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          action: "upload"
-          app_location: "/app/frontend"
-          output_location: "public"
-```
+This template builds the frontend and deploys to the SWA resource. Configure variables (e.g., API base URL, subscription key) via variable groups or pipeline variables.
 
 #### Manual Deployment
 
@@ -889,44 +828,7 @@ az cosmosdb sql container update \
   --idx @db/schemas/indexes/cards-indexes.json
 ```
 
-## CI/CD Pipelines
-
-### GitHub Actions (Primary)
-
-#### Frontend Pipeline
-
-**Triggers**:
-
-- Push to main branch (app/frontend path)
-- Pull request to main branch (app/frontend path)
-
-**Steps**:
-
-1. Checkout code
-2. Setup Node.js 22.x
-3. Install dependencies
-4. Run tests
-5. Build application
-6. Deploy to Azure Static Web Apps
-
-#### Backend Pipeline
-
-**Triggers**:
-
-- Push to main branch (app/backend path)
-- Pull request to main branch (app/backend path)
-
-**Steps**:
-
-1. Checkout code
-2. Setup Node.js 22.x
-3. Install dependencies
-4. Run tests
-5. Build TypeScript
-6. Create deployment package
-7. Deploy to Azure Functions
-
-### Azure DevOps (Secondary)
+## CI/CD Pipelines (Azure DevOps)
 
 #### Infrastructure Pipeline
 
@@ -1039,14 +941,9 @@ stages:
 
 #### Secret Management
 
-**GitHub Secrets**:
+**Azure DevOps Variable Groups/Key Vault**:
 
-```bash
-# Set repository secrets
-gh secret set AZURE_STATIC_WEB_APPS_API_TOKEN --body "your-token"
-gh secret set VITE_API_BASE_URL --body "https://pokedata-apim-dev.azure-api.net/api"
-gh secret set VITE_APIM_SUBSCRIPTION_KEY --body "your-subscription-key"
-```
+Use Azure DevOps variable groups (optionally linked to Key Vault) to provide values such as `VITE_API_BASE_URL` and `VITE_APIM_SUBSCRIPTION_KEY` to the Static Web App deployment.
 
 **Azure DevOps Variables**:
 
@@ -1824,9 +1721,9 @@ az cosmosdb sql database restore \
 This deployment guide provides comprehensive coverage of the PCPC deployment process, from infrastructure setup to production monitoring. Key highlights include:
 
 - **Complete Infrastructure as Code**: 7 Terraform modules with multi-environment support
-- **Automated CI/CD Pipelines**: GitHub Actions and Azure DevOps integration
+- **Automated CI/CD Pipelines**: Azure DevOps validation and deployment pipelines
 - **Comprehensive Monitoring**: Application Insights with custom dashboards and alerts
-- **Robust Rollback Procedures**: Blue-green and canary deployment strategies
+- **Rollout**: Direct deploy with validations (blue-green/canary planned)
 - **Security Best Practices**: Azure Key Vault integration and RBAC
 - **Multi-Environment Strategy**: Development, staging, and production environments
 
