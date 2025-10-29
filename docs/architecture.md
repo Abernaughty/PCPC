@@ -28,9 +28,6 @@ graph TB
         MOBILE[Mobile Browser]
     end
 
-    subgraph "CDN & Edge"
-        CDN[Azure CDN<br/>Global Distribution]
-    end
 
     subgraph "Frontend Layer"
         SWA[Azure Static Web Apps<br/>Svelte SPA]
@@ -60,7 +57,7 @@ graph TB
             SETS_CONTAINER[Sets Container<br/>Partition: /series]
             CARDS_CONTAINER[Cards Container<br/>Partition: /setId]
         end
-        REDIS[Redis Cache<br/>Optional Performance]
+        REDIS[Redis Cache<br/>Optional (future)]
         BLOB[Azure Blob Storage<br/>Image Assets]
     end
 
@@ -75,9 +72,8 @@ graph TB
         LOGS[Log Analytics<br/>Centralized Logging]
     end
 
-    WEB --> CDN
-    MOBILE --> CDN
-    CDN --> SWA
+    WEB --> SWA
+    MOBILE --> SWA
     SWA --> ASSETS
     SWA --> APIM
     APIM --> POLICIES
@@ -122,9 +118,8 @@ graph TB
 
 #### 4. Performance-Optimized
 
-- **Multi-Tier Caching**: Browser, CDN, API Management, and application-level caching
+- **Caching**: Browser, API Management, and application-level caching
 - **Optimized Data Access**: Efficient Cosmos DB partitioning and indexing strategies
-- **Content Delivery**: Global CDN for static assets and API responses
 
 #### 5. Security-First
 
@@ -200,10 +195,9 @@ graph TB
 
 #### Static Web App Hosting
 
-- **Global Distribution**: Azure CDN integration for worldwide performance
-- **Custom Domain**: Professional domain with SSL certificate management
-- **Build Integration**: Automated builds from GitHub repository
+- **Hosting**: Azure Static Web Apps
 - **Environment Configuration**: Separate configurations for dev/staging/production
+- **Planned**: Custom domain and CDN integration
 
 ### Backend Components
 
@@ -457,8 +451,8 @@ graph TB
         end
     end
 
-    subgraph "CDN Caching"
-        AZURE_CDN[Azure CDN<br/>Global Edge Locations]
+    %% CDN layer not in use currently; caching at gateway/app levels
+    subgraph "Edge/Static Caching"
         STATIC_CACHE[Static Assets<br/>TTL: 30 days]
         API_CACHE[API Responses<br/>TTL: 5-60 minutes]
     end
@@ -482,8 +476,7 @@ graph TB
     INDEXEDDB --> PRICE_CACHE
     INDEXEDDB --> CONFIG_CACHE
 
-    AZURE_CDN --> STATIC_CACHE
-    AZURE_CDN --> API_CACHE
+    APIM_CACHE --> API_CACHE
 
     APIM_CACHE --> SET_RESPONSE
     APIM_CACHE --> CARD_RESPONSE

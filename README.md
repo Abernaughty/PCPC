@@ -2,7 +2,7 @@
 
 [![Enterprise Architecture](https://img.shields.io/badge/Architecture-Enterprise-blue.svg)](docs/architecture.md)
 [![DevContainer Performance](https://img.shields.io/badge/DevContainer-95%25%20Faster-green.svg)](.devcontainer/README.md)
-[![Testing Framework](https://img.shields.io/badge/Tests-26%20Passing-brightgreen.svg)](tests/README.md)
+[![Testing Framework](https://img.shields.io/badge/Tests-Unit%20Suite%20Active-brightgreen.svg)](tests/README.md)
 [![Infrastructure as Code](https://img.shields.io/badge/IaC-Terraform-purple.svg)](infra/README.md)
 
 > **Enterprise-grade Pokemon card price checking application demonstrating advanced software engineering, DevOps, and cloud architecture capabilities.**
@@ -36,7 +36,7 @@
 PCPC is the result of consolidating three existing projects into a single, enterprise-grade monorepo that demonstrates:
 
 - **Advanced Software Engineering**: Modern architecture patterns, comprehensive testing, enterprise-grade code quality
-- **DevOps Excellence**: Revolutionary DevContainer performance, Infrastructure as Code, multi-platform CI/CD
+- **DevOps Excellence**: Revolutionary DevContainer performance, Infrastructure as Code, Azure DevOps CI/CD
 - **Cloud Architecture**: Azure-native serverless architecture with optimal cost and performance
 - **Portfolio Showcase**: Demonstrates senior-level engineering capabilities for technical recruiters
 
@@ -57,7 +57,7 @@ Transform Pokemon card price checking into a showcase of enterprise software dev
 ### 🛠️ Technical Features
 
 - **Revolutionary DevContainer**: 95% faster environment setup with ACR optimization
-- **Enterprise Testing**: 26 passing tests with comprehensive Test Pyramid implementation
+- **Testing**: Active unit test suite (coverage expansion planned)
 - **Infrastructure as Code**: Complete Terraform automation with 7 enterprise modules
 - **API Management**: Comprehensive APIM as Code with policy management
 - **Database Schema Management**: Optimized Cosmos DB with performance analysis
@@ -66,9 +66,9 @@ Transform Pokemon card price checking into a showcase of enterprise software dev
 ### 🏗️ Enterprise Capabilities
 
 - **Monorepo Architecture**: 15+ top-level domains with clear separation of concerns
-- **Multi-Platform CI/CD**: Azure DevOps and GitHub Actions integration
+- **CI/CD**: Azure DevOps pipelines with reusable templates
 - **Security & Compliance**: Comprehensive security scanning and best practices
-- **Documentation Excellence**: 25,000+ words of enterprise-grade documentation
+- **Documentation**: Consolidated, factual dev/ops documentation
 - **Cost Optimization**: $0/month development environment
 
 ## 🏗️ Architecture
@@ -148,13 +148,13 @@ code .
 
 ```bash
 # Check development tools (all pre-installed in DevContainer)
-node --version    # v22.19.0 LTS
+node --version    # v22.20.0 LTS
 npm --version     # Latest
 terraform version # v1.13.3
 az --version      # Latest Azure CLI
 
-# Verify emulators are running
-make dev-status   # Check Azurite and Cosmos DB emulators
+# Verify emulators are running (optional)
+# Azurite Blob: http://localhost:10000 | Cosmos DB Explorer (if emulated): https://localhost:8081
 ```
 
 ### 3. Start Development
@@ -168,14 +168,15 @@ npm run dev
 cd app/backend
 npm run start
 
-# Infrastructure management
-make terraform-plan ENVIRONMENT=dev
+# Infrastructure management (Terraform)
+cd ../../infra/envs/dev
+terraform init && terraform plan
 ```
 
 ### 4. Run Tests
 
 ```bash
-# Run all tests (26 tests, ~40 seconds)
+# Run unit tests
 npm test
 
 # Frontend tests only
@@ -203,12 +204,17 @@ Our revolutionary DevContainer provides:
 ### Development Workflow
 
 ```bash
-# Daily development workflow
-make dev          # Start all development services
-make build        # Build frontend and backend
-make test         # Run comprehensive test suite
-make lint         # Code quality checks
-make deploy-dev   # Deploy to development environment
+# Frontend development
+cd app/frontend && npm run dev
+
+# Backend development
+cd app/backend && npm run start
+
+# Run unit tests (from repo root)
+npm test
+
+# Frontend build
+cd app/frontend && npm run build
 ```
 
 ### Project Structure
@@ -235,9 +241,7 @@ PCPC/
 
 ### Test Pyramid Implementation
 
-Our comprehensive testing strategy includes:
-
-- **Unit Tests**: 17 frontend + 9 backend tests
+Our comprehensive testing strategy includes unit, integration, and E2E tests. The unit test suite is active and expanding (coverage growth planned).
 - **Integration Tests**: API and database integration
 - **End-to-End Tests**: Playwright cross-browser testing
 - **Performance Tests**: Load testing with K6 (planned)
@@ -246,10 +250,9 @@ Our comprehensive testing strategy includes:
 ### Test Results
 
 ```bash
-✅ Frontend Tests: 17/17 passing (SearchableSelect component)
-✅ Backend Tests: 9/9 passing (GetSetList Azure Function)
-✅ Total Coverage: 26/26 tests passing (100% success rate)
-⏱️ Execution Time: ~40 seconds
+# Example (output will vary)
+✅ Unit tests executed successfully
+⏱️ Execution time varies by environment
 ```
 
 ### Running Tests
@@ -354,7 +357,7 @@ Our comprehensive documentation includes:
 ### Enterprise Capabilities
 
 - **Monorepo Architecture**: 15+ top-level domains
-- **Multi-Platform CI/CD**: Azure DevOps and GitHub Actions ready
+- **CI/CD**: Azure DevOps pipelines with reusable templates
 - **Comprehensive Documentation**: 25,000+ words planned
 - **Security & Compliance**: Enterprise-grade practices throughout
 

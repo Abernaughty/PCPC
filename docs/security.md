@@ -6,52 +6,52 @@ This document outlines the comprehensive security architecture, policies, and pr
 
 ## Security Architecture
 
-### Defense-in-Depth Strategy
+### Current Security Model
 
 ```mermaid
 graph TB
-    subgraph "External Layer"
-        A[Internet] --> B[Azure Front Door]
-        B --> C[DDoS Protection]
+    subgraph "Client"
+        U[User]
     end
-    
-    subgraph "Network Layer"
-        C --> D[API Management]
-        D --> E[Virtual Network]
-        E --> F[Network Security Groups]
+
+    subgraph "Frontend"
+        SWA[Azure Static Web Apps]
     end
-    
-    subgraph "Application Layer"  
-        F --> G[Static Web App]
-        F --> H[Azure Functions]
-        G --> I[Authentication]
-        H --> I
+
+    subgraph "API Gateway"
+        APIM[Azure API Management]
     end
-    
-    subgraph "Data Layer"
-        I --> J[Azure Key Vault]
-        I --> K[Cosmos DB]
-        I --> L[Storage Account]
-        J --> M[Encryption at Rest]
-        K --> M
-        L --> M
+
+    subgraph "Backend"
+        AF[Azure Functions]
     end
-    
-    subgraph "Identity Layer"
-        N[Azure AD] --> I
-        O[Managed Identity] --> J
+
+    subgraph "Secrets"
+        KV[Azure Key Vault]
     end
+
+    subgraph "Data"
+        COSMOS[Cosmos DB]
+        STORAGE[Storage Account]
+    end
+
+    U --> SWA
+    SWA --> APIM
+    APIM --> AF
+    AF --> KV
+    AF --> COSMOS
+    AF --> STORAGE
 ```
 
 ### Security Domains
 
 | Domain | Components | Security Controls |
 |--------|------------|------------------|
-| **Network Security** | VNet, NSG, Front Door | Network isolation, DDoS protection, WAF |
-| **Application Security** | APIM, Functions, SWA | Authentication, authorization, input validation |
-| **Data Security** | Cosmos DB, Storage | Encryption, access control, audit logging |
-| **Identity Security** | Azure AD, Managed Identity | Multi-factor authentication, RBAC |
-| **Infrastructure Security** | Resource Groups, RBAC | Least privilege, resource isolation |
+| **Gateway** | API Management | Subscription key validation, rate limits, quotas |
+| **Application** | Azure Functions, SWA | Function keys, input validation, CORS |
+| **Secrets** | Key Vault | Secret storage, reference in app settings |
+| **Data** | Cosmos DB, Storage | Encryption at rest, access keys |
+| **Infra** | Resource Groups | RBAC and tagging |
 
 ## Authentication and Authorization
 
@@ -127,34 +127,11 @@ export const httpTrigger: AzureFunction = async function (context, req) {
 };
 ```
 
-### Azure Active Directory Integration
+### Planned Enhancements
 
-#### Planned Implementation
-
-**Authentication Providers**:
-- **Azure AD B2C**: Consumer identity management
-- **Microsoft Identity Platform**: Enterprise integration
-- **Social Logins**: Google, GitHub, Facebook integration
-
-**Authorization Model**:
-```json
-{
-  "roles": [
-    {
-      "name": "User",
-      "permissions": ["read:cards", "read:sets", "read:pricing"]
-    },
-    {
-      "name": "Premium",
-      "permissions": ["read:cards", "read:sets", "read:pricing", "read:historical", "read:analytics"]
-    },
-    {
-      "name": "Admin",
-      "permissions": ["*"]
-    }
-  ]
-}
-```
+- Azure AD (or B2C) authentication for user identity and role-based access
+- VNet integration and private endpoints for data plane isolation
+- Azure Front Door/WAF for global edge security and web application firewalling
 
 ## Data Protection
 

@@ -11,14 +11,14 @@ This directory contains Azure DevOps pipeline definitions for the PCPC (Pokemon 
 **Triggers:** Pull requests to `main` or `develop` branches
 
 **Stages:**
-1. **Frontend Validation** (~3 minutes)
+1. **Frontend Validation**
    - ESLint code linting
    - Jest unit tests (17 tests)
    - Production build verification
    - Security audit (npm audit)
    - Code coverage reporting
 
-2. **Backend Validation** (~2 minutes)
+2. **Backend Validation**
    - ESLint code linting
    - TypeScript compilation check
    - Jest unit tests (9 tests)
@@ -26,14 +26,14 @@ This directory contains Azure DevOps pipeline definitions for the PCPC (Pokemon 
    - Security audit (npm audit)
    - Code coverage reporting
 
-3. **Infrastructure Validation** (~2 minutes)
+3. **Infrastructure Validation**
    - Terraform format verification
    - Terraform module validation
    - TFLint static analysis
    - Checkov security scanning
    - Dev environment validation
 
-4. **APIM Validation** (~1 minute)
+4. **APIM Validation**
    - OpenAPI specification validation (Spectral)
    - Policy XML well-formedness checks
    - API operations verification
@@ -42,8 +42,6 @@ This directory contains Azure DevOps pipeline definitions for the PCPC (Pokemon 
 5. **Summary** (~1 second)
    - Aggregated validation results
    - Pass/fail status for all stages
-
-**Total Feedback Time:** 5-10 minutes
 
 **Key Features:**
 - ✅ No deployments - validation only
