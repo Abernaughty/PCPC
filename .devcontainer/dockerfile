@@ -128,6 +128,10 @@ RUN chown vscode:vscode /home/vscode/.bashrc
 RUN echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> /home/vscode/.bashrc \
  && echo 'export GOPATH=$HOME/go' >> /home/vscode/.bashrc
 
+# Ensure Azure CLI uses a writable config directory for the vscode user
+RUN mkdir -p /home/vscode/.azure && chown -R vscode:vscode /home/vscode/.azure
+ENV AZURE_CONFIG_DIR=/home/vscode/.azure
+
 # (Alternative Option B: fetch latest from GitHub)
 # RUN curl -fsSL https://raw.githubusercontent.com/Abernaughty/git-maber/main/dotfiles/bashrc/.bashrc \
 #     -o /home/vscode/.bashrc && chown vscode:vscode /home/vscode/.bashrc

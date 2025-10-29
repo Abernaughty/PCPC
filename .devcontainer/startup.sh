@@ -19,12 +19,12 @@ while ! curl -k --silent --head "$endpoint/_explorer/index.html" >/dev/null; do
   sleep 3
 done
 
-echo "[devcontainer] HTTP endpoint up, downloading and installing TLS certificate..."
+echo "[devcontainer] HTTP endpoint up, downloading Cosmos emulator TLS certificate for user trust..."
 
-# Download and install emulator certificate
-curl --insecure https://cosmosdb-emulator:8081/_explorer/emulator.pem > ~/emulatorcert.crt
-sudo cp ~/emulatorcert.crt /usr/local/share/ca-certificates/
-sudo update-ca-certificates
+# Download emulator certificate to user-scoped certs for per-process trust
+mkdir -p "$HOME/.certs"
+curl --insecure https://cosmosdb-emulator:8081/_explorer/emulator.pem > "$HOME/.certs/emulator.pem"
+echo "[devcontainer] TLS certificate saved to $HOME/.certs/emulator.pem"
 
 echo "[devcontainer] Certificate installed, checking data plane readiness..."
 
@@ -37,35 +37,16 @@ echo "[devcontainer] Certificate installed, checking data plane readiness..."
 # echo "[devcontainer] Startup seeding complete."
 
 echo "Checking Azure CLI login"
-ensure_azure_config_dir() {
-  local candidates=()
-  if [ -n "${AZURE_CONFIG_DIR:-}" ]; then
-    candidates+=("$AZURE_CONFIG_DIR")
-  fi
-  candidates+=("/workspace/.azure-cli" "/tmp/azure-cli" "$HOME/.azure-config")
+# Ensure Azure CLI config dir exists and is writable for the current user
+mkdir -p "$HOME/.azure" || true
+# On some host-mounted filesystems (e.g., Windows), chmod may not be supported; silence errors
+chmod 700 "$HOME/.azure" 2>/dev/null || true
 
-  local dir
-  for dir in "${candidates[@]}"; do
-    [ -n "$dir" ] || continue
-    if mkdir -p "$dir" 2>/dev/null && [ -w "$dir" ]; then
-      if [ "${AZURE_CONFIG_DIR:-}" != "$dir" ]; then
-        export AZURE_CONFIG_DIR="$dir"
-        echo "[devcontainer] Using Azure config directory at $dir"
-        if [ "$dir" = "$HOME/.azure-config" ] && [ -w "$HOME/.bashrc" ] && ! grep -q 'AZURE_CONFIG_DIR=' "$HOME/.bashrc"; then
-          echo 'export AZURE_CONFIG_DIR="$HOME/.azure-config"' >> "$HOME/.bashrc"
-        fi
-      fi
-      return 0
-    fi
-  done
-
-  echo "[devcontainer] Skipping Azure CLI login check (no writable Azure config directory)"
-  return 1
-}
-
-if ensure_azure_config_dir; then
-  az account show >/dev/null 2>&1 || az login --use-device-code
+# Make Cosmos emulator cert available to Node-based tools without affecting system trust stores
+if [ -f "$HOME/.certs/emulator.pem" ]; then
+  export NODE_EXTRA_CA_CERTS="$HOME/.certs/emulator.pem"
 fi
+az account show >/dev/null 2>&1 || az login --use-device-code
 
 echo "Configure git"
 git config --global --add safe.directory /workspace

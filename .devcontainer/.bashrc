@@ -153,3 +153,9 @@ if [ -z "${AZURE_CONFIG_DIR:-}" ]; then
         fi
     done
 fi
+
+# Expose Cosmos Emulator certificate to Node.js tools when available
+COSMOS_EMULATOR_CA="$HOME/.certs/emulator.pem"
+if [ -z "${NODE_EXTRA_CA_CERTS:-}" ] && [ -f "$COSMOS_EMULATOR_CA" ]; then
+    export NODE_EXTRA_CA_CERTS="$COSMOS_EMULATOR_CA"
+fi

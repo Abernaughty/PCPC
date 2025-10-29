@@ -30,13 +30,49 @@ export class PokemonTcgApiService implements IPokemonTcgApiService {
     async getAllSets(): Promise<Set[]> {
         console.log(`[PokemonTcgApiService] Getting all sets`);
         
-        try {
-            const response = await axios.get(`${this.baseUrl}/sets`, { headers: this.getHeaders() });
-            return response.data.data.map((apiSet: any) => this.mapApiSetToSet(apiSet));
-        } catch (error: any) {
-            console.error(`[PokemonTcgApiService] Error getting sets: ${error.message}`);
-            return [];
+        const maxAttempts = this.getRetryAttempts();
+        const baseDelayMs = this.getRetryBaseDelay();
+        let attempt = 0;
+
+        while (attempt < maxAttempts) {
+            attempt++;
+            try {
+                const response = await axios.get(`${this.baseUrl}/sets`, { headers: this.getHeaders() });
+                const data = response?.data?.data;
+
+                if (!Array.isArray(data)) {
+                    throw new Error("Invalid response structure from Pokemon TCG API - expected array");
+                }
+
+                return data.map((apiSet: any) => this.mapApiSetToSet(apiSet));
+            } catch (error: any) {
+                const status = error?.response?.status;
+                const isRetryable = this.isRetryableStatus(status) || !error.response;
+                const message = error?.message || "Unknown error";
+
+                console.error(
+                    `[PokemonTcgApiService] Error getting sets (attempt ${attempt}/${maxAttempts})${status ? ` [status=${status}]` : ""}: ${message}`
+                );
+
+                if (attempt >= maxAttempts || !isRetryable) {
+                    throw new Error(
+                        `[PokemonTcgApiService] Failed to retrieve sets after ${attempt} attempt(s)${
+                            status ? ` (status ${status})` : ""
+                        }: ${message}`
+                    );
+                }
+
+                const delay = this.calculateDelay(baseDelayMs, attempt);
+                console.warn(
+                    `[PokemonTcgApiService] Retrying in ${delay}ms after retryable error${status ? ` (status ${status})` : ""}`
+                );
+                await this.delay(delay);
+            }
         }
+
+        throw new Error(
+            "[PokemonTcgApiService] Exhausted all retry attempts without receiving a valid response"
+        );
     }
     
     async getSet(setCode: string): Promise<Set | null> {
@@ -191,5 +227,31 @@ async getCardsBySet(setCode: string): Promise<Card[]> {
             console.error(`Error determining if set is current (release date: ${releaseDate}):`, error);
             return false;
         }
+    }
+
+    private getRetryAttempts(): number {
+        const attempts = parseInt(process.env.TCG_RETRY_ATTEMPTS || "3", 10);
+        return Number.isFinite(attempts) && attempts > 0 ? attempts : 3;
+    }
+
+    private getRetryBaseDelay(): number {
+        const baseDelayMs = parseInt(process.env.TCG_RETRY_BASE_MS || "300", 10);
+        return Number.isFinite(baseDelayMs) && baseDelayMs > 0 ? baseDelayMs : 300;
+    }
+
+    private isRetryableStatus(status?: number): boolean {
+        if (!status) {
+            return false;
+        }
+
+        return status === 408 || status === 429 || status === 500 || status === 502 || status === 503 || status === 504;
+    }
+
+    private calculateDelay(baseDelayMs: number, attempt: number): number {
+        return baseDelayMs * Math.pow(2, attempt - 1);
+    }
+
+    private async delay(ms: number): Promise<void> {
+        await new Promise((resolve) => setTimeout(resolve, ms));
     }
 }
