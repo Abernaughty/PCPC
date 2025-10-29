@@ -12,6 +12,7 @@
     "prestart": "npm run build",
     "start": "func start",
     "test": "node test-api.js",
+    "test:unit": "node --require ts-node/register --test test/**/*.test.ts",
     "test:azure": "node test-azure.js",
     "test:cosmos": "node test-cosmos.js",
     "import": "npx ts-node import-data.ts",
