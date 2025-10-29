@@ -195,3 +195,4 @@ tools/scripts/*.log
 .snapshot/
 .devcontainer/scripts/snapshot-devcontainer.sh
 .azure-cli/
+.devcontainer/.devcontainer/azure-config/
