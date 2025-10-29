@@ -6,7 +6,7 @@ services:
       - ..:/workspace:cached
       - /var/run/docker.sock:/var/run/docker.sock
       # Bind-mount a workspace-scoped Azure CLI config dir to avoid root-owned named volumes
-      - ./.devcontainer/azure-config:/home/vscode/.azure
+      - ./azure-config:/home/vscode/.azure
     command: sleep infinity
     environment:
       - AzureWebJobsStorage=${AzureWebJobsStorage}
