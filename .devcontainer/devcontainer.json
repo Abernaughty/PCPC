@@ -64,8 +64,8 @@
     "PATH": "${containerEnv:PATH}:/usr/local/go/bin:/home/vscode/go/bin"
   },
 
-  "postCreateCommand": ".devcontainer/setup.sh",
-  "postStartCommand": ".devcontainer/startup.sh",
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "postStartCommand": "bash .devcontainer/startup.sh",
 
   "forwardPorts": [
     3000, // Frontend Dev Server (CRITICAL - MISSING!)
