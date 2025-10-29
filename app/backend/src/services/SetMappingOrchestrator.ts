@@ -82,6 +82,17 @@ export class SetMappingOrchestrator {
     const pokeDataSets = await this.pokeDataApi.getAllSets();
     const tcgSets = await this.pokemonTcgApi.getAllSets();
 
+    if (tcgSets.length === 0) {
+      const abortMessage =
+        `[SetMappingOrchestrator] (${correlationId}) Aborting synchronization: Pokemon TCG API returned zero sets`;
+      console.error(abortMessage);
+      this.monitoringService.trackEvent?.("mapping.sync.aborted", {
+        correlationId,
+        reason: "tcg_zero_sets",
+      });
+      throw new Error("Pokemon TCG API returned zero sets");
+    }
+
     const currentPokeDataCount = pokeDataSets.length;
     const currentTcgCount = tcgSets.length;
 
