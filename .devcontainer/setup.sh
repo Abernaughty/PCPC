@@ -4,30 +4,6 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-determine_azure_config_dir() {
-    local primary="/workspace/.azure-cli"
-    local fallback="/tmp/azure-cli"
-    local selected=""
-
-    if mkdir -p "$primary" 2>/dev/null && [ -w "$primary" ]; then
-        selected="$primary"
-    elif mkdir -p "$fallback" 2>/dev/null && [ -w "$fallback" ]; then
-        selected="$fallback"
-        echo "   ⚠️  Using fallback Azure config directory at ${fallback}"
-    else
-        echo "   ⚠️  Unable to initialize a writable Azure config directory. Azure CLI commands may fail."
-        return 1
-    fi
-
-    export AZURE_CONFIG_DIR="$selected"
-    return 0
-}
-
-# If AZURE_CONFIG_DIR is not preset (e.g., via devcontainer mount), pick a writable fallback
-if [ -z "${AZURE_CONFIG_DIR:-}" ]; then
-    determine_azure_config_dir || true
-fi
-
 echo "🚀 Initializing PCPC DevContainer v1.3.0 (ACR Optimized)..."
 
 # Verify pre-installed tools from ACR image
