@@ -23,7 +23,10 @@ determine_azure_config_dir() {
     return 0
 }
 
-determine_azure_config_dir || true
+# If AZURE_CONFIG_DIR is not preset (e.g., via devcontainer mount), pick a writable fallback
+if [ -z "${AZURE_CONFIG_DIR:-}" ]; then
+    determine_azure_config_dir || true
+fi
 
 echo "🚀 Initializing PCPC DevContainer v1.3.0 (ACR Optimized)..."
 

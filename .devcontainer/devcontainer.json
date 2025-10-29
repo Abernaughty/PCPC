@@ -56,15 +56,16 @@
   },
 
   "containerEnv": {
-    "NODE_ENV": "development"
+    "NODE_ENV": "development",
+    "AZURE_CONFIG_DIR": "/home/vscode/.azure"
   },
 
   "remoteEnv": {
     "PATH": "${containerEnv:PATH}:/usr/local/go/bin:/home/vscode/go/bin"
   },
 
-  "postCreateCommand": ".devcontainer/setup.sh",
-  "postStartCommand": ".devcontainer/startup.sh",
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "postStartCommand": "bash .devcontainer/startup.sh",
 
   "forwardPorts": [
     3000, // Frontend Dev Server (CRITICAL - MISSING!)
@@ -145,7 +146,7 @@
   },
 
   "mounts": [
-    "source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind",
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
     "source=${localWorkspaceFolder}/.devcontainer/cosmos-data,target=/tmp/cosmos/appdata,type=bind",
     "source=${localEnv:HOME}/.azure,target=/home/vscode/.azure,type=bind,consistency=cached"
   ],
