@@ -21,5 +21,5 @@ RUN npm install -g @stoplight/spectral-cli@${SPECTRAL_VERSION}
 WORKDIR /workspace
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["bash", "-lc", "node --version && npm --version && spectral --version"]
-
+# Keep container alive so CI agents can execute multiple steps within the job
+CMD ["bash", "-lc", "tail -f /dev/null"]
