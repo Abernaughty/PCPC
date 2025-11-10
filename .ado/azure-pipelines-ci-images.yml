@@ -13,7 +13,7 @@ stages:
   - stage: Build
     displayName: "Build CI Images"
     jobs:
-      - template: .ado/templates/build-ci-images.yml
+      - template: templates/build-ci-images.yml
         parameters:
           acrRegistryServiceConnection: pcpc-acr-service-connection
           azureSubscription: pcpc-azure-subscription
