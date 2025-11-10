@@ -12,6 +12,7 @@ RUN apt-get update \
         ca-certificates \
         git \
         openssl \
+        libxml2-utils \
         tini \
     && rm -rf /var/lib/apt/lists/*
 
