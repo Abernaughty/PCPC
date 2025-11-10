@@ -1,0 +1,22 @@
+# PCPC CI Images Build Pipeline
+# Builds CI container images, pushes to ACR, and publishes digests for consumption.
+
+trigger: none
+pr: none
+
+variables:
+  # Registry and version tagging
+  ACR_NAME: maberdevcontainerregistry-ccedhvhwfndwetdp
+  IMAGE_VERSION: v0.1.$(Date:yyyyMMdd)$(Rev:.r)
+
+stages:
+  - stage: Build
+    displayName: "Build CI Images"
+    jobs:
+      - template: .ado/templates/build-ci-images.yml
+        parameters:
+          acrRegistryServiceConnection: pcpc-acr-service-connection
+          azureSubscription: pcpc-azure-subscription
+          acrName: $(ACR_NAME)
+          imageVersion: $(IMAGE_VERSION)
+          pushLatest: true

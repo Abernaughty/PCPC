@@ -1,0 +1,20 @@
+registry: maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io
+
+images:
+  pcpc-ci-terraform:
+    base_os: debian:bookworm-slim
+    terraform: "1.13.3"
+    tflint: "0.54.0"
+    checkov: "3.2.0"
+    jq: "1.6"
+  pcpc-ci-node22:
+    base_image: node:22-bullseye-slim
+    node_major: "22"
+    spectral_cli: "6.11.1"
+    git: "TBD"             # Use distro git; record version during image build
+
+policy:
+  consume_by_digest: true
+  allow_only_acr_registry: true
+  signing: optional
+  rebuild_cadence: monthly
