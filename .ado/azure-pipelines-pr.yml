@@ -19,6 +19,8 @@ pool:
   vmImage: "ubuntu-latest"
 
 variables:
+  # Include container image digest variables and ACR service connection
+  - template: variables/ci-images.yml
   - name: nodeVersion
     value: "22.x"
   - name: terraformVersion
@@ -29,9 +31,16 @@ stages:
   - stage: ValidateFrontend
     displayName: "Validate Frontend"
     jobs:
+      # Declare the container resource for this stage/job
+      # Uses ACR image by digest and the ACR service connection
       - template: templates/validate-frontend.yml
-        parameters:
-          nodeVersion: $(nodeVersion)
+        # The template expects a container alias 'node' declared at stage scope.
+    variables: {}
+    resources:
+      containers:
+        - container: node
+          image: $(CI_IMAGE_NODE22)
+          endpoint: $(ACR_SERVICE_CONNECTION)
 
   # Stage 2: Backend Validation
   - stage: ValidateBackend

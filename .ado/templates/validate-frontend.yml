@@ -1,24 +1,16 @@
 # Frontend Validation Template
-# Validates frontend code quality, tests, and build
-
-parameters:
-  - name: nodeVersion
-    type: string
-    default: "22.x"
+# Validates frontend code quality, tests, and build (containerized)
 
 jobs:
   - job: ValidateFrontend
     displayName: "Frontend Validation"
+    # Run this job inside the prebuilt Node 22 CI image
+    # Note: The including pipeline/stage must declare a container resource alias 'node'
+    container: node
     steps:
       # Checkout code
       - checkout: self
         displayName: "Checkout Repository"
-
-      # Setup Node.js
-      - task: NodeTool@0
-        displayName: "Setup Node.js ${{ parameters.nodeVersion }}"
-        inputs:
-          versionSpec: ${{ parameters.nodeVersion }}
 
       # Install root dependencies (Jest, shared configs)
       - script: |
