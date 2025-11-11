@@ -26,21 +26,18 @@ variables:
   - name: terraformVersion
     value: "1.13.3"
 
+resources:
+  containers:
+    - container: node
+      image: $(CI_IMAGE_NODE22)
+      endpoint: $(ACR_SERVICE_CONNECTION)
+
 stages:
   # Stage 1: Frontend Validation
   - stage: ValidateFrontend
     displayName: "Validate Frontend"
     jobs:
-      # Declare the container resource for this stage/job
-      # Uses ACR image by digest and the ACR service connection
       - template: templates/validate-frontend.yml
-        # The template expects a container alias 'node' declared at stage scope.
-    variables: {}
-    resources:
-      containers:
-        - container: node
-          image: $(CI_IMAGE_NODE22)
-          endpoint: $(ACR_SERVICE_CONNECTION)
 
   # Stage 2: Backend Validation
   - stage: ValidateBackend
