@@ -20,6 +20,7 @@ trigger:
 pr: none # PR validation handled by azure-pipelines-pr.yml
 
 variables:
+  - template: variables/ci-images.yml
   - group: vg-pcpc-dev-config
   - group: vg-pcpc-dev-secrets
   - group: vg-pcpc-staging-config
@@ -30,6 +31,15 @@ variables:
     value: "Release"
   - name: nodeVersion
     value: "22.x"
+
+resources:
+  containers:
+    - container: node-azure
+      image: $(CI_IMAGE_NODE_AZURE)
+      endpoint: $(ACR_SERVICE_CONNECTION)
+    - container: terraform
+      image: $(CI_IMAGE_TERRAFORM)
+      endpoint: $(ACR_SERVICE_CONNECTION)
 
 stages:
   # ============================================================================
