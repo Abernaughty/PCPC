@@ -4,9 +4,11 @@
 jobs:
   - job: ValidateFrontend
     displayName: "Frontend Validation"
+    pool:
+      vmImage: "ubuntu-latest"
     # Run this job inside the prebuilt Node 22 CI image
-    # Note: The including pipeline/stage must declare a container resource alias 'node'
-    container: node
+    # Note: The including pipeline/stage must declare a container resource alias 'node22'
+    container: node22
     steps:
       # Checkout code
       - checkout: self

@@ -9,16 +9,13 @@ parameters:
 jobs:
   - job: ValidateBackend
     displayName: "Backend Validation"
+    pool:
+      vmImage: "ubuntu-latest"
+    container: node22
     steps:
       # Checkout code
       - checkout: self
         displayName: "Checkout Repository"
-
-      # Setup Node.js
-      - task: NodeTool@0
-        displayName: "Setup Node.js ${{ parameters.nodeVersion }}"
-        inputs:
-          versionSpec: ${{ parameters.nodeVersion }}
 
       # Install root dependencies (Jest, shared configs)
       - script: |

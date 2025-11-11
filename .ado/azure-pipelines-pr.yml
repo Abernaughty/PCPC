@@ -28,8 +28,11 @@ variables:
 
 resources:
   containers:
-    - container: node
+    - container: node22
       image: $(CI_IMAGE_NODE22)
+      endpoint: $(ACR_SERVICE_CONNECTION)
+    - container: terraform
+      image: $(CI_IMAGE_TERRAFORM)
       endpoint: $(ACR_SERVICE_CONNECTION)
 
 stages:
