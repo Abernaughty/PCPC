@@ -87,6 +87,10 @@ jobs:
             ACR_NAME='${{ parameters.acrName }}'
             VERSION='${{ parameters.imageVersion }}'
 
+            # Login to ACR to authenticate for manifest queries
+            echo "Logging into ACR..."
+            az acr login --name "$ACR_NAME"
+
             get_digest() {
               local repo="$1"
               az acr repository show-manifests \
