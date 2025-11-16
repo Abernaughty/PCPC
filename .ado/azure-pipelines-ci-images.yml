@@ -7,7 +7,7 @@ pr: none
 variables:
   # Registry and version tagging
   - name: ACR_NAME
-    value: maberdevcontainerregistry-ccedhvhwfndwetdp
+    value: maberDevContainerRegistry
   - name: IMAGE_VERSION
     value: $(Build.BuildNumber)
 
