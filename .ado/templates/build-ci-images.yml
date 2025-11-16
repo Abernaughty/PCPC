@@ -87,6 +87,10 @@ jobs:
             ACR_NAME='${{ parameters.acrName }}'
             VERSION='${{ parameters.imageVersion }}'
 
+            # Explicitly login to ACR for data plane access
+            echo "Logging into ACR: $ACR_NAME"
+            az acr login --name "$ACR_NAME"
+
             # Get FQDN first for image references
             FQDN=$(az acr show -n "$ACR_NAME" --query loginServer -o tsv)
             echo "ACR Login Server: $FQDN"
