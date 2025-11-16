@@ -6,8 +6,10 @@ pr: none
 
 variables:
   # Registry and version tagging
-  ACR_NAME: maberdevcontainerregistry-ccedhvhwfndwetdp
-  IMAGE_VERSION: v0.1.$(Date:yyyyMMdd)$(Rev:.r)
+  - name: ACR_NAME
+    value: maberdevcontainerregistry-ccedhvhwfndwetdp
+  - name: IMAGE_VERSION
+    value: $(Build.BuildNumber)
 
 stages:
   - stage: Build
