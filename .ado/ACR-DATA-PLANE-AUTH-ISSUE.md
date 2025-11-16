@@ -75,19 +75,26 @@ sha256:7ab5120f0bae3e7b1d5a39da31c10084eb3dc6c9ac1389e278c33a2bd07ec0fe
 
 ### Pipeline Impact
 
-⚠️ **Pipeline fix applied** - Added explicit `az acr login` command to the pipeline before manifest operations.
+✅ **Pipeline fix applied** - Switched from Azure CLI to Docker commands for digest retrieval (industry standard approach).
 
-**The Problem:** The pipeline was failing with `ERROR: authentication required` when running `az acr manifest list-metadata`. Even though the `Docker@2` task logged into ACR, the service principal with federated authentication didn't automatically establish Docker credentials that `az acr` commands could use.
+**The Problem:** The pipeline was failing with `ERROR: authentication required` when running `az acr manifest list-metadata`. The Azure CLI data plane commands don't work reliably with service principal authentication in Azure Pipelines, even after explicit `az acr login`.
 
-**The Solution:** Added explicit ACR login in `.ado/templates/build-ci-images.yml`:
+**The Solution:** Replaced Azure CLI commands with Docker commands in `.ado/templates/build-ci-images.yml`:
 
 ```bash
-# Explicitly login to ACR for data plane access
-echo "Logging into ACR: $ACR_NAME"
-az acr login --name "$ACR_NAME"
+# Use Docker manifest inspect to get digests (works with existing Docker@2 login)
+get_digest() {
+  local repo="$1"
+  echo "Fetching digest for $repo:$VERSION..."
+  docker manifest inspect "$FQDN/$repo:$VERSION" --verbose | jq -r '.Descriptor.digest'
+}
 ```
 
-This ensures the Azure CLI has the necessary Docker credentials to perform data plane operations like `az acr manifest list-metadata`.
+**Why This Works:**
+- Uses Docker credentials already established by the `Docker@2` task
+- Industry standard approach for CI/CD pipelines
+- No Azure CLI authentication issues
+- More reliable and doesn't depend on preview Azure CLI commands
 
 ### Next Steps for Future DevContainer Builds
 
