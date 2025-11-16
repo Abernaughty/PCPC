@@ -87,16 +87,18 @@ jobs:
             ACR_NAME='${{ parameters.acrName }}'
             VERSION='${{ parameters.imageVersion }}'
 
-            # Login to ACR to authenticate for manifest queries
-            echo "Logging into ACR..."
-            az acr login --name "$ACR_NAME"
+            # Get FQDN first for image references
+            FQDN=$(az acr show -n "$ACR_NAME" --query loginServer -o tsv)
+            echo "ACR Login Server: $FQDN"
 
+            # Use the newer manifest list-metadata command which works with federated auth
             get_digest() {
               local repo="$1"
-              az acr repository show-manifests \
-                --name "$ACR_NAME" \
-                --repository "$repo" \
-                --query "[?contains(tags, '$VERSION')].digest | [0]" -o tsv
+              echo "Fetching digest for $repo:$VERSION..."
+              az acr manifest list-metadata \
+                --name "$repo" \
+                --registry "$ACR_NAME" \
+                --query "[?tags[?@ == '$VERSION']].digest | [0]" -o tsv
             }
 
             TF_DIGEST=$(get_digest pcpc-ci-terraform)
@@ -106,8 +108,6 @@ jobs:
             echo "Terraform digest: $TF_DIGEST"
             echo "Node22 digest: $NODE_DIGEST"
             echo "Node-Azure digest: $NODE_AZURE_DIGEST"
-
-            FQDN=$(az acr show -n "$ACR_NAME" --query loginServer -o tsv)
 
             mkdir -p $(Build.ArtifactStagingDirectory)
             cat > $(Build.ArtifactStagingDirectory)/image-manifest.json << JSON
