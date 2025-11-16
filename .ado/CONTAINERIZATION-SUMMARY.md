@@ -210,9 +210,10 @@ jobs:
 
 ### Image Pull Failures
 
-- Verify ACR service connection is configured
+- Verify ACR service connection `pcpc-acr-service-connection` is configured in Azure DevOps
 - Check image digest exists in ACR
 - Ensure agent has network access to ACR
+- **Note**: The `endpoint` parameter in container resources requires a literal service connection name, not a variable reference
 
 ### Container Startup Issues
 

@@ -13,9 +13,6 @@
 # 3. Copy the contents of ci-images-variables.yml to replace this file
 
 variables:
-  # ACR Service Connection for pulling images
-  ACR_SERVICE_CONNECTION: pcpc-acr-service-connection
-
   # Node.js 22 image - for JavaScript/TypeScript builds and validation
   # Contains: Node.js 22, npm, basic utilities
   CI_IMAGE_NODE22: maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-ci-node22:latest
