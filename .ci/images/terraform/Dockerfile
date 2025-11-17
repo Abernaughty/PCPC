@@ -7,7 +7,7 @@ FROM debian:bookworm-slim
 ENV DEBIAN_FRONTEND=noninteractive \
     TERRAFORM_VERSION=1.13.3 \
     TFLINT_VERSION=0.54.0 \
-    TF_PLUGIN_CACHE_DIR=/root/.terraform.d/plugin-cache
+    TF_PLUGIN_CACHE_DIR=/opt/tf-plugin-cache
 
 # OS packages and tini for sane PID 1 in CI containers
 RUN apt-get update \
@@ -22,7 +22,8 @@ RUN apt-get update \
         python3-venv \
         tini \
     && rm -rf /var/lib/apt/lists/* \
-    && mkdir -p /root/.terraform.d/plugin-cache
+    && mkdir -p "${TF_PLUGIN_CACHE_DIR}" \
+    && chmod 0777 "${TF_PLUGIN_CACHE_DIR}"
 
 # Install Terraform (pinned)
 RUN curl -fsSL -o /tmp/terraform.zip \

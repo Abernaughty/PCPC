@@ -9,16 +9,13 @@ parameters:
 jobs:
   - job: ValidateInfrastructure
     displayName: "Infrastructure Validation"
+    pool:
+      vmImage: "ubuntu-latest"
+    container: terraform
     steps:
       # Checkout code
       - checkout: self
         displayName: "Checkout Repository"
-
-      # Setup Terraform
-      - task: TerraformInstaller@1
-        displayName: "Install Terraform ${{ parameters.terraformVersion }}"
-        inputs:
-          terraformVersion: ${{ parameters.terraformVersion }}
 
       # Terraform Format Check
       - script: |
@@ -51,11 +48,6 @@ jobs:
         env:
           TF_VAR_environment: dev
 
-      # Install TFLint
-      - script: |
-          curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
-        displayName: "Install TFLint"
-
       # Run TFLint on modules
       - script: |
           echo "Running TFLint on modules..."
@@ -80,9 +72,8 @@ jobs:
         workingDirectory: $(System.DefaultWorkingDirectory)/infra/envs/dev
         continueOnError: true
 
-      # Check for security issues with Checkov (optional)
+      # Check for security issues with Checkov
       - script: |
-          pip3 install checkov || echo "⚠️  Checkov not installed"
           checkov -d infra/modules --quiet --compact || echo "⚠️  Security findings (non-blocking)"
         displayName: "Security Scan (Checkov)"
         continueOnError: true

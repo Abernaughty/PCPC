@@ -62,7 +62,20 @@ jobs:
             ${{ parameters.imageVersion }}
             latest
 
-      # Capture digests using Azure CLI (reliable source of truth)
+      # Build and push Node + Azure CLI combined image
+      - task: Docker@2
+        displayName: "Build & Push pcpc-ci-node-azure"
+        inputs:
+          command: buildAndPush
+          containerRegistry: ${{ parameters.acrRegistryServiceConnection }}
+          repository: pcpc-ci-node-azure
+          Dockerfile: .ci/images/node-azure/Dockerfile
+          buildContext: $(Build.SourcesDirectory)
+          tags: |
+            ${{ parameters.imageVersion }}
+            latest
+
+      # Capture digests using Docker commands (industry standard approach)
       - task: AzureCLI@2
         displayName: "Capture image digests from ACR"
         inputs:
@@ -74,21 +87,24 @@ jobs:
             ACR_NAME='${{ parameters.acrName }}'
             VERSION='${{ parameters.imageVersion }}'
 
+            # Get FQDN for image references
+            FQDN=$(az acr show -n "$ACR_NAME" --query loginServer -o tsv)
+            echo "ACR Login Server: $FQDN"
+
+            # Use Docker manifest inspect to get digests (works with existing Docker@2 login)
             get_digest() {
               local repo="$1"
-              az acr repository show-manifests \
-                --name "$ACR_NAME" \
-                --repository "$repo" \
-                --query "[?contains(tags, '$VERSION')].digest | [0]" -o tsv
+              echo "Fetching digest for $repo:$VERSION..."
+              docker manifest inspect "$FQDN/$repo:$VERSION" --verbose | jq -r '.Descriptor.digest'
             }
 
             TF_DIGEST=$(get_digest pcpc-ci-terraform)
             NODE_DIGEST=$(get_digest pcpc-ci-node22)
+            NODE_AZURE_DIGEST=$(get_digest pcpc-ci-node-azure)
 
             echo "Terraform digest: $TF_DIGEST"
             echo "Node22 digest: $NODE_DIGEST"
-
-            FQDN=$(az acr show -n "$ACR_NAME" --query loginServer -o tsv)
+            echo "Node-Azure digest: $NODE_AZURE_DIGEST"
 
             mkdir -p $(Build.ArtifactStagingDirectory)
             cat > $(Build.ArtifactStagingDirectory)/image-manifest.json << JSON
@@ -105,6 +121,11 @@ jobs:
                   "tag": "$VERSION",
                   "digest": "$NODE_DIGEST",
                   "reference": "$FQDN/pcpc-ci-node22@$NODE_DIGEST"
+                },
+                "pcpc-ci-node-azure": {
+                  "tag": "$VERSION",
+                  "digest": "$NODE_AZURE_DIGEST",
+                  "reference": "$FQDN/pcpc-ci-node-azure@$NODE_AZURE_DIGEST"
                 }
               }
             }
@@ -114,6 +135,8 @@ jobs:
             variables:
               CI_IMAGE_TERRAFORM: $FQDN/pcpc-ci-terraform@$TF_DIGEST
               CI_IMAGE_NODE22: $FQDN/pcpc-ci-node22@$NODE_DIGEST
+              CI_IMAGE_NODE_AZURE: $FQDN/pcpc-ci-node-azure@$NODE_AZURE_DIGEST
+              ACR_SERVICE_CONNECTION: ${{ parameters.acrRegistryServiceConnection }}
             VARYAML
 
       - task: PublishBuildArtifacts@1

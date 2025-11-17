@@ -6,14 +6,16 @@ pr: none
 
 variables:
   # Registry and version tagging
-  ACR_NAME: maberdevcontainerregistry-ccedhvhwfndwetdp
-  IMAGE_VERSION: v0.1.$(Date:yyyyMMdd)$(Rev:.r)
+  - name: ACR_NAME
+    value: maberDevContainerRegistry
+  - name: IMAGE_VERSION
+    value: $(Build.BuildNumber)
 
 stages:
   - stage: Build
     displayName: "Build CI Images"
     jobs:
-      - template: .ado/templates/build-ci-images.yml
+      - template: templates/build-ci-images.yml
         parameters:
           acrRegistryServiceConnection: pcpc-acr-service-connection
           azureSubscription: pcpc-azure-subscription
