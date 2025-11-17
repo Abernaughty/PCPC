@@ -45,7 +45,7 @@ jobs:
     displayName: "Build Unified Artifact"
     pool:
       vmImage: "ubuntu-latest"
-    container: $[ variables['CI_IMAGE_NODE_AZURE'] ]
+    container: node-azure
     steps:
       # Setup Node.js environment
       - task: NodeTool@0
