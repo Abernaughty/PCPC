@@ -4,27 +4,11 @@
 jobs:
   - job: ValidateAPIM
     displayName: "APIM Validation"
+    container: node22
     steps:
       # Checkout code
       - checkout: self
         displayName: "Checkout Repository"
-
-      # Setup Node.js for Spectral
-      - task: NodeTool@0
-        displayName: "Setup Node.js"
-        inputs:
-          versionSpec: "22.x"
-
-      # Install Spectral (OpenAPI linter)
-      - script: |
-          npm install -g @stoplight/spectral-cli@6.11.1
-        displayName: "Install Spectral"
-
-      # Install XML validation tooling
-      - script: |
-          sudo apt-get update
-          sudo apt-get install -y libxml2-utils
-        displayName: "Install XML Tools"
 
       # Validate OpenAPI specification
       - script: |
