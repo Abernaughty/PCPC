@@ -24,11 +24,11 @@ CONTAINER ID   IMAGE                                                            
 5d33cb3b6a98   vsc-pcpc-5c04df8cf79f69e8c0cd7535e8c4455c8abd798a7dadfad154a25e8d55ac9e1b   "/bin/sh -c 'echo Co…"   6 minutes ago   Up 6 minutes
 
 # ACR login successful (NOTE: Use registry name, not FQDN)
-$ az acr login --name maberDevContainerRegistry
+$ az acr login --name maberdevcontainerregistry
 Login Succeeded
 
 # ACR repository list working
-$ az acr repository list --name maberDevContainerRegistry
+$ az acr repository list --name maberdevcontainerregistry
 [
   "pcpc-ci-node-azure",
   "pcpc-ci-node22",
@@ -37,7 +37,7 @@ $ az acr repository list --name maberDevContainerRegistry
 ]
 
 # ACR manifest metadata retrieval working (CRITICAL for pipeline)
-$ az acr manifest list-metadata --name pcpc-ci-terraform --registry maberDevContainerRegistry
+$ az acr manifest list-metadata --name pcpc-ci-terraform --registry maberdevcontainerregistry
 [
   {
     "digest": "sha256:7ab5120f0bae3e7b1d5a39da31c10084eb3dc6c9ac1389e278c33a2bd07ec0fe",
@@ -48,17 +48,17 @@ $ az acr manifest list-metadata --name pcpc-ci-terraform --registry maberDevCont
 ]
 
 # Pipeline script simulation - Get FQDN
-$ az acr show -n maberDevContainerRegistry --query loginServer -o tsv
+$ az acr show -n maberdevcontainerregistry --query loginServer -o tsv
 maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io
 
 # Pipeline script simulation - Get digest for specific tag
-$ az acr manifest list-metadata --name pcpc-ci-terraform --registry maberDevContainerRegistry --query "[?tags[?@ == 'latest']].digest | [0]" -o tsv
+$ az acr manifest list-metadata --name pcpc-ci-terraform --registry maberdevcontainerregistry --query "[?tags[?@ == 'latest']].digest | [0]" -o tsv
 sha256:7ab5120f0bae3e7b1d5a39da31c10084eb3dc6c9ac1389e278c33a2bd07ec0fe
 ```
 
 ### Key Findings
 
-1. **ACR Name vs FQDN**: Use `maberDevContainerRegistry` (registry name) for `az acr` commands, not the full FQDN `maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io`
+1. **ACR Name vs FQDN**: Use `maberdevcontainerregistry` (registry name) for `az acr` commands, not the full FQDN `maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io`
 2. **Docker CLI Required**: The base image did not include Docker CLI - added installation to `setup.sh`
 3. **Socket Permissions**: Docker socket permissions were already correctly configured in `startup.sh`
 4. **Auto-login**: Updated `startup.sh` to use correct ACR name for automatic login on container startup
@@ -71,7 +71,7 @@ sha256:7ab5120f0bae3e7b1d5a39da31c10084eb3dc6c9ac1389e278c33a2bd07ec0fe
 |------|--------|---------|
 | `.devcontainer/devcontainer.json` | Removed Docker-in-Docker feature | Eliminate conflict with socket mounting |
 | `.devcontainer/setup.sh` | Added Docker CLI installation | Install Docker CLI if not present in base image |
-| `.devcontainer/startup.sh` | Updated ACR name to `maberDevContainerRegistry` | Use correct registry name for auto-login |
+| `.devcontainer/startup.sh` | Updated ACR name to `maberdevcontainerregistry` | Use correct registry name for auto-login |
 
 ### Pipeline Impact
 
@@ -178,8 +178,8 @@ Add Docker CLI to the devcontainer so `az acr login` can work:
 Then run:
 
 ```bash
-az acr login --name maberDevContainerRegistry
-az acr manifest list-metadata --name pcpc-ci-terraform --registry maberDevContainerRegistry
+az acr login --name maberdevcontainerregistry
+az acr manifest list-metadata --name pcpc-ci-terraform --registry maberdevcontainerregistry
 ```
 
 ### Option 2: Use Admin Credentials (Quick Fix, Less Secure)
@@ -188,27 +188,27 @@ Since admin is already enabled on the ACR:
 
 ```bash
 # Get admin credentials
-ADMIN_USER=$(az acr credential show --name maberDevContainerRegistry --query username -o tsv)
-ADMIN_PASS=$(az acr credential show --name maberDevContainerRegistry --query passwords[0].value -o tsv)
+ADMIN_USER=$(az acr credential show --name maberdevcontainerregistry --query username -o tsv)
+ADMIN_PASS=$(az acr credential show --name maberdevcontainerregistry --query passwords[0].value -o tsv)
 
 # Use with Docker (if available)
 docker login maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io -u $ADMIN_USER -p $ADMIN_PASS
 
 # Or use directly with az acr commands
-az acr repository list --name maberDevContainerRegistry --username $ADMIN_USER --password $ADMIN_PASS
+az acr repository list --name maberdevcontainerregistry --username $ADMIN_USER --password $ADMIN_PASS
 ```
 
 ### Option 3: Use Access Token (For Scripts/Automation)
 
 ```bash
 # Get an access token
-TOKEN=$(az acr login --name maberDevContainerRegistry --expose-token --output tsv --query accessToken)
+TOKEN=$(az acr login --name maberdevcontainerregistry --expose-token --output tsv --query accessToken)
 
 # Use the token with Docker
 echo $TOKEN | docker login maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io --username 00000000-0000-0000-0000-000000000000 --password-stdin
 
 # Or use with az acr commands
-az acr repository list --name maberDevContainerRegistry --suffix $TOKEN
+az acr repository list --name maberdevcontainerregistry --suffix $TOKEN
 ```
 
 **Note**: The `--expose-token` flag returns a refresh token, not an access token, which is why this approach has limitations.
@@ -223,7 +223,7 @@ TOKEN=$(az account get-access-token --resource https://management.azure.com --qu
 
 # Call ACR REST API
 curl -H "Authorization: Bearer $TOKEN" \
-  "https://management.azure.com/subscriptions/555b4cfa-ad2e-4c71-9433-620a59cf7616/resourceGroups/dev-rg/providers/Microsoft.ContainerRegistry/registries/maberDevContainerRegistry/listCredentials?api-version=2023-01-01-preview"
+  "https://management.azure.com/subscriptions/555b4cfa-ad2e-4c71-9433-620a59cf7616/resourceGroups/dev-rg/providers/Microsoft.ContainerRegistry/registries/maberdevcontainerregistry/listCredentials?api-version=2023-01-01-preview"
 ```
 
 ## Pipeline Implications
