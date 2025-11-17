@@ -4,7 +4,6 @@
 FROM node:22-bullseye-slim
 
 ENV DEBIAN_FRONTEND=noninteractive \
-    NODE_ENV=production \
     SPECTRAL_VERSION=6.11.1
 
 RUN apt-get update \
@@ -12,6 +11,7 @@ RUN apt-get update \
         ca-certificates \
         git \
         openssl \
+        libxml2-utils \
         tini \
     && rm -rf /var/lib/apt/lists/*
 

@@ -20,6 +20,7 @@ trigger:
 pr: none # PR validation handled by azure-pipelines-pr.yml
 
 variables:
+  - template: variables/ci-images.yml
   - group: vg-pcpc-dev-config
   - group: vg-pcpc-dev-secrets
   - group: vg-pcpc-staging-config
@@ -30,6 +31,15 @@ variables:
     value: "Release"
   - name: nodeVersion
     value: "22.x"
+
+resources:
+  containers:
+    - container: node-azure
+      image: $(CI_IMAGE_NODE_AZURE)
+      endpoint: pcpc-acr-service-connection
+    - container: terraform
+      image: $(CI_IMAGE_TERRAFORM)
+      endpoint: pcpc-acr-service-connection
 
 stages:
   # ============================================================================
@@ -69,6 +79,7 @@ stages:
         displayName: "Deploy Infrastructure"
         pool:
           vmImage: "ubuntu-latest"
+        container: terraform
         steps:
           - template: templates/deploy-infra.yml
             parameters:
@@ -83,6 +94,7 @@ stages:
         condition: succeeded()
         pool:
           vmImage: "ubuntu-latest"
+        container: node-azure
         steps:
           - template: templates/deploy-functions.yml
             parameters:
@@ -98,6 +110,7 @@ stages:
         condition: succeeded()
         pool:
           vmImage: "ubuntu-latest"
+        container: node-azure
         steps:
           - template: templates/deploy-swa.yml
             parameters:
@@ -118,6 +131,7 @@ stages:
           SwaUrl: $[ dependencies.Deploy_Frontend.outputs['GetStaticWebAppUrl.SWA_URL'] ]
         pool:
           vmImage: "ubuntu-latest"
+        container: node-azure
         steps:
           - script: |
               set -euo pipefail
@@ -153,6 +167,7 @@ stages:
         condition: succeeded()
         pool:
           vmImage: "ubuntu-latest"
+        container: node-azure
         steps:
           - template: templates/smoke-tests.yml
             parameters:
@@ -181,6 +196,7 @@ stages:
         environment: pcpc-staging # Approval gate configured in Azure DevOps
         pool:
           vmImage: "ubuntu-latest"
+        container: terraform
         strategy:
           runOnce:
             deploy:
@@ -198,6 +214,7 @@ stages:
         condition: succeeded()
         pool:
           vmImage: "ubuntu-latest"
+        container: node-azure
         steps:
           - template: templates/deploy-functions.yml
             parameters:
@@ -213,6 +230,7 @@ stages:
         condition: succeeded()
         pool:
           vmImage: "ubuntu-latest"
+        container: node-azure
         steps:
           - template: templates/deploy-swa.yml
             parameters:
@@ -232,6 +250,7 @@ stages:
           SwaUrl: $[ dependencies.Deploy_Frontend.outputs['GetStaticWebAppUrl.SWA_URL'] ]
         pool:
           vmImage: "ubuntu-latest"
+        container: node-azure
         steps:
           - script: |
               set -euo pipefail
@@ -267,6 +286,7 @@ stages:
         condition: succeeded()
         pool:
           vmImage: "ubuntu-latest"
+        container: node-azure
         steps:
           - template: templates/smoke-tests.yml
             parameters:
@@ -295,6 +315,7 @@ stages:
         environment: pcpc-prod # Approval gate configured in Azure DevOps
         pool:
           vmImage: "ubuntu-latest"
+        container: terraform
         strategy:
           runOnce:
             deploy:
@@ -312,6 +333,7 @@ stages:
         condition: succeeded()
         pool:
           vmImage: "ubuntu-latest"
+        container: node-azure
         steps:
           - template: templates/deploy-functions.yml
             parameters:
@@ -327,6 +349,7 @@ stages:
         condition: succeeded()
         pool:
           vmImage: "ubuntu-latest"
+        container: node-azure
         steps:
           - template: templates/deploy-swa.yml
             parameters:
@@ -346,6 +369,7 @@ stages:
           SwaUrl: $[ dependencies.Deploy_Frontend.outputs['GetStaticWebAppUrl.SWA_URL'] ]
         pool:
           vmImage: "ubuntu-latest"
+        container: node-azure
         steps:
           - script: |
               set -euo pipefail
@@ -381,6 +405,7 @@ stages:
         condition: succeeded()
         pool:
           vmImage: "ubuntu-latest"
+        container: node-azure
         steps:
           - template: templates/smoke-tests.yml
             parameters:
@@ -398,6 +423,7 @@ stages:
         condition: succeeded()
         pool:
           vmImage: "ubuntu-latest"
+        container: node-azure
         steps:
           - checkout: none
           - script: |

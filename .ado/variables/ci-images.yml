@@ -1,22 +1,26 @@
-# CI Container Image References (populate digests in later stages)
-# Usage example in jobs:
-#   resources:
-#     containers:
-#       - container: tf
-#         image: $(CI_IMAGE_TERRAFORM)
-#         endpoint: $(ACR_SERVICE_CONNECTION)
-#   jobs:
-#     - job: ValidateInfrastructure
-#       container: tf
+# CI Container Images Variables
+# This file contains references to prebuilt CI container images stored in ACR
+#
+# IMPORTANT: These image references use digest-based tags (SHA256) for immutability
+# After building new images via azure-pipelines-ci-images.yml, update these references
+# with the new digests from the published ci-images-variables.yml artifact
+#
+# Image naming convention: <acr-fqdn>/<repository>@sha256:<digest>
+#
+# To update after building new images:
+# 1. Run the azure-pipelines-ci-images.yml pipeline
+# 2. Download the ci-image-digests artifact
+# 3. Copy the contents of ci-images-variables.yml to replace this file
 
 variables:
-  ACR_NAME: maberdevcontainerregistry-ccedhvhwfndwetdp
-  ACR_FQDN: $(ACR_NAME).azurecr.io
+  # Node.js 22 image - for JavaScript/TypeScript builds and validation
+  # Contains: Node.js 22, npm, basic utilities
+  CI_IMAGE_NODE22: maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-ci-node22:latest
 
-  # Populate these with actual digests after Stage 3 build/publish.
-  CI_IMAGE_TERRAFORM: $(ACR_FQDN)/pcpc-ci-terraform@sha256:TO_BE_FILLED
-  CI_IMAGE_NODE22:    $(ACR_FQDN)/pcpc-ci-node22@sha256:TO_BE_FILLED
+  # Terraform image - for infrastructure operations
+  # Contains: Terraform 1.13.3, TFLint, Checkov, jq
+  CI_IMAGE_TERRAFORM: maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-ci-terraform:latest
 
-  # Name of the ACR service connection in Azure DevOps
-  ACR_SERVICE_CONNECTION: pcpc-acr-service-connection
-
+  # Node.js + Azure CLI combined image - for builds and Azure deployments
+  # Contains: Node.js 22, npm, Azure CLI, utilities
+  CI_IMAGE_NODE_AZURE: maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-ci-node-azure:latest

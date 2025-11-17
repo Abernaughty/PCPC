@@ -54,3 +54,36 @@ git config --global user.name "Michael Abernathy"
 git config --global user.email "mabernathy87@gmail.com"
 git config pull.rebase true
 git config rebase.autoStash true
+
+echo "Configuring Docker socket permissions..."
+# Fix Docker socket permissions for vscode user
+if [ -S /var/run/docker.sock ]; then
+    # Try to add user to docker group (may not exist in container)
+    if getent group docker > /dev/null 2>&1; then
+        sudo usermod -aG docker vscode 2>/dev/null || true
+    fi
+    
+    # Ensure socket is accessible (fallback if group doesn't work)
+    sudo chmod 666 /var/run/docker.sock 2>/dev/null || true
+    
+    echo "✅ Docker socket permissions configured"
+else
+    echo "⚠️  Docker socket not found at /var/run/docker.sock"
+fi
+
+echo "Testing Docker connectivity..."
+if docker ps > /dev/null 2>&1; then
+    echo "✅ Docker daemon accessible"
+    
+    # Optional: Pre-authenticate with ACR if credentials are available
+    if az account show > /dev/null 2>&1; then
+        echo "Checking ACR authentication..."
+        ACR_NAME="maberDevContainerRegistry"
+        if az acr show --name "$ACR_NAME" > /dev/null 2>&1; then
+            echo "Logging into ACR: $ACR_NAME"
+            az acr login --name "$ACR_NAME" 2>/dev/null && echo "✅ ACR authenticated" || echo "⚠️  ACR login skipped (manual login required)"
+        fi
+    fi
+else
+    echo "⚠️  Docker daemon not accessible yet (may require container restart)"
+fi

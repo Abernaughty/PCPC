@@ -18,6 +18,17 @@ echo "   PowerShell: $(pwsh --version)"
 echo "   GitHub CLI: $(gh --version | head -1)"
 echo "   Python: $(python3 --version) (Expected: 3.12.x)"
 
+# Install Docker CLI if not present
+if ! command -v docker &> /dev/null; then
+    echo "📦 Installing Docker CLI..."
+    curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
+    sudo sh /tmp/get-docker.sh
+    rm /tmp/get-docker.sh
+    echo "   ✅ Docker CLI installed: $(docker --version)"
+else
+    echo "   Docker CLI: $(docker --version)"
+fi
+
 # Install devcontainer-specific Node.js dependencies
 echo "📦 Installing DevContainer Node.js dependencies..."
 if [ -f "${SCRIPT_DIR}/package.json" ]; then
