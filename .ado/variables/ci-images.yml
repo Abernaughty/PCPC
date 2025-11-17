@@ -13,14 +13,13 @@
 # 3. Copy the contents of ci-images-variables.yml to replace this file
 
 variables:
-  # Node.js 22 image - for JavaScript/TypeScript builds and validation
-  # Contains: Node.js 22, npm, basic utilities
-  CI_IMAGE_NODE22: maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-ci-node22:latest
-
   # Terraform image - for infrastructure operations
   # Contains: Terraform 1.13.3, TFLint, Checkov, jq
-  CI_IMAGE_TERRAFORM: maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-ci-terraform:latest
-
+  CI_IMAGE_TERRAFORM: maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-ci-terraform@sha256:7728b9bc349422966513272211133fcd9c334d164ccec31c30e90423e1627b9b
+  # Node.js 22 image - for JavaScript/TypeScript builds and validation
+  # Contains: Node.js 22, npm, basic utilities
+  CI_IMAGE_NODE22: maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-ci-node22@sha256:ff4bbe05195b47fb81075707f0aed40ecfd2a0b085be15563068fc6f2ed1566b
   # Node.js + Azure CLI combined image - for builds and Azure deployments
   # Contains: Node.js 22, npm, Azure CLI, utilities
-  CI_IMAGE_NODE_AZURE: maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-ci-node-azure:latest
+  CI_IMAGE_NODE_AZURE: maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-ci-node-azure@sha256:d05dd0e5723a13244e41af4cec33ebff192d485cd85252f18956dc62716e4097
+  ACR_SERVICE_CONNECTION: pcpc-acr-service-connection
