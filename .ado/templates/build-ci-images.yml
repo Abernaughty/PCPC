@@ -4,7 +4,7 @@
 #   parameters:
 #     acrRegistryServiceConnection: pcpc-acr-service-connection   # Docker Registry → ACR
 #     azureSubscription: pcpc-azure-subscription                   # Azure Resource Manager
-#     acrName: maberdevcontainerregistry-ccedhvhwfndwetdp
+#     acrName: maberdevcontainerregistry
 #     imageVersion: v1.0.0
 #     pushLatest: true
 
