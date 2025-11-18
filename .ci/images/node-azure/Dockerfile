@@ -15,6 +15,7 @@ RUN apt-get update \
         jq \
         gnupg \
         lsb-release \
+        python3 \
         tini \
     && rm -rf /var/lib/apt/lists/*
 
