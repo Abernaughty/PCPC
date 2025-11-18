@@ -17,11 +17,11 @@ This document summarizes the containerization of the PCPC Azure DevOps pipelines
   - Backend validation (PR pipeline)
   - APIM validation (PR pipeline)
 
-### 2. **terraform** - Infrastructure as Code Image
+### 2. **terraform-azure** - Infrastructure as Code Image
 
 - **Location**: `.ci/images/terraform/Dockerfile`
 - **Base Image**: `debian:bookworm-slim`
-- **Contains**: Terraform 1.13.3, TFLint 0.54.0, Checkov 3.2.0, jq
+- **Contains**: Terraform 1.13.3, TFLint 0.54.0, Checkov 3.2.0, jq, Azure CLI
 - **Size**: ~150-200 MB
 - **Used By**:
   - Infrastructure validation (PR pipeline)

@@ -12,7 +12,7 @@ Registry & Auth
 - Access from ADO: Use an Azure Container Registry service connection (or OIDC in later stages). Pipelines will pull images from ACR only.
 
 Images (initial set)
-- pcpc-ci-terraform: Terraform toolchain for infra validation (Terraform, TFLint, Checkov, jq, bash).
+- pcpc-ci-terraform-azure: Terraform + Azure CLI toolchain for infra validation (Terraform, TFLint, Checkov, jq, bash, az CLI).
 - pcpc-ci-node22: Node 22 LTS toolchain for frontend/backend/APIM validation (Node/NPM, Git; Spectral CLI for OpenAPI).
 - Note: Playwright/browser image is out of scope for now by request.
 
@@ -28,7 +28,7 @@ Tagging & Digests
 - Consume images by digest in CI: <acr>/<repo>@sha256:<digest> to ensure immutability and reproducibility.
 
 Naming Conventions
-- Repositories: pcpc-ci-terraform, pcpc-ci-node22
+- Repositories: pcpc-ci-terraform-azure, pcpc-ci-node22
 - Tags: vMAJOR.MINOR.PATCH and latest (humans), but jobs use digests (machines).
 
 Maintenance (high level)
@@ -55,4 +55,3 @@ How to use (Azure DevOps)
 - After completion, download artifact "ci-image-digests"; it includes:
   - image-manifest.json (names, tags, digests, full references)
   - ci-images-variables.yml (ready-to-include variables with digest references)
-

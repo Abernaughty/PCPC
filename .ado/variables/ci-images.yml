@@ -15,7 +15,7 @@
 variables:
   # Terraform image - for infrastructure operations
   # Contains: Terraform 1.13.3, TFLint, Checkov, jq
-  CI_IMAGE_TERRAFORM: maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-ci-terraform@sha256:7728b9bc349422966513272211133fcd9c334d164ccec31c30e90423e1627b9b
+  CI_IMAGE_TERRAFORM: maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-ci-terraform-azure@sha256:7728b9bc349422966513272211133fcd9c334d164ccec31c30e90423e1627b9b
   # Node.js 22 image - for JavaScript/TypeScript builds and validation
   # Contains: Node.js 22, npm, basic utilities
   CI_IMAGE_NODE22: maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-ci-node22@sha256:ff4bbe05195b47fb81075707f0aed40ecfd2a0b085be15563068fc6f2ed1566b
