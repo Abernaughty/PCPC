@@ -1,4 +1,4 @@
-pcpc-ci-terraform image
+pcpc-ci-terraform-azure image
 
 Purpose
 - Provides a deterministic Terraform toolchain for CI validation (fmt, init, validate, tflint, checkov).
@@ -6,4 +6,3 @@ Purpose
 Notes
 - Dockerfile will be added in Stage 2 using versions from ../../versions.yaml.
 - Image will be pushed to ACR and consumed by digest in pipelines.
-

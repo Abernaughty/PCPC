@@ -32,12 +32,12 @@ $ az acr repository list --name maberdevcontainerregistry
 [
   "pcpc-ci-node-azure",
   "pcpc-ci-node22",
-  "pcpc-ci-terraform",
+  "pcpc-ci-terraform-azure",
   "pcpc-devcontainer"
 ]
 
 # ACR manifest metadata retrieval working (CRITICAL for pipeline)
-$ az acr manifest list-metadata --name pcpc-ci-terraform --registry maberdevcontainerregistry
+$ az acr manifest list-metadata --name pcpc-ci-terraform-azure --registry maberdevcontainerregistry
 [
   {
     "digest": "sha256:7ab5120f0bae3e7b1d5a39da31c10084eb3dc6c9ac1389e278c33a2bd07ec0fe",
@@ -52,7 +52,7 @@ $ az acr show -n maberdevcontainerregistry --query loginServer -o tsv
 maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io
 
 # Pipeline script simulation - Get digest for specific tag
-$ az acr manifest list-metadata --name pcpc-ci-terraform --registry maberdevcontainerregistry --query "[?tags[?@ == 'latest']].digest | [0]" -o tsv
+$ az acr manifest list-metadata --name pcpc-ci-terraform-azure --registry maberdevcontainerregistry --query "[?tags[?@ == 'latest']].digest | [0]" -o tsv
 sha256:7ab5120f0bae3e7b1d5a39da31c10084eb3dc6c9ac1389e278c33a2bd07ec0fe
 ```
 
@@ -179,7 +179,7 @@ Then run:
 
 ```bash
 az acr login --name maberdevcontainerregistry
-az acr manifest list-metadata --name pcpc-ci-terraform --registry maberdevcontainerregistry
+az acr manifest list-metadata --name pcpc-ci-terraform-azure --registry maberdevcontainerregistry
 ```
 
 ### Option 2: Use Admin Credentials (Quick Fix, Less Secure)

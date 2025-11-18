@@ -15,6 +15,7 @@ RUN apt-get update \
         ca-certificates \
         curl \
         git \
+        gnupg \
         jq \
         unzip \
         python3 \
@@ -24,6 +25,9 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p "${TF_PLUGIN_CACHE_DIR}" \
     && chmod 0777 "${TF_PLUGIN_CACHE_DIR}"
+
+# Install Azure CLI for Terraform deployments that call az commands
+RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 
 # Install Terraform (pinned)
 RUN curl -fsSL -o /tmp/terraform.zip \

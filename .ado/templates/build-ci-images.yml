@@ -36,13 +36,13 @@ jobs:
           command: login
           containerRegistry: ${{ parameters.acrRegistryServiceConnection }}
 
-      # Build and push Terraform toolchain image
+      # Build and push Terraform + Azure CLI toolchain image
       - task: Docker@2
-        displayName: "Build & Push pcpc-ci-terraform"
+        displayName: "Build & Push pcpc-ci-terraform-azure"
         inputs:
           command: buildAndPush
           containerRegistry: ${{ parameters.acrRegistryServiceConnection }}
-          repository: pcpc-ci-terraform
+          repository: pcpc-ci-terraform-azure
           Dockerfile: .ci/images/terraform/Dockerfile
           buildContext: $(Build.SourcesDirectory)
           tags: |
@@ -98,7 +98,7 @@ jobs:
               docker manifest inspect "$FQDN/$repo:$VERSION" --verbose | jq -r '.Descriptor.digest'
             }
 
-            TF_DIGEST=$(get_digest pcpc-ci-terraform)
+            TF_DIGEST=$(get_digest pcpc-ci-terraform-azure)
             NODE_DIGEST=$(get_digest pcpc-ci-node22)
             NODE_AZURE_DIGEST=$(get_digest pcpc-ci-node-azure)
 
@@ -112,10 +112,10 @@ jobs:
               "registry": "$FQDN",
               "version": "$VERSION",
               "images": {
-                "pcpc-ci-terraform": {
+                "pcpc-ci-terraform-azure": {
                   "tag": "$VERSION",
                   "digest": "$TF_DIGEST",
-                  "reference": "$FQDN/pcpc-ci-terraform@$TF_DIGEST"
+                  "reference": "$FQDN/pcpc-ci-terraform-azure@$TF_DIGEST"
                 },
                 "pcpc-ci-node22": {
                   "tag": "$VERSION",
@@ -133,7 +133,7 @@ jobs:
 
             cat > $(Build.ArtifactStagingDirectory)/ci-images-variables.yml << VARYAML
             variables:
-              CI_IMAGE_TERRAFORM: $FQDN/pcpc-ci-terraform@$TF_DIGEST
+              CI_IMAGE_TERRAFORM: $FQDN/pcpc-ci-terraform-azure@$TF_DIGEST
               CI_IMAGE_NODE22: $FQDN/pcpc-ci-node22@$NODE_DIGEST
               CI_IMAGE_NODE_AZURE: $FQDN/pcpc-ci-node-azure@$NODE_AZURE_DIGEST
               ACR_SERVICE_CONNECTION: ${{ parameters.acrRegistryServiceConnection }}
