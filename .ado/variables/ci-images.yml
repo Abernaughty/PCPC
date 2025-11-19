@@ -15,11 +15,11 @@
 variables:
   # Terraform image - for infrastructure operations
   # Contains: Terraform 1.13.3, TFLint, Checkov, jq
-  CI_IMAGE_TERRAFORM: maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-ci-terraform-azure@sha256:8595d98d6e782ba078853d4392e31ec63037c9e97b158351b8df44b722f14bce
+  CI_IMAGE_TERRAFORM: maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-ci-terraform-azure@sha256:5b1a1fd05387eb94f2e07a1ed361f5e446189eed4e47e222636bf74644d714bd
   # Node.js 22 image - for JavaScript/TypeScript builds and validation
   # Contains: Node.js 22, npm, basic utilities
-  CI_IMAGE_NODE22: maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-ci-node22@sha256:c7b6165ffe7ec7c24c1199d0c03db223fb96c301ff81913e9cb353c2e6398e51
+  CI_IMAGE_NODE22: maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-ci-node22@sha256:f103c23fc59315f2f1140308c2d8a36ca680f19c9079fc162e560426807072f4
   # Node.js + Azure CLI combined image - for builds and Azure deployments
   # Contains: Node.js 22, npm, Azure CLI, utilities
-  CI_IMAGE_NODE_AZURE: maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-ci-node-azure@sha256:bf404feeef9c5fb7f90908681fee07ed5d3e7387f9ac6c768fd618e2be58484c
+  CI_IMAGE_NODE_AZURE: maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-ci-node-azure@sha256:5882605096f43fcae2d8c5842724504237f9b524e8fbc05a09b5edabceaa77a2
   ACR_SERVICE_CONNECTION: pcpc-acr-service-connection
