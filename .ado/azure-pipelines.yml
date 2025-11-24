@@ -36,10 +36,10 @@ resources:
   containers:
     - container: node-azure
       image: $(CI_IMAGE_NODE_AZURE)
-      endpoint: pcpc-acr-service-connection
+      endpoint: $(ACR_SERVICE_CONNECTION)
     - container: terraform
       image: $(CI_IMAGE_TERRAFORM)
-      endpoint: pcpc-acr-service-connection
+      endpoint: $(ACR_SERVICE_CONNECTION)
 
 stages:
   # ============================================================================
@@ -131,7 +131,7 @@ stages:
           SwaUrl: $[ dependencies.Deploy_Frontend.outputs['GetStaticWebAppUrl.SWA_URL'] ]
         pool:
           vmImage: "ubuntu-latest"
-        container: node-azure
+        container: terraform
         steps:
           - script: |
               set -euo pipefail
@@ -250,7 +250,7 @@ stages:
           SwaUrl: $[ dependencies.Deploy_Frontend.outputs['GetStaticWebAppUrl.SWA_URL'] ]
         pool:
           vmImage: "ubuntu-latest"
-        container: node-azure
+        container: terraform
         steps:
           - script: |
               set -euo pipefail
@@ -369,7 +369,7 @@ stages:
           SwaUrl: $[ dependencies.Deploy_Frontend.outputs['GetStaticWebAppUrl.SWA_URL'] ]
         pool:
           vmImage: "ubuntu-latest"
-        container: node-azure
+        container: terraform
         steps:
           - script: |
               set -euo pipefail
