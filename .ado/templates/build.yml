@@ -47,12 +47,6 @@ jobs:
       vmImage: "ubuntu-latest"
     container: node-azure
     steps:
-      # Setup Node.js environment
-      - task: NodeTool@0
-        displayName: "Setup Node.js ${{ parameters.nodeVersion }}"
-        inputs:
-          versionSpec: "${{ parameters.nodeVersion }}"
-
       # Install root dependencies (for Jest testing framework)
       - script: |
           npm ci

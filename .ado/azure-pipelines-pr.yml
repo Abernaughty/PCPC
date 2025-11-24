@@ -30,10 +30,10 @@ resources:
   containers:
     - container: node22
       image: $(CI_IMAGE_NODE22)
-      endpoint: pcpc-acr-service-connection
+      endpoint: $(ACR_SERVICE_CONNECTION)
     - container: terraform
       image: $(CI_IMAGE_TERRAFORM)
-      endpoint: pcpc-acr-service-connection
+      endpoint: $(ACR_SERVICE_CONNECTION)
 
 stages:
   # Stage 1: Frontend Validation
