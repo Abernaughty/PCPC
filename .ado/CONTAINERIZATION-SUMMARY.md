@@ -9,7 +9,7 @@ This document summarizes the containerization of the PCPC Azure DevOps pipelines
 ### 1. **node22** - Node.js Development Image
 
 - **Location**: `.ci/images/node22/Dockerfile`
-- **Base Image**: `node:22-bookworm-slim`
+- **Base Image**: `node:22-bullseye-slim`
 - **Contains**: Node.js 22, npm, basic utilities
 - **Size**: ~200-300 MB
 - **Used By**:
