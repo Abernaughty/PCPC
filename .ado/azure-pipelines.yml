@@ -36,10 +36,10 @@ resources:
   containers:
     - container: node-azure
       image: $(CI_IMAGE_NODE_AZURE)
-      endpoint: $(ACR_SERVICE_CONNECTION)
+      endpoint: pcpc-acr-service-connection
     - container: terraform
       image: $(CI_IMAGE_TERRAFORM)
-      endpoint: $(ACR_SERVICE_CONNECTION)
+      endpoint: pcpc-acr-service-connection
 
 stages:
   # ============================================================================
