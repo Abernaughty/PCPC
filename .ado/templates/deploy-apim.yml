@@ -22,11 +22,6 @@ steps:
       artifactName: "drop"
       targetPath: "$(Pipeline.Workspace)/drop"
 
-  - task: TerraformInstaller@1
-    displayName: "Install Terraform"
-    inputs:
-      terraformVersion: ${{ parameters.terraformVersion }}
-
   - task: AzureCLI@2
     displayName: "Get Function App Key"
     inputs:

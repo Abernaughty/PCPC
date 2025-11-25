@@ -131,7 +131,7 @@ stages:
           SwaUrl: $[ dependencies.Deploy_Frontend.outputs['GetStaticWebAppUrl.SWA_URL'] ]
         pool:
           vmImage: "ubuntu-latest"
-        container: node-azure
+        container: terraform
         steps:
           - script: |
               set -euo pipefail
@@ -250,7 +250,7 @@ stages:
           SwaUrl: $[ dependencies.Deploy_Frontend.outputs['GetStaticWebAppUrl.SWA_URL'] ]
         pool:
           vmImage: "ubuntu-latest"
-        container: node-azure
+        container: terraform
         steps:
           - script: |
               set -euo pipefail
@@ -369,7 +369,7 @@ stages:
           SwaUrl: $[ dependencies.Deploy_Frontend.outputs['GetStaticWebAppUrl.SWA_URL'] ]
         pool:
           vmImage: "ubuntu-latest"
-        container: node-azure
+        container: terraform
         steps:
           - script: |
               set -euo pipefail
