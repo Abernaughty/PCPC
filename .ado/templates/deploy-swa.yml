@@ -290,10 +290,10 @@ steps:
     condition: and(succeeded(), eq(variables['ShouldDeploySWA'], 'true'))
     inputs:
       azure_static_web_apps_api_token: $(DEPLOYMENT_TOKEN)
-      app_location: "swa"
+      # Point directly to the downloaded artifact location
+      app_location: "$(Pipeline.Workspace)/drop/swa"
       output_location: ""
       skip_app_build: true
-      cwd: "$(Pipeline.Workspace)/drop"
 
   # Wait for deployment propagation
   - script: |
