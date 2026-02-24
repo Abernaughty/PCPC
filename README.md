@@ -1,22 +1,17 @@
 # Pokemon Card Price Checker (PCPC)
 
 [![Enterprise Architecture](https://img.shields.io/badge/Architecture-Enterprise-blue.svg)](docs/architecture.md)
-[![DevContainer Performance](https://img.shields.io/badge/DevContainer-95%25%20Faster-green.svg)](.devcontainer/README.md)
+[![DevContainer](https://img.shields.io/badge/DevContainer-ACR%20Optimized-green.svg)](.devcontainer/README.md)
 [![Testing Framework](https://img.shields.io/badge/Tests-Unit%20Suite%20Active-brightgreen.svg)](tests/README.md)
-[![Infrastructure as Code](https://img.shields.io/badge/IaC-Terraform-purple.svg)](infra/README.md)
+[![Infrastructure as Code](https://img.shields.io/badge/IaC-Terraform-purple.svg)](docs/deployment-guide.md)
 
 > **Enterprise-grade Pokemon card price checking application demonstrating advanced software engineering, DevOps, and cloud architecture capabilities.**
 
-## 🚀 Revolutionary Development Experience
+## 🚀 Optimized Development Experience
 
-**95% Faster Environment Setup** - Our Azure Container Registry optimized DevContainer reduces setup time from **5-10 minutes to 30-60 seconds**.
+The DevContainer uses Azure Container Registry pre-built images to reduce environment setup from **5-10 minutes to 30-60 seconds**.
 
-```bash
-# Traditional setup: 5-10 minutes
-# PCPC DevContainer: 30-60 seconds ⚡
-```
-
-[**Learn more about our revolutionary DevContainer optimization →**](.devcontainer/README.md)
+[**Learn more about the DevContainer setup →**](.devcontainer/README.md)
 
 ## 📋 Table of Contents
 
@@ -36,7 +31,7 @@
 PCPC is the result of consolidating three existing projects into a single, enterprise-grade monorepo that demonstrates:
 
 - **Advanced Software Engineering**: Modern architecture patterns, comprehensive testing, enterprise-grade code quality
-- **DevOps Excellence**: Revolutionary DevContainer performance, Infrastructure as Code, Azure DevOps CI/CD
+- **DevOps Excellence**: Optimized DevContainer with ACR, Infrastructure as Code, Azure DevOps CI/CD
 - **Cloud Architecture**: Azure-native serverless architecture with optimal cost and performance
 - **Portfolio Showcase**: Demonstrates senior-level engineering capabilities for technical recruiters
 
@@ -56,7 +51,7 @@ Transform Pokemon card price checking into a showcase of enterprise software dev
 
 ### 🛠️ Technical Features
 
-- **Revolutionary DevContainer**: 95% faster environment setup with ACR optimization
+- **Optimized DevContainer**: ACR pre-built images for fast, consistent environment setup
 - **Testing**: Active unit test suite (coverage expansion planned)
 - **Infrastructure as Code**: Complete Terraform automation with 7 enterprise modules
 - **API Management**: Comprehensive APIM as Code with policy management
@@ -193,9 +188,9 @@ npm run test:e2e
 
 ### Development Environment
 
-Our revolutionary DevContainer provides:
+The DevContainer provides:
 
-- **Instant Setup**: 30-60 seconds vs traditional 5-10 minutes
+- **Fast Setup**: 30-60 seconds using ACR pre-built images
 - **Pre-installed Tools**: All 9 development tools ready to use
 - **VS Code Extensions**: 35 extensions pre-configured
 - **Azure Emulators**: Cosmos DB and Azurite ready for local development
@@ -231,7 +226,7 @@ PCPC/
 ├── db/                    # Database schema management
 ├── tests/                 # Comprehensive testing framework
 ├── docs/                  # Enterprise documentation
-├── .devcontainer/         # Revolutionary DevContainer setup
+├── .devcontainer/         # DevContainer configuration and setup
 └── tools/                 # Development and operational tools
 ```
 
@@ -319,28 +314,29 @@ Our comprehensive documentation includes:
 
 | Document                                       | Purpose                    | Status         |
 | ---------------------------------------------- | -------------------------- | -------------- |
-| [Architecture](docs/architecture.md)           | System design and patterns | 🚧 In Progress |
-| [API Reference](docs/api-reference.md)         | Complete API documentation | 🚧 In Progress |
-| [Development Guide](docs/development-guide.md) | Development workflows      | 🚧 Planned     |
-| [Deployment Guide](docs/deployment-guide.md)   | Deployment procedures      | 🚧 Planned     |
-| [Troubleshooting](docs/troubleshooting.md)     | Problem resolution         | 🚧 Planned     |
-| [Security](docs/security.md)                   | Security practices         | 🚧 Planned     |
-| [Performance](docs/performance.md)             | Performance optimization   | 🚧 Planned     |
-| [DevContainer](/.devcontainer/README.md)       | Development environment    | ✅ Complete    |
+| [Architecture](docs/architecture.md)           | System design and patterns | ✅ Complete    |
+| [API Reference](docs/api-reference.md)         | Complete API documentation | ✅ Complete    |
+| [Development Guide](docs/development-guide.md) | Development workflows      | ✅ Complete    |
+| [Deployment Guide](docs/deployment-guide.md)   | Deployment procedures      | ✅ Complete    |
+| [Troubleshooting](docs/troubleshooting.md)     | Problem resolution         | ✅ Complete    |
+| [Security](docs/security.md)                   | Security practices         | ✅ Complete    |
+| [Performance](docs/performance.md)             | Performance optimization   | ✅ Complete    |
+| [Monitoring](docs/monitoring.md)               | Observability and alerting | ✅ Complete    |
+| [DevContainer](.devcontainer/README.md)        | Development environment    | ✅ Complete    |
 
 ### Quick Navigation
 
 - **🏗️ Architecture**: [System Architecture](docs/architecture.md) | [Design Patterns](memory-bank/systemPatterns.md)
 - **💻 Development**: [DevContainer Setup](.devcontainer/README.md) | [Development Guide](docs/development-guide.md)
-- **🧪 Testing**: [Testing Framework](tests/README.md) | [Test Results](tests/reports/)
-- **🚀 Deployment**: [Infrastructure](infra/README.md) | [Deployment Guide](docs/deployment-guide.md)
+- **🧪 Testing**: [Testing Framework](tests/README.md) | [Test Reports](tests/reports/)
+- **🚀 Deployment**: [Deployment Guide](docs/deployment-guide.md) | [Infrastructure Modules](infra/modules/)
 - **📊 Monitoring**: [Observability](docs/monitoring.md) | [Performance](docs/performance.md)
 
 ## 🎯 Project Achievements
 
 ### Technical Milestones
 
-- ✅ **Revolutionary DevContainer**: 95% faster environment setup
+- ✅ **Optimized DevContainer**: ACR pre-built images, 30-60 second environment setup
 - ✅ **Complete Migration**: 115+ files migrated from 3 source projects
 - ✅ **Enterprise Testing**: 26 passing tests with Test Pyramid implementation
 - ✅ **Infrastructure as Code**: 7 Terraform modules with enterprise patterns
@@ -363,30 +359,22 @@ Our comprehensive documentation includes:
 
 ## 🤝 Contributing
 
-We welcome contributions to the PCPC project! Please see our contributing guidelines:
-
-### Development Process
-
-1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
-4. **Push** to the branch (`git push origin feature/amazing-feature`)
-5. **Open** a Pull Request
+PCPC is a personal portfolio project. Feedback, suggestions, and bug reports via [GitHub Issues](https://github.com/Abernaughty/PCPC/issues) are welcome.
 
 ### Code Standards
 
 - **TypeScript**: Strict type checking enabled
 - **ESLint**: Code quality and consistency
 - **Prettier**: Automated code formatting
-- **Testing**: Comprehensive test coverage required
-- **Documentation**: Update documentation for new features
+- **Testing**: Unit and integration test coverage required for new features
+- **Documentation**: Update relevant docs alongside code changes
 
 ### Development Environment
 
-Use our revolutionary DevContainer for consistent development:
+Use the DevContainer for a consistent development environment:
 
 ```bash
-# Start DevContainer (30-60 seconds)
+# Open in VS Code
 code .
 # Click "Reopen in Container" when prompted
 
@@ -396,16 +384,14 @@ make dev-status
 
 ## 📊 Project Status
 
-### Current Phase: 4.1 Comprehensive Documentation
-
-**Progress**: 20% Complete (DevContainer documentation foundation established)
+### Current Phase: 4.2 Staging & Production Deployment
 
 **Next Milestones**:
 
-- 🚧 System Architecture Documentation
-- 🚧 API Reference Documentation
-- 🚧 Development Guide
-- 🚧 Deployment Guide
+- 🚧 Staging environment provisioning and validation
+- 🚧 Production environment setup
+- 🚧 Monitoring and alerting configuration
+- 🚧 End-to-end test coverage expansion
 
 ### Completed Phases
 
@@ -414,13 +400,14 @@ make dev-status
 - ✅ **Phase 3.1**: API Management as Code (100%)
 - ✅ **Phase 3.2**: Database Schema Management (100%)
 - ✅ **Phase 3.3**: Comprehensive Testing Framework (100%)
+- ✅ **Phase 4.1**: Comprehensive Documentation (100%)
 
 ## 🏆 Recognition
 
 This project demonstrates:
 
 - **Enterprise Software Architecture** skills for senior engineering roles
-- **Advanced DevOps Practices** with revolutionary performance improvements
+- **Advanced DevOps Practices** with measurable performance improvements
 - **Cloud Engineering Expertise** with Azure-native serverless architecture
 - **Project Management Excellence** with systematic migration and documentation
 
@@ -436,7 +423,7 @@ This project demonstrates:
 
 Common issues and solutions:
 
-- **DevContainer Issues**: See [DevContainer Troubleshooting](.devcontainer/README.md#troubleshooting)
+- **DevContainer Issues**: See [DevContainer Troubleshooting Guide](.devcontainer/docs/troubleshooting-guide.md)
 - **Build Problems**: Check [Development Guide](docs/development-guide.md)
 - **Deployment Issues**: Review [Deployment Guide](docs/deployment-guide.md)
 
