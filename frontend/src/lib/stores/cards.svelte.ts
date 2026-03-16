@@ -90,19 +90,23 @@ function createCardsStore(): CardsStore {
   }
 
   /**
-   * Effect: React to selectedSet changes and load cards
+   * Effect: React to selectedSet changes and load cards.
+   * Uses $effect.root() because this store is created at module scope,
+   * outside of any Svelte component tree.
    */
   if (browser) {
-    $effect(() => {
-      const selectedSet = setsStore.selectedSet;
-      if (selectedSet) {
-        loadCardsForSet(selectedSet.id).catch((err) => {
-          log.error(`Failed to auto-load cards: ${err}`);
-        });
-      } else {
-        cardsInSet = [];
-        selectedCard = null;
-      }
+    $effect.root(() => {
+      $effect(() => {
+        const selectedSet = setsStore.selectedSet;
+        if (selectedSet) {
+          loadCardsForSet(selectedSet.id).catch((err) => {
+            log.error(`Failed to auto-load cards: ${err}`);
+          });
+        } else {
+          cardsInSet = [];
+          selectedCard = null;
+        }
+      });
     });
   }
 
