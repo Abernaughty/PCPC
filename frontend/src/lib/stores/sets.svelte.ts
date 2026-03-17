@@ -85,9 +85,14 @@ function createSetsStore(): SetsStore {
   /**
    * Select a set and update the store
    */
-  function selectSet(set: PokemonSet): void {
+  async function selectSet(set: PokemonSet): Promise<void> {
     selectedSet = set;
     log.debug(`Selected set: ${set.name} (${set.code})`);
+
+    // Trigger card loading for the selected set
+    // Import cardsStore at the top of the file to use this
+    const { cardsStore } = await import('./cards.svelte');
+    await cardsStore.loadCardsForSet(set.id);
   }
 
   return {

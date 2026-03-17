@@ -39,14 +39,15 @@ function createUIStore(): UIStore {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Initialize with current status
-    isOnline = navigator.onLine;
+    // Initialize with current status - default to true if navigator.onLine is undefined
+    // Some browsers may incorrectly report offline status
+    isOnline = navigator.onLine !== false;
 
     // Cleanup listeners on unload
-    return () => {
+    window.addEventListener('beforeunload', () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-    };
+    });
   }
 
   /**

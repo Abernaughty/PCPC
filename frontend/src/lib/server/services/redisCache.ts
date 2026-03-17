@@ -1,4 +1,6 @@
-import { createClient, RedisClientType } from 'redis';
+import pkg from 'redis';
+const { createClient } = pkg;
+type RedisClientType = ReturnType<typeof createClient>;
 
 export interface IRedisCacheService {
   get<T>(key: string): Promise<T | null>;
