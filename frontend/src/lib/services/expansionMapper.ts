@@ -103,7 +103,7 @@ const SPECIAL_CASES: Record<string, string> = {
   base: 'Base Set',
 };
 
-// Set name mappings for sets without codes (from PokeData)
+// Set name mappings for sets without codes (fallback)
 const SET_NAME_MAPPINGS: Record<string, string> = {
   'Scarlet & Violet': 'Scarlet & Violet',
   'Sword & Shield': 'Sword & Shield',
@@ -132,9 +132,17 @@ const SET_NAME_MAPPINGS: Record<string, string> = {
 const FALLBACK_EXPANSION = 'Other';
 
 /**
- * Get expansion era for a single set
+ * Get expansion era for a single set.
+ * Scrydex provides a `series` field directly on expansions — use it as the
+ * primary grouping key when available. Falls back to code/name pattern
+ * matching for any sets where series is missing or unrecognized.
  */
 export function getExpansionForSet(set: PokemonSet): string {
+  // Scrydex provides series directly — use it if it matches a known expansion
+  if (set.series && EXPANSION_ORDER.includes(set.series as any)) {
+    return set.series;
+  }
+
   const code = set.code?.toLowerCase() || '';
   const name = set.name || '';
 
@@ -158,6 +166,13 @@ export function getExpansionForSet(set: PokemonSet): string {
   // Try set name mapping
   if (name in SET_NAME_MAPPINGS) {
     return SET_NAME_MAPPINGS[name];
+  }
+
+  // If Scrydex provides a series that isn't in our known list, use it directly
+  // (e.g., a new expansion era we haven't added to EXPANSION_ORDER yet)
+  if (set.series) {
+    log.debug(`Using Scrydex series "${set.series}" as expansion for set: ${name}`);
+    return set.series;
   }
 
   // Fallback

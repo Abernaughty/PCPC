@@ -1,5 +1,8 @@
 import type { RequestHandler } from './$types';
-import { getPokeDataApiService } from '$lib/server/services/pokeDataApi';
+import {
+  getScrydexApiService,
+  mapScrydexVariantToCardVariant,
+} from '$lib/server/services/scrydexApi';
 import { getCosmosDbService } from '$lib/server/services/cosmosDb';
 import { getRedisCacheService } from '$lib/server/services/redisCache';
 import { monitoring } from '$lib/server/services/monitoring';
@@ -12,13 +15,13 @@ import {
   type CacheEntry,
 } from '$lib/server/utils/cache';
 import { getConfig } from '$lib/server/config';
-import type { Card } from '$lib/server/models/types';
+import type { Card, CardImage } from '$lib/server/models/types';
 
 export const GET: RequestHandler = async ({ params, url }) => {
   const startTime = Date.now();
   const correlationId = monitoring.createCorrelationId();
 
-  const setId = parseInt(params.set_id, 10);
+  const setId = params.set_id;
   const cardId = params.card_id;
   const forceRefresh = url.searchParams.get('forceRefresh') === 'true';
 
@@ -74,7 +77,6 @@ export const GET: RequestHandler = async ({ params, url }) => {
     if (!card) {
       console.log(`[GetCardInfo] Checking Cosmos DB for card ${cardId}`);
       const cosmosService = getCosmosDbService();
-      const cardIdNum = parseInt(cardId, 10);
       card = await cosmosService.getCard(cardId, setId);
 
       if (card) {
@@ -82,84 +84,76 @@ export const GET: RequestHandler = async ({ params, url }) => {
       }
     }
 
-    // Fetch full card details from PokeData
-    if (!card) {
-      console.log(`[GetCardInfo] Fetching card details from PokeData API`);
+    // Fetch from Scrydex API (single call includes pricing via ?include=prices)
+    if (!card || forceRefresh) {
+      console.log(`[GetCardInfo] Fetching card details from Scrydex API`);
       const apiStartTime = Date.now();
 
       try {
-        const pokeDataService = getPokeDataApiService();
-        const cardIdNum = parseInt(cardId, 10);
-        const fullCardData = await pokeDataService.getFullCardDetailsById(cardIdNum);
+        const scrydexService = getScrydexApiService();
+        const scrydexCard = await scrydexService.getCard(cardId, true);
 
-        if (!fullCardData) {
-          console.log(`[GetCardInfo] Card ${cardId} not found in PokeData API`);
-          return apiError(`Card ${cardId} not found`, 404);
-        }
-
-        const apiDuration = Date.now() - apiStartTime;
-
-        monitoring.trackMetric('api.pokedata.duration', apiDuration, {
-          functionName: 'GetCardInfo',
-          cardId,
-        });
-
-        // Create card from API response
-        card = {
-          id: fullCardData.id.toString(),
-          setCode: fullCardData.set_code || '',
-          setId: fullCardData.set_id,
-          setName: fullCardData.set_name,
-          cardId: fullCardData.id.toString(),
-          cardName: fullCardData.name,
-          cardNumber: fullCardData.num,
-          rarity: '',
-          pokeDataId: fullCardData.id,
-          lastUpdated: new Date().toISOString(),
-        };
-
-        // Save to Cosmos DB
-        console.log(`[GetCardInfo] Saving card ${cardId} to Cosmos DB`);
-        const cosmosService = getCosmosDbService();
-        await cosmosService.saveCard(card);
-      } catch (error: any) {
-        console.error(
-          `[GetCardInfo] Error fetching from PokeData API: ${error.message}`
-        );
-        throw error;
-      }
-    }
-
-    // Fetch fresh pricing if requested or not available
-    if (forceRefresh || !card.enhancedPricing) {
-      console.log(`[GetCardInfo] Fetching pricing for card ${cardId}`);
-      const pricingStartTime = Date.now();
-
-      try {
-        const pokeDataService = getPokeDataApiService();
-        const pricing = await pokeDataService.getCardPricing(
-          cardId,
-          card.pokeDataId
-        );
-
-        if (pricing) {
-          card.enhancedPricing = pricing;
-          card.pricingLastUpdated = new Date().toISOString();
-
-          const pricingDuration = Date.now() - pricingStartTime;
-          console.log(
-            `[GetCardInfo] Updated pricing for card ${cardId} (${pricingDuration}ms)`
+        if (!scrydexCard) {
+          if (!card) {
+            console.log(`[GetCardInfo] Card ${cardId} not found in Scrydex API`);
+            return apiError(`Card ${cardId} not found`, 404);
+          }
+          // If we have a cached/DB card but Scrydex failed, continue with what we have
+          console.warn(
+            `[GetCardInfo] Scrydex API returned null for ${cardId}, using existing data`
           );
+        } else {
+          const apiDuration = Date.now() - apiStartTime;
 
-          // Update in Cosmos DB
+          monitoring.trackMetric('api.scrydex.duration', apiDuration, {
+            functionName: 'GetCardInfo',
+            cardId,
+          });
+
+          const images: CardImage[] | undefined = scrydexCard.images?.map((img) => ({
+            type: img.type,
+            small: img.small,
+            medium: img.medium,
+            large: img.large,
+          }));
+
+          // Build card from Scrydex response (pricing is included inline)
+          card = {
+            id: scrydexCard.id,
+            setCode: scrydexCard.expansion.code,
+            setId: scrydexCard.expansion.id,
+            setName: scrydexCard.expansion.name,
+            cardId: scrydexCard.id,
+            cardName: scrydexCard.name,
+            cardNumber: scrydexCard.number,
+            printedNumber: scrydexCard.printed_number,
+            rarity: scrydexCard.rarity || '',
+            rarityCode: scrydexCard.rarity_code,
+            artist: scrydexCard.artist,
+            images,
+            variants: scrydexCard.variants?.map(mapScrydexVariantToCardVariant),
+            language: scrydexCard.language,
+            languageCode: scrydexCard.language_code,
+            lastUpdated: new Date().toISOString(),
+            pricingLastUpdated: new Date().toISOString(),
+          };
+
+          // Save to Cosmos DB
+          console.log(`[GetCardInfo] Saving card ${cardId} to Cosmos DB`);
           const cosmosService = getCosmosDbService();
-          await cosmosService.updateCard(card);
+          await cosmosService.saveCard(card);
         }
       } catch (error: any) {
+        if (!card) {
+          console.error(
+            `[GetCardInfo] Error fetching from Scrydex API: ${error.message}`
+          );
+          throw error;
+        }
+        // If we have existing data, log warning but don't fail
         console.warn(
-          `[GetCardInfo] Failed to fetch pricing for card ${cardId}: ${error.message}`
+          `[GetCardInfo] Failed to refresh from Scrydex API: ${error.message}, using existing data`
         );
-        // Don't fail the entire request if pricing fails
       }
     }
 
@@ -180,12 +174,13 @@ export const GET: RequestHandler = async ({ params, url }) => {
     }
 
     const duration = Date.now() - startTime;
+    const hasPricing = !!(card.variants && card.variants.length > 0);
 
     monitoring.trackMetric('function.duration', duration, {
       functionName: 'GetCardInfo',
       correlationId,
       cached: cacheHit,
-      hasPricing: !!card.enhancedPricing,
+      hasPricing,
     });
 
     monitoring.trackEvent('function.success', {
@@ -195,7 +190,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
       cached: cacheHit,
       cardId,
       setId,
-      hasPricing: !!card.enhancedPricing,
+      hasPricing,
     });
 
     console.log(`[GetCardInfo] Successfully returning card ${cardId} (${duration}ms)`);

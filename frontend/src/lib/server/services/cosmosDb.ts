@@ -4,7 +4,7 @@ import { getConfig } from '../config';
 
 export interface ICosmosDbService {
   // Card operations
-  getCard(cardId: string, setId: number): Promise<Card | null>;
+  getCard(cardId: string, setId: string): Promise<Card | null>;
   getCardsBySet(setCode: string): Promise<Card[]>;
   getCardsBySetId(setId: string): Promise<Card[]>;
   saveCard(card: Card): Promise<void>;
@@ -48,15 +48,13 @@ export class CosmosDbService implements ICosmosDbService {
     console.log('[CosmosDbService] Initialized');
   }
 
-  async getCard(cardId: string, setId: number): Promise<Card | null> {
+  async getCard(cardId: string, setId: string): Promise<Card | null> {
     try {
-      const cleanCardId = cardId.replace(/^pokedata-/, '');
+      console.log(`[CosmosDbService] Querying card ${cardId} in set ${setId}`);
 
-      console.log(`[CosmosDbService] Querying card ${cleanCardId} in set ${setId}`);
+      const { resource } = await this.cardContainer.item(cardId, setId).read();
 
-      const { resource } = await this.cardContainer.item(cleanCardId, setId).read();
-
-      console.log(`[CosmosDbService] Successfully retrieved card ${cleanCardId}`);
+      console.log(`[CosmosDbService] Successfully retrieved card ${cardId}`);
       return resource as Card;
     } catch (error: any) {
       if (error.code === 404) {
@@ -106,55 +104,17 @@ export class CosmosDbService implements ICosmosDbService {
 
   async getCardsBySetId(setId: string): Promise<Card[]> {
     try {
-      const normalizedSetId = (setId || '').trim();
-      const setIdNumber = parseInt(normalizedSetId, 10);
-      const hasNumericSetId = !isNaN(setIdNumber);
-      const queryParts: string[] = [];
-      const parameters: { name: string; value: string | number }[] = [];
-
-      if (hasNumericSetId) {
-        queryParts.push('c.setId = @setIdNumber');
-        parameters.push({ name: '@setIdNumber', value: setIdNumber });
-      }
-
-      if (normalizedSetId.length > 0) {
-        queryParts.push('c.setId = @setIdString');
-        parameters.push({ name: '@setIdString', value: normalizedSetId });
-
-        const prefixedSetId = normalizedSetId.startsWith('pokedata-')
-          ? null
-          : `pokedata-${normalizedSetId}`;
-
-        if (prefixedSetId) {
-          queryParts.push('c.setId = @prefixedSetId');
-          parameters.push({ name: '@prefixedSetId', value: prefixedSetId });
-        }
-      }
-
-      if (queryParts.length === 0) {
-        console.warn(`[CosmosDbService] No valid setId filters provided for value "${setId}"`);
-        return [];
-      }
-
-      const queryText = `SELECT * FROM c WHERE ${queryParts.join(' OR ')}`;
-
-      console.log(
-        `[CosmosDbService] Querying cards for setId variants - raw: "${setId}", numeric: ${
-          hasNumericSetId ? setIdNumber : 'N/A'
-        }`
-      );
+      console.log(`[CosmosDbService] Querying cards for setId "${setId}"`);
 
       const { resources } = await this.cardContainer.items
         .query({
-          query: queryText,
-          parameters,
+          query: 'SELECT * FROM c WHERE c.setId = @setId',
+          parameters: [{ name: '@setId', value: setId }],
         })
         .fetchAll();
 
       console.log(
-        `[CosmosDbService] Found ${resources.length} cards for setId "${
-          normalizedSetId || setId
-        }"`
+        `[CosmosDbService] Found ${resources.length} cards for setId "${setId}"`
       );
 
       return resources as Card[];

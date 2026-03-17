@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
 import { getCosmosDbService } from '$lib/server/services/cosmosDb';
 import { getRedisCacheService } from '$lib/server/services/redisCache';
-import { getPokeDataApiService } from '$lib/server/services/pokeDataApi';
+import { getScrydexApiService } from '$lib/server/services/scrydexApi';
 import { monitoring } from '$lib/server/services/monitoring';
 import type { HealthCheckResult, ComponentHealth } from '$lib/server/models/types';
 import { json } from '@sveltejs/kit';
@@ -23,10 +23,10 @@ export const GET: RequestHandler = async () => {
       checks.cosmosdb = await checkCosmosDb();
     }
 
-    // Check PokeData API
-    const pokeDataApiKey = process.env.POKEDATA_API_KEY;
-    if (pokeDataApiKey) {
-      checks.pokedataApi = await checkPokeDataApi();
+    // Check Scrydex API
+    const scrydexApiKey = process.env.SCRYDEX_API_KEY;
+    if (scrydexApiKey) {
+      checks.scrydexApi = await checkScrydexApi();
     }
 
     // Check Redis
@@ -137,16 +137,19 @@ async function checkCosmosDb(): Promise<ComponentHealth> {
   }
 }
 
-async function checkPokeDataApi(): Promise<ComponentHealth> {
+async function checkScrydexApi(): Promise<ComponentHealth> {
   const startTime = Date.now();
 
   try {
-    const apiKey = process.env.POKEDATA_API_KEY;
-    const baseUrl = process.env.POKEDATA_API_BASE_URL || 'https://www.pokedata.io/v0';
+    const apiKey = process.env.SCRYDEX_API_KEY;
+    const teamId = process.env.SCRYDEX_TEAM_ID;
+    const baseUrl =
+      process.env.SCRYDEX_API_BASE_URL || 'https://api.scrydex.com/pokemon/v1';
 
-    const response = await fetch(`${baseUrl}/sets?limit=1`, {
+    const response = await fetch(`${baseUrl}/en/expansions?page_size=1&select=id`, {
       headers: {
-        Authorization: `Bearer ${apiKey ?? ''}`,
+        'X-Api-Key': apiKey ?? '',
+        'X-Team-ID': teamId ?? '',
         'Content-Type': 'application/json',
       },
     });
@@ -157,13 +160,13 @@ async function checkPokeDataApi(): Promise<ComponentHealth> {
       return {
         status: 'healthy',
         latency: responseTime,
-        message: 'PokeData API accessible',
+        message: 'Scrydex API accessible',
       };
     } else {
       return {
         status: 'unhealthy',
         latency: responseTime,
-        message: `PokeData API returned status ${response.status}`,
+        message: `Scrydex API returned status ${response.status}`,
       };
     }
   } catch (error) {
@@ -172,7 +175,7 @@ async function checkPokeDataApi(): Promise<ComponentHealth> {
     return {
       status: 'unhealthy',
       latency: responseTime,
-      message: `PokeData API check failed: ${(error as Error).message}`,
+      message: `Scrydex API check failed: ${(error as Error).message}`,
     };
   }
 }

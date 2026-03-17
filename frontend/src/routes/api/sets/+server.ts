@@ -1,5 +1,5 @@
 import type { RequestHandler } from './$types';
-import { getPokeDataApiService } from '$lib/server/services/pokeDataApi';
+import { getScrydexApiService } from '$lib/server/services/scrydexApi';
 import { getRedisCacheService } from '$lib/server/services/redisCache';
 import { monitoring } from '$lib/server/services/monitoring';
 import { apiError, apiSuccess } from '$lib/server/utils/errors';
@@ -22,7 +22,7 @@ export const GET: RequestHandler = async ({ url }) => {
   });
 
   try {
-    const language = url.searchParams.get('language') || 'ENGLISH';
+    const language = url.searchParams.get('language') || 'en';
     const forceRefresh = url.searchParams.get('forceRefresh') === 'true';
     const returnAll = url.searchParams.get('all') === 'true';
     const page = parseInt(url.searchParams.get('page') || '1');
@@ -35,7 +35,7 @@ export const GET: RequestHandler = async ({ url }) => {
       `[GetSets] Parameters: language=${language}, returnAll=${returnAll}, page=${page}, pageSize=${pageSize}`
     );
 
-    const cacheKey = `${CacheKeys.setList()}-pokedata-${language}`;
+    const cacheKey = `${CacheKeys.setList()}-scrydex-${language}`;
     let sets: any[] | null = null;
     let cacheHit = false;
     let cacheAge = 0;
@@ -83,29 +83,40 @@ export const GET: RequestHandler = async ({ url }) => {
       }
     }
 
-    // Fetch from PokeData API if not cached
+    // Fetch from Scrydex API if not cached
     if (!sets) {
-      console.log(`[GetSets] Fetching sets from PokeData API`);
+      console.log(`[GetSets] Fetching sets from Scrydex API`);
       const apiStartTime = Date.now();
 
       try {
-        const pokeDataService = getPokeDataApiService();
-        const allSets = await pokeDataService.getAllSets();
+        const scrydexService = getScrydexApiService();
+        const expansions = await scrydexService.getAllExpansions(language);
         const apiDuration = Date.now() - apiStartTime;
 
-        sets = allSets.filter(
-          (set) => language === 'ALL' || set.language === language
-        );
+        // Map Scrydex expansions to our internal PokemonSet shape
+        sets = expansions.map((expansion) => ({
+          id: expansion.id,
+          code: expansion.code,
+          name: expansion.name,
+          series: expansion.series,
+          releaseDate: expansion.release_date,
+          total: expansion.total,
+          printedTotal: expansion.printed_total,
+          language: expansion.language,
+          languageCode: expansion.language_code,
+          isOnlineOnly: expansion.is_online_only,
+          logo: expansion.logo,
+          symbol: expansion.symbol,
+        }));
 
         console.log(
-          `[GetSets] PokeData API returned ${allSets.length} total sets, ${sets.length} for language ${language} (${apiDuration}ms)`
+          `[GetSets] Scrydex API returned ${expansions.length} expansions for language ${language} (${apiDuration}ms)`
         );
 
-        monitoring.trackMetric('api.pokedata.duration', apiDuration, {
+        monitoring.trackMetric('api.scrydex.duration', apiDuration, {
           functionName: 'GetSets',
           language,
-          totalSets: allSets.length,
-          filteredSets: sets.length,
+          totalSets: expansions.length,
         });
 
         // Save to cache
@@ -119,7 +130,7 @@ export const GET: RequestHandler = async ({ url }) => {
           );
         }
       } catch (error: any) {
-        console.log(`[GetSets] Error fetching from PokeData API: ${error.message}`);
+        console.log(`[GetSets] Error fetching from Scrydex API: ${error.message}`);
         throw error;
       }
     }
@@ -133,9 +144,9 @@ export const GET: RequestHandler = async ({ url }) => {
     const enhancedSets = sets.map((set) => {
       const enhanced: any = { ...set };
 
-      if (set.release_date) {
-        enhanced.releaseYear = new Date(set.release_date).getFullYear();
-        const releaseDate = new Date(set.release_date);
+      if (set.releaseDate) {
+        enhanced.releaseYear = new Date(set.releaseDate).getFullYear();
+        const releaseDate = new Date(set.releaseDate);
         const twoYearsAgo = new Date();
         twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
         enhanced.isRecent = releaseDate > twoYearsAgo;
@@ -146,9 +157,9 @@ export const GET: RequestHandler = async ({ url }) => {
 
     // Sort by release date (newest first)
     enhancedSets.sort((a, b) => {
-      if (!a.release_date || !b.release_date) return 0;
+      if (!a.releaseDate || !b.releaseDate) return 0;
       return (
-        new Date(b.release_date).getTime() - new Date(a.release_date).getTime()
+        new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime()
       );
     });
 

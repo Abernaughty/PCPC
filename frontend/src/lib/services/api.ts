@@ -7,7 +7,6 @@ import type {
   PokemonCard,
   PricingResult,
   ApiResponse,
-  PaginatedResponse,
 } from '$lib/types';
 import { logger } from './logger';
 
@@ -68,19 +67,20 @@ export const api = {
   /**
    * Get cards for a specific set
    */
-  async getCardsForSet(setId: string | number): Promise<PokemonCard[]> {
-    const result = await fetchApi<PaginatedResponse<PokemonCard>>(
+  async getCardsForSet(setId: string): Promise<PokemonCard[]> {
+    const result = await fetchApi<{ cards: PokemonCard[]; pagination: any }>(
       `/sets/${setId}/cards?pageSize=500`
     );
-    return result.items;
+    return result.cards;
   },
 
   /**
-   * Get pricing data for a specific card
+   * Get full card data including pricing for a specific card.
+   * The card detail route returns the full card with variants/pricing inline.
    */
   async getCardPricing(
-    setId: string | number,
-    cardId: string | number
+    setId: string,
+    cardId: string
   ): Promise<PricingResult> {
     return fetchApi<PricingResult>(`/sets/${setId}/cards/${cardId}`);
   },

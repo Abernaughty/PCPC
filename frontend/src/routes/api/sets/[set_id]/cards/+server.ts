@@ -1,5 +1,8 @@
 import type { RequestHandler } from './$types';
-import { getPokeDataApiService } from '$lib/server/services/pokeDataApi';
+import {
+  getScrydexApiService,
+  mapScrydexVariantToCardVariant,
+} from '$lib/server/services/scrydexApi';
 import { getCosmosDbService } from '$lib/server/services/cosmosDb';
 import { getRedisCacheService } from '$lib/server/services/redisCache';
 import { monitoring } from '$lib/server/services/monitoring';
@@ -12,7 +15,7 @@ import {
   type CacheEntry,
 } from '$lib/server/utils/cache';
 import { getConfig } from '$lib/server/config';
-import type { Card } from '$lib/server/models/types';
+import type { Card, CardImage } from '$lib/server/models/types';
 
 export const GET: RequestHandler = async ({ params, url }) => {
   const startTime = Date.now();
@@ -86,41 +89,52 @@ export const GET: RequestHandler = async ({ params, url }) => {
       }
     }
 
-    // Fetch from PokeData API
+    // Fetch from Scrydex API
     if (!cards || cards.length === 0) {
-      console.log(`[GetCardsBySet] Fetching cards from PokeData API for set ${setId}`);
+      console.log(`[GetCardsBySet] Fetching cards from Scrydex API for set ${setId}`);
       const apiStartTime = Date.now();
 
       try {
-        const pokeDataService = getPokeDataApiService();
-        const setIdNum = parseInt(setId, 10);
-
-        const apiCards = await pokeDataService.getCardsInSet(setIdNum);
+        const scrydexService = getScrydexApiService();
+        const response = await scrydexService.getCardsInExpansion(setId);
         const apiDuration = Date.now() - apiStartTime;
 
         console.log(
-          `[GetCardsBySet] PokeData API returned ${apiCards.length} cards (${apiDuration}ms)`
+          `[GetCardsBySet] Scrydex API returned ${response.data.length} cards (${apiDuration}ms)`
         );
 
-        monitoring.trackMetric('api.pokedata.duration', apiDuration, {
+        monitoring.trackMetric('api.scrydex.duration', apiDuration, {
           functionName: 'GetCardsBySet',
           setId,
-          cardCount: apiCards.length,
+          cardCount: response.data.length,
         });
 
-        // Transform and save to Cosmos DB
+        // Transform Scrydex cards to internal Card format and save to Cosmos DB
         const cosmosService = getCosmosDbService();
-        const cardsToSave = apiCards.map((card) => {
+        const cardsToSave = response.data.map((card) => {
+          const images: CardImage[] | undefined = card.images?.map((img) => ({
+            type: img.type,
+            small: img.small,
+            medium: img.medium,
+            large: img.large,
+          }));
+
           const cosmosCard: Card = {
-            id: card.id.toString(),
-            setCode: card.set_code || '',
-            setId: card.set_id,
-            setName: card.set_name,
-            cardId: card.id.toString(),
+            id: card.id,
+            setCode: card.expansion.code,
+            setId: card.expansion.id,
+            setName: card.expansion.name,
+            cardId: card.id,
             cardName: card.name,
-            cardNumber: card.num,
-            rarity: '',
-            pokeDataId: card.id,
+            cardNumber: card.number,
+            printedNumber: card.printed_number,
+            rarity: card.rarity || '',
+            rarityCode: card.rarity_code,
+            artist: card.artist,
+            images,
+            variants: card.variants?.map(mapScrydexVariantToCardVariant),
+            language: card.language,
+            languageCode: card.language_code,
             lastUpdated: new Date().toISOString(),
           };
           return cosmosCard;
@@ -134,7 +148,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
         cards = cardsToSave;
       } catch (error: any) {
         console.error(
-          `[GetCardsBySet] Error fetching from PokeData API: ${error.message}`
+          `[GetCardsBySet] Error fetching from Scrydex API: ${error.message}`
         );
         throw error;
       }

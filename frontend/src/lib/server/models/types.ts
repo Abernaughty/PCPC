@@ -2,52 +2,80 @@
 export interface Card {
   id: string;
   setCode: string;
-  setId: number;
+  setId: string;
   setName: string;
   cardId: string;
   cardName: string;
   cardNumber: string;
+  printedNumber?: string;
   rarity: string;
-  imageUrl?: string;
-  imageUrlHiRes?: string;
-  originalImageUrl?: string;
-  tcgPlayerPrice?: PriceData;
-  enhancedPricing?: EnhancedPriceData;
+  rarityCode?: string;
+  artist?: string;
+  images?: CardImage[];
+  variants?: CardVariant[];
   lastUpdated?: string;
-  pokeDataId?: number;
-  pricing?: Record<string, unknown>;
   pricingLastUpdated?: string;
-  images?: CardImages;
+  language?: string;
+  languageCode?: string;
 }
 
-export interface CardImages {
-  small?: string;
-  large?: string;
-  original?: string;
-  variants?: Record<string, string>;
+export interface CardImage {
+  type: string;
+  small: string;
+  medium: string;
+  large: string;
 }
 
-export interface PriceData {
-  market: number;
+export interface CardVariant {
+  name: string;
+  images?: CardImage[];
+  prices: VariantPrice[];
+}
+
+export interface VariantPrice {
+  condition: string;
+  type: 'raw' | 'graded';
+  company?: string;
+  grade?: string;
+  isPerfect: boolean;
+  isError: boolean;
+  isSigned: boolean;
   low: number;
-  mid: number;
-  high: number;
+  mid?: number;
+  high?: number;
+  market: number;
+  currency: string;
+  trends?: PriceTrends;
 }
 
-export interface EnhancedPriceData {
-  psaGrades?: Record<string, { value: number }>;
-  cgcGrades?: Record<string, { value: number }>;
-  ebayRaw?: { value: number };
+export interface PriceTrends {
+  days1?: TrendData;
+  days7?: TrendData;
+  days14?: TrendData;
+  days30?: TrendData;
+  days90?: TrendData;
+  days180?: TrendData;
+}
+
+export interface TrendData {
+  priceChange: number;
+  percentChange: number;
 }
 
 // Set interfaces
 export interface PokemonSet {
-  id: string | number;
-  code: string | null;
+  id: string;
+  code: string;
   name: string;
-  series?: string;
+  series: string;
   releaseDate?: string;
-  release_date?: string;
+  total?: number;
+  printedTotal?: number;
+  language?: string;
+  languageCode?: string;
+  isOnlineOnly?: boolean;
+  logo?: string;
+  symbol?: string;
   cardCount?: number;
   isCurrent?: boolean;
   lastUpdated?: string;
@@ -92,10 +120,9 @@ export interface AppConfig {
   cosmosDbSetsContainerName: string;
   redisConnectionString?: string;
   enableRedisCache: boolean;
-  pokeDataApiKey: string;
-  pokeDataApiBaseUrl: string;
-  pokemonTcgApiKey: string;
-  pokemonTcgApiBaseUrl: string;
+  scrydexApiKey: string;
+  scrydexTeamId: string;
+  scrydexApiBaseUrl: string;
   cacheTtlSets: number;
   cacheTtlCards: number;
 }

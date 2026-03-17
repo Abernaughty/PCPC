@@ -4,12 +4,18 @@
 
 // Set types
 export interface PokemonSet {
-  id: string | number;
-  code: string | null;
+  id: string;
+  code: string;
   name: string;
-  series?: string;
-  release_date?: string;
+  series: string;
   releaseDate?: string;
+  total?: number;
+  printedTotal?: number;
+  language?: string;
+  languageCode?: string;
+  isOnlineOnly?: boolean;
+  logo?: string;
+  symbol?: string;
   cardCount?: number;
 }
 
@@ -21,47 +27,64 @@ export interface GroupedSets {
 
 // Card types
 export interface PokemonCard {
-  id: string | number;
+  id: string;
   name: string;
   number?: string;
   cardNumber?: string;
+  printedNumber?: string;
   rarity?: string;
-  imageUrl?: string;
-  imageUrlHiRes?: string;
-  images?: {
-    small?: string;
-    large?: string;
-    original?: string;
-    variants?: Record<string, string>;
-  };
+  rarityCode?: string;
+  artist?: string;
+  images?: CardImage[];
   variants?: CardVariant[];
 }
 
+export interface CardImage {
+  type: string;
+  small: string;
+  medium: string;
+  large: string;
+}
+
 export interface CardVariant {
-  id: string | number;
   name: string;
-  type?: string;
-  rarity?: string;
-  imageUrl?: string;
-  number?: string;
+  images?: CardImage[];
+  prices: VariantPrice[];
 }
 
 // Pricing types
-export interface PriceData {
-  market?: number;
-  low?: number;
+export interface VariantPrice {
+  condition: string;
+  type: 'raw' | 'graded';
+  company?: string;
+  grade?: string;
+  isPerfect: boolean;
+  isError: boolean;
+  isSigned: boolean;
+  low: number;
   mid?: number;
   high?: number;
+  market: number;
+  currency: string;
+  trends?: PriceTrends;
 }
 
-export interface EnhancedPriceData {
-  psaGrades?: Record<string, { value: number }>;
-  cgcGrades?: Record<string, { value: number }>;
-  ebayRaw?: { value: number };
+export interface PriceTrends {
+  days1?: TrendData;
+  days7?: TrendData;
+  days14?: TrendData;
+  days30?: TrendData;
+  days90?: TrendData;
+  days180?: TrendData;
+}
+
+export interface TrendData {
+  priceChange: number;
+  percentChange: number;
 }
 
 export interface PricingResult {
-  pricing: Record<string, PriceData | EnhancedPriceData | Record<string, unknown>>;
+  variants?: CardVariant[];
   metadata?: {
     timestamp?: number;
     fromCache?: boolean;

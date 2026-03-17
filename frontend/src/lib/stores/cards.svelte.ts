@@ -17,8 +17,9 @@ interface CardsStore {
   selectedCard: PokemonCard | null;
   cardName: string;
   isLoadingCards: boolean;
-  loadCardsForSet(setId: string | number): Promise<void>;
+  loadCardsForSet(setId: string): Promise<void>;
   selectCard(card: PokemonCard): void;
+  resetCards(): void;
 }
 
 /**
@@ -37,7 +38,7 @@ function createCardsStore(): CardsStore {
   /**
    * Load cards for a specific set
    */
-  async function loadCardsForSet(setId: string | number): Promise<void> {
+  async function loadCardsForSet(setId: string): Promise<void> {
     if (isLoadingCards) return;
 
     isLoadingCards = true;
@@ -90,6 +91,14 @@ function createCardsStore(): CardsStore {
   }
 
   /**
+   * Reset cards state
+   */
+  function resetCards() {
+    cardsInSet = [];
+    selectedCard = null;
+  }
+
+  /**
    * Effect: React to selectedSet changes and load cards.
    * Uses $effect.root() because this store is created at module scope,
    * outside of any Svelte component tree.
@@ -129,6 +138,7 @@ function createCardsStore(): CardsStore {
 
     loadCardsForSet,
     selectCard,
+    resetCards,
   };
 }
 
