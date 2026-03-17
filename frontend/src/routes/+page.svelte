@@ -205,12 +205,11 @@
                 <h3 class="pricing-title">{variant.name}</h3>
 
                 <!-- Raw (Ungraded) Prices -->
-                {@const rawPrices = pricingStore.getRawPrices(variant)}
-                {#if rawPrices.length > 0}
+                {#if pricingStore.getRawPrices(variant).length > 0}
                   <div class="pricing-category">
                     <h4 class="pricing-subtitle">Raw Prices</h4>
                     <div class="pricing-grid">
-                      {#each rawPrices as price}
+                      {#each pricingStore.getRawPrices(variant) as price}
                         <div class="price-item">
                           <span class="price-label">{price.condition}:</span>
                           <span class="price-value">
@@ -226,12 +225,11 @@
                 {/if}
 
                 <!-- Graded Prices -->
-                {@const gradedPrices = pricingStore.getGradedPrices(variant)}
-                {#if gradedPrices.length > 0}
+                {#if pricingStore.getGradedPrices(variant).length > 0}
                   <div class="pricing-category">
                     <h4 class="pricing-subtitle">Graded Prices</h4>
                     <div class="pricing-grid">
-                      {#each gradedPrices as price}
+                      {#each pricingStore.getGradedPrices(variant) as price}
                         <div class="price-item">
                           <span class="price-label">{price.company} {price.grade}:</span>
                           <span class="price-value">
