@@ -17,6 +17,12 @@ import {
 import { getConfig } from '$lib/server/config';
 import type { Card, CardImage } from '$lib/server/models/types';
 
+/** Check whether a card has any actual price values in its variants */
+function cardHasPricing(card: Card | null): boolean {
+  if (!card?.variants || card.variants.length === 0) return false;
+  return card.variants.some((v) => v.prices && v.prices.length > 0);
+}
+
 /** Map backend Card → frontend PokemonCard shape */
 function cardToFrontend(card: Card) {
   return {
@@ -105,8 +111,16 @@ export const GET: RequestHandler = async ({ params, url }) => {
     }
 
     // Fetch from Scrydex API (single call includes pricing via ?include=prices)
-    if (!card || forceRefresh) {
-      console.log(`[GetCardInfo] Fetching card details from Scrydex API`);
+    // Also fetch if the card exists but has no pricing data (e.g. saved from list endpoint)
+    const needsPricing = !cardHasPricing(card);
+    if (!card || forceRefresh || needsPricing) {
+      if (card && needsPricing) {
+        console.log(
+          `[GetCardInfo] Card ${cardId} exists but has no pricing data, fetching from Scrydex API`
+        );
+      } else {
+        console.log(`[GetCardInfo] Fetching card details from Scrydex API`);
+      }
       const apiStartTime = Date.now();
 
       try {
@@ -194,7 +208,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
     }
 
     const duration = Date.now() - startTime;
-    const hasPricing = !!(card.variants && card.variants.length > 0);
+    const hasPricing = cardHasPricing(card);
 
     monitoring.trackMetric('function.duration', duration, {
       functionName: 'GetCardInfo',
