@@ -33,16 +33,14 @@
     }
   }
 
-  // Price display helpers
-  function hasGradedPrices(pricing: any, gradeType: string): boolean {
-    if (!pricing) return false;
-    return Object.keys(pricing).some(key => key.startsWith(`${gradeType}-`));
-  }
-
-  function hasTcgPlayerPrices(pricing: any): boolean {
-    if (!pricing) return false;
-    return Object.keys(pricing).some(key => ['market', 'low', 'mid', 'high'].includes(key));
-  }
+  // Derive the current pricing result from the store
+  let currentPricing = $derived.by(() => {
+    const card = cardsStore.selectedCard;
+    const set = setsStore.selectedSet;
+    if (!card || !set) return null;
+    const key = `${set.id}_${card.id}`;
+    return pricingStore.priceData[key] || null;
+  });
 
   // Variant handlers
   function handleVariantSelect(variant: any) {
@@ -51,10 +49,7 @@
 
   function handleVariantConfirm(variant: any) {
     selectedVariant = variant;
-    const set = setsStore.selectedSet;
-    if (set) {
-      pricingStore.loadPricingForVariant(set.id, variant.id);
-    }
+    showVariantSelector = false;
   }
 
   function closeVariantSelector() {
@@ -186,7 +181,7 @@
         </div>
 
         <!-- Pricing Section -->
-        {#if Object.keys(pricingStore.priceData).length > 0}
+        {#if currentPricing && currentPricing.variants && currentPricing.variants.length > 0}
           <div class="pricing-section">
             <div class="pricing-header">
               <h2 class="section-title">Pricing Information</h2>
@@ -205,75 +200,52 @@
               </div>
             </div>
 
-            {#each Object.entries(pricingStore.priceData) as [key, pricing]}
-              {#if pricing && pricing.pricing}
-                {@const validPrices = pricingStore.filterValidPrices(pricing)}
-                {#if validPrices}
-                  <div class="pricing-category">
-                    <h3 class="pricing-title">Standard</h3>
-                    <div class="pricing-grid">
-                      {#if validPrices.market}
-                        <div class="price-item">
-                          <span class="price-label">Market Price:</span>
-                          <span class="price-value">{pricingStore.formatPrice(validPrices.market)}</span>
-                        </div>
-                      {/if}
-                      {#if validPrices.low}
-                        <div class="price-item">
-                          <span class="price-label">Low:</span>
-                          <span class="price-value">{pricingStore.formatPrice(validPrices.low)}</span>
-                        </div>
-                      {/if}
-                      {#if validPrices.mid}
-                        <div class="price-item">
-                          <span class="price-label">Mid:</span>
-                          <span class="price-value">{pricingStore.formatPrice(validPrices.mid)}</span>
-                        </div>
-                      {/if}
-                      {#if validPrices.high}
-                        <div class="price-item">
-                          <span class="price-label">High:</span>
-                          <span class="price-value">{pricingStore.formatPrice(validPrices.high)}</span>
-                        </div>
-                      {/if}
-                    </div>
-                  </div>
-                {/if}
+            {#each currentPricing.variants as variant (variant.name)}
+              <div class="pricing-variant">
+                <h3 class="pricing-title">{variant.name}</h3>
 
-                <!-- PSA Graded Prices -->
-                {#if hasGradedPrices(pricing.pricing, 'psa')}
+                <!-- Raw (Ungraded) Prices -->
+                {@const rawPrices = pricingStore.getRawPrices(variant)}
+                {#if rawPrices.length > 0}
                   <div class="pricing-category">
-                    <h3 class="pricing-title">PSA Graded</h3>
+                    <h4 class="pricing-subtitle">Raw Prices</h4>
                     <div class="pricing-grid">
-                      {#each Object.entries(pricing.pricing) as [gradeKey, gradeData]}
-                        {#if gradeKey.startsWith('psa-') && gradeData && typeof gradeData === 'object' && 'value' in gradeData}
-                          <div class="price-item">
-                            <span class="price-label">{gradeKey.replace('psa-', 'PSA ')}:</span>
-                            <span class="price-value">{pricingStore.formatPrice(gradeData.value)}</span>
-                          </div>
-                        {/if}
+                      {#each rawPrices as price}
+                        <div class="price-item">
+                          <span class="price-label">{price.condition}:</span>
+                          <span class="price-value">
+                            {pricingStore.formatPrice(price.market, price.currency)}
+                            {#if price.low && price.low !== price.market}
+                              <span class="price-range">({pricingStore.formatPrice(price.low, price.currency)} – {pricingStore.formatPrice(price.high, price.currency)})</span>
+                            {/if}
+                          </span>
+                        </div>
                       {/each}
                     </div>
                   </div>
                 {/if}
 
-                <!-- CGC Graded Prices -->
-                {#if hasGradedPrices(pricing.pricing, 'cgc')}
+                <!-- Graded Prices -->
+                {@const gradedPrices = pricingStore.getGradedPrices(variant)}
+                {#if gradedPrices.length > 0}
                   <div class="pricing-category">
-                    <h3 class="pricing-title">CGC Graded</h3>
+                    <h4 class="pricing-subtitle">Graded Prices</h4>
                     <div class="pricing-grid">
-                      {#each Object.entries(pricing.pricing) as [gradeKey, gradeData]}
-                        {#if gradeKey.startsWith('cgc-') && gradeData && typeof gradeData === 'object' && 'value' in gradeData}
-                          <div class="price-item">
-                            <span class="price-label">{gradeKey.replace('cgc-', 'CGC ')}:</span>
-                            <span class="price-value">{pricingStore.formatPrice(gradeData.value)}</span>
-                          </div>
-                        {/if}
+                      {#each gradedPrices as price}
+                        <div class="price-item">
+                          <span class="price-label">{price.company} {price.grade}:</span>
+                          <span class="price-value">
+                            {pricingStore.formatPrice(price.market, price.currency)}
+                            {#if price.low && price.low !== price.market}
+                              <span class="price-range">({pricingStore.formatPrice(price.low, price.currency)} – {pricingStore.formatPrice(price.high, price.currency)})</span>
+                            {/if}
+                          </span>
+                        </div>
                       {/each}
                     </div>
                   </div>
                 {/if}
-              {/if}
+              </div>
             {/each}
           </div>
         {/if}
@@ -544,11 +516,37 @@
     margin-bottom: 1.5em;
   }
 
+  .pricing-variant {
+    margin-bottom: 2em;
+    padding-bottom: 1.5em;
+    border-bottom: 1px solid var(--border-primary);
+  }
+
+  .pricing-variant:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
   .pricing-title {
     margin: 0 0 1em 0;
     font-size: 1.1em;
     font-weight: 600;
     color: var(--color-pricing-category);
+  }
+
+  .pricing-subtitle {
+    margin: 0 0 0.8em 0;
+    font-size: 0.95em;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  .price-range {
+    font-size: 0.8em;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin-left: 0.3em;
   }
 
   .pricing-grid {

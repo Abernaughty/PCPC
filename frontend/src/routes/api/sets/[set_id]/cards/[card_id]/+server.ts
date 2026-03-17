@@ -17,6 +17,26 @@ import {
 import { getConfig } from '$lib/server/config';
 import type { Card, CardImage } from '$lib/server/models/types';
 
+/** Map backend Card → frontend PokemonCard shape */
+function cardToFrontend(card: Card) {
+  return {
+    id: card.id,
+    name: card.cardName,
+    number: card.cardNumber,
+    cardNumber: card.cardNumber,
+    printedNumber: card.printedNumber,
+    rarity: card.rarity,
+    rarityCode: card.rarityCode,
+    artist: card.artist,
+    images: card.images,
+    variants: card.variants,
+    setCode: card.setCode,
+    setId: card.setId,
+    setName: card.setName,
+    pricingLastUpdated: card.pricingLastUpdated,
+  };
+}
+
 export const GET: RequestHandler = async ({ params, url }) => {
   const startTime = Date.now();
   const correlationId = monitoring.createCorrelationId();
@@ -195,7 +215,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
 
     console.log(`[GetCardInfo] Successfully returning card ${cardId} (${duration}ms)`);
 
-    return apiSuccess(card, 200, cacheHit);
+    return apiSuccess(cardToFrontend(card), 200, cacheHit);
   } catch (error: any) {
     const duration = Date.now() - startTime;
 

@@ -17,6 +17,25 @@ import {
 import { getConfig } from '$lib/server/config';
 import type { Card, CardImage } from '$lib/server/models/types';
 
+/** Map backend Card → frontend PokemonCard shape */
+function cardToFrontend(card: Card) {
+  return {
+    id: card.id,
+    name: card.cardName,
+    number: card.cardNumber,
+    cardNumber: card.cardNumber,
+    printedNumber: card.printedNumber,
+    rarity: card.rarity,
+    rarityCode: card.rarityCode,
+    artist: card.artist,
+    images: card.images,
+    variants: card.variants,
+    setCode: card.setCode,
+    setId: card.setId,
+    setName: card.setName,
+  };
+}
+
 export const GET: RequestHandler = async ({ params, url }) => {
   const startTime = Date.now();
   const correlationId = monitoring.createCorrelationId();
@@ -159,12 +178,13 @@ export const GET: RequestHandler = async ({ params, url }) => {
       return apiError(`No cards found for set ${setId}`, 404);
     }
 
-    // Apply pagination
-    const totalCount = cards.length;
+    // Map to frontend shape and apply pagination
+    const frontendCards = cards.map(cardToFrontend);
+    const totalCount = frontendCards.length;
     const totalPages = Math.ceil(totalCount / pageSize);
     const startIndex = (page - 1) * pageSize;
     const endIndex = Math.min(startIndex + pageSize, totalCount);
-    const paginatedCards = cards.slice(startIndex, endIndex);
+    const paginatedCards = frontendCards.slice(startIndex, endIndex);
 
     // Cache the paginated result
     if (!cacheHit && process.env.ENABLE_REDIS_CACHE === 'true') {

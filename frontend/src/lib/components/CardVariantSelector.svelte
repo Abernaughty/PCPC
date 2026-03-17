@@ -73,24 +73,21 @@
           <div class="no-variants">No variants available</div>
         {:else}
           <div class="variants-grid">
-            {#each variants as variant (variant.id)}
+            {#each variants as variant (variant.name)}
               <button
                 class="variant-card"
-                class:selected={selectedVariant?.id === variant.id}
+                class:selected={selectedVariant?.name === variant.name}
                 onclick={() => handleVariantSelect(variant)}
                 type="button"
-                aria-pressed={selectedVariant?.id === variant.id}
+                aria-pressed={selectedVariant?.name === variant.name}
               >
-                {#if variant.imageUrl}
-                  <img src={variant.imageUrl} alt={variant.name} class="variant-image" />
+                {#if variant.images && variant.images.length > 0}
+                  <img src={variant.images[0].small} alt={variant.name} class="variant-image" />
                 {/if}
                 <div class="variant-info">
                   <div class="variant-name">{variant.name}</div>
-                  {#if variant.type}
-                    <div class="variant-type">{variant.type}</div>
-                  {/if}
-                  {#if variant.rarity}
-                    <div class="variant-rarity">{variant.rarity}</div>
+                  {#if variant.prices && variant.prices.length > 0}
+                    <div class="variant-type">{variant.prices.length} price{variant.prices.length !== 1 ? 's' : ''}</div>
                   {/if}
                 </div>
               </button>
