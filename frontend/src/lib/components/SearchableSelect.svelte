@@ -126,7 +126,12 @@
   });
 
   function handleInputClick() {
-    showDropdown = !showDropdown;
+    // Always open on click — don’t toggle.
+    // Focus handler also opens, but click should never close.
+    // Closing is handled by outside-click and Escape key.
+    if (!showDropdown) {
+      showDropdown = true;
+    }
     highlightedIndex = -1;
   }
 
