@@ -17,6 +17,7 @@ const log = createContextLogger('pricingStore');
 interface PricingStore {
   priceData: Record<string, PricingResult>;
   isLoading: boolean;
+  pricingError: string | null;
   pricingTimestamp: number | null;
   pricingFromCache: boolean;
   pricingIsStale: boolean;
@@ -28,6 +29,7 @@ interface PricingStore {
   getRawPrices(variant: CardVariant): VariantPrice[];
   getGradedPrices(variant: CardVariant): VariantPrice[];
   formatPrice(price: number | undefined, currency?: string): string;
+  clearError(): void;
 }
 
 /**
@@ -36,6 +38,7 @@ interface PricingStore {
 function createPricingStore(): PricingStore {
   let priceData: Record<string, PricingResult> = $state({});
   let isLoading: boolean = $state(false);
+  let pricingError: string | null = $state(null);
   let pricingTimestamp: number | null = $state(null);
   let pricingFromCache: boolean = $state(false);
   let pricingIsStale: boolean = $state(false);
@@ -51,6 +54,7 @@ function createPricingStore(): PricingStore {
     isLoading = true;
     pricingFromCache = false;
     pricingIsStale = false;
+    pricingError = null;
 
     try {
       let pricing: PricingResult | null = null;
@@ -80,19 +84,39 @@ function createPricingStore(): PricingStore {
         }
       }
 
-      // Update store
-      priceData[key] = pricing;
+      // Validate that we actually got pricing data with variants
+      const hasVariants = pricing?.variants && pricing.variants.length > 0;
+      const hasPrices = hasVariants && pricing!.variants!.some(
+        (v) => v.prices && v.prices.length > 0
+      );
+
+      if (!hasPrices) {
+        log.warn(`API returned card ${cardId} but no pricing data found`);
+        pricingError = 'No pricing data available for this card. The card may be too new or pricing data may be temporarily unavailable.';
+      }
+
+      // Use immutable update to ensure Svelte 5 reactivity triggers
+      priceData = { ...priceData, [key]: pricing };
       pricingTimestamp = pricing.metadata?.timestamp || Date.now();
       pricingIsStale = pricing.metadata?.isStale || false;
 
-      log.info(`Pricing loaded for card ${cardId}`);
+      log.info(`Pricing loaded for card ${cardId} (hasPrices: ${hasPrices})`);
       return pricing;
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       log.error(`Failed to fetch pricing for card ${cardId}:`, err);
+      pricingError = `Failed to load pricing: ${errorMessage}`;
       return null;
     } finally {
       isLoading = false;
     }
+  }
+
+  /**
+   * Clear the current error
+   */
+  function clearError(): void {
+    pricingError = null;
   }
 
   /**
@@ -163,6 +187,10 @@ function createPricingStore(): PricingStore {
       return isLoading;
     },
 
+    get pricingError() {
+      return pricingError;
+    },
+
     get pricingTimestamp() {
       return pricingTimestamp;
     },
@@ -180,6 +208,7 @@ function createPricingStore(): PricingStore {
     getRawPrices,
     getGradedPrices,
     formatPrice,
+    clearError,
   };
 }
 
