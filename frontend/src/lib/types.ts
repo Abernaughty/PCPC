@@ -23,6 +23,8 @@ export interface GroupedSets {
   type: 'group';
   label: string;
   items: PokemonSet[];
+  /** Date range derived from set releaseDates, e.g. "2023 – present" */
+  dateRange?: string;
 }
 
 // Card types
