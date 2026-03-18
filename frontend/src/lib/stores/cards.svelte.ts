@@ -33,7 +33,7 @@ function createCardsStore(): CardsStore {
   /**
    * Derived: card name from selected card
    */
-  let cardName = $derived(selectedCard?.name || '');
+  let cardName: string = $derived(selectedCard?.name || '');
 
   /**
    * Load cards for a specific set
