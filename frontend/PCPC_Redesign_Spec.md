@@ -413,7 +413,7 @@ Japanese set names need English translations. Check if Scrydex API provides an E
 ### New files to create
 
 | File | Purpose |
-|------|--------|
+|------|---------|
 | `apps/pcpc/src/lib/components/CardDetailPanel.svelte` | Image + meta chips sidebar |
 | `apps/pcpc/src/lib/components/PricingPanel.svelte` | All pricing display logic |
 | `apps/pcpc/src/lib/components/HeroPrice.svelte` | Hero price with trend |
@@ -447,7 +447,17 @@ Japanese set names need English translations. Check if Scrydex API provides an E
 
 ## 10.1 Testing gates between implementation steps
 
-Every step must pass two checks before moving to the next:
+Every step must pass two checks before moving to the next.
+
+### Vercel URLs
+
+- **Dashboard:** https://vercel.com/abernaughtys-projects/pcpc
+- **Production:** https://pcpc.vercel.app
+- **Preview (feature/redesign):** Check dashboard → Deployments tab for the latest preview URL
+
+> **Note:** Ensure the Vercel project is connected to the GitHub repo via Git integration
+> so that pushes to `feature/redesign` trigger automatic preview builds. If not connected,
+> deploy manually via `vercel --cwd apps/pcpc` or connect via the dashboard Settings → Git.
 
 ### Gate 1: Build check
 
