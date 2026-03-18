@@ -119,6 +119,7 @@ export interface IScrydexApiService {
     page?: number,
     pageSize?: number
   ): Promise<ScrydexPaginatedResponse<ScrydexCard>>;
+  getAllCardsInExpansion(expansionId: string): Promise<ScrydexCard[]>;
   getCard(cardId: string, includePrices?: boolean): Promise<ScrydexCard | null>;
   searchCards(
     query: string,
@@ -138,11 +139,11 @@ export class ScrydexApiService implements IScrydexApiService {
   private teamId: string;
   private baseUrl: string;
 
-  // In-memory caches
-  private expansionsCache: {
-    data: ScrydexExpansion[] | null;
-    timestamp: number;
-  } = { data: null, timestamp: 0 };
+  // In-memory caches — expansion cache keyed by language to avoid cross-language bleed
+  private expansionsCache: Record<
+    string,
+    { data: ScrydexExpansion[]; timestamp: number }
+  > = {};
 
   private cardsCache: Record<
     string,
@@ -240,14 +241,16 @@ export class ScrydexApiService implements IScrydexApiService {
   // ─── Expansion endpoints ──────────────────────────────────────────────────
 
   async getAllExpansions(language: string = 'en'): Promise<ScrydexExpansion[]> {
+    // Check language-keyed cache
+    const cached = this.expansionsCache[language];
     if (
-      this.expansionsCache.data &&
-      this.isCacheValid(this.expansionsCache.timestamp, this.EXPANSION_CACHE_TTL)
+      cached?.data &&
+      this.isCacheValid(cached.timestamp, this.EXPANSION_CACHE_TTL)
     ) {
       console.log(
-        `[ScrydexApiService] Returning cached expansions (${this.expansionsCache.data.length} expansions)`
+        `[ScrydexApiService] Returning cached expansions for '${language}' (${cached.data.length} expansions)`
       );
-      return this.expansionsCache.data;
+      return cached.data;
     }
 
     if (!this.apiKey) {
@@ -266,21 +269,36 @@ export class ScrydexApiService implements IScrydexApiService {
         `[ScrydexApiService] Fetching all expansions (language: ${language})`
       );
 
-      const response = await this.fetchWithRetry<
-        ScrydexPaginatedResponse<ScrydexExpansion>
-      >(`${this.baseUrl}/${language}/expansions?page_size=100`);
+      // Paginate through all pages to avoid truncating sets
+      const allExpansions: ScrydexExpansion[] = [];
+      let currentPage = 1;
+      const fetchPageSize = 100;
+      let totalCount = Infinity;
+
+      while (allExpansions.length < totalCount) {
+        const response = await this.fetchWithRetry<
+          ScrydexPaginatedResponse<ScrydexExpansion>
+        >(`${this.baseUrl}/${language}/expansions?page=${currentPage}&page_size=${fetchPageSize}`);
+
+        allExpansions.push(...response.data);
+        totalCount = response.totalCount;
+        currentPage++;
+
+        // Safety: break if we got an empty page (shouldn't happen, but prevents infinite loops)
+        if (response.data.length === 0) break;
+      }
 
       const duration = Date.now() - startTime;
       console.log(
-        `[ScrydexApiService] Retrieved ${response.data.length} expansions (${duration}ms)`
+        `[ScrydexApiService] Retrieved ${allExpansions.length} expansions for '${language}' (${duration}ms)`
       );
 
-      this.expansionsCache = {
-        data: response.data,
+      this.expansionsCache[language] = {
+        data: allExpansions,
         timestamp: Date.now(),
       };
 
-      return response.data;
+      return allExpansions;
     } catch (error) {
       console.error('[ScrydexApiService] Error fetching expansions:', error);
       throw error;
@@ -360,6 +378,42 @@ export class ScrydexApiService implements IScrydexApiService {
       );
       throw error;
     }
+  }
+
+  /**
+   * Fetch ALL cards in an expansion by paginating through every page.
+   * Use this when hydrating Cosmos DB or when you need the complete set.
+   */
+  async getAllCardsInExpansion(expansionId: string): Promise<ScrydexCard[]> {
+    const allCards: ScrydexCard[] = [];
+    let currentPage = 1;
+    const fetchPageSize = 100;
+    let totalCount = Infinity;
+
+    console.log(
+      `[ScrydexApiService] Fetching ALL cards for expansion ${expansionId}`
+    );
+
+    while (allCards.length < totalCount) {
+      const response = await this.getCardsInExpansion(
+        expansionId,
+        currentPage,
+        fetchPageSize
+      );
+
+      allCards.push(...response.data);
+      totalCount = response.totalCount;
+      currentPage++;
+
+      // Safety: break if we got an empty page
+      if (response.data.length === 0) break;
+    }
+
+    console.log(
+      `[ScrydexApiService] Retrieved all ${allCards.length}/${totalCount} cards for expansion ${expansionId}`
+    );
+
+    return allCards;
   }
 
   async getCard(

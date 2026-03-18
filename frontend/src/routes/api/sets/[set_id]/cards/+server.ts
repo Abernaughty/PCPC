@@ -108,29 +108,29 @@ export const GET: RequestHandler = async ({ params, url }) => {
       }
     }
 
-    // Fetch from Scrydex API
+    // Fetch from Scrydex API — paginate through ALL pages to avoid truncation
     if (!cards || cards.length === 0) {
       console.log(`[GetCardsBySet] Fetching cards from Scrydex API for set ${setId}`);
       const apiStartTime = Date.now();
 
       try {
         const scrydexService = getScrydexApiService();
-        const response = await scrydexService.getCardsInExpansion(setId);
+        const allScrydexCards = await scrydexService.getAllCardsInExpansion(setId);
         const apiDuration = Date.now() - apiStartTime;
 
         console.log(
-          `[GetCardsBySet] Scrydex API returned ${response.data.length} cards (${apiDuration}ms)`
+          `[GetCardsBySet] Scrydex API returned ${allScrydexCards.length} cards (${apiDuration}ms)`
         );
 
         monitoring.trackMetric('api.scrydex.duration', apiDuration, {
           functionName: 'GetCardsBySet',
           setId,
-          cardCount: response.data.length,
+          cardCount: allScrydexCards.length,
         });
 
         // Transform Scrydex cards to internal Card format and save to Cosmos DB
         const cosmosService = getCosmosDbService();
-        const cardsToSave = response.data.map((card) => {
+        const cardsToSave = allScrydexCards.map((card) => {
           const images: CardImage[] | undefined = card.images?.map((img) => ({
             type: img.type,
             small: img.small,
