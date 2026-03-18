@@ -26,9 +26,9 @@ interface CardsStore {
  * Create the cards store with Svelte 5 runes
  */
 function createCardsStore(): CardsStore {
-  let cardsInSet: PokemonCard[] = $state([]);
-  let selectedCard: PokemonCard | null = $state(null);
-  let isLoadingCards: boolean = $state(false);
+  let cardsInSet = $state<PokemonCard[]>([]);
+  let selectedCard = $state<PokemonCard | null>(null);
+  let isLoadingCards = $state<boolean>(false);
 
   /**
    * Derived: card name from selected card
