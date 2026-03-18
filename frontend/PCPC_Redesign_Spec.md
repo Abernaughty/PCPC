@@ -451,13 +451,24 @@ Every step must pass two checks before moving to the next.
 
 ### Vercel URLs
 
-- **Dashboard:** https://vercel.com/abernaughtys-projects/pcpc
-- **Production:** https://pcpc.vercel.app
-- **Preview (feature/redesign):** Check dashboard → Deployments tab for the latest preview URL
+| Resource | URL |
+|----------|-----|
+| **Dashboard** | https://vercel.com/abernaughtys-projects/pcpc |
+| **Deployments** | https://vercel.com/abernaughtys-projects/pcpc/deployments |
+| **Production** | https://pcpc.vercel.app |
+| **Preview (feature/redesign)** | https://pcpc-git-feature-redesign-abernaughtys-projects.vercel.app |
 
-> **Note:** Ensure the Vercel project is connected to the GitHub repo via Git integration
-> so that pushes to `feature/redesign` trigger automatic preview builds. If not connected,
-> deploy manually via `vercel --cwd apps/pcpc` or connect via the dashboard Settings → Git.
+The Git integration is connected — pushes to any branch auto-trigger preview builds.
+
+### Testing workflow
+
+Use **Claude in Chrome** browser automation for both Gate 1 and Gate 2 testing:
+
+1. **Check build status:** Navigate to the Vercel dashboard or Deployments tab. Confirm the latest push built successfully (green status dot on the branch).
+2. **Navigate to preview:** From the dashboard, follow the Active Branches section or Deployments tab to open the preview site for `feature/redesign`.
+3. **Gate 1 — Build check:** Refresh the preview page and use `read_console_messages(onlyErrors=true)` to verify zero console errors on load.
+4. **Gate 2 — Smoke test:** Interact with the live preview using `computer` actions (click, type, screenshot) to walk through the full user flow per the checklist below.
+5. **Step-specific checks:** Verify the step's unique requirements using screenshots and zoomed captures.
 
 ### Gate 1: Build check
 
@@ -465,7 +476,7 @@ Vercel preview deploy must succeed (runs `pnpm build` for `apps/pcpc`). This cat
 
 ### Gate 2: Smoke test — full user flow
 
-Manually walk through the core flow on the Vercel preview (or locally):
+Walk through the core flow on the Vercel preview using Claude in Chrome:
 
 1. Page loads without console errors
 2. Set dropdown opens and populates
