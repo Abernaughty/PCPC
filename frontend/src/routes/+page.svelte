@@ -283,6 +283,22 @@
             {/each}
           </div>
         {/if}
+
+        <!-- Pricing Error -->
+        {#if pricingStore.pricingError}
+          <div class="pricing-error">
+            <span class="error-icon">⚠️</span>
+            <span class="error-text">{pricingStore.pricingError}</span>
+            <button
+              class="error-close"
+              onclick={() => pricingStore.clearError()}
+              aria-label="Dismiss pricing error"
+              type="button"
+            >
+              ✕
+            </button>
+          </div>
+        {/if}
       </div>
     {/if}
   </main>
@@ -633,6 +649,17 @@
     font-size: 1.2em;
     font-weight: 700;
     color: var(--color-price-value);
+  }
+
+  .pricing-error {
+    margin-top: 2em;
+    background-color: rgba(255, 165, 0, 0.1);
+    border: 1px solid rgba(255, 165, 0, 0.5);
+    border-radius: 4px;
+    padding: 1em;
+    display: flex;
+    align-items: center;
+    gap: 1em;
   }
 
   @media (max-width: 768px) {
