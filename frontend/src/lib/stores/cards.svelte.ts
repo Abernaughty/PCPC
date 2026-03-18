@@ -19,7 +19,7 @@ interface CardsStore {
   selectedCard: PokemonCard | null;
   cardName: string;
   isLoadingCards: boolean;
-  loadCardsForSet(setId: string): Promise&lt;void&gt;;
+  loadCardsForSet(setId: string): Promise<void>;
   selectCard(card: PokemonCard): void;
   resetCards(): void;
 }
@@ -28,9 +28,9 @@ interface CardsStore {
  * Create the cards store with Svelte 5 runes
  */
 function createCardsStore(): CardsStore {
-  let cardsInSet = $state&lt;PokemonCard[]&gt;([]);
-  let selectedCard = $state&lt;PokemonCard | null&gt;(null);
-  let isLoadingCards = $state&lt;boolean&gt;(false);
+  let cardsInSet = $state<PokemonCard[]>([]);
+  let selectedCard = $state<PokemonCard | null>(null);
+  let isLoadingCards = $state<boolean>(false);
 
   /**
    * Derived: card name from selected card
@@ -41,7 +41,7 @@ function createCardsStore(): CardsStore {
    * Load cards for a specific set.
    * Called imperatively from setsStore.selectSet() — not from a reactive $effect.
    */
-  async function loadCardsForSet(setId: string): Promise&lt;void&gt; {
+  async function loadCardsForSet(setId: string): Promise<void> {
     if (isLoadingCards) return;
 
     isLoadingCards = true;
