@@ -1,13 +1,20 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, type Snippet } from 'svelte';
 
   interface Props {
     items?: any[];
     placeholder?: string;
+    /** Fields to display as label (primary) and secondary text in default rendering */
     labelField?: string;
     secondaryField?: string | null;
+    /** Fields to search/filter against. Defaults to [labelField] + secondaryField if set. */
+    searchFields?: string[];
     value?: any;
     onselect?: (item: any) => void;
+    /** Custom snippet for rendering each selectable item */
+    item?: Snippet<[any, boolean]>;
+    /** Custom snippet for rendering group headers */
+    groupHeader?: Snippet<[any]>;
   }
 
   let {
@@ -15,8 +22,11 @@
     placeholder = 'Select an item...',
     labelField = 'name',
     secondaryField = null,
+    searchFields,
     value = undefined,
-    onselect
+    onselect,
+    item: itemSnippet,
+    groupHeader: groupHeaderSnippet
   }: Props = $props();
 
   let searchText = $state('');
@@ -24,6 +34,14 @@
   let highlightedIndex = $state(-1);
   let inputElement: HTMLInputElement | undefined = $state();
   let dropdownElement: HTMLDivElement | undefined = $state();
+
+  // Resolve which fields to search against
+  const resolvedSearchFields = $derived.by(() => {
+    if (searchFields && searchFields.length > 0) return searchFields;
+    const fields = [labelField];
+    if (secondaryField) fields.push(secondaryField);
+    return fields;
+  });
 
   // Check if items are grouped
   const isGroupedItems = $derived.by(() => {
@@ -35,6 +53,14 @@
     if (!isGroupedItems) return items;
     return items.flatMap((group: any) => group.items || []);
   });
+
+  // Match an item against the search text using resolvedSearchFields
+  function matchesSearch(item: any, lowerSearch: string): boolean {
+    return resolvedSearchFields.some((field) => {
+      const val = item[field];
+      return val != null && String(val).toLowerCase().includes(lowerSearch);
+    });
+  }
 
   // Filter items based on search text
   const filteredItems = $derived.by(() => {
@@ -48,30 +74,19 @@
       return items
         .map((group: any) => ({
           ...group,
-          items: (group.items || []).filter(
-            (item: any) =>
-              String(item[labelField] || '').toLowerCase().includes(lowerSearch) ||
-              (secondaryField && String(item[secondaryField] || '').toLowerCase().includes(lowerSearch))
-          )
+          items: (group.items || []).filter((item: any) => matchesSearch(item, lowerSearch))
         }))
         .filter((group: any) => group.items.length > 0);
     } else {
-      return items.filter(
-        (item: any) =>
-          String(item[labelField] || '').toLowerCase().includes(lowerSearch) ||
-          (secondaryField && String(item[secondaryField] || '').toLowerCase().includes(lowerSearch))
-      );
+      return items.filter((item: any) => matchesSearch(item, lowerSearch));
     }
   });
 
   // Get all selectable items for keyboard navigation
   const allSelectableItems = $derived.by(() => {
-    return flattenedItems.filter(
-      (item: any) =>
-        !searchText.trim() ||
-        String(item[labelField] || '').toLowerCase().includes(searchText.toLowerCase()) ||
-        (secondaryField && String(item[secondaryField] || '').toLowerCase().includes(searchText.toLowerCase()))
-    );
+    const lowerSearch = searchText.trim().toLowerCase();
+    if (!lowerSearch) return flattenedItems;
+    return flattenedItems.filter((item: any) => matchesSearch(item, lowerSearch));
   });
 
   // Get display text for selected value
@@ -221,20 +236,30 @@
         {#each filteredItems as group (group.label)}
           {#if group.items && group.items.length > 0}
             <div class="group">
-              <div class="group-label">{group.label}</div>
-              {#each group.items as item, idx (item.id)}
-                {@const globalIdx = allSelectableItems.indexOf(item)}
+              {#if groupHeaderSnippet}
+                {@render groupHeaderSnippet(group)}
+              {:else}
+                <div class="group-label">{group.label}</div>
+              {/if}
+              {#each group.items as groupItem, idx (groupItem.id)}
+                {@const globalIdx = allSelectableItems.indexOf(groupItem)}
+                {@const isHighlighted = highlightedIndex === globalIdx}
                 <div
                   class="dropdown-item"
-                  class:highlighted={highlightedIndex === globalIdx}
+                  class:highlighted={isHighlighted}
+                  class:selected={value?.id === groupItem.id}
                   onmouseover={() => handleMouseOver(globalIdx)}
-                  onclick={() => handleItemSelect(item)}
+                  onclick={() => handleItemSelect(groupItem)}
                   role="option"
-                  aria-selected={highlightedIndex === globalIdx}
+                  aria-selected={isHighlighted}
                 >
-                  <span class="item-label">{item[labelField]}</span>
-                  {#if secondaryField}
-                    <span class="item-secondary">{item[secondaryField]}</span>
+                  {#if itemSnippet}
+                    {@render itemSnippet(groupItem, value?.id === groupItem.id)}
+                  {:else}
+                    <span class="item-label">{groupItem[labelField]}</span>
+                    {#if secondaryField}
+                      <span class="item-secondary">{groupItem[secondaryField]}</span>
+                    {/if}
                   {/if}
                 </div>
               {/each}
@@ -242,24 +267,30 @@
           {/if}
         {/each}
       {:else}
-        {#each filteredItems as item, idx (item.id)}
+        {#each filteredItems as flatItem, idx (flatItem.id)}
+          {@const isHighlighted = highlightedIndex === idx}
           <div
             class="dropdown-item"
-            class:highlighted={highlightedIndex === idx}
+            class:highlighted={isHighlighted}
+            class:selected={value?.id === flatItem.id}
             onmouseover={() => handleMouseOver(idx)}
-            onclick={() => handleItemSelect(item)}
+            onclick={() => handleItemSelect(flatItem)}
             role="option"
-            aria-selected={highlightedIndex === idx}
+            aria-selected={isHighlighted}
           >
-            <span class="item-label">{item[labelField]}</span>
-            {#if secondaryField}
-              <span class="item-secondary">{item[secondaryField]}</span>
+            {#if itemSnippet}
+              {@render itemSnippet(flatItem, value?.id === flatItem.id)}
+            {:else}
+              <span class="item-label">{flatItem[labelField]}</span>
+              {#if secondaryField}
+                <span class="item-secondary">{flatItem[secondaryField]}</span>
+              {/if}
             {/if}
           </div>
         {/each}
       {/if}
 
-      {#if filteredItems.length === 0}
+      {#if filteredItems.length === 0 || (isGroupedItems && filteredItems.every((g: any) => !g.items || g.items.length === 0))}
         <div class="no-results">No results found</div>
       {/if}
     </div>
@@ -282,19 +313,20 @@
   .searchable-input {
     width: 100%;
     padding: 0.6em 2.5em 0.6em 0.8em;
-    border: 1px solid var(--border-input);
-    border-radius: 4px;
-    background-color: var(--bg-dropdown);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-input, 6px);
+    background-color: var(--surface-2);
     color: var(--text-primary);
-    font-size: 1em;
+    font-size: 12px;
     font-family: inherit;
-    transition: all var(--transition-speed) ease;
+    transition: border-color var(--transition-speed, 0.2s) ease,
+                box-shadow var(--transition-speed, 0.2s) ease;
   }
 
   .searchable-input:focus {
     outline: none;
-    border-color: var(--border-focus);
-    box-shadow: 0 0 0 3px var(--focus-ring-color);
+    border-color: var(--accent-red);
+    box-shadow: var(--focus-ring);
   }
 
   .clear-button {
@@ -308,7 +340,7 @@
     cursor: pointer;
     padding: 0.2em 0.4em;
     font-size: 1.2em;
-    transition: color var(--transition-speed) ease;
+    transition: color var(--transition-speed, 0.2s) ease;
   }
 
   .clear-button:hover {
@@ -330,59 +362,69 @@
     top: 100%;
     left: 0;
     right: 0;
-    margin-top: 0.4em;
-    background-color: var(--bg-dropdown);
-    border: 1px solid var(--border-input);
-    border-radius: 4px;
-    box-shadow: 0 4px 12px var(--shadow-medium);
+    margin-top: 4px;
+    background-color: var(--surface-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-input, 6px);
+    box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.4));
     z-index: 1000;
-    max-height: 300px;
+    max-height: 340px;
     overflow-y: auto;
   }
 
   .group {
-    padding: 0.4em 0;
+    /* No extra padding — group header handles its own */
   }
 
+  /* Default group label (used when no groupHeader snippet is provided) */
   .group-label {
-    padding: 0.6em 0.8em;
-    background-color: var(--bg-group-header);
+    padding: 8px 12px;
+    background-color: var(--surface-1);
     color: var(--text-muted);
-    font-weight: 600;
-    font-size: 0.9em;
+    font-weight: 500;
+    font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.5px;
+    position: sticky;
+    top: 0;
+    z-index: 1;
   }
 
   .dropdown-item {
-    padding: 0.8em;
+    padding: 0;
     color: var(--text-primary);
     cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: background-color var(--transition-speed) ease;
+    transition: background-color var(--transition-speed, 0.2s) ease;
   }
 
   .dropdown-item:hover,
   .dropdown-item.highlighted {
-    background-color: var(--bg-hover);
+    background-color: var(--bg-hover, rgba(255, 255, 255, 0.04));
   }
 
+  .dropdown-item.selected {
+    border-left: 3px solid var(--accent-red);
+  }
+
+  /* Default item rendering (when no item snippet is provided) */
   .item-label {
     font-weight: 500;
+    font-size: 12px;
+    padding: 8px 12px;
+    display: inline;
   }
 
   .item-secondary {
-    color: var(--text-secondary);
-    font-size: 0.9em;
+    color: var(--text-muted);
+    font-size: 11px;
+    padding-right: 12px;
   }
 
   .no-results {
-    padding: 1em 0.8em;
+    padding: 16px 12px;
     color: var(--text-muted);
     text-align: center;
-    font-size: 0.9em;
+    font-size: 12px;
   }
 
   ::-webkit-scrollbar {
@@ -390,15 +432,15 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: var(--bg-dropdown);
+    background: var(--surface-2);
   }
 
   ::-webkit-scrollbar-thumb {
-    background: var(--scrollbar-thumb-bg);
+    background: var(--scrollbar-thumb-bg, var(--surface-1));
     border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--scrollbar-thumb-hover-bg);
+    background: var(--scrollbar-thumb-hover-bg, var(--text-dim));
   }
 </style>

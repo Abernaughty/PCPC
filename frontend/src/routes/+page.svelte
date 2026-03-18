@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { SearchableSelect, CardSearchSelect, CardVariantSelector } from '$lib/components';
+  import SetDropdownItem from '$lib/components/SetDropdownItem.svelte';
+  import SetGroupHeader from '$lib/components/SetGroupHeader.svelte';
   import { setsStore } from '$lib/stores/sets.svelte';
   import { cardsStore } from '$lib/stores/cards.svelte';
   import { pricingStore } from '$lib/stores/pricing.svelte';
@@ -105,10 +107,17 @@
           items={setsStore.groupedSetsForDropdown}
           placeholder="Search sets..."
           labelField="name"
-          secondaryField="code"
+          searchFields={['name', 'code']}
           value={setsStore.selectedSet}
           onselect={handleSetSelect}
-        />
+        >
+          {#snippet item(set, selected)}
+            <SetDropdownItem {set} {selected} />
+          {/snippet}
+          {#snippet groupHeader(group)}
+            <SetGroupHeader {group} />
+          {/snippet}
+        </SearchableSelect>
         {#if setsStore.isLoadingSets}
           <div class="loading-indicator">Loading sets...</div>
         {/if}
