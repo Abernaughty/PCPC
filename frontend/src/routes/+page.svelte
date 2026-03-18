@@ -18,6 +18,10 @@
   function handleSetSelect(item: any) {
     if (item) {
       setsStore.selectSet(item);
+    } else {
+      // Set was cleared — reset card state so the card input
+      // doesn't retain stale text from the previous selection.
+      cardsStore.resetCards();
     }
   }
 
