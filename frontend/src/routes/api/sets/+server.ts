@@ -41,7 +41,7 @@ export const GET: RequestHandler = async ({ url }) => {
     let cacheAge = 0;
 
     // Check Redis cache
-    if (!forceRefresh && process.env.ENABLE_REDIS_CACHE === 'true') {
+    if (!forceRefresh && config.enableRedisCache) {
       console.log(`[GetSets] Checking Redis cache with key: ${cacheKey}`);
       const cacheCheckStart = Date.now();
       const redisService = getRedisCacheService();
@@ -120,7 +120,7 @@ export const GET: RequestHandler = async ({ url }) => {
         });
 
         // Save to cache
-        if (sets && sets.length > 0 && process.env.ENABLE_REDIS_CACHE === 'true') {
+        if (sets && sets.length > 0 && config.enableRedisCache) {
           console.log(`[GetSets] Saving ${sets.length} sets to Redis cache`);
           const redisService = getRedisCacheService();
           await redisService.set(

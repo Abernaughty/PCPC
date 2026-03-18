@@ -63,7 +63,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
     let cacheAge = 0;
 
     // Check Redis cache
-    if (!forceRefresh && process.env.ENABLE_REDIS_CACHE === 'true') {
+    if (!forceRefresh && config.enableRedisCache) {
       console.log(`[GetCardsBySet] Checking Redis cache with key: ${cacheKey}`);
       const redisService = getRedisCacheService();
       const cachedEntry = await redisService.get<CacheEntry<Card[]>>(cacheKey);
@@ -187,7 +187,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
     const paginatedCards = frontendCards.slice(startIndex, endIndex);
 
     // Cache the paginated result
-    if (!cacheHit && process.env.ENABLE_REDIS_CACHE === 'true') {
+    if (!cacheHit && config.enableRedisCache) {
       console.log(`[GetCardsBySet] Caching ${paginatedCards.length} cards`);
       const redisService = getRedisCacheService();
       await redisService.set(

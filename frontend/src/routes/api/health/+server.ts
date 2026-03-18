@@ -3,6 +3,7 @@ import { getCosmosDbService } from '$lib/server/services/cosmosDb';
 import { getRedisCacheService } from '$lib/server/services/redisCache';
 import { getScrydexApiService } from '$lib/server/services/scrydexApi';
 import { monitoring } from '$lib/server/services/monitoring';
+import { getConfig } from '$lib/server/config';
 import type { HealthCheckResult, ComponentHealth } from '$lib/server/models/types';
 import { json } from '@sveltejs/kit';
 
@@ -13,24 +14,23 @@ export const GET: RequestHandler = async () => {
   console.log(`[HealthCheck] Starting health check - Correlation ID: ${correlationId}`);
 
   try {
+    const config = getConfig();
     const checks: Record<string, ComponentHealth> = {
       runtime: await checkRuntime(),
     };
 
     // Check Cosmos DB
-    const cosmosDbConnectionString = process.env.COSMOS_DB_CONNECTION_STRING;
-    if (cosmosDbConnectionString) {
+    if (config.cosmosDbConnectionString) {
       checks.cosmosdb = await checkCosmosDb();
     }
 
     // Check Scrydex API
-    const scrydexApiKey = process.env.SCRYDEX_API_KEY;
-    if (scrydexApiKey) {
+    if (config.scrydexApiKey) {
       checks.scrydexApi = await checkScrydexApi();
     }
 
     // Check Redis
-    if (process.env.ENABLE_REDIS_CACHE === 'true') {
+    if (config.enableRedisCache) {
       checks.redis = await checkRedis();
     } else {
       checks.redis = {
@@ -141,10 +141,10 @@ async function checkScrydexApi(): Promise<ComponentHealth> {
   const startTime = Date.now();
 
   try {
-    const apiKey = process.env.SCRYDEX_API_KEY;
-    const teamId = process.env.SCRYDEX_TEAM_ID;
-    const baseUrl =
-      process.env.SCRYDEX_API_BASE_URL || 'https://api.scrydex.com/pokemon/v1';
+    const config = getConfig();
+    const apiKey = config.scrydexApiKey;
+    const teamId = config.scrydexTeamId;
+    const baseUrl = config.scrydexApiBaseUrl;
 
     const response = await fetch(`${baseUrl}/en/expansions?page_size=1&select=id`, {
       headers: {

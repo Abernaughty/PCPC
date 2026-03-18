@@ -68,7 +68,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
     let cacheAge = 0;
 
     // Check Redis cache
-    if (!forceRefresh && process.env.ENABLE_REDIS_CACHE === 'true') {
+    if (!forceRefresh && config.enableRedisCache) {
       console.log(`[GetCardInfo] Checking Redis cache with key: ${cacheKey}`);
       const redisService = getRedisCacheService();
       const cachedEntry = await redisService.get<CacheEntry<Card>>(cacheKey);
@@ -197,7 +197,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
     }
 
     // Cache the card
-    if (!cacheHit && process.env.ENABLE_REDIS_CACHE === 'true') {
+    if (!cacheHit && config.enableRedisCache) {
       console.log(`[GetCardInfo] Caching card ${cardId}`);
       const redisService = getRedisCacheService();
       await redisService.set(
