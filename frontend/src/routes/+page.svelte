@@ -42,6 +42,15 @@
     return pricingStore.priceData[key] || null;
   });
 
+  // Derive the best card image URL
+  let cardImageUrl = $derived.by(() => {
+    const card = cardsStore.selectedCard;
+    if (!card?.images || card.images.length === 0) return null;
+    // Prefer medium size for display, fall back to small then large
+    const img = card.images[0];
+    return img.medium || img.small || img.large || null;
+  });
+
   // Variant handlers
   function handleVariantSelect(variant: any) {
     selectedVariant = variant;
@@ -153,30 +162,57 @@
     <!-- Results Section -->
     {#if setsStore.selectedSet && cardsStore.selectedCard}
       <div class="results-container">
-        <!-- Card Info -->
-        <div class="card-info-section">
-          <h2 class="section-title">Card Information</h2>
-          <div class="card-info-grid">
-            <div class="info-item">
-              <span class="info-label">Card:</span>
-              <span class="info-value">{cardsStore.selectedCard.name}</span>
+        <!-- Card Details Layout: Image + Info side by side -->
+        <div class="card-details-layout">
+          <!-- Card Image -->
+          {#if cardImageUrl}
+            <div class="card-image-section">
+              <img
+                src={cardImageUrl}
+                alt="{cardsStore.selectedCard.name} card image"
+                class="card-image"
+                loading="lazy"
+              />
             </div>
-            {#if cardsStore.selectedCard.number || cardsStore.selectedCard.cardNumber}
+          {/if}
+
+          <!-- Card Info -->
+          <div class="card-info-section">
+            <h2 class="section-title">Card Information</h2>
+            <div class="card-info-grid">
               <div class="info-item">
-                <span class="info-label">Number:</span>
-                <span class="info-value">#{cardsStore.selectedCard.number || cardsStore.selectedCard.cardNumber}</span>
+                <span class="info-label">Card:</span>
+                <span class="info-value">{cardsStore.selectedCard.name}</span>
               </div>
-            {/if}
-            <div class="info-item">
-              <span class="info-label">Set:</span>
-              <span class="info-value">{setsStore.selectedSet.name}</span>
+              {#if cardsStore.selectedCard.number || cardsStore.selectedCard.cardNumber}
+                <div class="info-item">
+                  <span class="info-label">Number:</span>
+                  <span class="info-value">#{cardsStore.selectedCard.number || cardsStore.selectedCard.cardNumber}</span>
+                </div>
+              {/if}
+              <div class="info-item">
+                <span class="info-label">Set:</span>
+                <span class="info-value">{setsStore.selectedSet.name}</span>
+              </div>
+              {#if setsStore.selectedSet.code}
+                <div class="info-item">
+                  <span class="info-label">Set Code:</span>
+                  <span class="info-value">{setsStore.selectedSet.code}</span>
+                </div>
+              {/if}
+              {#if cardsStore.selectedCard.rarity}
+                <div class="info-item">
+                  <span class="info-label">Rarity:</span>
+                  <span class="info-value">{cardsStore.selectedCard.rarity}</span>
+                </div>
+              {/if}
+              {#if cardsStore.selectedCard.artist}
+                <div class="info-item">
+                  <span class="info-label">Artist:</span>
+                  <span class="info-value">{cardsStore.selectedCard.artist}</span>
+                </div>
+              {/if}
             </div>
-            {#if setsStore.selectedSet.code}
-              <div class="info-item">
-                <span class="info-label">Set Code:</span>
-                <span class="info-value">{setsStore.selectedSet.code}</span>
-              </div>
-            {/if}
           </div>
         </div>
 
@@ -430,6 +466,30 @@
     box-shadow: 0 2px 8px var(--shadow-light);
   }
 
+  .card-details-layout {
+    display: flex;
+    gap: 2em;
+    align-items: flex-start;
+  }
+
+  .card-image-section {
+    flex-shrink: 0;
+    width: 250px;
+  }
+
+  .card-image {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px var(--shadow-medium);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .card-image:hover {
+    transform: scale(1.03);
+    box-shadow: 0 8px 24px var(--shadow-medium);
+  }
+
   .section-title {
     margin: 0 0 1.5em 0;
     font-size: 1.3em;
@@ -440,12 +500,13 @@
   }
 
   .card-info-section {
-    margin-bottom: 2em;
+    flex: 1;
+    min-width: 0;
   }
 
   .card-info-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1em;
   }
 
@@ -591,6 +652,19 @@
 
     .app-title {
       font-size: 1.5em;
+    }
+
+    .card-details-layout {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .card-image-section {
+      width: 200px;
+    }
+
+    .card-info-section {
+      width: 100%;
     }
 
     .pricing-grid,
