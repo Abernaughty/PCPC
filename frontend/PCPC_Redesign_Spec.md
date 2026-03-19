@@ -5,6 +5,9 @@
 **Repo:** `Abernaughty/maber-web` → `apps/pcpc`
 **Stack:** SvelteKit 2 · Svelte 5 · TailwindCSS 4 · TypeScript 5 · adapter-vercel
 **Theme:** Dark-mode-first (light mode deferred)
+**Tracking:** [GitHub Issue #2](https://github.com/Abernaughty/maber-web/issues/2) — source of truth for progress and decisions
+
+> **Note:** This file contains the detailed design spec. For implementation progress, gate results, and decision log, see [Issue #2](https://github.com/Abernaughty/maber-web/issues/2).
 
 ---
 
@@ -197,7 +200,7 @@ Three-way toggle bar above the card list:
          #001/197
 ```
 
-- **Thumbnail**: 22×30px from `PokemonCard.images[0].small`, lazy-loaded (`loading="lazy"`)
+- **Thumbnail**: 22×30px from `PokemonCard.images[0].small`, lazy-loaded via `IntersectionObserver`
 - **Rarity dot**: 6px colored circle from `PokemonCard.rarity`
   - Gray: Common
   - Green: Uncommon
@@ -216,8 +219,8 @@ Small legend row at the bottom of the dropdown showing dot colors → rarity nam
 
 ### Performance
 
-- Virtual scrolling for sets with 200+ cards (only render visible rows)
-- `IntersectionObserver` for lazy-loading thumbnails
+- `IntersectionObserver` for lazy-loading thumbnails (do NOT rely on native `loading="lazy"` — it does not work in scroll containers)
+- Virtual scrolling for sets with 200+ cards (only render visible rows) — deferred to fast-follow if needed
 
 ---
 
@@ -514,6 +517,7 @@ If a step introduces a regression caught by the smoke test:
 
 These remain separate tasks:
 
-- **Issue #3**: Duplicate API calls — still open
+- **Issue #3**: Duplicate API calls — **FIXED** on `feature/redesign`, PR #9 open to main
 - **Issue #4**: Excessive IndexedDB writes (100 individual ops per card load) — still open
 - **Issue #5**: "No cards found" text persists — still open
+- **Issue #10**: Card/set counts truncated at 100 (Cosmos DB stale data) — still open
