@@ -6,3 +6,5 @@ export { default as SetGroupHeader } from './SetGroupHeader.svelte';
 export { default as SearchForm } from './SearchForm.svelte';
 export { default as CardDetailPanel } from './CardDetailPanel.svelte';
 export { default as PricingPanel } from './PricingPanel.svelte';
+export { default as HeroPrice } from './HeroPrice.svelte';
+export { default as VariantPills } from './VariantPills.svelte';

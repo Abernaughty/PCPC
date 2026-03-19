@@ -1,78 +1,120 @@
 <script lang="ts">
-  import type { PricingResult } from '$lib/types';
+  import type { PricingResult, CardVariant } from '$lib/types';
   import { pricingStore } from '$lib/stores/pricing.svelte';
+  import HeroPrice from './HeroPrice.svelte';
+  import VariantPills from './VariantPills.svelte';
 
   interface Props {
     pricing: PricingResult;
   }
 
   let { pricing }: Props = $props();
+
+  // Selected variant name — defaults to first variant that has prices,
+  // falling back to the first variant overall
+  let selectedVariantName = $state<string>('');
+
+  // When pricing changes (new card selected), reset to best default
+  $effect(() => {
+    if (pricing.variants && pricing.variants.length > 0) {
+      const withPrices = pricing.variants.find((v) => v.prices.length > 0);
+      selectedVariantName = withPrices?.name ?? pricing.variants[0].name;
+    }
+  });
+
+  // Derive the active variant object
+  let activeVariant = $derived.by(() => {
+    if (!pricing.variants) return null;
+    return pricing.variants.find((v) => v.name === selectedVariantName) ?? null;
+  });
+
+  // Derive the market price for the hero display
+  let heroPrice = $derived.by(() => {
+    if (!activeVariant) return null;
+    return pricingStore.getMarketPrice(pricing, activeVariant.name);
+  });
+
+  // Derive raw and graded prices for the active variant
+  let rawPrices = $derived(activeVariant ? pricingStore.getRawPrices(activeVariant) : []);
+  let gradedPrices = $derived(activeVariant ? pricingStore.getGradedPrices(activeVariant) : []);
+
+  function handleVariantSelect(name: string) {
+    selectedVariantName = name;
+  }
 </script>
 
-{#if pricing.variants && pricing.variants.length > 0}
+{#if pricing.variants && pricing.variants.length > 0 && activeVariant}
   <div class="pricing-section">
-    <div class="pricing-header">
-      <h2 class="section-title">Pricing Information</h2>
-      <div class="pricing-metadata">
-        {#if pricingStore.pricingFromCache}
-          <span class="cache-indicator">Cached</span>
-        {/if}
-        {#if pricingStore.pricingIsStale}
-          <span class="stale-indicator">Stale</span>
-        {/if}
-        {#if pricingStore.pricingTimestamp}
-          <span class="timestamp">
-            Updated: {new Date(pricingStore.pricingTimestamp).toLocaleDateString()}
-          </span>
-        {/if}
-      </div>
-    </div>
+    <!-- Hero Price -->
+    <HeroPrice
+      price={heroPrice}
+      variant={activeVariant}
+      fromCache={pricingStore.pricingFromCache}
+      isStale={pricingStore.pricingIsStale}
+      timestamp={pricingStore.pricingTimestamp}
+    />
 
-    {#each pricing.variants as variant (variant.name)}
-      <div class="pricing-variant">
-        <h3 class="pricing-title">{variant.name}</h3>
+    <!-- Variant Pills -->
+    {#if pricing.variants.length > 1}
+      <VariantPills
+        variants={pricing.variants}
+        selected={selectedVariantName}
+        onselect={handleVariantSelect}
+      />
+    {/if}
 
-        <!-- Raw (Ungraded) Prices -->
-        {#if pricingStore.getRawPrices(variant).length > 0}
-          <div class="pricing-category">
-            <h4 class="pricing-subtitle">Raw Prices</h4>
-            <div class="pricing-grid">
-              {#each pricingStore.getRawPrices(variant) as price}
-                <div class="price-item">
-                  <span class="price-label">{price.condition}:</span>
-                  <span class="price-value">
-                    {pricingStore.formatPrice(price.market, price.currency)}
-                    {#if price.low && price.low !== price.market}
-                      <span class="price-range">({pricingStore.formatPrice(price.low, price.currency)} &ndash; {pricingStore.formatPrice(price.high, price.currency)})</span>
-                    {/if}
+    <!-- Raw (Ungraded) Prices -->
+    {#if rawPrices.length > 0}
+      <div class="pricing-category">
+        <h4 class="pricing-subtitle">Raw Prices</h4>
+        <div class="pricing-grid">
+          {#each rawPrices as price (price.condition)}
+            <div class="price-item">
+              <span class="price-label">{price.condition}:</span>
+              <span class="price-value">
+                {pricingStore.formatPrice(price.market, price.currency)}
+                {#if price.low && price.low !== price.market}
+                  <span class="price-range">
+                    ({pricingStore.formatPrice(price.low, price.currency)} &ndash; {pricingStore.formatPrice(price.high, price.currency)})
                   </span>
-                </div>
-              {/each}
+                {/if}
+              </span>
             </div>
-          </div>
-        {/if}
-
-        <!-- Graded Prices -->
-        {#if pricingStore.getGradedPrices(variant).length > 0}
-          <div class="pricing-category">
-            <h4 class="pricing-subtitle">Graded Prices</h4>
-            <div class="pricing-grid">
-              {#each pricingStore.getGradedPrices(variant) as price}
-                <div class="price-item">
-                  <span class="price-label">{price.company} {price.grade}:</span>
-                  <span class="price-value">
-                    {pricingStore.formatPrice(price.market, price.currency)}
-                    {#if price.low && price.low !== price.market}
-                      <span class="price-range">({pricingStore.formatPrice(price.low, price.currency)} &ndash; {pricingStore.formatPrice(price.high, price.currency)})</span>
-                    {/if}
-                  </span>
-                </div>
-              {/each}
-            </div>
-          </div>
-        {/if}
+          {/each}
+        </div>
       </div>
-    {/each}
+    {/if}
+
+    <!-- Graded Prices -->
+    {#if gradedPrices.length > 0}
+      <div class="pricing-category">
+        <h4 class="pricing-subtitle">Graded Prices</h4>
+        <div class="pricing-grid">
+          {#each gradedPrices as price (`${price.company}_${price.grade}`)}
+            <div class="price-item">
+              <span class="price-label">{price.company} {price.grade}:</span>
+              <span class="price-value">
+                {pricingStore.formatPrice(price.market, price.currency)}
+                {#if price.low && price.low !== price.market}
+                  <span class="price-range">
+                    ({pricingStore.formatPrice(price.low, price.currency)} &ndash; {pricingStore.formatPrice(price.high, price.currency)})
+                  </span>
+                {/if}
+              </span>
+            </div>
+          {/each}
+        </div>
+      </div>
+    {/if}
+
+    <!-- Empty variant state -->
+    {#if rawPrices.length === 0 && gradedPrices.length === 0}
+      <div class="empty-variant">
+        <span class="empty-icon">&empty;</span>
+        <p class="empty-text">No pricing data available for this variant yet.</p>
+        <p class="empty-sub">This variant may be too new or not widely traded.</p>
+      </div>
+    {/if}
   </div>
 {/if}
 
@@ -94,151 +136,120 @@
 
 <style>
   .pricing-section {
-    margin-top: 2em;
-  }
-
-  .pricing-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5em;
-    flex-wrap: wrap;
-    gap: 1em;
-  }
-
-  .section-title {
-    margin: 0;
-    font-size: 1.3em;
-    font-weight: 600;
-    color: var(--color-heading);
-    border-bottom: 2px solid var(--border-primary);
-    padding-bottom: 0.5em;
-  }
-
-  .pricing-metadata {
-    display: flex;
-    gap: 1em;
-    font-size: 0.85em;
-  }
-
-  .cache-indicator {
-    background-color: rgba(60, 90, 166, 0.2);
-    color: var(--color-cached-indicator);
-    padding: 0.3em 0.6em;
-    border-radius: 3px;
-    font-weight: 500;
-  }
-
-  .stale-indicator {
-    background-color: rgba(238, 21, 21, 0.2);
-    color: var(--color-stale-indicator);
-    padding: 0.3em 0.6em;
-    border-radius: 3px;
-    font-weight: 500;
-  }
-
-  .timestamp {
-    color: var(--text-secondary);
+    margin-top: 20px;
   }
 
   .pricing-category {
-    margin-bottom: 1.5em;
-  }
-
-  .pricing-variant {
-    margin-bottom: 2em;
-    padding-bottom: 1.5em;
-    border-bottom: 1px solid var(--border-primary);
-  }
-
-  .pricing-variant:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-    padding-bottom: 0;
-  }
-
-  .pricing-title {
-    margin: 0 0 1em 0;
-    font-size: 1.1em;
-    font-weight: 600;
-    color: var(--color-pricing-category);
+    margin-bottom: 16px;
   }
 
   .pricing-subtitle {
-    margin: 0 0 0.8em 0;
-    font-size: 0.95em;
+    margin: 0 0 8px 0;
+    font-size: 11px;
     font-weight: 500;
-    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
   }
 
   .pricing-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1em;
+    gap: 6px;
   }
 
   .price-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.8em;
-    background-color: var(--bg-secondary);
-    border-radius: 4px;
-    border-left: 4px solid var(--color-pokemon-red);
+    padding: 8px 12px;
+    background-color: var(--surface-2);
+    border-radius: var(--radius-input);
+    border-left: 3px solid var(--accent-red);
   }
 
   .price-label {
+    font-size: 12px;
     font-weight: 500;
     color: var(--text-secondary);
   }
 
   .price-value {
-    font-size: 1.2em;
-    font-weight: 700;
-    color: var(--color-price-value);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--price-green);
   }
 
   .price-range {
-    font-size: 0.8em;
+    font-size: 10px;
     font-weight: 400;
-    color: var(--text-secondary);
-    margin-left: 0.3em;
+    color: var(--text-dim);
+    margin-left: 4px;
   }
 
+  /* Empty variant state */
+  .empty-variant {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--text-dim);
+  }
+
+  .empty-icon {
+    font-size: 28px;
+    display: block;
+    margin-bottom: 8px;
+    opacity: 0.5;
+  }
+
+  .empty-text {
+    margin: 0 0 4px 0;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .empty-sub {
+    margin: 0;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  /* Pricing error */
   .pricing-error {
-    margin-top: 2em;
-    background-color: rgba(255, 165, 0, 0.1);
-    border: 1px solid rgba(255, 165, 0, 0.5);
-    border-radius: 4px;
-    padding: 1em;
+    margin-top: 16px;
+    background-color: rgba(248, 113, 113, 0.08);
+    border: 1px solid rgba(248, 113, 113, 0.2);
+    border-radius: var(--radius-input);
+    padding: 10px 14px;
     display: flex;
     align-items: center;
-    gap: 1em;
+    gap: 10px;
   }
 
   .error-icon {
-    font-size: 1.3em;
+    font-size: 1.1em;
     flex-shrink: 0;
   }
 
   .error-text {
-    color: var(--color-error-text);
+    color: var(--price-red);
     flex: 1;
+    font-size: 12px;
   }
 
   .error-close {
     background-color: transparent;
     border: none;
-    color: var(--color-error-text);
+    color: var(--price-red);
     cursor: pointer;
     padding: 0;
-    font-size: 1.2em;
+    font-size: 1em;
     flex-shrink: 0;
-    transition: opacity var(--transition-speed) ease;
+    transition: opacity 0.15s ease;
   }
 
   .error-close:hover {
     opacity: 0.7;
+    background: none;
   }
 
   @media (max-width: 768px) {
