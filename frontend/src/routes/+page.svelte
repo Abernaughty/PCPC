@@ -9,13 +9,13 @@
 
   // String constants — kept in JS to avoid encoding issues when files
   // are pushed through the GitHub API (which can mangle UTF-8 in HTML).
-  const APP_TITLE = 'Pok\u00e9mon Card Price Checker';
-  const PAGE_TITLE = 'PCPC | Pok\u00e9mon Card Price Checker';
-  const META_DESC = 'Check Pok\u00e9mon card prices and market data';
-  const ICON_MOON = '\u{1F319}';
-  const ICON_SUN = '\u2600\uFE0F';
-  const ICON_WARN = '\u26A0\uFE0F';
-  const ICON_CLOSE = '\u2715';
+  const APP_TITLE = 'Pokémon Card Price Checker';
+  const PAGE_TITLE = 'PCPC | Pokémon Card Price Checker';
+  const META_DESC = 'Check Pokémon card prices and market data';
+  const ICON_MOON = '🌙';
+  const ICON_SUN = '☀️';
+  const ICON_WARN = '⚠️';
+  const ICON_CLOSE = '✕';
 
   // Local state
   let cardVariants = $state<any[]>([]);
