@@ -4,6 +4,7 @@
  */
 
 import { browser } from '$app/environment';
+import { untrack } from 'svelte';
 import type { PokemonCard } from '$lib/types';
 import { api } from '$lib/services/api';
 import { db } from '$lib/services/db';
@@ -102,18 +103,27 @@ function createCardsStore(): CardsStore {
    * Effect: React to selectedSet changes and load cards.
    * Uses $effect.root() because this store is created at module scope,
    * outside of any Svelte component tree.
+   *
+   * IMPORTANT: loadCardsForSet and state writes are wrapped in untrack()
+   * so that only setsStore.selectedSet is tracked as a dependency.
+   * Without untrack(), the isLoadingCards read inside loadCardsForSet
+   * becomes a tracked dependency, causing an infinite re-run loop.
    */
   if (browser) {
     $effect.root(() => {
       $effect(() => {
         const selectedSet = setsStore.selectedSet;
         if (selectedSet) {
-          loadCardsForSet(selectedSet.id).catch((err) => {
-            log.error(`Failed to auto-load cards: ${err}`);
+          untrack(() => {
+            loadCardsForSet(selectedSet.id).catch((err) => {
+              log.error(`Failed to auto-load cards: ${err}`);
+            });
           });
         } else {
-          cardsInSet = [];
-          selectedCard = null;
+          untrack(() => {
+            cardsInSet = [];
+            selectedCard = null;
+          });
         }
       });
     });

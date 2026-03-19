@@ -84,16 +84,13 @@ function createSetsStore(): SetsStore {
   }
 
   /**
-   * Select a set and update the store
+   * Select a set and update the store.
+   * Card loading is handled reactively by the $effect in cardsStore
+   * which watches selectedSet — no need to call loadCardsForSet here.
    */
-  async function selectSet(set: PokemonSet): Promise<void> {
+  function selectSet(set: PokemonSet): void {
     selectedSet = set;
     log.debug(`Selected set: ${set.name} (${set.code})`);
-
-    // Trigger card loading for the selected set
-    // Import cardsStore at the top of the file to use this
-    const { cardsStore } = await import('./cards.svelte');
-    await cardsStore.loadCardsForSet(set.id);
   }
 
   /**
