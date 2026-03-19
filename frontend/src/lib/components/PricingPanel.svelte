@@ -68,7 +68,7 @@
       <div class="pricing-category">
         <h4 class="pricing-subtitle">Raw Prices</h4>
         <div class="pricing-grid">
-          {#each rawPrices as price (price.condition)}
+          {#each rawPrices as price, i (`raw_${i}_${price.condition}`)}
             <div class="price-item">
               <span class="price-label">{price.condition}:</span>
               <span class="price-value">
@@ -90,7 +90,7 @@
       <div class="pricing-category">
         <h4 class="pricing-subtitle">Graded Prices</h4>
         <div class="pricing-grid">
-          {#each gradedPrices as price (`${price.company}_${price.grade}`)}
+          {#each gradedPrices as price, i (`graded_${i}_${price.company}_${price.grade}`)}
             <div class="price-item">
               <span class="price-label">{price.company} {price.grade}:</span>
               <span class="price-value">
