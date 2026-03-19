@@ -27,6 +27,64 @@
   let sortMode = $state<SortMode>('number');
   let inputElement: HTMLInputElement | undefined = $state();
   let dropdownElement: HTMLDivElement | undefined = $state();
+  let cardListElement: HTMLDivElement | undefined = $state();
+
+  // IntersectionObserver for lazy-loading thumbnails
+  let observer: IntersectionObserver | null = null;
+
+  // Set up IntersectionObserver when dropdown opens, tear down when it closes
+  $effect(() => {
+    if (showDropdown && cardListElement) {
+      // Create observer scoped to the .card-list scroll container
+      observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              const img = entry.target as HTMLImageElement;
+              const src = img.dataset.src;
+              if (src) {
+                img.src = src;
+                delete img.dataset.src;
+              }
+              observer?.unobserve(img);
+            }
+          }
+        },
+        {
+          root: cardListElement,
+          rootMargin: '50px',
+          threshold: 0,
+        }
+      );
+
+      // Observe all lazy images currently in the DOM
+      const images = cardListElement.querySelectorAll('img[data-src]');
+      images.forEach((img) => observer?.observe(img));
+    }
+
+    return () => {
+      if (observer) {
+        observer.disconnect();
+        observer = null;
+      }
+    };
+  });
+
+  // Re-observe images when filteredCards or sortMode changes (list re-renders)
+  $effect(() => {
+    // Read dependencies to track them
+    const _ = filteredCards;
+    const __ = sortMode;
+
+    // Use microtask to wait for DOM to update after Svelte renders
+    if (showDropdown && cardListElement && observer) {
+      queueMicrotask(() => {
+        if (!cardListElement || !observer) return;
+        const images = cardListElement.querySelectorAll('img[data-src]');
+        images.forEach((img) => observer?.observe(img));
+      });
+    }
+  });
 
   // Parse card number for numeric sorting
   function parseCardNumber(card: PokemonCard): number {
@@ -247,7 +305,7 @@
       </div>
 
       <!-- Card list -->
-      <div class="card-list">
+      <div bind:this={cardListElement} class="card-list">
         {#each filteredCards as card, idx (card.id)}
           {@const thumbUrl = getThumbnailUrl(card)}
           {@const cardNum = formatCardNumber(card)}
@@ -263,14 +321,13 @@
             role="option"
             aria-selected={highlightedIndex === idx}
           >
-            <!-- Thumbnail -->
+            <!-- Thumbnail (lazy-loaded via IntersectionObserver) -->
             <div class="card-thumb">
               {#if thumbUrl}
                 <img
-                  src={thumbUrl}
+                  data-src={thumbUrl}
                   alt=""
                   class="thumb-img"
-                  loading="lazy"
                   width="22"
                   height="30"
                 />
