@@ -175,7 +175,12 @@
   });
 
   function handleInputClick() {
-    showDropdown = !showDropdown;
+    // Open only - never close on click. Closing is handled by
+    // outside-click and Escape key. This prevents the flash bug
+    // where focus fires first (opening) then click toggles (closing).
+    if (!showDropdown) {
+      showDropdown = true;
+    }
     highlightedIndex = -1;
   }
 
@@ -276,10 +281,10 @@
         aria-label="Clear selection"
         type="button"
       >
-        ✕
+        &#x2715;
       </button>
     {/if}
-    <span class="dropdown-icon">▼</span>
+    <span class="dropdown-icon">&#x25BC;</span>
   </div>
 
   {#if showDropdown}
