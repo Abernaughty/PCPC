@@ -18,7 +18,6 @@ interface SetsStore {
   isLoadingSets: boolean;
   loadSets(forceRefresh?: boolean): Promise<void>;
   selectSet(set: PokemonSet): void;
-  clearSelection(): void;
 }
 
 /**
@@ -84,22 +83,16 @@ function createSetsStore(): SetsStore {
   }
 
   /**
-   * Select a set and update the store.
-   * Card loading is handled reactively by the $effect in cardsStore
-   * which watches selectedSet — no need to call loadCardsForSet here.
+   * Select a set and update the store
    */
-  function selectSet(set: PokemonSet): void {
+  async function selectSet(set: PokemonSet): Promise<void> {
     selectedSet = set;
     log.debug(`Selected set: ${set.name} (${set.code})`);
-  }
 
-  /**
-   * Clear the selected set. This triggers the $effect in cardsStore
-   * to cascade-clear cardsInSet and selectedCard.
-   */
-  function clearSelection(): void {
-    selectedSet = null;
-    log.debug('Cleared set selection');
+    // Trigger card loading for the selected set
+    // Import cardsStore at the top of the file to use this
+    const { cardsStore } = await import('./cards.svelte');
+    await cardsStore.loadCardsForSet(set.id);
   }
 
   return {
@@ -121,7 +114,6 @@ function createSetsStore(): SetsStore {
 
     loadSets,
     selectSet,
-    clearSelection,
   };
 }
 
