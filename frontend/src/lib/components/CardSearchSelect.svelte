@@ -35,7 +35,6 @@
   // Set up IntersectionObserver when dropdown opens, tear down when it closes
   $effect(() => {
     if (showDropdown && cardListElement) {
-      // Create observer scoped to the .card-list scroll container
       observer = new IntersectionObserver(
         (entries) => {
           for (const entry of entries) {
@@ -57,7 +56,6 @@
         }
       );
 
-      // Observe all lazy images currently in the DOM
       const images = cardListElement.querySelectorAll('img[data-src]');
       images.forEach((img) => observer?.observe(img));
     }
@@ -72,11 +70,9 @@
 
   // Re-observe images when filteredCards or sortMode changes (list re-renders)
   $effect(() => {
-    // Read dependencies to track them
     const _ = filteredCards;
     const __ = sortMode;
 
-    // Use microtask to wait for DOM to update after Svelte renders
     if (showDropdown && cardListElement && observer) {
       queueMicrotask(() => {
         if (!cardListElement || !observer) return;
@@ -106,7 +102,6 @@
       });
     }
 
-    // Apply sort
     const sorted = [...result];
     switch (sortMode) {
       case 'number':
@@ -144,10 +139,14 @@
     return num ? `${selectedCard.name} (#${num})` : selectedCard.name;
   });
 
-  // Update searchText when selectedCard changes
+  // Sync searchText with selectedCard prop.
+  // When selectedCard is set (e.g. user picks a card), show its display text.
+  // When selectedCard is cleared (e.g. parent resets after set change), clear the input.
   $effect(() => {
     if (selectedCard && !showDropdown) {
       searchText = displayText;
+    } else if (!selectedCard) {
+      searchText = '';
     }
   });
 
