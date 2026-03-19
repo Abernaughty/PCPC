@@ -7,6 +7,13 @@
   import { themeStore } from '$lib/stores/theme.svelte';
   import { uiStore } from '$lib/stores/ui.svelte';
 
+  // Emoji constants — kept in JS to avoid HTML entity encoding issues
+  // when files are pushed through the GitHub API.
+  const ICON_MOON = '\u{1F319}';
+  const ICON_SUN = '\u2600\uFE0F';
+  const ICON_WARN = '\u26A0\uFE0F';
+  const ICON_CLOSE = '\u2715';
+
   // Local state
   let cardVariants = $state<any[]>([]);
   let showVariantSelector = $state(false);
@@ -53,22 +60,22 @@
 </script>
 
 <svelte:head>
-  <title>PCPC | Pok&eacute;mon Card Price Checker</title>
-  <meta name="description" content="Check Pok&eacute;mon card prices and market data" />
+  <title>PCPC | Pok\u00e9mon Card Price Checker</title>
+  <meta name="description" content="Check Pok\u00e9mon card prices and market data" />
 </svelte:head>
 
 <div class="pcpc-app">
   <!-- Header -->
   <header class="header">
     <div class="header-content">
-      <h1 class="app-title">Pok&eacute;mon Card Price Checker</h1>
+      <h1 class="app-title">Pok\u00e9mon Card Price Checker</h1>
       <button
         class="theme-toggle"
         onclick={toggleTheme}
         aria-label="Toggle dark mode"
         type="button"
       >
-        {themeStore.current === 'light' ? '&#x1F319;' : '&#x2600;&#xFE0F;'}
+        {themeStore.current === 'light' ? ICON_MOON : ICON_SUN}
       </button>
     </div>
   </header>
@@ -81,7 +88,7 @@
     <!-- Error Display -->
     {#if uiStore.error}
       <div class="error-message">
-        <span class="error-icon">&#x26A0;&#xFE0F;</span>
+        <span class="error-icon">{ICON_WARN}</span>
         <span class="error-text">{uiStore.error}</span>
         <button
           class="error-close"
@@ -89,7 +96,7 @@
           aria-label="Dismiss error"
           type="button"
         >
-          &#x2715;
+          {ICON_CLOSE}
         </button>
       </div>
     {/if}
