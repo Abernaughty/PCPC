@@ -14,6 +14,11 @@
   let showVariantSelector = $state(false);
   let selectedVariant = $state<any>(null);
 
+  // Derive printedTotal from selected set
+  let printedTotal = $derived(
+    setsStore.selectedSet?.printedTotal ?? setsStore.selectedSet?.total ?? null
+  );
+
   // Event handlers (callback-based)
   function handleSetSelect(item: any) {
     if (item) {
@@ -133,6 +138,7 @@
           cards={cardsStore.cardsInSet}
           placeholder="Search cards by name or number..."
           selectedCard={cardsStore.selectedCard}
+          {printedTotal}
           onselect={handleCardSelect}
         />
         {#if cardsStore.isLoadingCards}
