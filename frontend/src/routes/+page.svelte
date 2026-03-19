@@ -16,12 +16,19 @@
   function handleSetSelect(item: any) {
     if (item) {
       setsStore.selectSet(item);
+    } else {
+      // Clear was clicked — reset set selection, which cascades
+      // through the cardsStore $effect to clear cards and selectedCard
+      setsStore.clearSelection();
     }
   }
 
   function handleCardSelect(card: any) {
     if (card) {
       cardsStore.selectCard(card);
+    } else {
+      // Clear was clicked on the card select
+      cardsStore.resetCards();
     }
   }
 

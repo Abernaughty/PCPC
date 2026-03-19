@@ -41,9 +41,10 @@
     return num ? `${selectedCard.name} (#${num})` : selectedCard.name;
   });
 
-  // Update searchText when selectedCard changes
+  // Update searchText when selectedCard changes from outside
+  // Handles both selecting a card (show its name) and clearing (empty the input)
   $effect(() => {
-    if (selectedCard && !showDropdown) {
+    if (!showDropdown) {
       searchText = displayText;
     }
   });

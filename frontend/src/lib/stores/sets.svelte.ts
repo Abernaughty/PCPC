@@ -18,6 +18,7 @@ interface SetsStore {
   isLoadingSets: boolean;
   loadSets(forceRefresh?: boolean): Promise<void>;
   selectSet(set: PokemonSet): void;
+  clearSelection(): void;
 }
 
 /**
@@ -95,6 +96,15 @@ function createSetsStore(): SetsStore {
     await cardsStore.loadCardsForSet(set.id);
   }
 
+  /**
+   * Clear the selected set. This triggers the $effect in cardsStore
+   * to cascade-clear cardsInSet and selectedCard.
+   */
+  function clearSelection(): void {
+    selectedSet = null;
+    log.debug('Cleared set selection');
+  }
+
   return {
     get availableSets() {
       return availableSets;
@@ -114,6 +124,7 @@ function createSetsStore(): SetsStore {
 
     loadSets,
     selectSet,
+    clearSelection,
   };
 }
 
