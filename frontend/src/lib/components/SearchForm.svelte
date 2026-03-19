@@ -19,6 +19,11 @@
     setsStore.selectedSet?.printedTotal ?? setsStore.selectedSet?.total ?? null
   );
 
+  // Card dropdown is disabled until a set is selected and cards have loaded
+  let cardSelectDisabled = $derived(
+    !setsStore.selectedSet || cardsStore.cardsInSet.length === 0
+  );
+
   function handleSetSelect(item: any) {
     if (item) {
       setsStore.selectSet(item);
@@ -77,6 +82,7 @@
       cards={cardsStore.cardsInSet}
       placeholder="Search cards by name or number..."
       selectedCard={cardsStore.selectedCard}
+      disabled={cardSelectDisabled}
       {printedTotal}
       onselect={handleCardSelect}
     />

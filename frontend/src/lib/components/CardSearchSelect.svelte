@@ -10,6 +10,7 @@
     placeholder?: string;
     selectedCard?: PokemonCard;
     printedTotal?: number | null;
+    disabled?: boolean;
     onselect?: (card: PokemonCard | null) => void;
   }
 
@@ -18,6 +19,7 @@
     placeholder = 'Search cards...',
     selectedCard = undefined,
     printedTotal = null,
+    disabled = false,
     onselect
   }: Props = $props();
 
@@ -31,6 +33,14 @@
 
   // IntersectionObserver for lazy-loading thumbnails
   let observer: IntersectionObserver | null = null;
+
+  // Close dropdown when component becomes disabled
+  $effect(() => {
+    if (disabled && showDropdown) {
+      showDropdown = false;
+      highlightedIndex = -1;
+    }
+  });
 
   // Set up IntersectionObserver when dropdown opens, tear down when it closes
   $effect(() => {
@@ -174,9 +184,7 @@
   });
 
   function handleInputClick() {
-    // Open only - never close on click. Closing is handled by
-    // outside-click and Escape key. This prevents the flash bug
-    // where focus fires first (opening) then click toggles (closing).
+    if (disabled) return;
     if (!showDropdown) {
       showDropdown = true;
     }
@@ -184,6 +192,7 @@
   }
 
   function handleInputChange(e: Event) {
+    if (disabled) return;
     const target = e.target as HTMLInputElement;
     searchText = target.value;
     showDropdown = true;
@@ -191,6 +200,7 @@
   }
 
   function handleInputFocus() {
+    if (disabled) return;
     showDropdown = true;
   }
 
@@ -213,6 +223,7 @@
   }
 
   function handleKeyDown(e: KeyboardEvent) {
+    if (disabled) return;
     if (!showDropdown && e.key !== 'ArrowDown' && e.key !== 'Enter') {
       return;
     }
@@ -263,15 +274,16 @@
   });
 </script>
 
-<div class="card-search-select-container">
+<div class="card-search-select-container" class:disabled>
   <div class="input-wrapper">
     <input
       bind:this={inputElement}
       type="text"
-      {placeholder}
+      placeholder={disabled ? 'Select a set first...' : placeholder}
       value={searchText}
       class="search-input"
       aria-label="Search cards"
+      {disabled}
     />
     {#if selectedCard}
       <button
@@ -280,13 +292,13 @@
         aria-label="Clear selection"
         type="button"
       >
-        &#x2715;
+        ✕
       </button>
     {/if}
-    <span class="dropdown-icon">&#x25BC;</span>
+    <span class="dropdown-icon">▼</span>
   </div>
 
-  {#if showDropdown}
+  {#if showDropdown && !disabled}
     <div bind:this={dropdownElement} class="dropdown">
       <!-- Sort toggle bar -->
       <div class="sort-bar">
@@ -388,6 +400,11 @@
     font-family: inherit;
   }
 
+  .card-search-select-container.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
   .input-wrapper {
     position: relative;
     display: flex;
@@ -406,10 +423,20 @@
     transition: all var(--transition-speed) var(--transition-fn);
   }
 
+  .search-input:disabled {
+    cursor: not-allowed;
+    color: var(--text-dim);
+  }
+
   .search-input:focus {
     outline: none;
     border-color: var(--accent-red);
     box-shadow: var(--focus-ring);
+  }
+
+  .search-input:disabled:focus {
+    border-color: var(--border-subtle);
+    box-shadow: none;
   }
 
   .clear-btn {
