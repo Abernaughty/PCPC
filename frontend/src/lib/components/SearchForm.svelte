@@ -23,6 +23,9 @@
     if (item) {
       setsStore.selectSet(item);
     } else {
+      // Clear was clicked — null out selectedSet so the SearchableSelect
+      // $effect doesn't re-populate searchText with the stale value.
+      setsStore.clearSet();
       cardsStore.resetCards();
     }
     onsetselect?.(item ?? null);
