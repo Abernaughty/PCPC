@@ -3,6 +3,9 @@
   import { pricingStore } from '$lib/stores/pricing.svelte';
   import HeroPrice from './HeroPrice.svelte';
   import VariantPills from './VariantPills.svelte';
+  import PriceTable from './PriceTable.svelte';
+  import GradedPriceGrid from './GradedPriceGrid.svelte';
+  import Toast from './Toast.svelte';
 
   interface Props {
     pricing: PricingResult;
@@ -38,8 +41,19 @@
   let rawPrices = $derived(activeVariant ? pricingStore.getRawPrices(activeVariant) : []);
   let gradedPrices = $derived(activeVariant ? pricingStore.getGradedPrices(activeVariant) : []);
 
+  // Toast state for copy feedback
+  let toastMessage = $state('');
+
   function handleVariantSelect(name: string) {
     selectedVariantName = name;
+  }
+
+  function handleCopy(text: string) {
+    toastMessage = '';
+    // Tick to reset reactivity if same value copied twice
+    setTimeout(() => {
+      toastMessage = `Copied ${text}`;
+    }, 0);
   }
 </script>
 
@@ -64,48 +78,10 @@
     {/if}
 
     <!-- Raw (Ungraded) Prices -->
-    {#if rawPrices.length > 0}
-      <div class="pricing-category">
-        <h4 class="pricing-subtitle">Raw Prices</h4>
-        <div class="pricing-grid">
-          {#each rawPrices as price, i (`raw_${i}_${price.condition}`)}
-            <div class="price-item">
-              <span class="price-label">{price.condition}:</span>
-              <span class="price-value">
-                {pricingStore.formatPrice(price.market, price.currency)}
-                {#if price.low && price.low !== price.market}
-                  <span class="price-range">
-                    ({pricingStore.formatPrice(price.low, price.currency)} &ndash; {pricingStore.formatPrice(price.high, price.currency)})
-                  </span>
-                {/if}
-              </span>
-            </div>
-          {/each}
-        </div>
-      </div>
-    {/if}
+    <PriceTable prices={rawPrices} onCopy={handleCopy} />
 
     <!-- Graded Prices -->
-    {#if gradedPrices.length > 0}
-      <div class="pricing-category">
-        <h4 class="pricing-subtitle">Graded Prices</h4>
-        <div class="pricing-grid">
-          {#each gradedPrices as price, i (`graded_${i}_${price.company}_${price.grade}`)}
-            <div class="price-item">
-              <span class="price-label">{price.company} {price.grade}:</span>
-              <span class="price-value">
-                {pricingStore.formatPrice(price.market, price.currency)}
-                {#if price.low && price.low !== price.market}
-                  <span class="price-range">
-                    ({pricingStore.formatPrice(price.low, price.currency)} &ndash; {pricingStore.formatPrice(price.high, price.currency)})
-                  </span>
-                {/if}
-              </span>
-            </div>
-          {/each}
-        </div>
-      </div>
-    {/if}
+    <GradedPriceGrid prices={gradedPrices} onCopy={handleCopy} />
 
     <!-- Empty variant state -->
     {#if rawPrices.length === 0 && gradedPrices.length === 0}
@@ -134,57 +110,12 @@
   </div>
 {/if}
 
+<!-- Copy toast -->
+<Toast message={toastMessage} />
+
 <style>
   .pricing-section {
     margin-top: 20px;
-  }
-
-  .pricing-category {
-    margin-bottom: 16px;
-  }
-
-  .pricing-subtitle {
-    margin: 0 0 8px 0;
-    font-size: 11px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text-muted);
-  }
-
-  .pricing-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 6px;
-  }
-
-  .price-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    background-color: var(--surface-2);
-    border-radius: var(--radius-input);
-    border-left: 3px solid var(--accent-red);
-  }
-
-  .price-label {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-secondary);
-  }
-
-  .price-value {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--price-green);
-  }
-
-  .price-range {
-    font-size: 10px;
-    font-weight: 400;
-    color: var(--text-dim);
-    margin-left: 4px;
   }
 
   /* Empty variant state */
@@ -250,11 +181,5 @@
   .error-close:hover {
     opacity: 0.7;
     background: none;
-  }
-
-  @media (max-width: 768px) {
-    .pricing-grid {
-      grid-template-columns: 1fr;
-    }
   }
 </style>
