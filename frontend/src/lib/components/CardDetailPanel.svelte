@@ -48,81 +48,66 @@
   }
 </script>
 
-<div class="card-details-layout">
-  <div class="card-image-section">
-    {#if imageUrl}
-      <button
-        class="card-image-button"
-        onclick={openLightbox}
-        type="button"
-        aria-label="View full size image of {card.name}"
-      >
-        <div class="ambient-glow" style="background: {glowColor};"></div>
-        <img
-          src={imageUrl}
-          alt="{card.name} card image"
-          class="card-image"
-          loading="lazy"
-        />
-        <div class="zoom-overlay">
-          <span class="zoom-label">Zoom</span>
-        </div>
-      </button>
-    {:else}
-      <!-- Empty state: Pok\u00e9ball card-back -->
-      <div class="card-back">
-        <div class="card-back-inner">
-          <div class="pokeball-orb">
-            <div class="pokeball-top"></div>
-            <div class="pokeball-line"></div>
-            <div class="pokeball-center"></div>
-          </div>
+<div class="card-sidebar">
+  {#if imageUrl}
+    <button
+      class="card-image-button"
+      onclick={openLightbox}
+      type="button"
+      aria-label="View full size image of {card.name}"
+    >
+      <div class="ambient-glow" style="background: {glowColor};"></div>
+      <img
+        src={imageUrl}
+        alt="{card.name} card image"
+        class="card-image"
+        loading="lazy"
+      />
+      <div class="zoom-overlay">
+        <span class="zoom-label">Zoom</span>
+      </div>
+    </button>
+  {:else}
+    <!-- Empty state: Pok\u00e9ball card-back -->
+    <div class="card-back">
+      <div class="card-back-inner">
+        <div class="pokeball-orb">
+          <div class="pokeball-top"></div>
+          <div class="pokeball-line"></div>
+          <div class="pokeball-center"></div>
         </div>
       </div>
-    {/if}
-
-    <!-- Meta chips below image -->
-    <div class="meta-chips">
-      {#if card.rarity}
-        <span class="chip chip-rarity">
-          <span class="rarity-dot" style="background-color: {rarityColor};"></span>
-          <span class="chip-text" style="color: {rarityColor};">{card.rarity}</span>
-        </span>
-      {/if}
-      {#if set.code}
-        <span class="chip">
-          <span class="chip-text">{set.code.toUpperCase()}</span>
-        </span>
-      {/if}
-      {#if card.number || card.cardNumber}
-        <span class="chip">
-          <span class="chip-text">#{card.number || card.cardNumber}</span>
-        </span>
-      {/if}
-      {#if set.languageCode || set.language}
-        <span class="chip">
-          <span class="chip-text">{(set.languageCode || set.language || 'EN').toUpperCase()}</span>
-        </span>
-      {/if}
-      {#if card.artist}
-        <span class="chip">
-          <span class="chip-text">{card.artist}</span>
-        </span>
-      {/if}
     </div>
-  </div>
+  {/if}
 
-  <div class="card-info-section">
-    <h2 class="card-name">{card.name}</h2>
-    <p class="card-subtitle">
-      {set.name}
-      {#if set.code}
-        <span class="sep">&middot;</span> {set.code.toUpperCase()}
-      {/if}
-      {#if card.artist}
-        <span class="sep">&middot;</span> {card.artist}
-      {/if}
-    </p>
+  <!-- Meta chips below image -->
+  <div class="meta-chips">
+    {#if card.rarity}
+      <span class="chip chip-rarity">
+        <span class="rarity-dot" style="background-color: {rarityColor};"></span>
+        <span class="chip-text" style="color: {rarityColor};">{card.rarity}</span>
+      </span>
+    {/if}
+    {#if set.code}
+      <span class="chip">
+        <span class="chip-text">{set.code.toUpperCase()}</span>
+      </span>
+    {/if}
+    {#if card.number || card.cardNumber}
+      <span class="chip">
+        <span class="chip-text">#{card.number || card.cardNumber}</span>
+      </span>
+    {/if}
+    {#if set.languageCode || set.language}
+      <span class="chip">
+        <span class="chip-text">{(set.languageCode || set.language || 'EN').toUpperCase()}</span>
+      </span>
+    {/if}
+    {#if card.artist}
+      <span class="chip">
+        <span class="chip-text">{card.artist}</span>
+      </span>
+    {/if}
   </div>
 </div>
 
@@ -135,13 +120,7 @@
 {/if}
 
 <style>
-  .card-details-layout {
-    display: flex;
-    gap: 24px;
-    align-items: flex-start;
-  }
-
-  .card-image-section {
+  .card-sidebar {
     flex-shrink: 0;
     width: 200px;
   }
@@ -310,44 +289,9 @@
     color: var(--amber);
   }
 
-  /* Card info */
-  .card-info-section {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .card-name {
-    margin: 0 0 4px 0;
-    font-size: 20px;
-    font-weight: 500;
-    letter-spacing: -0.3px;
-    color: var(--text-primary);
-  }
-
-  .card-subtitle {
-    margin: 0;
-    font-size: 12px;
-    color: var(--text-muted);
-  }
-
-  .sep {
-    color: var(--text-dim);
-    margin: 0 2px;
-  }
-
   @media (max-width: 768px) {
-    .card-details-layout {
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .card-image-section {
+    .card-sidebar {
       width: 180px;
-    }
-
-    .card-info-section {
-      width: 100%;
-      text-align: center;
     }
 
     .meta-chips {

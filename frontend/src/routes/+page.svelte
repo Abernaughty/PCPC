@@ -124,15 +124,36 @@
     <!-- Results Section -->
     {#if !pricingStore.isLoading && setsStore.selectedSet && cardsStore.selectedCard}
       <div class="results-container">
-        <CardDetailPanel
-          card={cardsStore.selectedCard}
-          set={setsStore.selectedSet}
-          imageUrl={cardImageUrl}
-        />
+        <div class="results-layout">
+          <!-- Left: Sticky card sidebar -->
+          <div class="results-sidebar">
+            <CardDetailPanel
+              card={cardsStore.selectedCard}
+              set={setsStore.selectedSet}
+              imageUrl={cardImageUrl}
+            />
+          </div>
 
-        {#if currentPricing}
-          <PricingPanel pricing={currentPricing} />
-        {/if}
+          <!-- Right: Card info + pricing (scrollable) -->
+          <div class="results-main">
+            <div class="card-header">
+              <h2 class="card-name">{cardsStore.selectedCard.name}</h2>
+              <p class="card-subtitle">
+                {setsStore.selectedSet.name}
+                {#if setsStore.selectedSet.code}
+                  <span class="sep">&#x00B7;</span> {setsStore.selectedSet.code.toUpperCase()}
+                {/if}
+                {#if cardsStore.selectedCard.artist}
+                  <span class="sep">&#x00B7;</span> {cardsStore.selectedCard.artist}
+                {/if}
+              </p>
+            </div>
+
+            {#if currentPricing}
+              <PricingPanel pricing={currentPricing} />
+            {/if}
+          </div>
+        </div>
       </div>
     {/if}
   </main>
@@ -280,6 +301,49 @@
     pointer-events: none;
   }
 
+  /* Two-column results layout */
+  .results-layout {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+  }
+
+  .results-sidebar {
+    flex-shrink: 0;
+    position: sticky;
+    top: 24px;
+    align-self: flex-start;
+  }
+
+  .results-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Card header (name + subtitle) in the pricing column */
+  .card-header {
+    margin-bottom: 4px;
+  }
+
+  .card-name {
+    margin: 0 0 4px 0;
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: -0.3px;
+    color: var(--text-primary);
+  }
+
+  .card-subtitle {
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .sep {
+    color: var(--text-dim);
+    margin: 0 2px;
+  }
+
   @media (max-width: 768px) {
     .header {
       padding: 12px 16px;
@@ -295,6 +359,20 @@
 
     .results-container {
       padding: 16px;
+    }
+
+    /* Stack to single column on mobile */
+    .results-layout {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .results-sidebar {
+      position: static;
+    }
+
+    .card-header {
+      text-align: center;
     }
   }
 

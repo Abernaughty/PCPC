@@ -6,12 +6,12 @@
   import { setsStore } from '$lib/stores/sets.svelte';
   import { cardsStore } from '$lib/stores/cards.svelte';
   import { pricingStore } from '$lib/stores/pricing.svelte';
-  import { themeStore } from '$lib/stores/theme.svelte';
   import { uiStore } from '$lib/stores/ui.svelte';
 
   const APP_TITLE = 'Pok\u00e9mon Card Price Checker';
-  const ICON_MOON = '\ud83c\udf19';
-  const ICON_SUN = '\u2600\ufe0f';
+  const TITLE_PCPC = 'PCPC';
+  const TITLE_SEP = ' / ';
+  const TITLE_SUB = 'pokemon card price checker';
   const ICON_WARN = '\u26a0\ufe0f';
   const ICON_CLOSE = '\u2715';
   const ICON_BACK = '\u2190';
@@ -49,7 +49,6 @@
 
   function handlePriceFetched(info: { setId: string; cardId: string; name: string; imageUrl: string | null; setName: string }) {
     recentLookupsRef?.addLookup(info);
-    // Update URL when user fetches a new price from the search form
     goto(`/cards/${info.setId}/${info.cardId}`, { replaceState: true });
   }
 
@@ -64,10 +63,6 @@
 
   function closeVariantSelector() {
     showVariantSelector = false;
-  }
-
-  function toggleTheme() {
-    themeStore.toggle();
   }
 
   function handleBack() {
@@ -85,15 +80,12 @@
     }
 
     try {
-      // 1. Ensure sets are loaded
       if (setsStore.availableSets.length === 0) {
         await setsStore.loadSets();
       }
 
-      // 2. Find the target set
       let targetSet = setsStore.availableSets.find((s) => s.id === setId) ?? null;
       if (!targetSet) {
-        // Also search within grouped sets
         for (const group of setsStore.groupedSetsForDropdown) {
           if (group.type === 'group') {
             const found = group.items.find((s) => s.id === setId);
@@ -111,10 +103,8 @@
         return;
       }
 
-      // 3. Select set (this loads cards)
       await setsStore.selectSet(targetSet);
 
-      // 4. Find and select the card
       const targetCard = cardsStore.cardsInSet.find((c) => c.id === cardId) ?? null;
       if (!targetCard) {
         deepLinkError = `Card "${cardId}" not found in ${targetSet.name}.`;
@@ -124,10 +114,8 @@
 
       cardsStore.selectCard(targetCard);
 
-      // 5. Fetch pricing
       const result = await pricingStore.fetchCardPrice(setId, cardId);
 
-      // 6. Record as recent lookup
       if (result) {
         const imgUrl = targetCard.images?.[0]?.small ?? null;
         recentLookupsRef?.addLookup({
@@ -165,21 +153,15 @@
         >
           {ICON_BACK}
         </button>
-        <h1 class="app-title">{APP_TITLE}</h1>
+        <h1 class="app-title">
+          <span class="title-pcpc">{TITLE_PCPC}</span><span class="title-sep">{TITLE_SEP}</span><span class="title-sub">{TITLE_SUB}</span>
+        </h1>
       </div>
-      <button
-        class="theme-toggle"
-        onclick={toggleTheme}
-        aria-label="Toggle dark mode"
-        type="button"
-      >
-        {themeStore.current === 'light' ? ICON_MOON : ICON_SUN}
-      </button>
     </div>
   </header>
 
   <main class="main-content">
-    <!-- Search Form (persistent — allows new searches from deep link page) -->
+    <!-- Search Form -->
     <SearchForm onpricefetched={handlePriceFetched} />
 
     <!-- Recent Lookups -->
@@ -226,15 +208,36 @@
     <!-- Results Section -->
     {#if !isDeepLinkLoading && !pricingStore.isLoading && setsStore.selectedSet && cardsStore.selectedCard}
       <div class="results-container">
-        <CardDetailPanel
-          card={cardsStore.selectedCard}
-          set={setsStore.selectedSet}
-          imageUrl={cardImageUrl}
-        />
+        <div class="results-layout">
+          <!-- Left: Sticky card sidebar -->
+          <div class="results-sidebar">
+            <CardDetailPanel
+              card={cardsStore.selectedCard}
+              set={setsStore.selectedSet}
+              imageUrl={cardImageUrl}
+            />
+          </div>
 
-        {#if currentPricing}
-          <PricingPanel pricing={currentPricing} />
-        {/if}
+          <!-- Right: Card info + pricing (scrollable) -->
+          <div class="results-main">
+            <div class="card-header">
+              <h2 class="card-name">{cardsStore.selectedCard.name}</h2>
+              <p class="card-subtitle">
+                {setsStore.selectedSet.name}
+                {#if setsStore.selectedSet.code}
+                  <span class="sep">&#x00B7;</span> {setsStore.selectedSet.code.toUpperCase()}
+                {/if}
+                {#if cardsStore.selectedCard.artist}
+                  <span class="sep">&#x00B7;</span> {cardsStore.selectedCard.artist}
+                {/if}
+              </p>
+            </div>
+
+            {#if currentPricing}
+              <PricingPanel pricing={currentPricing} />
+            {/if}
+          </div>
+        </div>
       </div>
     {/if}
   </main>
@@ -255,13 +258,15 @@
     min-height: 100vh;
     background-color: var(--bg-primary);
     color: var(--text-primary);
+    position: relative;
+    z-index: 1;
   }
 
   .header {
     background-color: var(--color-header-bg);
     color: var(--text-inverse);
-    padding: 1.5em;
-    box-shadow: 0 2px 8px var(--shadow-medium);
+    padding: 16px 24px;
+    border-bottom: 0.5px solid var(--border-subtle);
   }
 
   .header-content {
@@ -280,40 +285,41 @@
 
   .back-btn {
     background: none;
-    border: 2px solid var(--text-inverse);
-    color: var(--text-inverse);
-    padding: 0.3em 0.6em;
-    border-radius: 4px;
-    font-size: 1.1em;
+    border: 0.5px solid var(--border-subtle);
+    color: var(--text-muted);
+    padding: 4px 10px;
+    border-radius: var(--radius-badge);
+    font-size: 14px;
     cursor: pointer;
     transition: all 0.15s ease;
     line-height: 1;
   }
 
   .back-btn:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    border-color: var(--amber-border);
+    color: var(--amber);
+    background: none;
   }
 
   .app-title {
     margin: 0;
-    font-size: 2em;
-    font-weight: 700;
-    color: var(--text-inverse);
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+    line-height: 1.2;
   }
 
-  .theme-toggle {
-    background-color: transparent;
-    border: 2px solid var(--text-inverse);
-    color: var(--text-inverse);
-    padding: 0.5em 1em;
-    border-radius: 4px;
-    font-size: 1.2em;
-    cursor: pointer;
-    transition: all 0.15s ease;
+  .title-pcpc {
+    color: var(--text-primary);
   }
 
-  .theme-toggle:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+  .title-sep {
+    color: var(--text-dim);
+  }
+
+  .title-sub {
+    color: var(--text-muted);
+    font-weight: 400;
   }
 
   .main-content {
@@ -321,28 +327,29 @@
     max-width: 1200px;
     margin: 0 auto;
     width: 100%;
-    padding: 2em;
+    padding: 24px;
   }
 
   .error-message {
     background-color: rgba(238, 21, 21, 0.1);
-    border: 1px solid var(--color-error-text);
-    border-radius: 4px;
-    padding: 1em;
-    margin-bottom: 1.5em;
+    border: 0.5px solid var(--color-error-text);
+    border-radius: var(--radius-input);
+    padding: 10px 14px;
+    margin-bottom: 16px;
     display: flex;
     align-items: center;
-    gap: 1em;
+    gap: 10px;
   }
 
   .error-icon {
-    font-size: 1.3em;
+    font-size: 1.1em;
     flex-shrink: 0;
   }
 
   .error-text {
     color: var(--color-error-text);
     flex: 1;
+    font-size: 12px;
   }
 
   .error-close {
@@ -351,23 +358,24 @@
     color: var(--color-error-text);
     cursor: pointer;
     padding: 0;
-    font-size: 1.2em;
+    font-size: 1.1em;
     flex-shrink: 0;
     transition: opacity 0.15s ease;
   }
 
   .error-close:hover {
     opacity: 0.7;
+    background: none;
   }
 
   .back-link {
     background: none;
-    border: 1px solid var(--color-error-text);
+    border: 0.5px solid var(--color-error-text);
     color: var(--color-error-text);
-    padding: 0.4em 0.8em;
-    border-radius: 4px;
+    padding: 4px 10px;
+    border-radius: var(--radius-badge);
     cursor: pointer;
-    font-size: 0.9em;
+    font-size: 11px;
     white-space: nowrap;
     flex-shrink: 0;
     transition: opacity 0.15s ease;
@@ -375,32 +383,129 @@
 
   .back-link:hover {
     opacity: 0.7;
+    background: none;
   }
 
   .results-container {
     background-color: var(--bg-container);
-    border: 1px solid var(--border-primary);
-    border-radius: 8px;
-    padding: 2em;
-    box-shadow: 0 2px 8px var(--shadow-light);
+    border: 0.5px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+  }
+
+  /* Specular highlight on results card top edge */
+  .results-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 20px;
+    right: 20px;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.08) 30%,
+      rgba(255, 255, 255, 0.12) 50%,
+      rgba(255, 255, 255, 0.08) 70%,
+      transparent
+    );
+    border-radius: 1px;
+    pointer-events: none;
+  }
+
+  /* Two-column results layout */
+  .results-layout {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+  }
+
+  .results-sidebar {
+    flex-shrink: 0;
+    position: sticky;
+    top: 24px;
+    align-self: flex-start;
+  }
+
+  .results-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Card header (name + subtitle) in the pricing column */
+  .card-header {
+    margin-bottom: 4px;
+  }
+
+  .card-name {
+    margin: 0 0 4px 0;
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: -0.3px;
+    color: var(--text-primary);
+  }
+
+  .card-subtitle {
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .sep {
+    color: var(--text-dim);
+    margin: 0 2px;
   }
 
   @media (max-width: 768px) {
-    .main-content {
-      padding: 1em;
-    }
-
-    .results-container {
-      padding: 1em;
-    }
-
-    .header-content {
-      flex-direction: column;
-      gap: 1em;
+    .header {
+      padding: 12px 16px;
     }
 
     .app-title {
-      font-size: 1.5em;
+      font-size: 15px;
+    }
+
+    .main-content {
+      padding: 16px;
+    }
+
+    .results-container {
+      padding: 16px;
+    }
+
+    /* Stack to single column on mobile */
+    .results-layout {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .results-sidebar {
+      position: static;
+    }
+
+    .card-header {
+      text-align: center;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .header {
+      padding: 10px 12px;
+    }
+
+    .app-title {
+      font-size: 14px;
+    }
+
+    .main-content {
+      padding: 12px;
+    }
+
+    .results-container {
+      padding: 12px;
+      border-radius: 8px;
     }
   }
 </style>
