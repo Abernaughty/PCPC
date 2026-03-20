@@ -144,9 +144,7 @@
   }
 
   function handleItemSelect(item: any) {
-    if (onselect) {
-      onselect(item);
-    }
+    onselect?.(item);
     searchText = displayText;
     showDropdown = false;
     highlightedIndex = -1;
@@ -154,12 +152,11 @@
 
   function handleClear(e: MouseEvent) {
     e.stopPropagation();
-    if (onselect) {
-      onselect(null);
-    }
+    onselect?.(null);
     searchText = '';
-    showDropdown = false;
+    showDropdown = true;
     highlightedIndex = -1;
+    inputElement?.focus();
   }
 
   function handleKeyDown(e: KeyboardEvent) {
