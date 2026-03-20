@@ -1,5 +1,6 @@
 <script lang="ts">
   import { browser } from '$app/environment';
+  import { goto } from '$app/navigation';
   import { setsStore } from '$lib/stores/sets.svelte';
   import { cardsStore } from '$lib/stores/cards.svelte';
   import { pricingStore } from '$lib/stores/pricing.svelte';
@@ -62,6 +63,8 @@
         await pricingStore.fetchCardPrice(lookup.setId, lookup.cardId);
         // Move this lookup to the front of the list
         addLookup(lookup);
+        // Update URL to deep link
+        goto(`/cards/${lookup.setId}/${lookup.cardId}`, { replaceState: true });
       }
       return;
     }
@@ -90,6 +93,8 @@
       cardsStore.selectCard(card);
       await pricingStore.fetchCardPrice(lookup.setId, lookup.cardId);
       addLookup(lookup);
+      // Update URL to deep link
+      goto(`/cards/${lookup.setId}/${lookup.cardId}`, { replaceState: true });
     }
   }
 

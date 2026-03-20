@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
   import { SearchForm, CardDetailPanel, PricingPanel, CardVariantSelector, RecentLookups, SkeletonLoader } from '$lib/components';
   import { setsStore } from '$lib/stores/sets.svelte';
   import { cardsStore } from '$lib/stores/cards.svelte';
@@ -8,25 +9,22 @@
   import { themeStore } from '$lib/stores/theme.svelte';
   import { uiStore } from '$lib/stores/ui.svelte';
 
-  // String constants — kept in JS to avoid encoding issues when files
-  // are pushed through the GitHub API (which can mangle UTF-8 in HTML).
   const APP_TITLE = 'Pok\u00e9mon Card Price Checker';
-  const PAGE_TITLE = 'PCPC | Pok\u00e9mon Card Price Checker';
-  const META_DESC = 'Check Pok\u00e9mon card prices and market data';
   const ICON_MOON = '\ud83c\udf19';
   const ICON_SUN = '\u2600\ufe0f';
   const ICON_WARN = '\u26a0\ufe0f';
   const ICON_CLOSE = '\u2715';
+  const ICON_BACK = '\u2190';
 
   // Local state
   let cardVariants = $state<any[]>([]);
   let showVariantSelector = $state(false);
   let selectedVariant = $state<any>(null);
+  let isDeepLinkLoading = $state(true);
+  let deepLinkError = $state<string | null>(null);
 
-  // Reference to RecentLookups component for imperative addLookup calls
   let recentLookupsRef: ReturnType<typeof RecentLookups> | undefined = $state(undefined);
 
-  // Derive the current pricing result from the store
   let currentPricing = $derived.by(() => {
     const card = cardsStore.selectedCard;
     const set = setsStore.selectedSet;
@@ -35,7 +33,6 @@
     return pricingStore.priceData[key] || null;
   });
 
-  // Derive the best card image URL
   let cardImageUrl = $derived.by(() => {
     const card = cardsStore.selectedCard;
     if (!card?.images || card.images.length === 0) return null;
@@ -43,21 +40,19 @@
     return img.medium || img.small || img.large || null;
   });
 
-  /**
-   * Record a recent lookup imperatively — called by SearchForm's
-   * onpricefetched callback AFTER pricing has resolved.
-   * This avoids the $effect → $state mutation infinite loop
-   * that occurred when using a reactive $effect to watch pricing.
-   *
-   * Also updates the URL to the deep link path.
-   */
+  let pageTitle = $derived.by(() => {
+    const card = cardsStore.selectedCard;
+    const set = setsStore.selectedSet;
+    if (card && set) return `${card.name} - ${set.name} | PCPC`;
+    return 'Loading... | PCPC';
+  });
+
   function handlePriceFetched(info: { setId: string; cardId: string; name: string; imageUrl: string | null; setName: string }) {
     recentLookupsRef?.addLookup(info);
-    // Push deep link URL (replaceState so back button goes to pre-search state)
+    // Update URL when user fetches a new price from the search form
     goto(`/cards/${info.setId}/${info.cardId}`, { replaceState: true });
   }
 
-  // Variant handlers
   function handleVariantSelect(variant: any) {
     selectedVariant = variant;
   }
@@ -75,21 +70,103 @@
     themeStore.toggle();
   }
 
-  onMount(() => {
-    setsStore.loadSets();
+  function handleBack() {
+    goto('/');
+  }
+
+  onMount(async () => {
+    const setId = $page.params.set_id;
+    const cardId = $page.params.card_id;
+
+    if (!setId || !cardId) {
+      deepLinkError = 'Invalid card URL.';
+      isDeepLinkLoading = false;
+      return;
+    }
+
+    try {
+      // 1. Ensure sets are loaded
+      if (setsStore.availableSets.length === 0) {
+        await setsStore.loadSets();
+      }
+
+      // 2. Find the target set
+      let targetSet = setsStore.availableSets.find((s) => s.id === setId) ?? null;
+      if (!targetSet) {
+        // Also search within grouped sets
+        for (const group of setsStore.groupedSetsForDropdown) {
+          if (group.type === 'group') {
+            const found = group.items.find((s) => s.id === setId);
+            if (found) {
+              targetSet = found;
+              break;
+            }
+          }
+        }
+      }
+
+      if (!targetSet) {
+        deepLinkError = `Set "${setId}" not found.`;
+        isDeepLinkLoading = false;
+        return;
+      }
+
+      // 3. Select set (this loads cards)
+      await setsStore.selectSet(targetSet);
+
+      // 4. Find and select the card
+      const targetCard = cardsStore.cardsInSet.find((c) => c.id === cardId) ?? null;
+      if (!targetCard) {
+        deepLinkError = `Card "${cardId}" not found in ${targetSet.name}.`;
+        isDeepLinkLoading = false;
+        return;
+      }
+
+      cardsStore.selectCard(targetCard);
+
+      // 5. Fetch pricing
+      const result = await pricingStore.fetchCardPrice(setId, cardId);
+
+      // 6. Record as recent lookup
+      if (result) {
+        const imgUrl = targetCard.images?.[0]?.small ?? null;
+        recentLookupsRef?.addLookup({
+          setId,
+          cardId,
+          name: targetCard.name,
+          imageUrl: imgUrl,
+          setName: targetSet.name,
+        });
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      deepLinkError = `Failed to load card: ${msg}`;
+    } finally {
+      isDeepLinkLoading = false;
+    }
   });
 </script>
 
 <svelte:head>
-  <title>{PAGE_TITLE}</title>
-  <meta name="description" content={META_DESC} />
+  <title>{pageTitle}</title>
+  <meta name="description" content="Check Pok\u00e9mon card prices and market data" />
 </svelte:head>
 
 <div class="pcpc-app">
   <!-- Header -->
   <header class="header">
     <div class="header-content">
-      <h1 class="app-title">{APP_TITLE}</h1>
+      <div class="header-left">
+        <button
+          class="back-btn"
+          onclick={handleBack}
+          aria-label="Back to search"
+          type="button"
+        >
+          {ICON_BACK}
+        </button>
+        <h1 class="app-title">{APP_TITLE}</h1>
+      </div>
       <button
         class="theme-toggle"
         onclick={toggleTheme}
@@ -101,9 +178,8 @@
     </div>
   </header>
 
-  <!-- Main Content -->
   <main class="main-content">
-    <!-- Search Form -->
+    <!-- Search Form (persistent — allows new searches from deep link page) -->
     <SearchForm onpricefetched={handlePriceFetched} />
 
     <!-- Recent Lookups -->
@@ -125,21 +201,30 @@
       </div>
     {/if}
 
-    {#if !uiStore.isOnline}
-      <div class="offline-message">
-        You are currently offline. Some features may be limited.
+    <!-- Deep Link Error -->
+    {#if deepLinkError}
+      <div class="error-message">
+        <span class="error-icon">{ICON_WARN}</span>
+        <span class="error-text">{deepLinkError}</span>
+        <button
+          class="back-link"
+          onclick={handleBack}
+          type="button"
+        >
+          Back to search
+        </button>
       </div>
     {/if}
 
-    <!-- Pricing Loading Skeleton -->
-    {#if pricingStore.isLoading}
+    <!-- Loading State -->
+    {#if isDeepLinkLoading || pricingStore.isLoading}
       <div class="results-container">
         <SkeletonLoader variant="pricing" />
       </div>
     {/if}
 
     <!-- Results Section -->
-    {#if !pricingStore.isLoading && setsStore.selectedSet && cardsStore.selectedCard}
+    {#if !isDeepLinkLoading && !pricingStore.isLoading && setsStore.selectedSet && cardsStore.selectedCard}
       <div class="results-container">
         <CardDetailPanel
           card={cardsStore.selectedCard}
@@ -154,7 +239,6 @@
     {/if}
   </main>
 
-  <!-- Card Variant Selector Modal -->
   <CardVariantSelector
     variants={cardVariants}
     isVisible={showVariantSelector}
@@ -188,6 +272,28 @@
     align-items: center;
   }
 
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .back-btn {
+    background: none;
+    border: 2px solid var(--text-inverse);
+    color: var(--text-inverse);
+    padding: 0.3em 0.6em;
+    border-radius: 4px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    line-height: 1;
+  }
+
+  .back-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
   .app-title {
     margin: 0;
     font-size: 2em;
@@ -203,7 +309,7 @@
     border-radius: 4px;
     font-size: 1.2em;
     cursor: pointer;
-    transition: all var(--transition-speed) ease;
+    transition: all 0.15s ease;
   }
 
   .theme-toggle:hover {
@@ -247,21 +353,28 @@
     padding: 0;
     font-size: 1.2em;
     flex-shrink: 0;
-    transition: opacity var(--transition-speed) ease;
+    transition: opacity 0.15s ease;
   }
 
   .error-close:hover {
     opacity: 0.7;
   }
 
-  .offline-message {
-    background-color: rgba(255, 165, 0, 0.1);
-    border: 1px solid var(--color-pokemon-red);
+  .back-link {
+    background: none;
+    border: 1px solid var(--color-error-text);
+    color: var(--color-error-text);
+    padding: 0.4em 0.8em;
     border-radius: 4px;
-    padding: 1em;
-    margin-bottom: 1.5em;
-    color: var(--text-primary);
-    text-align: center;
+    cursor: pointer;
+    font-size: 0.9em;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .back-link:hover {
+    opacity: 0.7;
   }
 
   .results-container {
