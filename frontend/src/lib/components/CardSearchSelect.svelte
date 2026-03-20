@@ -149,9 +149,6 @@
     return num ? `${selectedCard.name} (#${num})` : selectedCard.name;
   });
 
-  // Sync searchText with selectedCard prop.
-  // When selectedCard is set (e.g. user picks a card), show its display text.
-  // When selectedCard is cleared (e.g. parent resets after set change), clear the input.
   $effect(() => {
     if (selectedCard && !showDropdown) {
       searchText = displayText;
@@ -292,10 +289,10 @@
         aria-label="Clear selection"
         type="button"
       >
-        \u2715
+        &#x2715;
       </button>
     {/if}
-    <span class="dropdown-icon">\u25BC</span>
+    <span class="dropdown-icon">&#x25BC;</span>
   </div>
 
   {#if showDropdown && !disabled}
@@ -483,7 +480,6 @@
     flex-direction: column;
   }
 
-  /* Sort toggle bar */
   .sort-bar {
     display: flex;
     align-items: center;
@@ -524,7 +520,6 @@
     border-color: var(--accent-red);
   }
 
-  /* Card list */
   .card-list {
     max-height: 300px;
     overflow-y: auto;
@@ -552,7 +547,6 @@
     background-color: rgba(232, 69, 60, 0.06);
   }
 
-  /* Thumbnail */
   .card-thumb {
     flex-shrink: 0;
     width: 22px;
@@ -575,7 +569,6 @@
     background: var(--surface-1);
   }
 
-  /* Rarity dot */
   .rarity-dot {
     flex-shrink: 0;
     width: 6px;
@@ -587,7 +580,6 @@
     background-color: transparent;
   }
 
-  /* Card info */
   .card-info {
     display: flex;
     flex-direction: column;
@@ -616,7 +608,6 @@
     font-size: 12px;
   }
 
-  /* Rarity legend */
   .rarity-legend {
     display: flex;
     align-items: center;
@@ -646,7 +637,6 @@
     letter-spacing: 0.3px;
   }
 
-  /* Scrollbar */
   .card-list::-webkit-scrollbar { width: 6px; }
   .card-list::-webkit-scrollbar-track { background: transparent; }
   .card-list::-webkit-scrollbar-thumb {

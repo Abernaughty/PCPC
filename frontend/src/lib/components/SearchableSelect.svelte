@@ -126,9 +126,6 @@
   });
 
   function handleInputClick() {
-    // Always open on click — don't toggle.
-    // Focus handler also opens, but click should never close.
-    // Closing is handled by outside-click and Escape key.
     if (!showDropdown) {
       showDropdown = true;
     }
@@ -229,10 +226,10 @@
         aria-label="Clear selection"
         type="button"
       >
-        \u2715
+        &#x2715;
       </button>
     {/if}
-    <span class="dropdown-icon">\u25BC</span>
+    <span class="dropdown-icon">&#x25BC;</span>
   </div>
 
   {#if showDropdown}
@@ -378,10 +375,8 @@
   }
 
   .group {
-    /* No extra padding — group header handles its own */
   }
 
-  /* Default group label (used when no groupHeader snippet is provided) */
   .group-label {
     padding: 8px 12px;
     background-color: var(--surface-1);
@@ -411,7 +406,6 @@
     border-left: 3px solid var(--accent-red);
   }
 
-  /* Default item rendering (when no item snippet is provided) */
   .item-label {
     font-weight: 500;
     font-size: 12px;
