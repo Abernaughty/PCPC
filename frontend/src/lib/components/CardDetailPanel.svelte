@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { PokemonCard, PokemonSet } from '$lib/types';
-  import ImageLightbox from './ImageLightbox.svelte';
 
   interface Props {
     card: PokemonCard;
@@ -9,44 +8,17 @@
   }
 
   let { card, set, imageUrl = null }: Props = $props();
-
-  let showLightbox = $state(false);
-
-  // Derive the large image URL from card data, falling back to the passed imageUrl
-  let largeImageUrl = $derived(
-    card.images?.[0]?.large ?? card.images?.[0]?.medium ?? imageUrl ?? ''
-  );
-
-  function openLightbox() {
-    if (largeImageUrl) {
-      showLightbox = true;
-    }
-  }
-
-  function closeLightbox() {
-    showLightbox = false;
-  }
 </script>
 
 <div class="card-details-layout">
   {#if imageUrl}
     <div class="card-image-section">
-      <button
-        class="card-image-button"
-        on:click={openLightbox}
-        type="button"
-        aria-label="View full size image of {card.name}"
-      >
-        <img
-          src={imageUrl}
-          alt="{card.name} card image"
-          class="card-image"
-          loading="lazy"
-        />
-        <div class="zoom-overlay">
-          <span class="zoom-icon">&#128269; Zoom</span>
-        </div>
-      </button>
+      <img
+        src={imageUrl}
+        alt="{card.name} card image"
+        class="card-image"
+        loading="lazy"
+      />
     </div>
   {/if}
 
@@ -89,14 +61,6 @@
   </div>
 </div>
 
-{#if showLightbox && largeImageUrl}
-  <ImageLightbox
-    imageUrl={largeImageUrl}
-    altText="{card.name} - full size"
-    onclose={closeLightbox}
-  />
-{/if}
-
 <style>
   .card-details-layout {
     display: flex;
@@ -109,59 +73,17 @@
     width: 250px;
   }
 
-  .card-image-button {
-    position: relative;
-    display: block;
-    width: 100%;
-    padding: 0;
-    margin: 0;
-    border: none;
-    background: none;
-    cursor: pointer;
-    border-radius: 8px;
-    overflow: hidden;
-  }
-
   .card-image {
     width: 100%;
     height: auto;
-    display: block;
     border-radius: 8px;
     box-shadow: 0 4px 16px var(--shadow-medium);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
 
-  .card-image-button:hover .card-image {
+  .card-image:hover {
     transform: scale(1.03);
     box-shadow: 0 8px 24px var(--shadow-medium);
-  }
-
-  .zoom-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.45);
-    border-radius: 8px;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    pointer-events: none;
-  }
-
-  .card-image-button:hover .zoom-overlay {
-    opacity: 1;
-  }
-
-  .zoom-icon {
-    color: #fff;
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: 0.3px;
-    padding: 6px 14px;
-    background: rgba(0, 0, 0, 0.5);
-    border-radius: 20px;
-    backdrop-filter: blur(4px);
   }
 
   .section-title {
