@@ -11,10 +11,11 @@
   interface Props {
     onsetselect?: (set: PokemonSet | null) => void;
     oncardselect?: (card: PokemonCard | null) => void;
-    ongetprice?: () => void;
+    /** Called after pricing has been fetched, with the card/set info for recording */
+    onpricefetched?: (info: { setId: string; cardId: string; name: string; imageUrl: string | null; setName: string }) => void;
   }
 
-  let { onsetselect, oncardselect, ongetprice }: Props = $props();
+  let { onsetselect, oncardselect, onpricefetched }: Props = $props();
 
   let printedTotal = $derived(
     setsStore.selectedSet?.printedTotal ?? setsStore.selectedSet?.total ?? null
@@ -29,8 +30,6 @@
     if (item) {
       setsStore.selectSet(item);
     } else {
-      // Clear was clicked — null out selectedSet so the SearchableSelect
-      // $effect doesn't re-populate searchText with the stale value.
       setsStore.clearSet();
       cardsStore.resetCards();
     }
@@ -44,13 +43,24 @@
     oncardselect?.(card ?? null);
   }
 
-  function handleGetPrice() {
+  async function handleGetPrice() {
     const card = cardsStore.selectedCard;
     const set = setsStore.selectedSet;
-    if (card && set) {
-      pricingStore.fetchCardPrice(set.id, card.id);
+    if (!card || !set) return;
+
+    const result = await pricingStore.fetchCardPrice(set.id, card.id);
+
+    // Notify parent after successful fetch so it can record the lookup
+    if (result) {
+      const imgUrl = card.images?.[0]?.small ?? null;
+      onpricefetched?.({
+        setId: set.id,
+        cardId: card.id,
+        name: card.name,
+        imageUrl: imgUrl,
+        setName: set.name,
+      });
     }
-    ongetprice?.();
   }
 </script>
 

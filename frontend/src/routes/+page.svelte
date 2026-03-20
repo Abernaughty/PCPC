@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, untrack } from 'svelte';
+  import { onMount } from 'svelte';
   import { SearchForm, CardDetailPanel, PricingPanel, CardVariantSelector, RecentLookups, SkeletonLoader } from '$lib/components';
   import { setsStore } from '$lib/stores/sets.svelte';
   import { cardsStore } from '$lib/stores/cards.svelte';
@@ -22,11 +22,8 @@
   let showVariantSelector = $state(false);
   let selectedVariant = $state<any>(null);
 
-  // Reference to RecentLookups component
+  // Reference to RecentLookups component for imperative addLookup calls
   let recentLookupsRef: ReturnType<typeof RecentLookups> | undefined = $state(undefined);
-
-  // Track the last lookup we added to prevent duplicate $effect triggers
-  let lastAddedLookupKey = '';
 
   // Derive the current pricing result from the store
   let currentPricing = $derived.by(() => {
@@ -45,32 +42,15 @@
     return img.medium || img.small || img.large || null;
   });
 
-  // When pricing loads successfully, record the lookup.
-  // Use untrack() for the addLookup call to avoid an infinite
-  // $effect cycle (addLookup mutates $state inside RecentLookups,
-  // which would re-trigger this effect without untrack).
-  $effect(() => {
-    if (currentPricing && cardsStore.selectedCard && setsStore.selectedSet) {
-      const card = cardsStore.selectedCard;
-      const set = setsStore.selectedSet;
-      const key = `${set.id}_${card.id}`;
-
-      // Guard: only add once per card selection
-      if (key === lastAddedLookupKey) return;
-      lastAddedLookupKey = key;
-
-      const imgUrl = card.images?.[0]?.small ?? null;
-      untrack(() => {
-        recentLookupsRef?.addLookup({
-          setId: set.id,
-          cardId: card.id,
-          name: card.name,
-          imageUrl: imgUrl,
-          setName: set.name,
-        });
-      });
-    }
-  });
+  /**
+   * Record a recent lookup imperatively — called by SearchForm's
+   * onpricefetched callback AFTER pricing has resolved.
+   * This avoids the $effect → $state mutation infinite loop
+   * that occurred when using a reactive $effect to watch pricing.
+   */
+  function handlePriceFetched(info: { setId: string; cardId: string; name: string; imageUrl: string | null; setName: string }) {
+    recentLookupsRef?.addLookup(info);
+  }
 
   // Variant handlers
   function handleVariantSelect(variant: any) {
@@ -119,7 +99,7 @@
   <!-- Main Content -->
   <main class="main-content">
     <!-- Search Form -->
-    <SearchForm />
+    <SearchForm onpricefetched={handlePriceFetched} />
 
     <!-- Recent Lookups -->
     <RecentLookups bind:this={recentLookupsRef} />
