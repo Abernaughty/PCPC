@@ -52,7 +52,7 @@
         <tr>
           <th class="col-condition">Condition</th>
           <th class="col-market">Market</th>
-          <th class="col-range">Range</th>
+          <th class="col-low">Low</th>
         </tr>
       </thead>
       <tbody>
@@ -70,9 +70,11 @@
                 {pricingStore.formatPrice(price.market, price.currency)}
               </button>
             </td>
-            <td class="cell-range">
-              {#if price.low != null && price.high != null && price.low !== price.market}
+            <td class="cell-low">
+              {#if price.low != null && price.high != null}
                 {pricingStore.formatPrice(price.low, price.currency)} &ndash; {pricingStore.formatPrice(price.high, price.currency)}
+              {:else if price.low != null}
+                {pricingStore.formatPrice(price.low, price.currency)}
               {:else}
                 &mdash;
               {/if}
@@ -126,7 +128,7 @@
     width: auto;
   }
 
-  .col-range {
+  .col-low {
     text-align: right !important;
     width: 140px;
   }
@@ -178,14 +180,14 @@
     text-shadow: 0 0 8px rgba(74, 222, 128, 0.4);
   }
 
-  .cell-range {
+  .cell-low {
     text-align: right;
     font-size: 11px;
     color: var(--text-dim);
   }
 
   @media (max-width: 768px) {
-    .col-range {
+    .col-low {
       width: 110px;
     }
   }
