@@ -53,6 +53,10 @@
     price ? pricingStore.formatPrice(price.market, price.currency) : 'N/A'
   );
 
+  let conditionLabel = $derived(
+    price?.condition ?? 'NM'
+  );
+
   // Click-to-copy
   let copied = $state(false);
   async function copyPrice() {
@@ -244,21 +248,27 @@
       <span class="live-dot" class:dot-green={trendDir === 'up'} class:dot-red={trendDir === 'down'}></span>
       {#if updatedLabel}
         <span class="meta-text">{updatedLabel}</span>
-        <span class="meta-sep">&middot;</span>
+        <span class="meta-sep">&#x00B7;</span>
       {/if}
       <span class="meta-text">Scrydex</span>
       {#if variant.name}
-        <span class="meta-sep">&middot;</span>
+        <span class="meta-sep">&#x00B7;</span>
         <span class="meta-text">{variant.name}</span>
       {/if}
       {#if fromCache}
-        <span class="meta-sep">&middot;</span>
+        <span class="meta-sep">&#x00B7;</span>
         <span class="meta-badge cache">Cached</span>
       {/if}
       {#if isStale}
-        <span class="meta-sep">&middot;</span>
+        <span class="meta-sep">&#x00B7;</span>
         <span class="meta-badge stale">Stale</span>
       {/if}
+    </div>
+
+    <!-- C: Chart section label -->
+    <div class="chart-label-row">
+      <span class="chart-label">180D PRICE HISTORY &#x2014; {conditionLabel}</span>
+      <span class="chart-hint">Hover for details</span>
     </div>
 
     <!-- Embedded 180d chart -->
@@ -426,8 +436,30 @@
     color: var(--accent-red);
   }
 
+  /* C: Chart section label */
+  .chart-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 16px;
+    margin-bottom: 4px;
+  }
+
+  .chart-label {
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+  }
+
+  .chart-hint {
+    font-size: 10px;
+    color: var(--text-dim);
+    font-style: italic;
+  }
+
   .hero-chart {
-    margin-top: 12px;
     height: 140px;
   }
 
@@ -437,6 +469,7 @@
     .hero-row { gap: 8px; }
     .hero-meta { gap: 4px; font-size: 10px; }
     .hero-chart { height: 110px; }
+    .chart-hint { display: none; }
   }
 
   @media (max-width: 480px) {

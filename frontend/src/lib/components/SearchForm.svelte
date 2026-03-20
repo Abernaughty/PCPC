@@ -64,10 +64,11 @@
   }
 </script>
 
-<div class="form-container">
-  <div class="form-fields">
-    <div class="form-group">
-      <label for="set-select" class="form-label">Select a Set</label>
+<!-- F: Inline search form with button to the right -->
+<div class="search-form">
+  <div class="search-fields">
+    <div class="field-group">
+      <label class="field-label">EXPANSION</label>
       <SearchableSelect
         items={setsStore.groupedSetsForDropdown}
         placeholder="Search sets..."
@@ -90,11 +91,11 @@
       {/if}
     </div>
 
-    <div class="form-group">
-      <label for="card-select" class="form-label">Select a Card</label>
+    <div class="field-group">
+      <label class="field-label">CARD</label>
       <CardSearchSelect
         cards={cardsStore.cardsInSet}
-        placeholder="Search cards by name or number..."
+        placeholder="Search cards..."
         selectedCard={cardsStore.selectedCard}
         disabled={cardSelectDisabled}
         {printedTotal}
@@ -109,7 +110,7 @@
   </div>
 
   <button
-    class="button button-primary"
+    class="get-price-btn"
     onclick={handleGetPrice}
     disabled={!setsStore.selectedSet || !cardsStore.selectedCard || pricingStore.isLoading}
     type="button"
@@ -119,91 +120,82 @@
 </div>
 
 <style>
-  .form-container {
-    background-color: var(--bg-container);
-    border: 1px solid var(--border-primary);
-    border-radius: 8px;
-    padding: 2em;
-    margin-bottom: 2em;
-    box-shadow: 0 2px 8px var(--shadow-light);
-  }
-
-  .form-fields {
+  /* F: Search form — inputs and button on one row */
+  .search-form {
     display: flex;
-    gap: 1.5em;
-    margin-bottom: 1.5em;
+    align-items: flex-end;
+    gap: 12px;
+    margin-bottom: 16px;
   }
 
-  .form-group {
+  .search-fields {
+    display: flex;
+    gap: 12px;
     flex: 1;
     min-width: 0;
   }
 
-  .form-label {
+  .field-group {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .field-label {
     display: block;
-    margin-bottom: 0.5em;
-    font-weight: 600;
-    color: var(--color-heading);
-    font-size: 0.95em;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
   }
 
   .loading-skeleton {
-    margin-top: 8px;
-    padding: 4px 0;
+    margin-top: 6px;
+    padding: 2px 0;
   }
 
-  .button {
-    padding: 0.8em 1.6em;
+  .get-price-btn {
+    flex-shrink: 0;
+    padding: 9px 20px;
     border: none;
-    border-radius: 4px;
-    font-size: 1em;
-    font-weight: 600;
+    border-radius: var(--radius-input);
+    font-size: 12px;
+    font-weight: 500;
     cursor: pointer;
-    transition: all var(--transition-speed) ease;
+    transition: all 0.15s ease;
     font-family: inherit;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    background-color: var(--amber);
+    color: #0d0f14;
   }
 
-  .button-primary {
-    background-color: var(--color-button-primary-bg);
-    color: var(--button-text-color);
-    width: 100%;
+  .get-price-btn:hover:not(:disabled) {
+    background-color: #d4a574;
+    box-shadow: 0 2px 8px rgba(196, 154, 108, 0.25);
   }
 
-  .button-primary:hover:not(:disabled) {
-    background-color: var(--color-button-primary-hover-bg);
-    box-shadow: 0 4px 12px rgba(238, 21, 21, 0.3);
-  }
-
-  .button-primary:disabled {
-    background-color: var(--button-disabled-bg);
-    color: var(--button-disabled-text);
+  .get-price-btn:disabled {
+    background-color: var(--surface-2);
+    color: var(--text-dim);
     cursor: not-allowed;
+    border: 0.5px solid var(--border-subtle);
   }
 
   @media (max-width: 768px) {
-    .form-container {
-      padding: 1em;
-      margin-bottom: 1em;
-    }
-
-    .form-fields {
+    .search-form {
       flex-direction: column;
-      gap: 1em;
+      align-items: stretch;
     }
 
-    .button {
-      padding: 0.9em 1.6em;
+    .search-fields {
+      flex-direction: column;
+    }
+
+    .get-price-btn {
+      padding: 12px 20px;
       min-height: 44px;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .form-container {
-      padding: 0.75em;
-    }
-
-    .form-label {
-      font-size: 0.85em;
     }
   }
 </style>

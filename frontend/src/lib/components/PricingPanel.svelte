@@ -200,7 +200,7 @@
       <CompareChart rawPrices={rawPrices} gradedPrices={gradedPrices} />
     {/if}
 
-    <!-- Share section -->
+    <!-- H: Share section — label left, buttons inline right -->
     <div class="share-section">
       <span class="share-label">SHARE THIS CARD</span>
       <div class="share-buttons">
@@ -243,7 +243,7 @@
 
 <style>
   .pricing-section {
-    margin-top: 20px;
+    margin-top: 16px;
   }
 
   .section-header {
@@ -322,16 +322,14 @@
     flex-shrink: 0;
   }
 
-  /* Share section */
+  /* H: Share section — label left, buttons inline right */
   .share-section {
     margin-top: 24px;
     padding-top: 16px;
     border-top: 0.5px solid var(--border-subtle);
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 8px;
+    gap: 12px;
   }
 
   .share-label {
@@ -340,6 +338,7 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: var(--text-muted);
+    flex-shrink: 0;
   }
 
   .share-buttons {
@@ -427,6 +426,10 @@
     .price-cards-row > :global(.price-card) {
       min-width: calc(50% - 4px);
       flex: 0 0 calc(50% - 4px);
+    }
+
+    .share-section {
+      flex-wrap: wrap;
     }
   }
 

@@ -220,7 +220,8 @@
   }
 </script>
 
-<div class="compare-section">
+<!-- G: Compare section in its own surface-2 card -->
+<div class="compare-card">
   <div class="compare-header">
     <div class="section-label-row">
       <span class="section-label">COMPARE TRENDS</span>
@@ -328,10 +329,14 @@
 </div>
 
 <style>
-  .compare-section {
-    margin-top: 24px;
-    padding-top: 16px;
-    border-top: 0.5px solid var(--border-subtle);
+  /* G: Own surface-2 card container */
+  .compare-card {
+    margin-top: 20px;
+    background-color: var(--surface-2);
+    border: 0.5px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    padding: 16px 20px;
+    position: relative;
   }
 
   .compare-header {
@@ -364,7 +369,7 @@
 
   .segment-control {
     display: flex;
-    background-color: var(--surface-2);
+    background-color: rgba(255, 255, 255, 0.03);
     border: 0.5px solid var(--border-subtle);
     border-radius: var(--radius-badge);
     overflow: hidden;
@@ -462,6 +467,7 @@
   .legend-change.down { color: var(--price-red); }
 
   @media (max-width: 768px) {
+    .compare-card { padding: 12px 14px; }
     .compare-chart { height: 160px; }
   }
 </style>

@@ -18,7 +18,7 @@
   );
 
   let formattedLow = $derived(
-    pricingStore.formatPrice(price.low, price.currency)
+    price.low != null ? pricingStore.formatPrice(price.low, price.currency) : null
   );
 
   // 30d trend data
@@ -78,7 +78,7 @@
   onclick={handleCardClick}
   onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleCardClick(); }}
 >
-  <div class="card-header">
+  <div class="card-top">
     <span class="card-label">{label}</span>
     {#if trend30d}
       <span class="trend-badge {trendBadgeClass}">
@@ -97,18 +97,24 @@
     >
       {formattedPrice}
     </button>
-    <span class="low-price">Low: {formattedLow}</span>
+    {#if formattedLow}
+      <span class="low-price">Low {formattedLow}</span>
+    {/if}
   </div>
 
-  <div class="card-footer">
-    {#if sparkPoints.length >= 2}
+  <!-- D: Sparkline on its own row -->
+  {#if sparkPoints.length >= 2}
+    <div class="sparkline-row">
       <TrendSparkline
         points={sparkPoints}
         color={sparkColor}
-        width={56}
-        height={20}
+        width={80}
+        height={24}
       />
-    {/if}
+    </div>
+  {/if}
+
+  <div class="card-bottom">
     <button
       class="detail-btn"
       class:active={isExpanded}
@@ -130,6 +136,9 @@
     transition: border-color 0.2s ease, background-color 0.2s ease;
     min-width: 100px;
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
   }
 
   .price-card:hover {
@@ -141,11 +150,10 @@
     background-color: rgba(196, 154, 108, 0.04);
   }
 
-  .card-header {
+  .card-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 6px;
   }
 
   .card-label {
@@ -180,7 +188,7 @@
   }
 
   .card-body {
-    margin-bottom: 8px;
+    /* No extra margin — gap handles spacing */
   }
 
   .market-price {
@@ -202,18 +210,24 @@
     background: none;
   }
 
+  /* E: Clean Low formatting */
   .low-price {
     font-size: 10px;
     color: var(--text-dim);
-    margin-top: 2px;
     display: block;
+    margin-top: 2px;
   }
 
-  .card-footer {
+  /* D: Sparkline gets its own row */
+  .sparkline-row {
+    width: 100%;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 8px;
+  }
+
+  .card-bottom {
+    display: flex;
+    justify-content: flex-end;
   }
 
   .detail-btn {
