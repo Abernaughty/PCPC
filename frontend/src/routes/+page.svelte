@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import { SearchForm, CardDetailPanel, PricingPanel, CardVariantSelector, RecentLookups, SkeletonLoader } from '$lib/components';
   import { setsStore } from '$lib/stores/sets.svelte';
   import { cardsStore } from '$lib/stores/cards.svelte';
@@ -25,6 +25,9 @@
   // Reference to RecentLookups component
   let recentLookupsRef: ReturnType<typeof RecentLookups> | undefined = $state(undefined);
 
+  // Track the last lookup we added to prevent duplicate $effect triggers
+  let lastAddedLookupKey = '';
+
   // Derive the current pricing result from the store
   let currentPricing = $derived.by(() => {
     const card = cardsStore.selectedCard;
@@ -42,18 +45,29 @@
     return img.medium || img.small || img.large || null;
   });
 
-  // When pricing loads successfully, record the lookup
+  // When pricing loads successfully, record the lookup.
+  // Use untrack() for the addLookup call to avoid an infinite
+  // $effect cycle (addLookup mutates $state inside RecentLookups,
+  // which would re-trigger this effect without untrack).
   $effect(() => {
     if (currentPricing && cardsStore.selectedCard && setsStore.selectedSet) {
       const card = cardsStore.selectedCard;
       const set = setsStore.selectedSet;
+      const key = `${set.id}_${card.id}`;
+
+      // Guard: only add once per card selection
+      if (key === lastAddedLookupKey) return;
+      lastAddedLookupKey = key;
+
       const imgUrl = card.images?.[0]?.small ?? null;
-      recentLookupsRef?.addLookup({
-        setId: set.id,
-        cardId: card.id,
-        name: card.name,
-        imageUrl: imgUrl,
-        setName: set.name,
+      untrack(() => {
+        recentLookupsRef?.addLookup({
+          setId: set.id,
+          cardId: card.id,
+          name: card.name,
+          imageUrl: imgUrl,
+          setName: set.name,
+        });
       });
     }
   });
