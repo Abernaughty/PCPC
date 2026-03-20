@@ -216,6 +216,7 @@
     white-space: nowrap;
     flex-shrink: 0;
     transition: border-color 0.15s ease, background-color 0.15s ease;
+    min-height: 36px;
   }
 
   .lookup-chip:hover {
@@ -243,5 +244,26 @@
     font-size: 11px;
     font-weight: 500;
     color: var(--text-secondary);
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  @media (max-width: 768px) {
+    .lookup-chip {
+      min-height: 44px;
+      padding: 8px 10px 8px 6px;
+    }
+
+    .chip-name {
+      max-width: 100px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .chip-name {
+      max-width: 80px;
+      font-size: 10px;
+    }
   }
 </style>

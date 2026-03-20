@@ -82,6 +82,7 @@
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE/Edge */
     padding: 2px 0;
+    -webkit-overflow-scrolling: touch;
   }
 
   .variant-pills::-webkit-scrollbar {
@@ -103,6 +104,7 @@
     cursor: pointer;
     transition: all 0.15s ease;
     flex-shrink: 0;
+    min-height: 32px;
   }
 
   .variant-pill:hover {
@@ -158,5 +160,16 @@
       transparent,
       var(--surface-1)
     );
+  }
+
+  @media (max-width: 768px) {
+    .variant-pills {
+      padding: 2px 2px;
+    }
+
+    .variant-pill {
+      min-height: 36px;
+      padding: 6px 10px;
+    }
   }
 </style>

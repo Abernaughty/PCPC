@@ -126,7 +126,7 @@
   });
 
   function handleInputClick() {
-    // Always open on click — don’t toggle.
+    // Always open on click — don't toggle.
     // Focus handler also opens, but click should never close.
     // Closing is handled by outside-click and Escape key.
     if (!showDropdown) {
@@ -229,10 +229,10 @@
         aria-label="Clear selection"
         type="button"
       >
-        ✕
+        \u2715
       </button>
     {/if}
-    <span class="dropdown-icon">▼</span>
+    <span class="dropdown-icon">\u25BC</span>
   </div>
 
   {#if showDropdown}
@@ -447,5 +447,17 @@
 
   ::-webkit-scrollbar-thumb:hover {
     background: var(--scrollbar-thumb-hover-bg, var(--text-dim));
+  }
+
+  @media (max-width: 768px) {
+    .searchable-input {
+      padding: 0.7em 2.5em 0.7em 0.8em;
+      font-size: 14px;
+      min-height: 44px;
+    }
+
+    .dropdown {
+      max-height: 50vh;
+    }
   }
 </style>

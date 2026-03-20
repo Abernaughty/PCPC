@@ -83,6 +83,7 @@
 <svelte:head>
   <title>{PAGE_TITLE}</title>
   <meta name="description" content={META_DESC} />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 </svelte:head>
 
 <div class="pcpc-app">
@@ -204,6 +205,7 @@
     font-size: 1.2em;
     cursor: pointer;
     transition: all var(--transition-speed) ease;
+    flex-shrink: 0;
   }
 
   .theme-toggle:hover {
@@ -273,6 +275,19 @@
   }
 
   @media (max-width: 768px) {
+    .header {
+      padding: 1em;
+    }
+
+    .header-content {
+      flex-direction: row;
+      gap: 0.75em;
+    }
+
+    .app-title {
+      font-size: 1.3em;
+    }
+
     .main-content {
       padding: 1em;
     }
@@ -280,14 +295,35 @@
     .results-container {
       padding: 1em;
     }
+  }
 
-    .header-content {
-      flex-direction: column;
-      gap: 1em;
+  @media (max-width: 480px) {
+    .header {
+      padding: 0.75em;
     }
 
     .app-title {
-      font-size: 1.5em;
+      font-size: 1.1em;
+    }
+
+    .theme-toggle {
+      padding: 0.4em 0.7em;
+      font-size: 1em;
+    }
+
+    .main-content {
+      padding: 0.75em;
+    }
+
+    .results-container {
+      padding: 0.75em;
+      border-radius: 6px;
+    }
+
+    .error-message {
+      padding: 0.75em;
+      gap: 0.5em;
+      font-size: 12px;
     }
   }
 </style>

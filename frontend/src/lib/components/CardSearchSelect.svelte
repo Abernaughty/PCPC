@@ -292,10 +292,10 @@
         aria-label="Clear selection"
         type="button"
       >
-        ✕
+        \u2715
       </button>
     {/if}
-    <span class="dropdown-icon">▼</span>
+    <span class="dropdown-icon">\u25BC</span>
   </div>
 
   {#if showDropdown && !disabled}
@@ -655,5 +655,41 @@
   }
   .card-list::-webkit-scrollbar-thumb:hover {
     background: var(--scrollbar-thumb-hover-bg);
+  }
+
+  @media (max-width: 768px) {
+    .search-input {
+      padding: 0.7em 2.5em 0.7em 0.8em;
+      font-size: 14px;
+      min-height: 44px;
+    }
+
+    .card-list {
+      max-height: 45vh;
+    }
+
+    .card-item {
+      padding: 8px;
+      min-height: 44px;
+    }
+
+    .sort-bar {
+      gap: 3px;
+      padding: 5px 6px;
+    }
+
+    .sort-btn {
+      padding: 3px 6px;
+      font-size: 9px;
+    }
+
+    .rarity-legend {
+      gap: 6px;
+      padding: 4px 6px;
+    }
+
+    .legend-label {
+      font-size: 8px;
+    }
   }
 </style>

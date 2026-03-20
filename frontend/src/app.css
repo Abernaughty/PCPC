@@ -152,6 +152,7 @@ html, body {
     Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -160,6 +161,11 @@ body {
   font-size: 13px;
   line-height: 1.5;
   letter-spacing: -0.01em;
+}
+
+/* Prevent horizontal overflow on mobile */
+html, body {
+  overflow-x: hidden;
 }
 
 /* ── Typography utility classes ── */
@@ -273,4 +279,15 @@ button:disabled {
 @keyframes toast-out {
   from { transform: translateY(0); opacity: 1; }
   to   { transform: translateY(100%); opacity: 0; }
+}
+
+/* ── Mobile base adjustments ── */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+
+  .text-hero {
+    font-size: 24px;
+  }
 }

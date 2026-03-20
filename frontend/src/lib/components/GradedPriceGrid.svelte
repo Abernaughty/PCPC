@@ -127,6 +127,7 @@
     cursor: pointer;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
     text-align: center;
+    min-height: 44px;
   }
 
   .grade-card:hover {
@@ -169,6 +170,20 @@
   @media (max-width: 768px) {
     .graded-grid {
       grid-template-columns: repeat(2, 1fr);
+    }
+
+    .grade-card {
+      padding: 10px 8px;
+    }
+
+    .grade-price {
+      font-size: 14px;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .graded-grid {
+      grid-template-columns: 1fr;
     }
   }
 </style>

@@ -47,42 +47,44 @@
 {#if sortedPrices.length > 0}
   <div class="price-table-section">
     <h4 class="section-label">Raw Prices</h4>
-    <table class="price-table">
-      <thead>
-        <tr>
-          <th class="col-condition">Condition</th>
-          <th class="col-market">Market</th>
-          <th class="col-low">Low</th>
-        </tr>
-      </thead>
-      <tbody>
-        {#each sortedPrices as price, i (`raw_${i}_${price.condition}`)}
-          <tr class="price-row">
-            <td class="cell-condition">{price.condition}</td>
-            <td class="cell-market">
-              <button
-                class="market-value"
-                class:copied={copiedIndex === i}
-                onclick={() => copyMarketPrice(price, i)}
-                title="Click to copy"
-                type="button"
-              >
-                {pricingStore.formatPrice(price.market, price.currency)}
-              </button>
-            </td>
-            <td class="cell-low">
-              {#if price.low != null && price.high != null}
-                {pricingStore.formatPrice(price.low, price.currency)} &ndash; {pricingStore.formatPrice(price.high, price.currency)}
-              {:else if price.low != null}
-                {pricingStore.formatPrice(price.low, price.currency)}
-              {:else}
-                &mdash;
-              {/if}
-            </td>
+    <div class="table-scroll-wrapper">
+      <table class="price-table">
+        <thead>
+          <tr>
+            <th class="col-condition">Condition</th>
+            <th class="col-market">Market</th>
+            <th class="col-low">Range</th>
           </tr>
-        {/each}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {#each sortedPrices as price, i (`raw_${i}_${price.condition}`)}
+            <tr class="price-row">
+              <td class="cell-condition">{price.condition}</td>
+              <td class="cell-market">
+                <button
+                  class="market-value"
+                  class:copied={copiedIndex === i}
+                  onclick={() => copyMarketPrice(price, i)}
+                  title="Click to copy"
+                  type="button"
+                >
+                  {pricingStore.formatPrice(price.market, price.currency)}
+                </button>
+              </td>
+              <td class="cell-low">
+                {#if price.low != null && price.high != null}
+                  {pricingStore.formatPrice(price.low, price.currency)} &ndash; {pricingStore.formatPrice(price.high, price.currency)}
+                {:else if price.low != null}
+                  {pricingStore.formatPrice(price.low, price.currency)}
+                {:else}
+                  &mdash;
+                {/if}
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
   </div>
 {/if}
 
@@ -100,10 +102,16 @@
     color: var(--text-muted);
   }
 
+  .table-scroll-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .price-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 12px;
+    min-width: 280px;
   }
 
   .price-table thead {
@@ -118,6 +126,7 @@
     color: var(--text-dim);
     text-align: left;
     padding: 6px 12px 8px;
+    white-space: nowrap;
   }
 
   .col-condition {
@@ -153,6 +162,7 @@
   .cell-condition {
     font-weight: 500;
     color: var(--text-secondary);
+    white-space: nowrap;
   }
 
   .cell-market {
@@ -168,6 +178,7 @@
     color: var(--price-green);
     cursor: pointer;
     transition: color 0.15s ease, text-shadow 0.15s ease;
+    white-space: nowrap;
   }
 
   .market-value:hover {
@@ -184,11 +195,25 @@
     text-align: right;
     font-size: 11px;
     color: var(--text-dim);
+    white-space: nowrap;
   }
 
   @media (max-width: 768px) {
     .col-low {
-      width: 110px;
+      width: auto;
+    }
+
+    .price-table th,
+    .price-table td {
+      padding: 6px 8px;
+    }
+
+    .market-value {
+      font-size: 12px;
+    }
+
+    .cell-low {
+      font-size: 10px;
     }
   }
 </style>

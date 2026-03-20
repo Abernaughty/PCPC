@@ -79,7 +79,7 @@
           class:positive={trend30d.isPositive}
           class:negative={!trend30d.isPositive}
         >
-          {trend30d.isPositive ? '▲' : '▼'} {trend30d.percent}% {trend30d.label}
+          {trend30d.isPositive ? '\u25B2' : '\u25BC'} {trend30d.percent}% {trend30d.label}
         </span>
       {/if}
     </div>
@@ -224,5 +224,36 @@
   .meta-badge.stale {
     background-color: rgba(232, 69, 60, 0.15);
     color: var(--accent-red);
+  }
+
+  @media (max-width: 768px) {
+    .hero-price {
+      padding: 12px 14px;
+    }
+
+    .hero-value {
+      font-size: 24px;
+    }
+
+    .hero-row {
+      gap: 8px;
+    }
+
+    .hero-meta {
+      gap: 4px;
+      font-size: 10px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .hero-value {
+      font-size: 22px;
+    }
+
+    .condition-badge,
+    .trend-pill {
+      font-size: 10px;
+      padding: 2px 6px;
+    }
   }
 </style>
