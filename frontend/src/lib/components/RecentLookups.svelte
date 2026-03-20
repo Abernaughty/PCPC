@@ -25,21 +25,18 @@
         lookups = JSON.parse(stored);
       }
     } catch {
-      // Corrupted data — start fresh
       lookups = [];
     }
   }
 
   /**
    * Add a lookup to the recent list.
-   * Called from the parent when a price fetch completes.
+   * Called imperatively from the parent after a price fetch completes.
    */
   export function addLookup(entry: RecentLookup): void {
-    // Remove duplicate if exists
     const filtered = lookups.filter(
       (l) => !(l.setId === entry.setId && l.cardId === entry.cardId)
     );
-    // Prepend new entry, cap at MAX_LOOKUPS
     lookups = [entry, ...filtered].slice(0, MAX_LOOKUPS);
     persist();
   }
@@ -54,7 +51,22 @@
   }
 
   async function handleChipClick(lookup: RecentLookup): Promise<void> {
-    // Find the set in the store and select it
+    const currentSetId = setsStore.selectedSet?.id;
+
+    if (currentSetId === lookup.setId) {
+      // Same set already selected — cards are already loaded.
+      // Just select the card directly and fetch pricing.
+      const card = cardsStore.cardsInSet.find((c) => c.id === lookup.cardId);
+      if (card) {
+        cardsStore.selectCard(card);
+        await pricingStore.fetchCardPrice(lookup.setId, lookup.cardId);
+        // Move this lookup to the front of the list
+        addLookup(lookup);
+      }
+      return;
+    }
+
+    // Different set — need to select it and wait for cards to load.
     const allSets = setsStore.groupedSetsForDropdown;
     let targetSet = null;
     for (const group of allSets) {
@@ -67,25 +79,17 @@
       }
     }
 
-    if (targetSet) {
-      setsStore.selectSet(targetSet);
-      // Wait for cards to load, then select the card and fetch price
-      // Use a reactive approach: poll briefly for cards to appear
-      const maxWait = 5000;
-      const interval = 100;
-      let waited = 0;
-      const poll = setInterval(() => {
-        waited += interval;
-        const cards = cardsStore.cardsInSet;
-        const found = cards.find((c) => c.id === lookup.cardId);
-        if (found || waited >= maxWait) {
-          clearInterval(poll);
-          if (found) {
-            cardsStore.selectCard(found);
-            pricingStore.fetchCardPrice(lookup.setId, lookup.cardId);
-          }
-        }
-      }, interval);
+    if (!targetSet) return;
+
+    // selectSet triggers loadCardsForSet which is async.
+    // Await it so cards are loaded before we try to select one.
+    await setsStore.selectSet(targetSet);
+
+    const card = cardsStore.cardsInSet.find((c) => c.id === lookup.cardId);
+    if (card) {
+      cardsStore.selectCard(card);
+      await pricingStore.fetchCardPrice(lookup.setId, lookup.cardId);
+      addLookup(lookup);
     }
   }
 
@@ -131,7 +135,6 @@
           <span class="chip-name">{lookup.name}</span>
         </button>
       {/each}
-      <div class="fade-hint"></div>
     </div>
   </div>
 {/if}
