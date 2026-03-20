@@ -1,9 +1,10 @@
 # PCPC v7 Visual Personality & Pricing Redesign Spec
 
-**Date:** March 20, 2026
+**Date:** March 20, 2026 (final)
 **Branch:** `feature/redesign`
 **Context:** Issue #12C — Visual personality pass
-**Status:** Spec finalized, implementation pending
+**Status:** Spec finalized and approved. Implementation pending.
+**Mockup:** `pcpc_mockup_v7_final.html`
 
 ---
 
@@ -14,6 +15,10 @@
 - Replaces system stack for all text
 - Import via `<link>` in `app.html`
 
+### Title
+- `PCPC / pokemon card price checker` — slash in `--text-dim` color
+- Font: 17px, weight 600, letter-spacing -0.4px
+
 ### Background
 - Dot grid pattern on `body::before`
 - `radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px)`
@@ -23,52 +28,61 @@
 ### Color System Updates
 - All existing CSS custom properties remain
 - New additions:
+  - `--amber: #c49a6c` (accent for meta chips, detail buttons, expanded borders)
+  - `--amber-dim: rgba(196, 154, 108, 0.12)`
+  - `--amber-border: rgba(196, 154, 108, 0.25)`
   - `--sgc-green: #34d399` (SGC grading company)
   - `--sgc-dim: rgba(52, 211, 153, 0.1)`
   - Per-condition chart colors: NM=#4ade80, LP=#60a5fa, MP=#a78bfa, HP=#fbbf24, DM=#f87171
+  - Per-company graded colors: PSA=#60a5fa, CGC=#a78bfa, BGS=#fbbf24, SGC=#34d399
+  - Luminance shades per company (for compare chart):
+    - PSA: #60a5fa, #93c5fd, #bfdbfe
+    - CGC: #a78bfa, #c4b5fd, #ddd6fe, #ede9fe, #f3f0ff, #f8f6ff
+    - BGS: #fbbf24, #fcd34d, #fde68a
+    - SGC: #34d399, #6ee7b7, #a7f3d0
 
 ### Header
-- Text: `PCPC / price checker` — slash in `--text-dim` color
-- Font: 17px, weight 600, letter-spacing -0.4px
-- Border: 0.5px solid `--border` bottom only
+- 0.5px solid border bottom only
 - **No glow, no gradient, no icon** — confidence through typography
 
 ### Borders
 - 0.5px everywhere (hairline)
 - Specular gradient highlights (`::before` pseudo with gradient) ONLY on:
   - Results card top edge (white/neutral)
-  - Graded price card top edges (company-colored)
   - Hero price top edge (trend-colored: green/red/neutral)
+- Amber border (`--amber-border`) on: meta chips, detail buttons, expanded card state, detail chart container
 
 ### Card Image Area
 - **Ambient glow underneath:** Blurred radial glow (16px blur, 50% opacity) positioned below card
 - Glow color by rarity: SAR = gold-to-pink gradient, Rare = blue, Holo = purple, Common = neutral
-- **Empty state:** Pokeball-inspired card-back design (radial gradient purple bg, centered orb)
+- **Empty state:** Pokéball-inspired card-back design (radial gradient purple bg, centered orb)
 - **Zoom overlay on hover:** Semi-transparent backdrop with "Zoom" label
 
 ### Meta Chips
 - Replace the `card-info-grid` (uniform gray boxes with blue left border)
-- Compact inline pills with per-field accent colors:
-  - Rarity: pink accent + rarity dot
-  - Set code: neutral
-  - Card number: neutral
-  - Language: blue accent for EN, red for JP
-  - Artist: neutral
+- **Uniform amber-bordered pills** for ALL fields (`--amber-border` border, light amber bg)
+- Only exception: rarity chip gets colored dot + pink text
+- Fields: Rarity, Set Code, Card Number, Language, Artist
 
 ---
 
-## 2. Hero Price Block
+## 2. Hero Market Price Block
 
-- **Compact layout:** No embedded chart
+- **Price text:** Always white/neutral (`--t1`) — NOT trend-colored
 - Market price (28px, weight 600)
 - Condition badge (pill, neutral bg)
-- Trend badge (pill, colored: green up / red down / neutral flat)
+- Trend badge (pill, colored: green/red/gray, includes time period: "▲ 8.0% 30d")
 - Live dot (5px, pulsing animation, trend-colored)
 - Footer: "Updated [date] · Scrydex · [variant]"
 - **Dynamic `::before` glow:** Changes color based on 30d trend direction
-  - Up: `rgba(74, 222, 128, 0.2)` (green)
-  - Down: `rgba(248, 113, 113, 0.2)` (red)
-  - Flat: `rgba(255, 255, 255, 0.06)` (neutral)
+
+### Embedded 180d Chart
+- Full-width Chart.js line chart inside the hero block
+- **Single-color line** based on overall 180d direction (green/red/gray)
+- Dashed current-price reference line with "Current: $X.XX" label
+- Hoverable with tooltip: price + dollar change + percent change from each historical point
+- Y-axis: suggestedMin/Max with 25% padding + 5% floor + 16px top layout padding
+- Custom `currentPriceLine` Chart.js plugin draws the dashed reference line
 
 ---
 
@@ -80,73 +94,98 @@ Same card design for BOTH raw conditions and graded grades.
 
 Each card contains:
 - **Label:** Condition code (NM/LP/etc.) or grade (10/9/etc.)
-- **Market price:** Prominent, clickable (copies to clipboard with toast)
-- **Mini sparkline:** Canvas-rendered, full 180d, colored by overall trend direction
-- **Percent change badge:** Colored pill (green/red/neutral)
-- **"Detail" link:** Small text link that toggles the Tier 2 expandable chart
+- **Market price:** Clickable — **clicking the price copies to clipboard** with toast
+- **Mini sparkline:** Canvas-rendered, **30d data only** (5 points: 30d/14d/7d/1d/Now), colored by 30d trend direction
+- **Percent change badge:** Colored pill (green/red/neutral) — NO time period on badge
+- **"Detail" button:** Bottom-right, amber-bordered pill, clearly visible. Toggles Tier 2.
+- **Clicking the card itself** (not the price) opens/closes the detail chart
 
 **Raw section:**
-- Cards in a horizontal row: NM, LP, MP, HP, DM (or whichever conditions the API returns)
+- Header: `RAW PRICES (30d)` — time period shown in lighter text on header
+- Cards in a horizontal row: NM, LP, MP, HP, DM
 - Responsive: wrap to 2-3 per row on mobile
 
 **Graded section:**
+- Header: `GRADED PRICES (30d)` — time period shown in lighter text on header
 - Company toggle pills at top: PSA, CGC, BGS, SGC (with company-colored dots)
 - Grade cards in a row for the active company
 - Switching company swaps the grade cards
 
 ### Tier 2 — Expandable Detail Chart (investigate)
 
-- Triggered by clicking "Detail" on any price card
+- Triggered by clicking card or "Detail" button
 - **Slides open** below the card row with smooth animation (200-300ms ease-out)
-- **Only one open at a time** — opening a new detail closes the previous
+- **Only one open at a time** per section — opening a new detail closes the previous
+- Amber border on the chart container
 - Contains a full-width Chart.js line chart:
-  - Single line for the selected condition/grade
-  - X-axis: 180d ago, 90d ago, 30d ago, 14d ago, 7d ago, 1d ago, Now
-  - Hoverable with tooltip showing:
-    - Price at that time point
-    - Dollar change from that point to now
-    - Percent change from that point to now
-  - Line color matches trend direction (green/red/neutral)
-  - Subtle fill gradient below the line
-- Close via: clicking "Detail" again, or clicking a different card's "Detail"
+  - **Full 180d data** (7 points: 180d/90d/30d/14d/7d/1d/Now)
+  - **Single-color line** based on overall 180d direction (green/red/gray)
+  - Dashed current-price reference line with "Current: $X.XX" label
+  - Y-axis with generous padding (25% + 5% floor)
+  - Hoverable tooltip: price + dollar change + percent change from that point to now
+- Close via: clicking card/"Detail" again, or clicking a different card
 
-### Tier 3 — Compare Section (analyze)
+### Tier 3 — Compare Trends (analyze)
 
-- **Collapsible section** at the bottom of the pricing area
-- Header: "Compare trends" with expand/collapse toggle
-- Defaults to collapsed
-
-When expanded:
+- **Own section** inside the results card, after Graded prices
+- Header: `COMPARE TRENDS (180d)` — time period in lighter text
+- **Expanded by default** when card is selected
 - **Segmented control:** `[Raw] [Graded]`
 - **Raw mode:** Multi-select condition chips (NM/LP/MP/HP/DM)
   - Each condition has its own color from the palette
   - Default: NM selected
 - **Graded mode:** Company pills (PSA/CGC/BGS/SGC) → then multi-select grade chips
-  - **Luminance stepping** for grades within a company (no dashed lines):
-    - Highest grade: full company color
-    - Next grade: lighter shade
-    - Next: lightest shade
+  - **Luminance stepping** for grades within a company (no dashed lines)
   - Default: highest grade selected
 - **Chart:** Full-width Chart.js multi-line overlay
-  - Hover crosshair tooltip shows ALL selected lines' values at that time point
-  - Each tooltip line shows: label, price, dollar change, percent change from that point
-- **Legend below chart:** Per selected line: `[color dot] Label  $price  +/-X.X%`
-  - No start→end range — just current price and total % change
+  - Hover crosshair tooltip shows ALL selected lines
+  - Each tooltip line: label, price, dollar change, percent change
+- **Legend below chart:** Per selected line: `[color line] Label  $price  +/-X.X%`
+  - NO time period on legend badges — header shows "(180d)"
 
 ---
 
-## 4. Data Model
+## 4. Chart Specifications
 
-### Price Table Columns
+### Direction (ALL charts)
+- Left = oldest (180d ago), Right = newest (Now)
+- Consistent across sparklines, detail charts, hero chart, and compare chart
+
+### Small Card Sparklines (30d)
+- **30d data only:** 5 points (30d ago, 14d, 7d, 1d, Now)
+- Built via `build30dPts()` function
+- Color: matches 30d trend direction (green/red/gray)
+- Canvas-rendered, no library
+
+### Detail & Hero Charts (180d)
+- **Full 180d data:** 7 points (180d, 90d, 30d, 14d, 7d, 1d, Now)
+- Built via `buildPts()` function
+- **Single color** based on overall 180d direction (current vs 180d-ago price)
+- Dashed current-price reference line via custom `currentPriceLine` Chart.js plugin
+- Y-axis: `suggestedMin = yMin - yPad`, `suggestedMax = yMax + yPad`
+  - `yPad = max(yRange * 0.25, yMax * 0.05, 0.05)`
+  - `layout.padding.top = 16px` for label headroom
+- Chart.js 4.4.x
+
+### Compare Chart (180d)
+- Multi-line overlay
+- Raw conditions: per-condition colors (NM=#4ade80, etc.)
+- Graded: luminance stepping per grade within company (full → lighter → lightest)
+- No dashed lines
+
+---
+
+## 5. Data Model
+
+### Price Display Columns
 - Raw: Condition → Market → Low
 - Graded: Grade → Market → Low
-- **Low (not Range)** — the API provides `low` and `market`, no `high` for raw prices
+- **Low (not Range)** — API provides `low` and `market`, no `high` for raw
 
 ### Historical Price Reconstruction
 ```
 price_at_N_days_ago = current_market - trends.daysN.priceChange
 ```
-This yields 7 data points: 180d, 90d, 30d, 14d, 7d, 1d, Now
 
 ### Trend Direction Logic
 ```ts
@@ -155,59 +194,73 @@ function dir(pct: number): 'up' | 'down' | 'flat' {
 }
 ```
 
-### Sparkline Color Logic
-- Per-row sparklines: colored by that row's overall trend direction (green/red/gray)
-- Compare chart lines: colored by identity (condition color or company luminance step)
+### Pricing Data Structure (from Scrydex API)
+- Raw prices: `low` + `market` only
+- Graded prices: `low` + `mid` + `high` + `market`
+- Both have `trends` object: `days1/7/14/30/90/180` each with `priceChange` + `percentChange`
+- Conditions: NM/LP/MP/HP/DM
+- Grading companies: PSA/CGC/BGS/SGC
+- CGC has `isPerfect` flag for Perfect 10
 
 ---
 
-## 5. New Components
+## 6. Share Section
+
+- Bottom of results card, after Compare Trends
+- Label: `SHARE THIS CARD`
+- Copy link button + Share button
+- Copies deep link URL to clipboard
+
+---
+
+## 7. New Components
 
 | Component | Responsibility |
 |-----------|---------------|
-| `PriceCard.svelte` | Individual price card: label, market price, sparkline, %, copy action, detail toggle |
-| `PriceDetailChart.svelte` | Expandable 180d single-line Chart.js chart with hover tooltips |
-| `CompareChart.svelte` | Multi-line overlay Chart.js chart with segmented control + filter chips |
-| `TrendSparkline.svelte` | Lightweight canvas sparkline component (reusable) |
+| `PriceCard.svelte` | Card with price, sparkline, %, copy action, detail toggle |
+| `PriceDetailChart.svelte` | Expandable 180d Chart.js with hover + current price line |
+| `CompareChart.svelte` | Multi-line overlay Chart.js with segmented control + filter chips + legend |
+| `TrendSparkline.svelte` | Lightweight canvas sparkline (30d data, reusable) |
 
 ### Modified Components
 | Component | Changes |
 |-----------|--------|
 | `PricingPanel.svelte` | Orchestrate three-tier layout, replace current table-based display |
-| `CardDetailPanel.svelte` | Replace info-grid with meta chips |
-| `+page.svelte` | Import Geist font, update header markup |
-| `app.css` | Add dot grid background, Geist font-family, new CSS variables |
-| `app.html` | Add Geist font `<link>` preconnect + import |
+| `CardDetailPanel.svelte` | Replace info-grid with uniform amber-bordered meta chips |
+| `+page.svelte` | Update title, import Geist font, header markup |
+| `app.css` | Dot grid bg, Geist font-family, amber variables, currentPriceLine plugin styles |
+| `app.html` | Geist font `<link>` preconnect + import |
 
 ---
 
-## 6. Implementation Order
+## 8. Implementation Order
 
-1. **Design system:** app.css + app.html (Geist font, dot grid, new variables)
-2. **Header:** Update `+page.svelte` header markup and styles
-3. **Meta chips:** Refactor `CardDetailPanel.svelte`
+1. **Design system:** app.css + app.html (Geist font, dot grid, amber variables)
+2. **Header:** Update `+page.svelte` title and header styles
+3. **Meta chips:** Refactor `CardDetailPanel.svelte` (amber-bordered uniform pills)
 4. **Empty state:** Card-back design, ghosted pricing skeleton
-5. **Hero price:** Compact layout with dynamic glow
-6. **TrendSparkline component:** Canvas sparkline, reusable
+5. **Hero price:** White price text, dynamic glow, embedded 180d chart with reference line
+6. **TrendSparkline component:** Canvas sparkline with 30d data
 7. **PriceCard component:** Card with sparkline, %, copy, detail toggle
-8. **PriceDetailChart:** Expandable Chart.js with hover
+8. **PriceDetailChart:** Expandable Chart.js with hover + reference line
 9. **Tier 1+2 integration:** Wire PriceCards + expandable detail into PricingPanel
-10. **CompareChart:** Multi-line chart with filters + legend
-11. **Tier 3 integration:** Collapsible compare section at bottom
-12. **Gate 1+2 testing**
+10. **CompareChart:** Multi-line chart with filters + legend + luminance stepping
+11. **Tier 3 integration:** Compare section inside results card, expanded by default
+12. **Share section:** Bottom of results card with label
+13. **Gate 1+2 testing**
 
 ---
 
-## 7. External Dependencies
+## 9. External Dependencies
 
-- **Chart.js 4.4.x** — CDN import for trend charts (or npm install)
+- **Chart.js 4.4.x** — CDN import or npm install
 - **Geist font** — Google Fonts import
 - No other new dependencies
 
 ---
 
-## 8. Mockups
+## 10. Mockup Reference
 
-- `pcpc_mockup_v6.html` — Interactive HTML mockup with tiered filter comparison chart
-- v7 extends v6 with the three-tier card layout (Tier 1 cards + Tier 2 expandable + Tier 3 compare)
+- `pcpc_mockup_v7_final.html` — Final approved interactive HTML mockup
 - All mockups use real Tyranitar ex (sv3-66) data from Scrydex API
+- Iterative versions v1–v7.8 explored: gradient effects (rejected), noise textures (rejected), split-color charts (rejected in favor of single-color + reference line), table layouts (replaced by cards), and various chart configurations
