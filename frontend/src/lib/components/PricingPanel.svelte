@@ -1,9 +1,10 @@
 <script lang="ts">
-  import type { PricingResult, CardVariant } from '$lib/types';
+  import type { PricingResult, CardVariant, VariantPrice } from '$lib/types';
   import { pricingStore } from '$lib/stores/pricing.svelte';
   import HeroPrice from './HeroPrice.svelte';
   import VariantPills from './VariantPills.svelte';
-  import PriceTable from './PriceTable.svelte';
+  import PriceCard from './PriceCard.svelte';
+  import PriceDetailChart from './PriceDetailChart.svelte';
   import GradedPriceGrid from './GradedPriceGrid.svelte';
   import Toast from './Toast.svelte';
 
@@ -13,11 +14,9 @@
 
   let { pricing }: Props = $props();
 
-  // Selected variant name — defaults to first variant that has prices,
-  // falling back to the first variant overall
+  // Selected variant
   let selectedVariantName = $state<string>('');
 
-  // When pricing changes (new card selected), reset to best default
   $effect(() => {
     if (pricing.variants && pricing.variants.length > 0) {
       const withPrices = pricing.variants.find((v) => v.prices.length > 0);
@@ -25,35 +24,85 @@
     }
   });
 
-  // Derive the active variant object
   let activeVariant = $derived.by(() => {
     if (!pricing.variants) return null;
     return pricing.variants.find((v) => v.name === selectedVariantName) ?? null;
   });
 
-  // Derive the market price for the hero display
   let heroPrice = $derived.by(() => {
     if (!activeVariant) return null;
     return pricingStore.getMarketPrice(pricing, activeVariant.name);
   });
 
-  // Derive raw and graded prices for the active variant
   let rawPrices = $derived(activeVariant ? pricingStore.getRawPrices(activeVariant) : []);
   let gradedPrices = $derived(activeVariant ? pricingStore.getGradedPrices(activeVariant) : []);
 
-  // Toast state for copy feedback
+  // Graded company filter
+  let gradedCompanies = $derived.by(() => {
+    const companies = new Set<string>();
+    for (const p of gradedPrices) {
+      if (p.company) companies.add(p.company);
+    }
+    return Array.from(companies);
+  });
+
+  let selectedCompany = $state<string>('');
+
+  $effect(() => {
+    if (gradedCompanies.length > 0 && !gradedCompanies.includes(selectedCompany)) {
+      selectedCompany = gradedCompanies[0];
+    }
+  });
+
+  let filteredGradedPrices = $derived(
+    gradedPrices.filter((p) => p.company === selectedCompany)
+  );
+
+  // Expanded detail chart state (only one at a time per section)
+  let expandedRawIndex = $state<number | null>(null);
+  let expandedGradedIndex = $state<number | null>(null);
+
+  // Toast
   let toastMessage = $state('');
 
   function handleVariantSelect(name: string) {
     selectedVariantName = name;
+    expandedRawIndex = null;
+    expandedGradedIndex = null;
   }
 
   function handleCopy(text: string) {
     toastMessage = '';
-    // Tick to reset reactivity if same value copied twice
-    setTimeout(() => {
-      toastMessage = `Copied ${text}`;
-    }, 0);
+    setTimeout(() => { toastMessage = `Copied ${text}`; }, 0);
+  }
+
+  function toggleRawDetail(index: number) {
+    expandedRawIndex = expandedRawIndex === index ? null : index;
+  }
+
+  function toggleGradedDetail(index: number) {
+    expandedGradedIndex = expandedGradedIndex === index ? null : index;
+  }
+
+  // Company color helper
+  function getCompanyColor(company: string): string {
+    switch (company.toUpperCase()) {
+      case 'PSA': return 'var(--chart-psa)';
+      case 'CGC': return 'var(--chart-cgc)';
+      case 'BGS': return 'var(--chart-bgs)';
+      case 'SGC': return 'var(--chart-sgc)';
+      default: return 'var(--text-muted)';
+    }
+  }
+
+  function getCompanyDotBg(company: string): string {
+    switch (company.toUpperCase()) {
+      case 'PSA': return 'var(--grade-psa)';
+      case 'CGC': return 'var(--grade-cgc)';
+      case 'BGS': return 'var(--grade-bgs)';
+      case 'SGC': return 'var(--grade-sgc)';
+      default: return 'rgba(255,255,255,0.06)';
+    }
   }
 </script>
 
@@ -77,11 +126,68 @@
       />
     {/if}
 
-    <!-- Raw (Ungraded) Prices -->
-    <PriceTable prices={rawPrices} onCopy={handleCopy} />
+    <!-- Tier 1: Raw Price Cards -->
+    {#if rawPrices.length > 0}
+      <div class="section-header">
+        <span class="section-label">RAW PRICES</span>
+        <span class="section-period">(30d)</span>
+      </div>
+      <div class="price-cards-row">
+        {#each rawPrices as rp, i}
+          <PriceCard
+            price={rp}
+            label={rp.condition}
+            isExpanded={expandedRawIndex === i}
+            onToggleDetail={() => toggleRawDetail(i)}
+            onCopy={handleCopy}
+          />
+        {/each}
+      </div>
+      <!-- Tier 2: Expanded detail chart (raw) -->
+      {#if expandedRawIndex !== null && rawPrices[expandedRawIndex]}
+        <PriceDetailChart price={rawPrices[expandedRawIndex]} />
+      {/if}
+    {/if}
 
-    <!-- Graded Prices -->
-    <GradedPriceGrid prices={gradedPrices} onCopy={handleCopy} />
+    <!-- Tier 1: Graded Price Cards -->
+    {#if gradedPrices.length > 0}
+      <div class="section-header graded-header">
+        <div class="section-label-row">
+          <span class="section-label">GRADED PRICES</span>
+          <span class="section-period">(30d)</span>
+        </div>
+        {#if gradedCompanies.length > 1}
+          <div class="company-pills">
+            {#each gradedCompanies as company}
+              <button
+                class="company-pill"
+                class:active={selectedCompany === company}
+                onclick={() => { selectedCompany = company; expandedGradedIndex = null; }}
+                type="button"
+              >
+                <span class="company-dot" style="background-color: {getCompanyColor(company)};"></span>
+                {company}
+              </button>
+            {/each}
+          </div>
+        {/if}
+      </div>
+      <div class="price-cards-row">
+        {#each filteredGradedPrices as gp, i}
+          <PriceCard
+            price={gp}
+            label={gp.grade ? `${gp.company} ${gp.grade}` : gp.condition}
+            isExpanded={expandedGradedIndex === i}
+            onToggleDetail={() => toggleGradedDetail(i)}
+            onCopy={handleCopy}
+          />
+        {/each}
+      </div>
+      <!-- Tier 2: Expanded detail chart (graded) -->
+      {#if expandedGradedIndex !== null && filteredGradedPrices[expandedGradedIndex]}
+        <PriceDetailChart price={filteredGradedPrices[expandedGradedIndex]} />
+      {/if}
+    {/if}
 
     <!-- Empty variant state -->
     {#if rawPrices.length === 0 && gradedPrices.length === 0}
@@ -118,6 +224,82 @@
     margin-top: 20px;
   }
 
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+  }
+
+  .graded-header {
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .section-label-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .section-label {
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+  }
+
+  .section-period {
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+
+  .price-cards-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .company-pills {
+    display: flex;
+    gap: 4px;
+  }
+
+  .company-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: none;
+    border: 0.5px solid var(--border-subtle);
+    border-radius: var(--radius-badge);
+    padding: 2px 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .company-pill:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: none;
+  }
+
+  .company-pill.active {
+    border-color: var(--amber-border);
+    background-color: var(--amber-dim);
+    color: var(--amber);
+  }
+
+  .company-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
   /* Empty variant state */
   .empty-variant {
     text-align: center;
@@ -148,7 +330,7 @@
   .pricing-error {
     margin-top: 16px;
     background-color: rgba(248, 113, 113, 0.08);
-    border: 1px solid rgba(248, 113, 113, 0.2);
+    border: 0.5px solid rgba(248, 113, 113, 0.2);
     border-radius: var(--radius-input);
     padding: 10px 14px;
     display: flex;
@@ -156,16 +338,8 @@
     gap: 10px;
   }
 
-  .error-icon {
-    font-size: 1.1em;
-    flex-shrink: 0;
-  }
-
-  .error-text {
-    color: var(--price-red);
-    flex: 1;
-    font-size: 12px;
-  }
+  .error-icon { font-size: 1.1em; flex-shrink: 0; }
+  .error-text { color: var(--price-red); flex: 1; font-size: 12px; }
 
   .error-close {
     background-color: transparent;
@@ -178,8 +352,23 @@
     transition: opacity 0.15s ease;
   }
 
-  .error-close:hover {
-    opacity: 0.7;
-    background: none;
+  .error-close:hover { opacity: 0.7; background: none; }
+
+  @media (max-width: 768px) {
+    .price-cards-row {
+      flex-wrap: wrap;
+    }
+
+    .price-cards-row > :global(.price-card) {
+      min-width: calc(50% - 4px);
+      flex: 0 0 calc(50% - 4px);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .price-cards-row > :global(.price-card) {
+      min-width: 100%;
+      flex: 0 0 100%;
+    }
   }
 </style>

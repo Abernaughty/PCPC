@@ -13,3 +13,6 @@ export { default as GradedPriceGrid } from './GradedPriceGrid.svelte';
 export { default as Toast } from './Toast.svelte';
 export { default as RecentLookups } from './RecentLookups.svelte';
 export { default as SkeletonLoader } from './SkeletonLoader.svelte';
+export { default as TrendSparkline } from './TrendSparkline.svelte';
+export { default as PriceCard } from './PriceCard.svelte';
+export { default as PriceDetailChart } from './PriceDetailChart.svelte';
