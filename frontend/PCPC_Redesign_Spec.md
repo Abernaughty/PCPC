@@ -87,10 +87,10 @@ A layered dark palette with three surface levels that create depth without harsh
 | | [SAR]    |  [Normal][Holofoil][Rev...]->    |
 | | [Fire]   |                                 |
 | | [#223]   |  Raw prices by condition        |
-| | [EN]     |  NM    $82.49  $74-$92          |
-| +----------+  LP    $68.20  $60-$78          |
-|               MP    $51.75  $44-$59          |
-|               HP    $34.50  $28-$41          |
+| | [EN]     |  NM    $82.49  $0.20            |
+| +----------+  LP    $68.20  $0.18            |
+|               MP    $51.75  $0.15            |
+|               HP    $34.50  --               |
 |                                              |
 |               Graded prices                  |
 |               [PSA 10] [PSA 9] [CGC 10]      |
@@ -271,12 +271,13 @@ Horizontal-scrollable pill bar (not tabs):
 
 | Column | Content |
 |--------|--------|
-| Condition | NM, LP, MP, HP |
+| Condition | NM, LP, MP, HP, DM |
 | Market | Price value, clickable to copy, highlights green on hover |
-| Range | Low - High in muted text |
+| Low | Lowest recent sale price. Shows `low - high` range when both exist (graded), `low` plainly when only `low` present (raw), or dash when absent. |
 
 - From `pricingStore.getRawPrices(variant)`
 - Table uses 0.5px row separators
+- **Note:** Scrydex API returns `low` + `market` for raw prices, but no `high` or `mid`. Graded prices include all four (`low`, `mid`, `high`, `market`).
 
 ### Graded prices grid
 
@@ -286,7 +287,7 @@ Horizontal-scrollable pill bar (not tabs):
 +----------+
 | [PSA 10] |  <- Company badge (colored)
 |  $245.00 |  <- Price (clickable to copy)
-| $220-$280|  <- Range
+| $220-$280|  <- Range (low - high)
 +----------+
 ```
 
@@ -395,6 +396,19 @@ Replace text-based loading indicators with animated placeholder shapes:
 | `VariantPrice.trends` | `PriceTrends?` | Trend indicators |
 | `VariantPrice.currency` | `string` | JPY vs USD formatting |
 
+### Scrydex pricing shape differences
+
+| Field | Raw prices | Graded prices |
+|-------|-----------|---------------|
+| `low` | Yes | Yes |
+| `mid` | No | Yes |
+| `high` | No | Yes |
+| `market` | Yes | Yes |
+| `condition` | Yes (NM/LP/MP/HP/DM) | No |
+| `company` | No | Yes (PSA/CGC/BGS/TAG/ACE) |
+| `grade` | No | Yes (10/9.5/9/8.5/etc) |
+| `trends` | Yes | Yes (sometimes absent) |
+
 ### Translation requirement
 
 Japanese set names need English translations. Check if Scrydex API provides an English name field for JP sets. If not, maintain a lightweight client-side translation map.
@@ -501,7 +515,7 @@ Walk through the core flow on the Vercel preview using Claude in Chrome:
 | 4. Card dropdown | Thumbnails load for at least the first ~20 visible cards. Rarity dots show correct colors. All three sort modes (By #, By name, By rarity) reorder the list correctly. |
 | 5. Component extraction | This is the highest-risk step. After decomposing `+page.svelte`, re-run the *full* smoke test twice. Verify: search form, error display, card details, pricing section, and variant selector all still render and function identically to pre-extraction. |
 | 6. Hero price + variants | Hero price displays the correct value for the selected variant. Trend pill shows direction and percentage. Switching variant pills updates the hero price. |
-| 7. Price table + graded | Raw prices table shows NM/LP/MP/HP rows with market + range. Graded grid shows PSA/CGC/BGS cards with correct badge colors. Empty variants show the empty state message. |
+| 7. Price table + graded | Raw prices table shows NM/LP/MP/HP rows with market + low values. Graded grid shows PSA/CGC/BGS cards with correct badge colors and low-high ranges. Empty variants show the empty state message. |
 | 8. QOL features | Tap any price -> clipboard contains the value, toast appears. Recent lookups strip appears after first lookup, persists on reload (check localStorage). Skeleton loaders show during API fetches (throttle network in DevTools to verify). |
 | 9. Deep linking | After selecting a card, URL updates to `/cards/{setId}/{cardId}`. Copy that URL, open in a new tab -> card loads directly with pricing. Back button works. |
 | 10. Image lightbox | Click card image -> lightbox opens with large image. Close via: click outside, Escape key, X button. No scroll bleed to page behind. |
