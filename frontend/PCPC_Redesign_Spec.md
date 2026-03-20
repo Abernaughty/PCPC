@@ -442,10 +442,10 @@ Japanese set names need English translations. Check if Scrydex API provides an E
 | `apps/pcpc/src/lib/components/PriceTable.svelte` | Raw prices table | 7 DONE |
 | `apps/pcpc/src/lib/components/GradedPriceGrid.svelte` | Graded price cards | 7 DONE |
 | `apps/pcpc/src/lib/components/Toast.svelte` | Copy feedback notification | 7 DONE |
-| `apps/pcpc/src/lib/components/RecentLookups.svelte` | Recent lookup chips | 8 |
+| `apps/pcpc/src/lib/components/RecentLookups.svelte` | Recent lookup chips | 8 DONE |
+| `apps/pcpc/src/lib/components/SkeletonLoader.svelte` | Loading placeholders | 8 DONE |
+| `apps/pcpc/src/routes/cards/[set_id]/[card_id]/+page.svelte` | Deep link route | 9 DONE |
 | `apps/pcpc/src/lib/components/ImageLightbox.svelte` | Full-size image overlay | 10 |
-| `apps/pcpc/src/lib/components/SkeletonLoader.svelte` | Loading placeholders | 8 |
-| `apps/pcpc/src/routes/cards/[set_id]/[card_id]/+page.svelte` | Deep link route | 9 |
 
 ---
 
@@ -458,8 +458,8 @@ Japanese set names need English translations. Check if Scrydex API provides an E
 5. **Component extraction** — Break `+page.svelte` into components (start with `SearchForm`) — DONE
 6. **Hero price + variant pills** — Core pricing display with trend indicators — DONE
 7. **Price table + graded grid** — Pricing detail components — DONE
-8. **QOL features** — Tap-to-copy (partially done), recent lookups, skeleton loaders
-9. **Deep linking** — Card detail route + URL state management
+8. **QOL features** — Tap-to-copy, recent lookups, skeleton loaders — DONE
+9. **Deep linking** — Card detail route + URL state management — DONE
 10. **Image lightbox** — Full-size card image overlay
 11. **Mobile responsive pass** — Verify all breakpoints
 
