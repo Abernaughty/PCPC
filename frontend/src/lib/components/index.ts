@@ -13,3 +13,4 @@ export { default as GradedPriceGrid } from './GradedPriceGrid.svelte';
 export { default as Toast } from './Toast.svelte';
 export { default as RecentLookups } from './RecentLookups.svelte';
 export { default as SkeletonLoader } from './SkeletonLoader.svelte';
+export { default as ImageLightbox } from './ImageLightbox.svelte';
