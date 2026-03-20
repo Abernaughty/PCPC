@@ -5,16 +5,14 @@
   import { setsStore } from '$lib/stores/sets.svelte';
   import { cardsStore } from '$lib/stores/cards.svelte';
   import { pricingStore } from '$lib/stores/pricing.svelte';
-  import { themeStore } from '$lib/stores/theme.svelte';
   import { uiStore } from '$lib/stores/ui.svelte';
 
-  // String constants — kept in JS to avoid encoding issues when files
-  // are pushed through the GitHub API (which can mangle UTF-8 in HTML).
-  const APP_TITLE = 'Pok\u00e9mon Card Price Checker';
+  // String constants
   const PAGE_TITLE = 'PCPC | Pok\u00e9mon Card Price Checker';
   const META_DESC = 'Check Pok\u00e9mon card prices and market data';
-  const ICON_MOON = '\ud83c\udf19';
-  const ICON_SUN = '\u2600\ufe0f';
+  const TITLE_PCPC = 'PCPC';
+  const TITLE_SEP = ' / ';
+  const TITLE_SUB = 'pokemon card price checker';
   const ICON_WARN = '\u26a0\ufe0f';
   const ICON_CLOSE = '\u2715';
 
@@ -44,16 +42,10 @@
   });
 
   /**
-   * Record a recent lookup imperatively — called by SearchForm's
-   * onpricefetched callback AFTER pricing has resolved.
-   * This avoids the $effect → $state mutation infinite loop
-   * that occurred when using a reactive $effect to watch pricing.
-   *
-   * Also updates the URL to the deep link path.
+   * Record a recent lookup and update URL.
    */
   function handlePriceFetched(info: { setId: string; cardId: string; name: string; imageUrl: string | null; setName: string }) {
     recentLookupsRef?.addLookup(info);
-    // Push deep link URL (replaceState so back button goes to pre-search state)
     goto(`/cards/${info.setId}/${info.cardId}`, { replaceState: true });
   }
 
@@ -71,10 +63,6 @@
     showVariantSelector = false;
   }
 
-  function toggleTheme() {
-    themeStore.toggle();
-  }
-
   onMount(() => {
     setsStore.loadSets();
   });
@@ -90,15 +78,9 @@
   <!-- Header -->
   <header class="header">
     <div class="header-content">
-      <h1 class="app-title">{APP_TITLE}</h1>
-      <button
-        class="theme-toggle"
-        onclick={toggleTheme}
-        aria-label="Toggle dark mode"
-        type="button"
-      >
-        {themeStore.current === 'light' ? ICON_MOON : ICON_SUN}
-      </button>
+      <h1 class="app-title">
+        <span class="title-pcpc">{TITLE_PCPC}</span><span class="title-sep">{TITLE_SEP}</span><span class="title-sub">{TITLE_SUB}</span>
+      </h1>
     </div>
   </header>
 
@@ -172,13 +154,15 @@
     min-height: 100vh;
     background-color: var(--bg-primary);
     color: var(--text-primary);
+    position: relative;
+    z-index: 1;
   }
 
   .header {
     background-color: var(--color-header-bg);
     color: var(--text-inverse);
-    padding: 1.5em;
-    box-shadow: 0 2px 8px var(--shadow-medium);
+    padding: 16px 24px;
+    border-bottom: 0.5px solid var(--border-subtle);
   }
 
   .header-content {
@@ -191,25 +175,23 @@
 
   .app-title {
     margin: 0;
-    font-size: 2em;
-    font-weight: 700;
-    color: var(--text-inverse);
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+    line-height: 1.2;
   }
 
-  .theme-toggle {
-    background-color: transparent;
-    border: 2px solid var(--text-inverse);
-    color: var(--text-inverse);
-    padding: 0.5em 1em;
-    border-radius: 4px;
-    font-size: 1.2em;
-    cursor: pointer;
-    transition: all var(--transition-speed) ease;
-    flex-shrink: 0;
+  .title-pcpc {
+    color: var(--text-primary);
   }
 
-  .theme-toggle:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+  .title-sep {
+    color: var(--text-dim);
+  }
+
+  .title-sub {
+    color: var(--text-muted);
+    font-weight: 400;
   }
 
   .main-content {
@@ -217,28 +199,29 @@
     max-width: 1200px;
     margin: 0 auto;
     width: 100%;
-    padding: 2em;
+    padding: 24px;
   }
 
   .error-message {
     background-color: rgba(238, 21, 21, 0.1);
-    border: 1px solid var(--color-error-text);
-    border-radius: 4px;
-    padding: 1em;
-    margin-bottom: 1.5em;
+    border: 0.5px solid var(--color-error-text);
+    border-radius: var(--radius-input);
+    padding: 10px 14px;
+    margin-bottom: 16px;
     display: flex;
     align-items: center;
-    gap: 1em;
+    gap: 10px;
   }
 
   .error-icon {
-    font-size: 1.3em;
+    font-size: 1.1em;
     flex-shrink: 0;
   }
 
   .error-text {
     color: var(--color-error-text);
     flex: 1;
+    font-size: 12px;
   }
 
   .error-close {
@@ -247,83 +230,90 @@
     color: var(--color-error-text);
     cursor: pointer;
     padding: 0;
-    font-size: 1.2em;
+    font-size: 1.1em;
     flex-shrink: 0;
     transition: opacity var(--transition-speed) ease;
   }
 
   .error-close:hover {
     opacity: 0.7;
+    background: none;
   }
 
   .offline-message {
     background-color: rgba(255, 165, 0, 0.1);
-    border: 1px solid var(--color-pokemon-red);
-    border-radius: 4px;
-    padding: 1em;
-    margin-bottom: 1.5em;
+    border: 0.5px solid var(--color-pokemon-red);
+    border-radius: var(--radius-input);
+    padding: 10px 14px;
+    margin-bottom: 16px;
     color: var(--text-primary);
     text-align: center;
+    font-size: 12px;
   }
 
   .results-container {
     background-color: var(--bg-container);
-    border: 1px solid var(--border-primary);
-    border-radius: 8px;
-    padding: 2em;
-    box-shadow: 0 2px 8px var(--shadow-light);
+    border: 0.5px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+  }
+
+  /* Specular highlight on results card top edge */
+  .results-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 20px;
+    right: 20px;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.08) 30%,
+      rgba(255, 255, 255, 0.12) 50%,
+      rgba(255, 255, 255, 0.08) 70%,
+      transparent
+    );
+    border-radius: 1px;
+    pointer-events: none;
   }
 
   @media (max-width: 768px) {
     .header {
-      padding: 1em;
-    }
-
-    .header-content {
-      flex-direction: row;
-      gap: 0.75em;
+      padding: 12px 16px;
     }
 
     .app-title {
-      font-size: 1.3em;
+      font-size: 15px;
     }
 
     .main-content {
-      padding: 1em;
+      padding: 16px;
     }
 
     .results-container {
-      padding: 1em;
+      padding: 16px;
     }
   }
 
   @media (max-width: 480px) {
     .header {
-      padding: 0.75em;
+      padding: 10px 12px;
     }
 
     .app-title {
-      font-size: 1.1em;
-    }
-
-    .theme-toggle {
-      padding: 0.4em 0.7em;
-      font-size: 1em;
+      font-size: 14px;
     }
 
     .main-content {
-      padding: 0.75em;
+      padding: 12px;
     }
 
     .results-container {
-      padding: 0.75em;
-      border-radius: 6px;
-    }
-
-    .error-message {
-      padding: 0.75em;
-      gap: 0.5em;
-      font-size: 12px;
+      padding: 12px;
+      border-radius: 8px;
     }
   }
 </style>

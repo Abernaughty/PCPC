@@ -29,6 +29,7 @@
 	"dependencies": {
 		"@azure/cosmos": "^4.3.0",
 		"@azure/storage-blob": "^12.27.0",
+		"chart.js": "^4.4.0",
 		"redis": "^4.7.0"
 	}
 }

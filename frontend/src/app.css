@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 /* ============================================================
-   PCPC Design System — "Elevated Dark"
+   PCPC Design System — “Elevated Dark” v7
    Dark-mode-first. Light mode deferred.
    ============================================================ */
 
@@ -22,9 +22,15 @@
   --accent-red: #e8453c;          /* Primary button, active states */
   --accent-red-dark: #d63a31;     /* Button hover */
 
+  /* ── Amber accent (v7) ── */
+  --amber: #c49a6c;
+  --amber-dim: rgba(196, 154, 108, 0.12);
+  --amber-border: rgba(196, 154, 108, 0.25);
+
   /* ── Pricing ── */
   --price-green: #4ade80;         /* Market price, positive trends */
   --price-red: #f87171;           /* Negative trends */
+  --price-neutral: #9ca3af;       /* Flat trends */
 
   /* ── Language badges ── */
   --badge-en-bg: rgba(59, 130, 246, 0.1);
@@ -43,6 +49,28 @@
   --grade-cgc-text: #a78bfa;
   --grade-bgs: rgba(234, 179, 8, 0.15);
   --grade-bgs-text: #fbbf24;
+  --grade-sgc: rgba(52, 211, 153, 0.1);
+  --grade-sgc-text: #34d399;
+
+  /* ── Per-condition chart colors ── */
+  --chart-nm: #4ade80;
+  --chart-lp: #60a5fa;
+  --chart-mp: #a78bfa;
+  --chart-hp: #fbbf24;
+  --chart-dm: #f87171;
+
+  /* ── Per-company graded chart colors ── */
+  --chart-psa: #60a5fa;
+  --chart-cgc: #a78bfa;
+  --chart-bgs: #fbbf24;
+  --chart-sgc: #34d399;
+
+  /* ── Luminance shades (compare chart) ── */
+  --psa-1: #60a5fa; --psa-2: #93c5fd; --psa-3: #bfdbfe;
+  --cgc-1: #a78bfa; --cgc-2: #c4b5fd; --cgc-3: #ddd6fe;
+  --cgc-4: #ede9fe; --cgc-5: #f3f0ff; --cgc-6: #f8f6ff;
+  --bgs-1: #fbbf24; --bgs-2: #fcd34d; --bgs-3: #fde68a;
+  --sgc-1: #34d399; --sgc-2: #6ee7b7; --sgc-3: #a7f3d0;
 
   /* ── Rarity dots ── */
   --rarity-common: #6b7280;
@@ -75,11 +103,7 @@
 
   /* ============================================================
      Backward-compat aliases
-     These map old variable names used in existing components
-     to the new token system. Remove as components are refactored.
      ============================================================ */
-
-  /* Backgrounds */
   --bg-primary: var(--surface-0);
   --bg-secondary: var(--surface-2);
   --bg-tertiary: var(--surface-2);
@@ -88,21 +112,17 @@
   --bg-hover: rgba(255, 255, 255, 0.04);
   --bg-group-header: var(--surface-1);
 
-  /* Borders */
   --border-input: var(--border-subtle);
   --border-focus: var(--accent-red);
   --border-primary: var(--border-subtle);
   --border-secondary: var(--border-faint);
 
-  /* Text (--text-primary/secondary/muted already match) */
   --text-inverse: var(--text-primary);
 
-  /* Pokemon brand → new accent system */
   --color-pokemon-blue: var(--text-secondary);
   --color-pokemon-red: var(--accent-red);
   --color-pokemon-red-dark: var(--accent-red-dark);
 
-  /* Semantic aliases */
   --color-header-bg: var(--surface-1);
   --color-heading: var(--text-primary);
   --color-button-primary-bg: var(--accent-red);
@@ -124,17 +144,14 @@
   --button-disabled-text: var(--text-dim);
   --focus-ring-color: rgba(232, 69, 60, 0.25);
 
-  /* Shadows (old names) */
   --shadow-light: rgba(0, 0, 0, 0.3);
   --shadow-medium: rgba(0, 0, 0, 0.4);
   --shadow-heavy: rgba(0, 0, 0, 0.6);
 
-  /* Scrollbar */
   --scrollbar-track-bg: var(--surface-1);
   --scrollbar-thumb-bg: var(--surface-2);
   --scrollbar-thumb-hover-bg: var(--text-dim);
 
-  /* Background image (disabled for elevated dark) */
   --bg-image-opacity: 0;
 }
 
@@ -148,7 +165,7 @@ html, body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -161,6 +178,18 @@ body {
   font-size: 13px;
   line-height: 1.5;
   letter-spacing: -0.01em;
+  position: relative;
+}
+
+/* Dot grid background pattern */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* Prevent horizontal overflow on mobile */
@@ -202,7 +231,7 @@ input, button, select, textarea {
   padding: 0.5em 0.75em;
   margin: 0;
   box-sizing: border-box;
-  border: 1px solid var(--border-subtle);
+  border: 0.5px solid var(--border-subtle);
   border-radius: var(--radius-input);
   background-color: var(--surface-2);
   color: var(--text-primary);
@@ -279,6 +308,18 @@ button:disabled {
 @keyframes toast-out {
   from { transform: translateY(0); opacity: 1; }
   to   { transform: translateY(100%); opacity: 0; }
+}
+
+/* ── Live dot pulse animation ── */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ── Detail expand animation ── */
+@keyframes expand-in {
+  from { max-height: 0; opacity: 0; }
+  to   { max-height: 400px; opacity: 1; }
 }
 
 /* ── Mobile base adjustments ── */
