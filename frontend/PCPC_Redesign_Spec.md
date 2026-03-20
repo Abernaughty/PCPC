@@ -2,8 +2,8 @@
 
 **Date:** March 17, 2026
 **Branch:** `feature/redesign`
-**Repo:** `Abernaughty/maber-web` → `apps/pcpc`
-**Stack:** SvelteKit 2 · Svelte 5 · TailwindCSS 4 · TypeScript 5 · adapter-vercel
+**Repo:** `Abernaughty/maber-web` -> `apps/pcpc`
+**Stack:** SvelteKit 2 . Svelte 5 . TailwindCSS 4 . TypeScript 5 . adapter-vercel
 **Theme:** Dark-mode-first (light mode deferred)
 **Tracking:** [GitHub Issue #2](https://github.com/Abernaughty/maber-web/issues/2) — source of truth for progress and decisions
 
@@ -13,7 +13,7 @@
 
 ## 1. Design direction — "Elevated dark"
 
-A layered dark palette with three surface levels that create depth without harsh contrast. Brand identity comes through warm accents rather than literal Pokémon brand colors on every element.
+A layered dark palette with three surface levels that create depth without harsh contrast. Brand identity comes through warm accents rather than literal Pokemon brand colors on every element.
 
 ### Color system
 
@@ -45,7 +45,7 @@ A layered dark palette with three surface levels that create depth without harsh
 - Weights: 400 (body), 500 (headings, emphasis)
 - Letter-spacing: -0.3px on headings, 0.5px on uppercase labels
 
-### Spacing & radius
+### Spacing and radius
 
 - Card radius: 10-12px
 - Input radius: 6-7px
@@ -55,49 +55,49 @@ A layered dark palette with three surface levels that create depth without harsh
 
 ---
 
-## 2. Page layout — Before & after selection
+## 2. Page layout — Before and after selection
 
 ### Before selection (search state)
 
 ```
-┌─ Header ─────────────────────────────────┐
-│ [PC] PCPC price checker        [🔗] [🌙] │
-├─ Search bar ─────────────────────────────┤
-│ Set: [____________ EN]  Card: [________]  │
-│                                [Get price]│
-├─ Recent lookups ─────────────────────────┤
-│ [🃏 Charizard ex] [🃏 Mew ex] [🃏 Eevee] │
-└──────────────────────────────────────────┘
++- Header ------------------------------------+
+| [PC] PCPC price checker        [link] [moon]|
++- Search bar --------------------------------+
+| Set: [____________ EN]  Card: [________]     |
+|                                [Get price]   |
++- Recent lookups ----------------------------+
+| [card Charizard ex] [card Mew ex] [card Eevee] |
++----------------------------------------------+
 ```
 
 ### After selection (results state)
 
 ```
-┌─ Header ─────────────────────────────────┐
-├─ Search bar (collapsed/persistent) ──────┤
-├─ Recent lookups ─────────────────────────┤
-├─ Results ────────────────────────────────┤
-│ ┌──────────┐  Card Name                  │
-│ │          │  Set · Code · Artist         │
-│ │  Card    │  ┌─ Hero Price ────────────┐ │
-│ │  Image   │  │ $82.49  NM  ▲ 8.2% 30d │ │
-│ │          │  │ Updated today · Scrydex  │ │
-│ │          │  └─────────────────────────┘ │
-│ ├──────────┤                              │
-│ │ [SAR]    │  [Normal][Holofoil][Rev...]→  │
-│ │ [Fire]   │                              │
-│ │ [#223]   │  Raw prices by condition     │
-│ │ [EN]     │  NM    $82.49  $74-$92       │
-│ └──────────┘  LP    $68.20  $60-$78       │
-│               MP    $51.75  $44-$59       │
-│               HP    $34.50  $28-$41       │
-│                                           │
-│               Graded prices               │
-│               [PSA 10] [PSA 9] [CGC 10]   │
-│               [CGC 9.5][BGS 10][BGS 9.5]  │
-│                                           │
-│               🔗 Copy link · ↗ Share      │
-└──────────────────────────────────────────┘
++- Header ------------------------------------+
++- Search bar (collapsed/persistent) ---------+
++- Recent lookups ----------------------------+
++- Results -----------------------------------+
+| +----------+  Card Name                     |
+| |          |  Set . Code . Artist            |
+| |  Card    |  +- Hero Price ---------------+ |
+| |  Image   |  | $82.49  NM  up 8.2% 30d   | |
+| |          |  | Updated today . Scrydex     | |
+| |          |  +----------------------------+ |
+| +----------+                                 |
+| | [SAR]    |  [Normal][Holofoil][Rev...]->    |
+| | [Fire]   |                                 |
+| | [#223]   |  Raw prices by condition        |
+| | [EN]     |  NM    $82.49  $74-$92          |
+| +----------+  LP    $68.20  $60-$78          |
+|               MP    $51.75  $44-$59          |
+|               HP    $34.50  $28-$41          |
+|                                              |
+|               Graded prices                  |
+|               [PSA 10] [PSA 9] [CGC 10]      |
+|               [CGC 9.5][BGS 10][BGS 9.5]     |
+|                                              |
+|               link Copy link . up-right Share |
++----------------------------------------------+
 ```
 
 ### Mobile (< 768px)
@@ -149,16 +149,16 @@ Replace with dynamic chronological sorting:
 
 1. Sort sets within each group by `releaseDate` descending (newest first)
 2. Sort groups by the newest `releaseDate` among their sets (newest expansion first)
-3. Group header shows date range: `"2023 – present"` (derived from min/max `releaseDate`)
+3. Group header shows date range: `"2023 - present"` (derived from min/max `releaseDate`)
 
 ### Item display (each set row)
 
 ```
 [SYM]  Set Name                    [EN]
-       CODE · 230 cards · Aug 2023
+       CODE . 230 cards . Aug 2023
 ```
 
-- **Set symbol**: 20×20px from `PokemonSet.symbol` URL, fallback to text abbreviation
+- **Set symbol**: 20x20px from `PokemonSet.symbol` URL, fallback to text abbreviation
 - **Set name**: Primary text, 12px
 - **Language badge**: `EN` (blue) or `JP` (red) inline with name, from `PokemonSet.languageCode`
 - **Subtitle**: Set code + card count (`cardCount` or `total`) + release date (`releaseDate` formatted to "Mon YYYY")
@@ -173,7 +173,7 @@ Replace with dynamic chronological sorting:
 ### Group headers
 
 ```
-SCARLET & VIOLET                 2023 – present
+SCARLET and VIOLET                 2023 - present
 ```
 
 - Sticky positioning while scrolling
@@ -196,11 +196,11 @@ Three-way toggle bar above the card list:
 ### Item display (each card row)
 
 ```
-[THUMB]  [●] Card Name
+[THUMB]  [dot] Card Name
          #001/197
 ```
 
-- **Thumbnail**: 22×30px from `PokemonCard.images[0].small`, lazy-loaded via `IntersectionObserver`
+- **Thumbnail**: 22x30px from `PokemonCard.images[0].small`, lazy-loaded via `IntersectionObserver`
 - **Rarity dot**: 6px colored circle from `PokemonCard.rarity`
   - Gray: Common
   - Green: Uncommon
@@ -208,14 +208,14 @@ Three-way toggle bar above the card list:
   - Purple: Holo Rare
   - Gold: Ultra Rare
   - Pink: Full Art
-  - Gradient (gold→pink): Special Art Rare
+  - Gradient (gold to pink): Special Art Rare
 - **Card name**: 12px
 - **Card number**: `#number/printedTotal` format, 10px muted
 - **Active state**: Left red border accent on selected card
 
 ### Rarity legend
 
-Small legend row at the bottom of the dropdown showing dot colors → rarity names.
+Small legend row at the bottom of the dropdown showing dot colors to rarity names.
 
 ### Performance
 
@@ -230,24 +230,24 @@ Small legend row at the bottom of the dropdown showing dot colors → rarity nam
 
 - Card image: 180px wide, rounded corners, subtle radial glow effect underneath
 - Click-to-zoom: Shows lightbox with large image
-- Hover state: "🔍 Zoom" indicator overlay
+- Hover state: "zoom" indicator overlay
 - Meta chips below image: rarity (pink accent), type, card number, language badge
 
 ### Hero price callout
 
 ```
-┌──────────────────────────────────────┐
-│ MARKET PRICE                         │
-│ $82.49   [Near Mint]   [▲ 8.2% 30d] │
-│ ● Updated today · Scrydex · Holofoil│
-└──────────────────────────────────────┘
++--------------------------------------+
+| MARKET PRICE                         |
+| $82.49   [Near Mint]   [up 8.2% 30d]|
+| dot Updated today . Scrydex . Holofoil|
++--------------------------------------+
 ```
 
 - Price: 28-32px, green (`--price-green`), clickable to copy
 - Condition badge: muted pill showing NM/LP/etc
 - **Trend indicator**: Uses existing `PriceTrends` data from `VariantPrice.trends`
-  - Green pill with ▲ for positive % change
-  - Red pill with ▼ for negative % change
+  - Green pill with up arrow for positive % change
+  - Red pill with down arrow for negative % change
   - Show 30-day trend by default (`trends.days30`)
 - Live dot: green dot + "Updated today" + source
 - Variant name shown in metadata line
@@ -257,12 +257,12 @@ Small legend row at the bottom of the dropdown showing dot colors → rarity nam
 Horizontal-scrollable pill bar (not tabs):
 
 ```
-[● Normal] [● Holofoil] [● Reverse holo] [● Pokeball holo] [● Masterball holo] [○ Crown rare] →
+[filled Normal] [filled Holofoil] [filled Reverse holo] [filled Pokeball holo] [filled Masterball holo] [empty Crown rare] ->
 ```
 
 - Each pill: 6-12px, 6px rounded, border on active
-- Green dot (●): variant has pricing data (`variant.prices.length > 0`)
-- Gray dot (○): no pricing data available
+- Green dot (filled): variant has pricing data (`variant.prices.length > 0`)
+- Gray dot (empty): no pricing data available
 - Active pill: elevated background + red border accent
 - Scrollable with fade hint on right edge when overflowing
 - Selecting a variant updates: hero price, raw table, graded grid
@@ -273,7 +273,7 @@ Horizontal-scrollable pill bar (not tabs):
 |--------|--------|
 | Condition | NM, LP, MP, HP |
 | Market | Price value, clickable to copy, highlights green on hover |
-| Range | Low – High in muted text |
+| Range | Low - High in muted text |
 
 - From `pricingStore.getRawPrices(variant)`
 - Table uses 0.5px row separators
@@ -283,11 +283,11 @@ Horizontal-scrollable pill bar (not tabs):
 3-column grid of grade cards:
 
 ```
-┌──────────┐
-│ [PSA 10] │  ← Company badge (colored)
-│  $245.00 │  ← Price (clickable to copy)
-│ $220–$280│  ← Range
-└──────────┘
++----------+
+| [PSA 10] |  <- Company badge (colored)
+|  $245.00 |  <- Price (clickable to copy)
+| $220-$280|  <- Range
++----------+
 ```
 
 - Badge colors per company:
@@ -301,7 +301,7 @@ Horizontal-scrollable pill bar (not tabs):
 When a variant has no pricing data:
 
 ```
-       ∅
+       empty set
 No pricing data available for this variant yet.
 This variant may be too new or not widely traded.
 ```
@@ -309,7 +309,7 @@ This variant may be too new or not widely traded.
 ### Share row
 
 ```
-🔗 Copy link · ↗ Share
+link Copy link . up-right Share
 ```
 
 - Copy link: copies deep link URL to clipboard
@@ -324,8 +324,8 @@ This variant may be too new or not widely traded.
 **Source**: `VariantPrice.trends` (already in type system, unused in UI)
 
 Display a colored pill next to the hero price:
-- `▲ 8.2%` green for positive 30d change
-- `▼ 3.1%` red for negative 30d change
+- `up 8.2%` green for positive 30d change
+- `down 3.1%` red for negative 30d change
 - Derived from `trends.days30.percentChange`
 
 ### 7.2 Tap-to-copy prices
@@ -338,7 +338,7 @@ Every price value in the UI is clickable:
 ### 7.3 Recent lookups
 
 - Strip of horizontal chips below the search bar
-- Each chip: tiny card thumbnail (18×25px) + card name
+- Each chip: tiny card thumbnail (18x25px) + card name
 - Stored in `localStorage` (last 8-10 lookups)
 - Key format: `pcpc_recent_lookups`
 - Value: `[{setId, cardId, name, imageUrl}]`
@@ -346,7 +346,7 @@ Every price value in the UI is clickable:
 
 ### 7.4 Card image lightbox
 
-- Click card image → full-screen overlay with large image
+- Click card image -> full-screen overlay with large image
 - Uses `PokemonCard.images[0].large` URL
 - Close on click outside, Escape key, or X button
 - Dark backdrop with blur
@@ -370,7 +370,7 @@ Replace text-based loading indicators with animated placeholder shapes:
 
 ### 7.7 Set logo/symbol
 
-- Display the set symbol (`PokemonSet.symbol` URL) as a 20×20px image next to set names
+- Display the set symbol (`PokemonSet.symbol` URL) as a 20x20px image next to set names
 - Shown in: set dropdown items, results section set name
 - Fallback: text abbreviation of expansion code in a styled box
 
@@ -413,35 +413,38 @@ Japanese set names need English translations. Check if Scrydex API provides an E
 | `apps/pcpc/src/lib/stores/pricing.svelte.ts` | No changes needed — already has variant/trend support |
 | `apps/pcpc/src/lib/stores/sets.svelte.ts` | Minor: ensure `releaseDate` sort in `loadSets` |
 
-### New files to create
+### New files created
 
-| File | Purpose |
-|------|---------|
-| `apps/pcpc/src/lib/components/CardDetailPanel.svelte` | Image + meta chips sidebar |
-| `apps/pcpc/src/lib/components/PricingPanel.svelte` | All pricing display logic |
-| `apps/pcpc/src/lib/components/HeroPrice.svelte` | Hero price with trend |
-| `apps/pcpc/src/lib/components/VariantPills.svelte` | Scrollable variant selector |
-| `apps/pcpc/src/lib/components/PriceTable.svelte` | Raw prices table |
-| `apps/pcpc/src/lib/components/GradedPriceGrid.svelte` | Graded price cards |
-| `apps/pcpc/src/lib/components/RecentLookups.svelte` | Recent lookup chips |
-| `apps/pcpc/src/lib/components/ImageLightbox.svelte` | Full-size image overlay |
-| `apps/pcpc/src/lib/components/Toast.svelte` | Copy feedback notification |
-| `apps/pcpc/src/lib/components/SkeletonLoader.svelte` | Loading placeholders |
-| `apps/pcpc/src/lib/components/SearchForm.svelte` | Search bar composition |
-| `apps/pcpc/src/routes/cards/[set_id]/[card_id]/+page.svelte` | Deep link route |
+| File | Purpose | Step |
+|------|---------|------|
+| `apps/pcpc/src/lib/components/SetDropdownItem.svelte` | Set symbol, badges, subtitle | 3 DONE |
+| `apps/pcpc/src/lib/components/SetGroupHeader.svelte` | Sticky group header with date range | 3 DONE |
+| `apps/pcpc/src/lib/utils/rarityMap.ts` | Rarity to color/weight mapping | 4 DONE |
+| `apps/pcpc/src/lib/components/SearchForm.svelte` | Search bar composition | 5 DONE |
+| `apps/pcpc/src/lib/components/CardDetailPanel.svelte` | Image + meta chips sidebar | 5 DONE |
+| `apps/pcpc/src/lib/components/PricingPanel.svelte` | All pricing display logic | 5 DONE |
+| `apps/pcpc/src/lib/components/HeroPrice.svelte` | Hero price with trend | 6 DONE |
+| `apps/pcpc/src/lib/components/VariantPills.svelte` | Scrollable variant selector | 6 DONE |
+| `apps/pcpc/src/lib/components/PriceTable.svelte` | Raw prices table | 7 DONE |
+| `apps/pcpc/src/lib/components/GradedPriceGrid.svelte` | Graded price cards | 7 DONE |
+| `apps/pcpc/src/lib/components/Toast.svelte` | Copy feedback notification | 7 DONE |
+| `apps/pcpc/src/lib/components/RecentLookups.svelte` | Recent lookup chips | 8 |
+| `apps/pcpc/src/lib/components/ImageLightbox.svelte` | Full-size image overlay | 10 |
+| `apps/pcpc/src/lib/components/SkeletonLoader.svelte` | Loading placeholders | 8 |
+| `apps/pcpc/src/routes/cards/[set_id]/[card_id]/+page.svelte` | Deep link route | 9 |
 
 ---
 
 ## 10. Implementation order
 
-1. **Theme overhaul** — Update `app.css` with new dark palette variables
-2. **Expansion mapper refactor** — Replace hardcoded order with date-based sorting
-3. **Set dropdown enhancement** — Language badges, set symbols, release dates, chronological sort
-4. **Card dropdown enhancement** — Thumbnails, rarity dots, sort toggles
-5. **Component extraction** — Break `+page.svelte` into components (start with `SearchForm`)
-6. **Hero price + variant pills** — Core pricing display with trend indicators
-7. **Price table + graded grid** — Pricing detail components
-8. **QOL features** — Tap-to-copy, recent lookups, skeleton loaders
+1. **Theme overhaul** — Update `app.css` with new dark palette variables — DONE
+2. **Expansion mapper refactor** — Replace hardcoded order with date-based sorting — DONE
+3. **Set dropdown enhancement** — Language badges, set symbols, release dates, chronological sort — DONE
+4. **Card dropdown enhancement** — Thumbnails, rarity dots, sort toggles — DONE
+5. **Component extraction** — Break `+page.svelte` into components (start with `SearchForm`) — DONE
+6. **Hero price + variant pills** — Core pricing display with trend indicators — DONE
+7. **Price table + graded grid** — Pricing detail components — DONE
+8. **QOL features** — Tap-to-copy (partially done), recent lookups, skeleton loaders
 9. **Deep linking** — Card detail route + URL state management
 10. **Image lightbox** — Full-size card image overlay
 11. **Mobile responsive pass** — Verify all breakpoints
@@ -499,9 +502,9 @@ Walk through the core flow on the Vercel preview using Claude in Chrome:
 | 5. Component extraction | This is the highest-risk step. After decomposing `+page.svelte`, re-run the *full* smoke test twice. Verify: search form, error display, card details, pricing section, and variant selector all still render and function identically to pre-extraction. |
 | 6. Hero price + variants | Hero price displays the correct value for the selected variant. Trend pill shows direction and percentage. Switching variant pills updates the hero price. |
 | 7. Price table + graded | Raw prices table shows NM/LP/MP/HP rows with market + range. Graded grid shows PSA/CGC/BGS cards with correct badge colors. Empty variants show the empty state message. |
-| 8. QOL features | Tap any price → clipboard contains the value, toast appears. Recent lookups strip appears after first lookup, persists on reload (check localStorage). Skeleton loaders show during API fetches (throttle network in DevTools to verify). |
-| 9. Deep linking | After selecting a card, URL updates to `/cards/{setId}/{cardId}`. Copy that URL, open in a new tab → card loads directly with pricing. Back button works. |
-| 10. Image lightbox | Click card image → lightbox opens with large image. Close via: click outside, Escape key, X button. No scroll bleed to page behind. |
+| 8. QOL features | Tap any price -> clipboard contains the value, toast appears. Recent lookups strip appears after first lookup, persists on reload (check localStorage). Skeleton loaders show during API fetches (throttle network in DevTools to verify). |
+| 9. Deep linking | After selecting a card, URL updates to `/cards/{setId}/{cardId}`. Copy that URL, open in a new tab -> card loads directly with pricing. Back button works. |
+| 10. Image lightbox | Click card image -> lightbox opens with large image. Close via: click outside, Escape key, X button. No scroll bleed to page behind. |
 | 11. Mobile responsive | Resize to <768px: card image stacks above details, search fields stack vertically, variant pills scroll horizontally, graded grid becomes 2-column. Test on at least one real mobile device or Chrome DevTools device mode. |
 
 ### Regression policy
