@@ -5,7 +5,7 @@
   import VariantPills from './VariantPills.svelte';
   import PriceCard from './PriceCard.svelte';
   import PriceDetailChart from './PriceDetailChart.svelte';
-  import GradedPriceGrid from './GradedPriceGrid.svelte';
+  import CompareChart from './CompareChart.svelte';
   import Toast from './Toast.svelte';
 
   interface Props {
@@ -95,13 +95,21 @@
     }
   }
 
-  function getCompanyDotBg(company: string): string {
-    switch (company.toUpperCase()) {
-      case 'PSA': return 'var(--grade-psa)';
-      case 'CGC': return 'var(--grade-cgc)';
-      case 'BGS': return 'var(--grade-bgs)';
-      case 'SGC': return 'var(--grade-sgc)';
-      default: return 'rgba(255,255,255,0.06)';
+  // Share actions
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      handleCopy('link');
+    } catch { /* clipboard may fail */ }
+  }
+
+  async function shareCard() {
+    if (navigator.share) {
+      try {
+        await navigator.share({ url: window.location.href });
+      } catch { /* user cancelled */ }
+    } else {
+      copyLink();
     }
   }
 </script>
@@ -143,7 +151,6 @@
           />
         {/each}
       </div>
-      <!-- Tier 2: Expanded detail chart (raw) -->
       {#if expandedRawIndex !== null && rawPrices[expandedRawIndex]}
         <PriceDetailChart price={rawPrices[expandedRawIndex]} />
       {/if}
@@ -183,11 +190,28 @@
           />
         {/each}
       </div>
-      <!-- Tier 2: Expanded detail chart (graded) -->
       {#if expandedGradedIndex !== null && filteredGradedPrices[expandedGradedIndex]}
         <PriceDetailChart price={filteredGradedPrices[expandedGradedIndex]} />
       {/if}
     {/if}
+
+    <!-- Tier 3: Compare Trends -->
+    {#if rawPrices.length > 0 || gradedPrices.length > 0}
+      <CompareChart rawPrices={rawPrices} gradedPrices={gradedPrices} />
+    {/if}
+
+    <!-- Share section -->
+    <div class="share-section">
+      <span class="share-label">SHARE THIS CARD</span>
+      <div class="share-buttons">
+        <button class="share-btn" onclick={copyLink} type="button">
+          &#x1F517; Copy link
+        </button>
+        <button class="share-btn" onclick={shareCard} type="button">
+          &#x2197;&#xFE0F; Share
+        </button>
+      </div>
+    </div>
 
     <!-- Empty variant state -->
     {#if rawPrices.length === 0 && gradedPrices.length === 0}
@@ -200,7 +224,6 @@
   </div>
 {/if}
 
-<!-- Pricing Error -->
 {#if pricingStore.pricingError}
   <div class="pricing-error">
     <span class="error-icon">&#x26A0;&#xFE0F;</span>
@@ -216,7 +239,6 @@
   </div>
 {/if}
 
-<!-- Copy toast -->
 <Toast message={toastMessage} />
 
 <style>
@@ -298,6 +320,49 @@
     height: 5px;
     border-radius: 50%;
     flex-shrink: 0;
+  }
+
+  /* Share section */
+  .share-section {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 0.5px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .share-label {
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+  }
+
+  .share-buttons {
+    display: flex;
+    gap: 8px;
+  }
+
+  .share-btn {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: none;
+    border: 0.5px solid var(--border-subtle);
+    border-radius: var(--radius-badge);
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .share-btn:hover {
+    border-color: var(--amber-border);
+    color: var(--amber);
+    background: none;
   }
 
   /* Empty variant state */
