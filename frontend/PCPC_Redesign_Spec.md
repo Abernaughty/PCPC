@@ -445,7 +445,7 @@ Japanese set names need English translations. Check if Scrydex API provides an E
 | `apps/pcpc/src/lib/components/RecentLookups.svelte` | Recent lookup chips | 8 DONE |
 | `apps/pcpc/src/lib/components/SkeletonLoader.svelte` | Loading placeholders | 8 DONE |
 | `apps/pcpc/src/routes/cards/[set_id]/[card_id]/+page.svelte` | Deep link route | 9 DONE |
-| `apps/pcpc/src/lib/components/ImageLightbox.svelte` | Full-size image overlay | 10 |
+| `apps/pcpc/src/lib/components/ImageLightbox.svelte` | Full-size image overlay | 10 DONE |
 
 ---
 
@@ -460,7 +460,7 @@ Japanese set names need English translations. Check if Scrydex API provides an E
 7. **Price table + graded grid** — Pricing detail components — DONE
 8. **QOL features** — Tap-to-copy, recent lookups, skeleton loaders — DONE
 9. **Deep linking** — Card detail route + URL state management — DONE
-10. **Image lightbox** — Full-size card image overlay
+10. **Image lightbox** — Full-size card image overlay — DONE
 11. **Mobile responsive pass** — Verify all breakpoints
 
 ---
@@ -538,3 +538,4 @@ These remain separate tasks:
 - **Issue #4**: Excessive IndexedDB writes (100 individual ops per card load) — still open
 - **Issue #5**: "No cards found" text persists — still open
 - **Issue #10**: Card/set counts truncated at 100 (Cosmos DB stale data) — still open
+- **Issue #11**: Card detail panel flashes/reloads when pricing is fetched — still open
