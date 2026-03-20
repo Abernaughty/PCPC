@@ -12,15 +12,35 @@
 
   let showLightbox = $state(false);
 
-  // Derive the large image URL from card data, falling back to the passed imageUrl
   let largeImageUrl = $derived(
     card.images?.[0]?.large ?? card.images?.[0]?.medium ?? imageUrl ?? ''
   );
 
+  // Rarity-based glow color for ambient effect
+  let glowColor = $derived.by(() => {
+    const r = card.rarity?.toLowerCase() ?? '';
+    if (r.includes('special art') || r.includes('sar')) return 'rgba(251, 191, 36, 0.25)';
+    if (r.includes('ultra') || r.includes('ur')) return 'rgba(251, 191, 36, 0.2)';
+    if (r.includes('full art')) return 'rgba(244, 114, 182, 0.2)';
+    if (r.includes('holo')) return 'rgba(167, 139, 250, 0.18)';
+    if (r.includes('rare')) return 'rgba(96, 165, 250, 0.15)';
+    return 'rgba(255, 255, 255, 0.06)';
+  });
+
+  // Rarity chip color
+  let rarityColor = $derived.by(() => {
+    const r = card.rarity?.toLowerCase() ?? '';
+    if (r.includes('special art') || r.includes('sar')) return '#fbbf24';
+    if (r.includes('ultra') || r.includes('ur')) return '#fbbf24';
+    if (r.includes('full art')) return '#f472b6';
+    if (r.includes('holo')) return '#a78bfa';
+    if (r.includes('rare')) return '#60a5fa';
+    if (r.includes('uncommon')) return '#4ade80';
+    return '#6b7280';
+  });
+
   function openLightbox() {
-    if (largeImageUrl) {
-      showLightbox = true;
-    }
+    if (largeImageUrl) showLightbox = true;
   }
 
   function closeLightbox() {
@@ -29,14 +49,15 @@
 </script>
 
 <div class="card-details-layout">
-  {#if imageUrl}
-    <div class="card-image-section">
+  <div class="card-image-section">
+    {#if imageUrl}
       <button
         class="card-image-button"
-        on:click={openLightbox}
+        onclick={openLightbox}
         type="button"
         aria-label="View full size image of {card.name}"
       >
+        <div class="ambient-glow" style="background: {glowColor};"></div>
         <img
           src={imageUrl}
           alt="{card.name} card image"
@@ -44,48 +65,64 @@
           loading="lazy"
         />
         <div class="zoom-overlay">
-          <span class="zoom-icon">&#128269; Zoom</span>
+          <span class="zoom-label">Zoom</span>
         </div>
       </button>
-    </div>
-  {/if}
+    {:else}
+      <!-- Empty state: Pok\u00e9ball card-back -->
+      <div class="card-back">
+        <div class="card-back-inner">
+          <div class="pokeball-orb">
+            <div class="pokeball-top"></div>
+            <div class="pokeball-line"></div>
+            <div class="pokeball-center"></div>
+          </div>
+        </div>
+      </div>
+    {/if}
 
-  <div class="card-info-section">
-    <h2 class="section-title">Card Information</h2>
-    <div class="card-info-grid">
-      <div class="info-item">
-        <span class="info-label">Card:</span>
-        <span class="info-value">{card.name}</span>
-      </div>
-      {#if card.number || card.cardNumber}
-        <div class="info-item">
-          <span class="info-label">Number:</span>
-          <span class="info-value">#{card.number || card.cardNumber}</span>
-        </div>
-      {/if}
-      <div class="info-item">
-        <span class="info-label">Set:</span>
-        <span class="info-value">{set.name}</span>
-      </div>
-      {#if set.code}
-        <div class="info-item">
-          <span class="info-label">Set Code:</span>
-          <span class="info-value">{set.code}</span>
-        </div>
-      {/if}
+    <!-- Meta chips below image -->
+    <div class="meta-chips">
       {#if card.rarity}
-        <div class="info-item">
-          <span class="info-label">Rarity:</span>
-          <span class="info-value">{card.rarity}</span>
-        </div>
+        <span class="chip chip-rarity">
+          <span class="rarity-dot" style="background-color: {rarityColor};"></span>
+          <span class="chip-text" style="color: {rarityColor};">{card.rarity}</span>
+        </span>
+      {/if}
+      {#if set.code}
+        <span class="chip">
+          <span class="chip-text">{set.code.toUpperCase()}</span>
+        </span>
+      {/if}
+      {#if card.number || card.cardNumber}
+        <span class="chip">
+          <span class="chip-text">#{card.number || card.cardNumber}</span>
+        </span>
+      {/if}
+      {#if set.languageCode || set.language}
+        <span class="chip">
+          <span class="chip-text">{(set.languageCode || set.language || 'EN').toUpperCase()}</span>
+        </span>
       {/if}
       {#if card.artist}
-        <div class="info-item">
-          <span class="info-label">Artist:</span>
-          <span class="info-value">{card.artist}</span>
-        </div>
+        <span class="chip">
+          <span class="chip-text">{card.artist}</span>
+        </span>
       {/if}
     </div>
+  </div>
+
+  <div class="card-info-section">
+    <h2 class="card-name">{card.name}</h2>
+    <p class="card-subtitle">
+      {set.name}
+      {#if set.code}
+        <span class="sep">&middot;</span> {set.code.toUpperCase()}
+      {/if}
+      {#if card.artist}
+        <span class="sep">&middot;</span> {card.artist}
+      {/if}
+    </p>
   </div>
 </div>
 
@@ -100,13 +137,13 @@
 <style>
   .card-details-layout {
     display: flex;
-    gap: 2em;
+    gap: 24px;
     align-items: flex-start;
   }
 
   .card-image-section {
     flex-shrink: 0;
-    width: 250px;
+    width: 200px;
   }
 
   .card-image-button {
@@ -119,7 +156,20 @@
     background: none;
     cursor: pointer;
     border-radius: 8px;
-    overflow: hidden;
+    overflow: visible;
+  }
+
+  .ambient-glow {
+    position: absolute;
+    bottom: -8px;
+    left: 10%;
+    right: 10%;
+    height: 60%;
+    border-radius: 50%;
+    filter: blur(16px);
+    opacity: 0.5;
+    z-index: 0;
+    pointer-events: none;
   }
 
   .card-image {
@@ -127,13 +177,13 @@
     height: auto;
     display: block;
     border-radius: 8px;
-    box-shadow: 0 4px 16px var(--shadow-medium);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    z-index: 1;
+    transition: transform 0.3s ease;
   }
 
   .card-image-button:hover .card-image {
     transform: scale(1.03);
-    box-shadow: 0 8px 24px var(--shadow-medium);
   }
 
   .zoom-overlay {
@@ -147,63 +197,142 @@
     opacity: 0;
     transition: opacity 0.2s ease;
     pointer-events: none;
+    z-index: 2;
   }
 
   .card-image-button:hover .zoom-overlay {
     opacity: 1;
   }
 
-  .zoom-icon {
+  .zoom-label {
     color: #fff;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.3px;
-    padding: 6px 14px;
+    padding: 5px 12px;
     background: rgba(0, 0, 0, 0.5);
-    border-radius: 20px;
-    backdrop-filter: blur(4px);
+    border-radius: 16px;
   }
 
-  .section-title {
-    margin: 0 0 1.5em 0;
-    font-size: 1.3em;
-    font-weight: 600;
-    color: var(--color-heading);
-    border-bottom: 2px solid var(--border-primary);
-    padding-bottom: 0.5em;
+  /* Pok\u00e9ball card-back empty state */
+  .card-back {
+    width: 100%;
+    aspect-ratio: 2.5 / 3.5;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #2d1b4e 0%, #1a1028 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0.5px solid var(--border-subtle);
   }
 
+  .card-back-inner {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pokeball-orb {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .pokeball-top {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: rgba(232, 69, 60, 0.4);
+  }
+
+  .pokeball-line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-50%);
+  }
+
+  .pokeball-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    transform: translate(-50%, -50%);
+  }
+
+  /* Meta chips */
+  .meta-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: var(--radius-badge);
+    border: 0.5px solid var(--amber-border);
+    background-color: var(--amber-dim);
+  }
+
+  .chip-rarity {
+    /* Same amber border, but rarity gets colored text */
+  }
+
+  .rarity-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .chip-text {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    color: var(--amber);
+  }
+
+  /* Card info */
   .card-info-section {
     flex: 1;
     min-width: 0;
   }
 
-  .card-info-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1em;
-  }
-
-  .info-item {
-    display: flex;
-    flex-direction: column;
-    padding: 1em;
-    background-color: var(--bg-secondary);
-    border-radius: 4px;
-    border-left: 4px solid var(--color-pokemon-blue);
-  }
-
-  .info-label {
-    font-weight: 600;
-    color: var(--color-heading);
-    font-size: 0.9em;
-    text-transform: uppercase;
-    margin-bottom: 0.3em;
-  }
-
-  .info-value {
+  .card-name {
+    margin: 0 0 4px 0;
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: -0.3px;
     color: var(--text-primary);
-    font-size: 1.1em;
+  }
+
+  .card-subtitle {
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .sep {
+    color: var(--text-dim);
+    margin: 0 2px;
   }
 
   @media (max-width: 768px) {
@@ -213,15 +342,16 @@
     }
 
     .card-image-section {
-      width: 200px;
+      width: 180px;
     }
 
     .card-info-section {
       width: 100%;
+      text-align: center;
     }
 
-    .card-info-grid {
-      grid-template-columns: 1fr;
+    .meta-chips {
+      justify-content: center;
     }
   }
 </style>
