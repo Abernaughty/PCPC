@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { SearchForm, CardDetailPanel, PricingPanel, CardVariantSelector } from '$lib/components';
+  import { SearchForm, CardDetailPanel, PricingPanel, CardVariantSelector, RecentLookups, SkeletonLoader } from '$lib/components';
   import { setsStore } from '$lib/stores/sets.svelte';
   import { cardsStore } from '$lib/stores/cards.svelte';
   import { pricingStore } from '$lib/stores/pricing.svelte';
@@ -9,18 +9,21 @@
 
   // String constants — kept in JS to avoid encoding issues when files
   // are pushed through the GitHub API (which can mangle UTF-8 in HTML).
-  const APP_TITLE = 'Pokémon Card Price Checker';
-  const PAGE_TITLE = 'PCPC | Pokémon Card Price Checker';
-  const META_DESC = 'Check Pokémon card prices and market data';
-  const ICON_MOON = '🌙';
-  const ICON_SUN = '☀️';
-  const ICON_WARN = '⚠️';
-  const ICON_CLOSE = '✕';
+  const APP_TITLE = 'Pok\u00e9mon Card Price Checker';
+  const PAGE_TITLE = 'PCPC | Pok\u00e9mon Card Price Checker';
+  const META_DESC = 'Check Pok\u00e9mon card prices and market data';
+  const ICON_MOON = '\ud83c\udf19';
+  const ICON_SUN = '\u2600\ufe0f';
+  const ICON_WARN = '\u26a0\ufe0f';
+  const ICON_CLOSE = '\u2715';
 
   // Local state
   let cardVariants = $state<any[]>([]);
   let showVariantSelector = $state(false);
   let selectedVariant = $state<any>(null);
+
+  // Reference to RecentLookups component
+  let recentLookupsRef: ReturnType<typeof RecentLookups> | undefined = $state(undefined);
 
   // Derive the current pricing result from the store
   let currentPricing = $derived.by(() => {
@@ -37,6 +40,22 @@
     if (!card?.images || card.images.length === 0) return null;
     const img = card.images[0];
     return img.medium || img.small || img.large || null;
+  });
+
+  // When pricing loads successfully, record the lookup
+  $effect(() => {
+    if (currentPricing && cardsStore.selectedCard && setsStore.selectedSet) {
+      const card = cardsStore.selectedCard;
+      const set = setsStore.selectedSet;
+      const imgUrl = card.images?.[0]?.small ?? null;
+      recentLookupsRef?.addLookup({
+        setId: set.id,
+        cardId: card.id,
+        name: card.name,
+        imageUrl: imgUrl,
+        setName: set.name,
+      });
+    }
   });
 
   // Variant handlers
@@ -88,6 +107,9 @@
     <!-- Search Form -->
     <SearchForm />
 
+    <!-- Recent Lookups -->
+    <RecentLookups bind:this={recentLookupsRef} />
+
     <!-- Error Display -->
     {#if uiStore.error}
       <div class="error-message">
@@ -110,8 +132,15 @@
       </div>
     {/if}
 
+    <!-- Pricing Loading Skeleton -->
+    {#if pricingStore.isLoading}
+      <div class="results-container">
+        <SkeletonLoader variant="pricing" />
+      </div>
+    {/if}
+
     <!-- Results Section -->
-    {#if setsStore.selectedSet && cardsStore.selectedCard}
+    {#if !pricingStore.isLoading && setsStore.selectedSet && cardsStore.selectedCard}
       <div class="results-container">
         <CardDetailPanel
           card={cardsStore.selectedCard}

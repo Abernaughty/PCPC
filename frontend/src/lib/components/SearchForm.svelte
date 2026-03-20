@@ -2,6 +2,7 @@
   import { SearchableSelect, CardSearchSelect } from '$lib/components';
   import SetDropdownItem from '$lib/components/SetDropdownItem.svelte';
   import SetGroupHeader from '$lib/components/SetGroupHeader.svelte';
+  import SkeletonLoader from '$lib/components/SkeletonLoader.svelte';
   import { setsStore } from '$lib/stores/sets.svelte';
   import { cardsStore } from '$lib/stores/cards.svelte';
   import { pricingStore } from '$lib/stores/pricing.svelte';
@@ -72,7 +73,9 @@
       {/snippet}
     </SearchableSelect>
     {#if setsStore.isLoadingSets}
-      <div class="loading-indicator">Loading sets...</div>
+      <div class="loading-skeleton">
+        <SkeletonLoader variant="set-rows" />
+      </div>
     {/if}
   </div>
 
@@ -87,7 +90,9 @@
       onselect={handleCardSelect}
     />
     {#if cardsStore.isLoadingCards}
-      <div class="loading-indicator">Loading cards...</div>
+      <div class="loading-skeleton">
+        <SkeletonLoader variant="card-rows" />
+      </div>
     {/if}
   </div>
 
@@ -127,12 +132,9 @@
     font-size: 0.95em;
   }
 
-  .loading-indicator {
-    margin-top: 0.5em;
-    padding: 0.5em;
-    color: var(--text-secondary);
-    font-size: 0.9em;
-    font-style: italic;
+  .loading-skeleton {
+    margin-top: 8px;
+    padding: 4px 0;
   }
 
   .button {
