@@ -47,7 +47,6 @@
     return pts;
   });
 
-  // Labels matching the sparkline points
   const sparkLabels = ['30d', '14d', '7d', '1d', 'Now'];
 
   let sparkColor = $derived.by(() => {
@@ -105,14 +104,13 @@
     {/if}
   </div>
 
-  <!-- Sparkline fills full card width with hover tooltips -->
   {#if sparkPoints.length >= 2}
     <div class="sparkline-row">
       <TrendSparkline
         points={sparkPoints}
         labels={sparkLabels}
         color={sparkColor}
-        height={32}
+        height={28}
         currency={price.currency}
       />
     </div>
@@ -143,6 +141,8 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
+    /* Allow sparkline tooltip to overflow */
+    overflow: visible;
   }
 
   .price-card:hover {
@@ -191,10 +191,6 @@
     background-color: rgba(255, 255, 255, 0.04);
   }
 
-  .card-body {
-    /* No extra margin -- gap handles spacing */
-  }
-
   .market-price {
     display: block;
     background: none;
@@ -221,9 +217,10 @@
     margin-top: 2px;
   }
 
-  /* Sparkline fills full width */
   .sparkline-row {
     width: 100%;
+    overflow: visible;
+    position: relative;
   }
 
   .card-bottom {

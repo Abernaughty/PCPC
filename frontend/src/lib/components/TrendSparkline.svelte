@@ -29,11 +29,11 @@
   let container: HTMLDivElement | undefined = $state(undefined);
   let canvasWidth = $state(80);
   let hoverIndex = $state<number | null>(null);
+  let hoverX = $state(0);
+  let hoverY = $state(0);
   let ro: ResizeObserver | undefined;
 
   const PAD = 2;
-  // Extra top padding when hover is enabled to fit the tooltip
-  const HOVER_TOP_PAD = 14;
 
   function resolveColor(c: string): string {
     if (c.startsWith('var(')) {
@@ -50,9 +50,9 @@
 
   function getPointCoords(i: number, w: number, h: number, min: number, range: number): { x: number; y: number } {
     const drawW = w - PAD * 2;
-    const drawH = h - PAD - HOVER_TOP_PAD;
+    const drawH = h - PAD * 2;
     const x = PAD + (i / (points.length - 1)) * drawW;
-    const y = HOVER_TOP_PAD + drawH - ((points[i] - min) / range) * drawH;
+    const y = PAD + drawH - ((points[i] - min) / range) * drawH;
     return { x, y };
   }
 
@@ -88,7 +88,7 @@
     }
     ctx.stroke();
 
-    // Draw hover state
+    // Draw hover dot
     if (hoverIndex !== null && hoverIndex >= 0 && hoverIndex < points.length) {
       const { x, y } = getPointCoords(hoverIndex, w, h, min, range);
 
@@ -107,41 +107,19 @@
       ctx.stroke();
       ctx.globalAlpha = 1;
 
-      // Tooltip text
-      const priceText = formatPrice(points[hoverIndex]);
-      const labelText = labels[hoverIndex] ?? '';
-      const tooltip = labelText ? `${labelText}: ${priceText}` : priceText;
-
-      ctx.font = '500 9px Geist, -apple-system, sans-serif';
-      const textW = ctx.measureText(tooltip).width;
-      const tipW = textW + 8;
-      const tipH = 14;
-      let tipX = x - tipW / 2;
-      // Clamp to canvas bounds
-      if (tipX < 1) tipX = 1;
-      if (tipX + tipW > w - 1) tipX = w - 1 - tipW;
-      const tipY = y - 18;
-
-      // Background pill
-      ctx.fillStyle = 'rgba(13, 15, 20, 0.92)';
-      ctx.beginPath();
-      ctx.roundRect(tipX, tipY, tipW, tipH, 3);
-      ctx.fill();
-
-      // Border
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-      ctx.lineWidth = 0.5;
-      ctx.beginPath();
-      ctx.roundRect(tipX, tipY, tipW, tipH, 3);
-      ctx.stroke();
-
-      // Text
-      ctx.fillStyle = '#e8eaef';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(tooltip, tipX + tipW / 2, tipY + tipH / 2);
+      // Store coords for HTML tooltip positioning
+      hoverX = x;
+      hoverY = y;
     }
   }
+
+  // Tooltip text
+  let tooltipText = $derived.by(() => {
+    if (hoverIndex === null || hoverIndex < 0 || hoverIndex >= points.length) return '';
+    const priceText = formatPrice(points[hoverIndex]);
+    const labelText = labels[hoverIndex] ?? '';
+    return labelText ? `${labelText}: ${priceText}` : priceText;
+  });
 
   function handleMouseMove(e: MouseEvent) {
     if (!canvas || !points || points.length < 2) return;
@@ -150,7 +128,6 @@
     const w = canvasWidth;
     const drawW = w - PAD * 2;
 
-    // Find nearest point
     let closest = 0;
     let closestDist = Infinity;
     for (let i = 0; i < points.length; i++) {
@@ -161,7 +138,6 @@
         closest = i;
       }
     }
-    // Only show hover if reasonably close
     if (closestDist < drawW / (points.length - 1)) {
       if (hoverIndex !== closest) {
         hoverIndex = closest;
@@ -202,7 +178,7 @@
   });
 </script>
 
-<div class="sparkline-container" bind:this={container} style="height: {height}px;">
+<div class="sparkline-wrapper" bind:this={container}>
   <canvas
     bind:this={canvas}
     class="sparkline"
@@ -210,16 +186,43 @@
     onmousemove={handleMouseMove}
     onmouseleave={handleMouseLeave}
   ></canvas>
+
+  <!-- HTML tooltip positioned above the canvas -->
+  {#if hoverIndex !== null && tooltipText}
+    <div
+      class="spark-tooltip"
+      style="left: {hoverX}px; top: {hoverY - 22}px;"
+    >
+      {tooltipText}
+    </div>
+  {/if}
 </div>
 
 <style>
-  .sparkline-container {
+  .sparkline-wrapper {
     width: 100%;
-    overflow: hidden;
+    position: relative;
   }
 
   .sparkline {
     display: block;
     cursor: crosshair;
+  }
+
+  .spark-tooltip {
+    position: absolute;
+    transform: translateX(-50%);
+    pointer-events: none;
+    white-space: nowrap;
+    font-size: 9px;
+    font-weight: 500;
+    font-family: Geist, -apple-system, sans-serif;
+    color: #e8eaef;
+    background: rgba(13, 15, 20, 0.92);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+    padding: 2px 5px;
+    line-height: 1.2;
+    z-index: 10;
   }
 </style>
