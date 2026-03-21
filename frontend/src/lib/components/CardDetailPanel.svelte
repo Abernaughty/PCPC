@@ -1,16 +1,15 @@
 <script lang="ts">
   import type { PokemonCard, PokemonSet } from '$lib/types';
-  import ImageLightbox from './ImageLightbox.svelte';
 
   interface Props {
     card: PokemonCard;
     set: PokemonSet;
     imageUrl?: string | null;
+    /** Called when the user wants to open the lightbox */
+    onlightbox?: (imageUrl: string) => void;
   }
 
-  let { card, set, imageUrl = null }: Props = $props();
-
-  let showLightbox = $state(false);
+  let { card, set, imageUrl = null, onlightbox }: Props = $props();
 
   let largeImageUrl = $derived(
     card.images?.[0]?.large ?? card.images?.[0]?.medium ?? imageUrl ?? ''
@@ -40,11 +39,7 @@
   });
 
   function openLightbox() {
-    if (largeImageUrl) showLightbox = true;
-  }
-
-  function closeLightbox() {
-    showLightbox = false;
+    if (largeImageUrl && onlightbox) onlightbox(largeImageUrl);
   }
 </script>
 
@@ -110,14 +105,6 @@
     {/if}
   </div>
 </div>
-
-{#if showLightbox && largeImageUrl}
-  <ImageLightbox
-    imageUrl={largeImageUrl}
-    altText="{card.name} - full size"
-    onclose={closeLightbox}
-  />
-{/if}
 
 <style>
   .card-sidebar {

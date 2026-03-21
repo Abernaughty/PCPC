@@ -3,12 +3,12 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
   import { SearchForm, CardDetailPanel, PricingPanel, CardVariantSelector, RecentLookups, SkeletonLoader } from '$lib/components';
+  import ImageLightbox from '$lib/components/ImageLightbox.svelte';
   import { setsStore } from '$lib/stores/sets.svelte';
   import { cardsStore } from '$lib/stores/cards.svelte';
   import { pricingStore } from '$lib/stores/pricing.svelte';
   import { uiStore } from '$lib/stores/ui.svelte';
 
-  const APP_TITLE = 'Pok\u00e9mon Card Price Checker';
   const TITLE_PCPC = 'PCPC';
   const TITLE_SEP = ' / ';
   const TITLE_SUB = 'pokemon card price checker';
@@ -22,6 +22,9 @@
   let selectedVariant = $state<any>(null);
   let isDeepLinkLoading = $state(true);
   let deepLinkError = $state<string | null>(null);
+
+  // Lightbox state (rendered at page level)
+  let lightboxUrl = $state<string | null>(null);
 
   let recentLookupsRef: ReturnType<typeof RecentLookups> | undefined = $state(undefined);
 
@@ -40,6 +43,8 @@
     return img.medium || img.small || img.large || null;
   });
 
+  let cardName = $derived(cardsStore.selectedCard?.name ?? '');
+
   let pageTitle = $derived.by(() => {
     const card = cardsStore.selectedCard;
     const set = setsStore.selectedSet;
@@ -50,6 +55,14 @@
   function handlePriceFetched(info: { setId: string; cardId: string; name: string; imageUrl: string | null; setName: string }) {
     recentLookupsRef?.addLookup(info);
     goto(`/cards/${info.setId}/${info.cardId}`, { replaceState: true });
+  }
+
+  function handleLightbox(url: string) {
+    lightboxUrl = url;
+  }
+
+  function closeLightbox() {
+    lightboxUrl = null;
   }
 
   function handleVariantSelect(variant: any) {
@@ -161,13 +174,9 @@
   </header>
 
   <main class="main-content">
-    <!-- Search Form -->
     <SearchForm onpricefetched={handlePriceFetched} />
-
-    <!-- Recent Lookups -->
     <RecentLookups bind:this={recentLookupsRef} />
 
-    <!-- Error Display -->
     {#if uiStore.error}
       <div class="error-message">
         <span class="error-icon">{ICON_WARN}</span>
@@ -183,42 +192,32 @@
       </div>
     {/if}
 
-    <!-- Deep Link Error -->
     {#if deepLinkError}
       <div class="error-message">
         <span class="error-icon">{ICON_WARN}</span>
         <span class="error-text">{deepLinkError}</span>
-        <button
-          class="back-link"
-          onclick={handleBack}
-          type="button"
-        >
-          Back to search
-        </button>
+        <button class="back-link" onclick={handleBack} type="button">Back to search</button>
       </div>
     {/if}
 
-    <!-- Loading State -->
     {#if isDeepLinkLoading || pricingStore.isLoading}
       <div class="results-container">
         <SkeletonLoader variant="pricing" />
       </div>
     {/if}
 
-    <!-- Results Section -->
     {#if !isDeepLinkLoading && !pricingStore.isLoading && setsStore.selectedSet && cardsStore.selectedCard}
       <div class="results-container">
         <div class="results-layout">
-          <!-- Left: Sticky card sidebar -->
           <div class="results-sidebar">
             <CardDetailPanel
               card={cardsStore.selectedCard}
               set={setsStore.selectedSet}
               imageUrl={cardImageUrl}
+              onlightbox={handleLightbox}
             />
           </div>
 
-          <!-- Right: Card info + pricing (scrollable) -->
           <div class="results-main">
             <div class="card-header">
               <h2 class="card-name">{cardsStore.selectedCard.name}</h2>
@@ -250,6 +249,15 @@
     onclose={closeVariantSelector}
   />
 </div>
+
+<!-- Lightbox rendered at page root to escape stacking contexts -->
+{#if lightboxUrl}
+  <ImageLightbox
+    imageUrl={lightboxUrl}
+    altText="{cardName} - full size"
+    onclose={closeLightbox}
+  />
+{/if}
 
 <style>
   .pcpc-app {
@@ -309,18 +317,9 @@
     line-height: 1.2;
   }
 
-  .title-pcpc {
-    color: var(--text-primary);
-  }
-
-  .title-sep {
-    color: var(--text-dim);
-  }
-
-  .title-sub {
-    color: var(--text-muted);
-    font-weight: 400;
-  }
+  .title-pcpc { color: var(--text-primary); }
+  .title-sep { color: var(--text-dim); }
+  .title-sub { color: var(--text-muted); font-weight: 400; }
 
   .main-content {
     flex: 1;
@@ -341,16 +340,8 @@
     gap: 10px;
   }
 
-  .error-icon {
-    font-size: 1.1em;
-    flex-shrink: 0;
-  }
-
-  .error-text {
-    color: var(--color-error-text);
-    flex: 1;
-    font-size: 12px;
-  }
+  .error-icon { font-size: 1.1em; flex-shrink: 0; }
+  .error-text { color: var(--color-error-text); flex: 1; font-size: 12px; }
 
   .error-close {
     background-color: transparent;
@@ -363,10 +354,7 @@
     transition: opacity 0.15s ease;
   }
 
-  .error-close:hover {
-    opacity: 0.7;
-    background: none;
-  }
+  .error-close:hover { opacity: 0.7; background: none; }
 
   .back-link {
     background: none;
@@ -381,10 +369,7 @@
     transition: opacity 0.15s ease;
   }
 
-  .back-link:hover {
-    opacity: 0.7;
-    background: none;
-  }
+  .back-link:hover { opacity: 0.7; background: none; }
 
   .results-container {
     background-color: var(--bg-container);
@@ -395,7 +380,6 @@
     position: relative;
   }
 
-  /* Specular highlight on results card top edge */
   .results-container::before {
     content: '';
     position: absolute;
@@ -415,7 +399,6 @@
     pointer-events: none;
   }
 
-  /* Two-column results layout */
   .results-layout {
     display: flex;
     gap: 24px;
@@ -432,12 +415,11 @@
   .results-main {
     flex: 1;
     min-width: 0;
+    overflow: visible;
+    position: relative;
   }
 
-  /* Card header (name + subtitle) in the pricing column */
-  .card-header {
-    margin-bottom: 4px;
-  }
+  .card-header { margin-bottom: 4px; }
 
   .card-name {
     margin: 0 0 4px 0;
@@ -447,65 +429,28 @@
     color: var(--text-primary);
   }
 
-  .card-subtitle {
-    margin: 0;
-    font-size: 12px;
-    color: var(--text-muted);
-  }
-
-  .sep {
-    color: var(--text-dim);
-    margin: 0 2px;
-  }
+  .card-subtitle { margin: 0; font-size: 12px; color: var(--text-muted); }
+  .sep { color: var(--text-dim); margin: 0 2px; }
 
   @media (max-width: 768px) {
-    .header {
-      padding: 12px 16px;
-    }
+    .header { padding: 12px 16px; }
+    .app-title { font-size: 15px; }
+    .main-content { padding: 16px; }
+    .results-container { padding: 16px; }
 
-    .app-title {
-      font-size: 15px;
-    }
-
-    .main-content {
-      padding: 16px;
-    }
-
-    .results-container {
-      padding: 16px;
-    }
-
-    /* Stack to single column on mobile */
     .results-layout {
       flex-direction: column;
       align-items: center;
     }
 
-    .results-sidebar {
-      position: static;
-    }
-
-    .card-header {
-      text-align: center;
-    }
+    .results-sidebar { position: static; }
+    .card-header { text-align: center; }
   }
 
   @media (max-width: 480px) {
-    .header {
-      padding: 10px 12px;
-    }
-
-    .app-title {
-      font-size: 14px;
-    }
-
-    .main-content {
-      padding: 12px;
-    }
-
-    .results-container {
-      padding: 12px;
-      border-radius: 8px;
-    }
+    .header { padding: 10px 12px; }
+    .app-title { font-size: 14px; }
+    .main-content { padding: 12px; }
+    .results-container { padding: 12px; border-radius: 8px; }
   }
 </style>

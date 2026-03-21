@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { SearchForm, CardDetailPanel, PricingPanel, CardVariantSelector, RecentLookups, SkeletonLoader } from '$lib/components';
+  import ImageLightbox from '$lib/components/ImageLightbox.svelte';
   import { setsStore } from '$lib/stores/sets.svelte';
   import { cardsStore } from '$lib/stores/cards.svelte';
   import { pricingStore } from '$lib/stores/pricing.svelte';
@@ -20,6 +21,9 @@
   let cardVariants = $state<any[]>([]);
   let showVariantSelector = $state(false);
   let selectedVariant = $state<any>(null);
+
+  // Lightbox state (rendered at page level to escape stacking contexts)
+  let lightboxUrl = $state<string | null>(null);
 
   // Reference to RecentLookups component for imperative addLookup calls
   let recentLookupsRef: ReturnType<typeof RecentLookups> | undefined = $state(undefined);
@@ -41,12 +45,22 @@
     return img.medium || img.small || img.large || null;
   });
 
+  let cardName = $derived(cardsStore.selectedCard?.name ?? '');
+
   /**
    * Record a recent lookup and update URL.
    */
   function handlePriceFetched(info: { setId: string; cardId: string; name: string; imageUrl: string | null; setName: string }) {
     recentLookupsRef?.addLookup(info);
     goto(`/cards/${info.setId}/${info.cardId}`, { replaceState: true });
+  }
+
+  function handleLightbox(url: string) {
+    lightboxUrl = url;
+  }
+
+  function closeLightbox() {
+    lightboxUrl = null;
   }
 
   // Variant handlers
@@ -131,10 +145,11 @@
               card={cardsStore.selectedCard}
               set={setsStore.selectedSet}
               imageUrl={cardImageUrl}
+              onlightbox={handleLightbox}
             />
           </div>
 
-          <!-- Right: Card info + pricing (scrollable) -->
+          <!-- Right: Card info + pricing -->
           <div class="results-main">
             <div class="card-header">
               <h2 class="card-name">{cardsStore.selectedCard.name}</h2>
@@ -167,6 +182,15 @@
     onclose={closeVariantSelector}
   />
 </div>
+
+<!-- Lightbox rendered at page root to escape stacking contexts -->
+{#if lightboxUrl}
+  <ImageLightbox
+    imageUrl={lightboxUrl}
+    altText="{cardName} - full size"
+    onclose={closeLightbox}
+  />
+{/if}
 
 <style>
   .pcpc-app {
@@ -318,6 +342,9 @@
   .results-main {
     flex: 1;
     min-width: 0;
+    /* Ensure Chart.js canvases can calculate size correctly in flex child */
+    overflow: visible;
+    position: relative;
   }
 
   /* Card header (name + subtitle) in the pricing column */
