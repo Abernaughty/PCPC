@@ -125,7 +125,7 @@
       onclick={(e) => { e.stopPropagation(); onToggleDetail?.(); }}
       type="button"
     >
-      Detail
+      {isExpanded ? 'Close' : 'Detail'}
     </button>
   </div>
 </div>
