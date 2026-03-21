@@ -47,6 +47,9 @@
     return pts;
   });
 
+  // Labels matching the sparkline points
+  const sparkLabels = ['30d', '14d', '7d', '1d', 'Now'];
+
   let sparkColor = $derived.by(() => {
     if (!trend30d || trend30d.dir === 'flat') return 'var(--price-neutral)';
     return trend30d.dir === 'up' ? 'var(--price-green)' : 'var(--price-red)';
@@ -102,13 +105,15 @@
     {/if}
   </div>
 
-  <!-- Sparkline fills full card width -->
+  <!-- Sparkline fills full card width with hover tooltips -->
   {#if sparkPoints.length >= 2}
     <div class="sparkline-row">
       <TrendSparkline
         points={sparkPoints}
+        labels={sparkLabels}
         color={sparkColor}
-        height={24}
+        height={32}
+        currency={price.currency}
       />
     </div>
   {/if}
