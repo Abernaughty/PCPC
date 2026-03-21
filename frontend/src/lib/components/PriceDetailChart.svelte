@@ -26,9 +26,9 @@
     return { labels, data };
   }
 
-  // Use 30d trend direction so chart color matches the card's trend badge
+  // Determine overall 180d direction
   function getDirection(p: VariantPrice): 'up' | 'down' | 'flat' {
-    const pct = p.trends?.days30?.percentChange ?? 0;
+    const pct = p.trends?.days180?.percentChange ?? 0;
     if (pct > 0.01) return 'up';
     if (pct < -0.01) return 'down';
     return 'flat';
