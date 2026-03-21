@@ -159,6 +159,7 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
         layout: { padding: { top: 16, left: 0, right: 0, bottom: 0 } },
         plugins: {
           legend: { display: false },
@@ -286,7 +287,6 @@
     padding: 16px 20px;
     margin-bottom: 16px;
     position: relative;
-    /* No overflow:hidden — Chart.js tooltips need to render outside canvas bounds */
   }
 
   .hero-highlight {
@@ -436,7 +436,6 @@
     color: var(--accent-red);
   }
 
-  /* Chart section label */
   .chart-label-row {
     display: flex;
     align-items: center;

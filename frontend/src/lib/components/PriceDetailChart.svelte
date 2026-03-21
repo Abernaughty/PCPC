@@ -118,6 +118,7 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
         layout: { padding: { top: 16 } },
         plugins: {
           legend: { display: false },
@@ -202,7 +203,6 @@
     background-color: rgba(196, 154, 108, 0.02);
     height: 180px;
     animation: expand-in 0.25s ease-out;
-    /* No overflow:hidden — Chart.js tooltips need to escape container */
     position: relative;
   }
 </style>
