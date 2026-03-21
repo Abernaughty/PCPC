@@ -160,7 +160,7 @@
         responsive: true,
         maintainAspectRatio: false,
         interaction: { mode: 'index', intersect: false },
-        layout: { padding: { top: 16, left: 0, right: 0, bottom: 0 } },
+        layout: { padding: { top: 36, left: 0, right: 0, bottom: 0 } },
         plugins: {
           legend: { display: false },
           tooltip: {
@@ -170,6 +170,8 @@
             borderColor: 'rgba(255,255,255,0.06)',
             borderWidth: 0.5,
             padding: 8,
+            caretSize: 4,
+            caretPadding: 6,
             bodyFont: { family: 'Geist, sans-serif', size: 11 },
             titleFont: { family: 'Geist, sans-serif', size: 11, weight: '500' },
             callbacks: {
@@ -459,7 +461,7 @@
   }
 
   .hero-chart {
-    height: 140px;
+    height: 160px;
     position: relative;
   }
 
@@ -468,13 +470,13 @@
     .hero-value { font-size: 24px; }
     .hero-row { gap: 8px; }
     .hero-meta { gap: 4px; font-size: 10px; }
-    .hero-chart { height: 110px; }
+    .hero-chart { height: 130px; }
     .chart-hint { display: none; }
   }
 
   @media (max-width: 480px) {
     .hero-value { font-size: 22px; }
     .condition-badge, .trend-pill { font-size: 10px; padding: 2px 6px; }
-    .hero-chart { height: 90px; }
+    .hero-chart { height: 110px; }
   }
 </style>

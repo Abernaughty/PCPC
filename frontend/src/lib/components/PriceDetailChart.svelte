@@ -119,7 +119,7 @@
         responsive: true,
         maintainAspectRatio: false,
         interaction: { mode: 'index', intersect: false },
-        layout: { padding: { top: 16 } },
+        layout: { padding: { top: 36 } },
         plugins: {
           legend: { display: false },
           tooltip: {
@@ -129,6 +129,8 @@
             borderColor: 'rgba(255,255,255,0.06)',
             borderWidth: 0.5,
             padding: 8,
+            caretSize: 4,
+            caretPadding: 6,
             bodyFont: { family: 'Geist, sans-serif', size: 11 },
             titleFont: { family: 'Geist, sans-serif', size: 11, weight: '500' },
             callbacks: {
@@ -201,7 +203,7 @@
     padding: 12px;
     margin-top: 8px;
     background-color: rgba(196, 154, 108, 0.02);
-    height: 180px;
+    height: 200px;
     animation: expand-in 0.25s ease-out;
     position: relative;
   }

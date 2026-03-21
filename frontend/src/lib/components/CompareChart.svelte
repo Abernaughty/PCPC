@@ -140,7 +140,7 @@
         responsive: true,
         maintainAspectRatio: false,
         interaction: { mode: 'index', intersect: false },
-        layout: { padding: { top: 8 } },
+        layout: { padding: { top: 36 } },
         plugins: {
           legend: { display: false },
           tooltip: {
@@ -150,6 +150,8 @@
             borderColor: 'rgba(255,255,255,0.06)',
             borderWidth: 0.5,
             padding: 8,
+            caretSize: 4,
+            caretPadding: 6,
             bodyFont: { family: 'Geist, sans-serif', size: 11 },
             titleFont: { family: 'Geist, sans-serif', size: 11, weight: '500' },
             callbacks: {
@@ -190,9 +192,7 @@
   onMount(() => { initChart(); });
 
   $effect(() => {
-    // Reinit when selections change
     if (chartCanvas) {
-      // Touch reactive deps
       void mode;
       void selectedRaw;
       void selectedGradedCompany;
@@ -220,7 +220,7 @@
   }
 </script>
 
-<!-- G: Compare section in its own surface-2 card -->
+<!-- Compare section in its own surface-2 card -->
 <div class="compare-card">
   <div class="compare-header">
     <div class="section-label-row">
@@ -257,7 +257,6 @@
         </button>
       {/each}
     {:else}
-      <!-- Company select -->
       {#if gradedCompanies.length > 1}
         <div class="company-select">
           {#each gradedCompanies as company}
@@ -329,7 +328,6 @@
 </div>
 
 <style>
-  /* G: Own surface-2 card container */
   .compare-card {
     margin-top: 20px;
     background-color: var(--surface-2);
@@ -436,7 +434,7 @@
   .filter-sep { width: 1px; height: 14px; background-color: var(--border-subtle); margin: 0 4px; }
 
   .compare-chart {
-    height: 200px;
+    height: 220px;
     margin-bottom: 8px;
   }
 
@@ -468,6 +466,6 @@
 
   @media (max-width: 768px) {
     .compare-card { padding: 12px 14px; }
-    .compare-chart { height: 160px; }
+    .compare-chart { height: 180px; }
   }
 </style>
