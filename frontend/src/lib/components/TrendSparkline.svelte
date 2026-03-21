@@ -1,11 +1,9 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
 
   interface Props {
     /** Array of price points [oldest...newest], minimum 2 */
     points: number[];
-    /** Width in px */
-    width?: number;
     /** Height in px */
     height?: number;
     /** Line color */
@@ -16,13 +14,15 @@
 
   let {
     points,
-    width = 60,
     height = 24,
     color = 'var(--price-green)',
     lineWidth = 1.5,
   }: Props = $props();
 
   let canvas: HTMLCanvasElement | undefined = $state(undefined);
+  let container: HTMLDivElement | undefined = $state(undefined);
+  let canvasWidth = $state(80);
+  let ro: ResizeObserver | undefined;
 
   // Resolve CSS variable to actual color
   function resolveColor(c: string): string {
@@ -38,15 +38,17 @@
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    const w = canvasWidth;
+    const h = height;
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
     ctx.scale(dpr, dpr);
-    ctx.clearRect(0, 0, width, height);
+    ctx.clearRect(0, 0, w, h);
 
     const pad = 2;
-    const drawW = width - pad * 2;
-    const drawH = height - pad * 2;
+    const drawW = w - pad * 2;
+    const drawH = h - pad * 2;
 
     const min = Math.min(...points);
     const max = Math.max(...points);
@@ -68,24 +70,48 @@
   }
 
   onMount(() => {
+    if (container) {
+      ro = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          const w = entry.contentRect.width;
+          if (w > 0 && Math.abs(w - canvasWidth) > 1) {
+            canvasWidth = w;
+          }
+        }
+      });
+      ro.observe(container);
+      // Initial measure
+      canvasWidth = container.clientWidth || 80;
+    }
     draw();
   });
 
   $effect(() => {
-    // Redraw when points or color changes
+    // Redraw when points, color, or width changes
     if (points && canvas) draw();
+    void canvasWidth;
+  });
+
+  onDestroy(() => {
+    ro?.disconnect();
   });
 </script>
 
-<canvas
-  bind:this={canvas}
-  class="sparkline"
-  style="width: {width}px; height: {height}px;"
-></canvas>
+<div class="sparkline-container" bind:this={container} style="height: {height}px;">
+  <canvas
+    bind:this={canvas}
+    class="sparkline"
+    style="width: {canvasWidth}px; height: {height}px;"
+  ></canvas>
+</div>
 
 <style>
+  .sparkline-container {
+    width: 100%;
+    overflow: hidden;
+  }
+
   .sparkline {
     display: block;
-    flex-shrink: 0;
   }
 </style>

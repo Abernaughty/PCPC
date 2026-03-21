@@ -102,13 +102,12 @@
     {/if}
   </div>
 
-  <!-- D: Sparkline on its own row -->
+  <!-- Sparkline fills full card width -->
   {#if sparkPoints.length >= 2}
     <div class="sparkline-row">
       <TrendSparkline
         points={sparkPoints}
         color={sparkColor}
-        width={80}
         height={24}
       />
     </div>
@@ -188,7 +187,7 @@
   }
 
   .card-body {
-    /* No extra margin — gap handles spacing */
+    /* No extra margin -- gap handles spacing */
   }
 
   .market-price {
@@ -210,7 +209,6 @@
     background: none;
   }
 
-  /* E: Clean Low formatting */
   .low-price {
     font-size: 10px;
     color: var(--text-dim);
@@ -218,11 +216,9 @@
     margin-top: 2px;
   }
 
-  /* D: Sparkline gets its own row */
+  /* Sparkline fills full width */
   .sparkline-row {
     width: 100%;
-    display: flex;
-    align-items: center;
   }
 
   .card-bottom {
