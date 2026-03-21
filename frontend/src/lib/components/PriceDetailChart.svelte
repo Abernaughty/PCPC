@@ -202,6 +202,7 @@
     background-color: rgba(196, 154, 108, 0.02);
     height: 180px;
     animation: expand-in 0.25s ease-out;
-    overflow: hidden;
+    /* No overflow:hidden — Chart.js tooltips need to escape container */
+    position: relative;
   }
 </style>

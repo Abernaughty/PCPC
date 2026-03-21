@@ -265,7 +265,7 @@
       {/if}
     </div>
 
-    <!-- C: Chart section label -->
+    <!-- Chart section label -->
     <div class="chart-label-row">
       <span class="chart-label">180D PRICE HISTORY &#x2014; {conditionLabel}</span>
       <span class="chart-hint">Hover for details</span>
@@ -286,7 +286,7 @@
     padding: 16px 20px;
     margin-bottom: 16px;
     position: relative;
-    overflow: hidden;
+    /* No overflow:hidden — Chart.js tooltips need to render outside canvas bounds */
   }
 
   .hero-highlight {
@@ -436,7 +436,7 @@
     color: var(--accent-red);
   }
 
-  /* C: Chart section label */
+  /* Chart section label */
   .chart-label-row {
     display: flex;
     align-items: center;
@@ -461,6 +461,7 @@
 
   .hero-chart {
     height: 140px;
+    position: relative;
   }
 
   @media (max-width: 768px) {
