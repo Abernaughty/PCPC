@@ -331,7 +331,7 @@
   }
 
   .hero-label {
-    font-size: 10px;
+    font-size: var(--fs-micro);
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -347,7 +347,7 @@
   }
 
   .hero-value {
-    font-size: 28px;
+    font-size: var(--fs-hero);
     font-weight: 600;
     letter-spacing: -0.3px;
     color: var(--text-primary);
@@ -369,7 +369,7 @@
   }
 
   .condition-badge {
-    font-size: 11px;
+    font-size: var(--fs-badge);
     font-weight: 500;
     color: var(--text-muted);
     background-color: rgba(255, 255, 255, 0.04);
@@ -379,7 +379,7 @@
   }
 
   .trend-pill {
-    font-size: 11px;
+    font-size: var(--fs-badge);
     font-weight: 500;
     padding: 3px 8px;
     border-radius: var(--radius-badge);
@@ -401,7 +401,7 @@
     align-items: center;
     gap: 6px;
     margin-top: 10px;
-    font-size: 11px;
+    font-size: var(--fs-badge);
     color: var(--text-dim);
     flex-wrap: wrap;
   }
@@ -422,7 +422,7 @@
   .meta-sep { color: var(--text-faint); }
 
   .meta-badge {
-    font-size: 10px;
+    font-size: var(--fs-micro);
     font-weight: 500;
     padding: 1px 5px;
     border-radius: 3px;
@@ -447,7 +447,7 @@
   }
 
   .chart-label {
-    font-size: 10px;
+    font-size: var(--fs-micro);
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -455,7 +455,7 @@
   }
 
   .chart-hint {
-    font-size: 10px;
+    font-size: var(--fs-micro);
     color: var(--text-dim);
     font-style: italic;
   }
@@ -467,16 +467,16 @@
 
   @media (max-width: 768px) {
     .hero-price { padding: 12px 14px; }
-    .hero-value { font-size: 24px; }
+    .hero-value { font-size: var(--fs-hero); }
     .hero-row { gap: 8px; }
-    .hero-meta { gap: 4px; font-size: 10px; }
+    .hero-meta { gap: 4px; font-size: var(--fs-micro); }
     .hero-chart { height: 130px; }
     .chart-hint { display: none; }
   }
 
   @media (max-width: 480px) {
-    .hero-value { font-size: 22px; }
-    .condition-badge, .trend-pill { font-size: 10px; padding: 2px 6px; }
+    .hero-value { font-size: var(--fs-hero); }
+    .condition-badge, .trend-pill { font-size: var(--fs-micro); padding: 2px 6px; }
     .hero-chart { height: 110px; }
   }
 </style>
