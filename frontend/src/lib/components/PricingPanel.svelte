@@ -14,7 +14,6 @@
 
   let { pricing }: Props = $props();
 
-  // Selected variant
   let selectedVariantName = $state<string>('');
 
   $effect(() => {
@@ -37,7 +36,6 @@
   let rawPrices = $derived(activeVariant ? pricingStore.getRawPrices(activeVariant) : []);
   let gradedPrices = $derived(activeVariant ? pricingStore.getGradedPrices(activeVariant) : []);
 
-  // Graded company filter
   let gradedCompanies = $derived.by(() => {
     const companies = new Set<string>();
     for (const p of gradedPrices) {
@@ -58,11 +56,8 @@
     gradedPrices.filter((p) => p.company === selectedCompany)
   );
 
-  // Expanded detail chart state (only one at a time per section)
   let expandedRawIndex = $state<number | null>(null);
   let expandedGradedIndex = $state<number | null>(null);
-
-  // Toast
   let toastMessage = $state('');
 
   function handleVariantSelect(name: string) {
@@ -84,7 +79,6 @@
     expandedGradedIndex = expandedGradedIndex === index ? null : index;
   }
 
-  // Company color helper
   function getCompanyColor(company: string): string {
     switch (company.toUpperCase()) {
       case 'PSA': return 'var(--chart-psa)';
@@ -95,19 +89,16 @@
     }
   }
 
-  // Share actions
   async function copyLink() {
     try {
       await navigator.clipboard.writeText(window.location.href);
       handleCopy('link');
-    } catch { /* clipboard may fail */ }
+    } catch {}
   }
 
   async function shareCard() {
     if (navigator.share) {
-      try {
-        await navigator.share({ url: window.location.href });
-      } catch { /* user cancelled */ }
+      try { await navigator.share({ url: window.location.href }); } catch {}
     } else {
       copyLink();
     }
@@ -116,7 +107,6 @@
 
 {#if pricing.variants && pricing.variants.length > 0 && activeVariant}
   <div class="pricing-section">
-    <!-- Hero Price -->
     <HeroPrice
       price={heroPrice}
       variant={activeVariant}
@@ -125,7 +115,6 @@
       timestamp={pricingStore.pricingTimestamp}
     />
 
-    <!-- Variant Pills -->
     {#if pricing.variants.length > 1}
       <VariantPills
         variants={pricing.variants}
@@ -134,7 +123,6 @@
       />
     {/if}
 
-    <!-- Tier 1: Raw Price Cards -->
     {#if rawPrices.length > 0}
       <div class="section-header">
         <span class="section-label">RAW PRICES</span>
@@ -156,7 +144,6 @@
       {/if}
     {/if}
 
-    <!-- Tier 1: Graded Price Cards -->
     {#if gradedPrices.length > 0}
       <div class="section-header graded-header">
         <div class="section-label-row">
@@ -195,25 +182,18 @@
       {/if}
     {/if}
 
-    <!-- Tier 3: Compare Trends -->
     {#if rawPrices.length > 0 || gradedPrices.length > 0}
       <CompareChart rawPrices={rawPrices} gradedPrices={gradedPrices} />
     {/if}
 
-    <!-- H: Share section — label left, buttons inline right -->
     <div class="share-section">
       <span class="share-label">SHARE THIS CARD</span>
       <div class="share-buttons">
-        <button class="share-btn" onclick={copyLink} type="button">
-          &#x1F517; Copy link
-        </button>
-        <button class="share-btn" onclick={shareCard} type="button">
-          &#x2197;&#xFE0F; Share
-        </button>
+        <button class="share-btn" onclick={copyLink} type="button">&#x1F517; Copy link</button>
+        <button class="share-btn" onclick={shareCard} type="button">&#x2197;&#xFE0F; Share</button>
       </div>
     </div>
 
-    <!-- Empty variant state -->
     {#if rawPrices.length === 0 && gradedPrices.length === 0}
       <div class="empty-variant">
         <span class="empty-icon">&empty;</span>
@@ -228,23 +208,14 @@
   <div class="pricing-error">
     <span class="error-icon">&#x26A0;&#xFE0F;</span>
     <span class="error-text">{pricingStore.pricingError}</span>
-    <button
-      class="error-close"
-      onclick={() => pricingStore.clearError()}
-      aria-label="Dismiss pricing error"
-      type="button"
-    >
-      &#x2715;
-    </button>
+    <button class="error-close" onclick={() => pricingStore.clearError()} aria-label="Dismiss pricing error" type="button">&#x2715;</button>
   </div>
 {/if}
 
 <Toast message={toastMessage} />
 
 <style>
-  .pricing-section {
-    margin-top: 16px;
-  }
+  .pricing-section { margin-top: 16px; }
 
   .section-header {
     display: flex;
@@ -254,19 +225,11 @@
     margin-bottom: 10px;
   }
 
-  .graded-header {
-    flex-wrap: wrap;
-    justify-content: space-between;
-  }
-
-  .section-label-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
+  .graded-header { flex-wrap: wrap; justify-content: space-between; }
+  .section-label-row { display: flex; align-items: center; gap: 6px; }
 
   .section-label {
-    font-size: 10px;
+    font-size: var(--fs-micro);
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -274,26 +237,19 @@
   }
 
   .section-period {
-    font-size: 10px;
+    font-size: var(--fs-micro);
     color: var(--text-dim);
   }
 
-  .price-cards-row {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
+  .price-cards-row { display: flex; gap: 8px; flex-wrap: wrap; }
 
-  .company-pills {
-    display: flex;
-    gap: 4px;
-  }
+  .company-pills { display: flex; gap: 4px; }
 
   .company-pill {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    font-size: 10px;
+    font-size: var(--fs-micro);
     font-weight: 500;
     color: var(--text-muted);
     background: none;
@@ -304,10 +260,7 @@
     transition: all 0.15s ease;
   }
 
-  .company-pill:hover {
-    border-color: rgba(255, 255, 255, 0.1);
-    background: none;
-  }
+  .company-pill:hover { border-color: rgba(255, 255, 255, 0.1); background: none; }
 
   .company-pill.active {
     border-color: var(--amber-border);
@@ -315,14 +268,8 @@
     color: var(--amber);
   }
 
-  .company-dot {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
+  .company-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
 
-  /* H: Share section — label left, buttons inline right */
   .share-section {
     margin-top: 24px;
     padding-top: 16px;
@@ -333,7 +280,7 @@
   }
 
   .share-label {
-    font-size: 10px;
+    font-size: var(--fs-micro);
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -341,13 +288,10 @@
     flex-shrink: 0;
   }
 
-  .share-buttons {
-    display: flex;
-    gap: 8px;
-  }
+  .share-buttons { display: flex; gap: 8px; }
 
   .share-btn {
-    font-size: 11px;
+    font-size: var(--fs-badge);
     font-weight: 500;
     color: var(--text-muted);
     background: none;
@@ -358,39 +302,13 @@
     transition: all 0.15s ease;
   }
 
-  .share-btn:hover {
-    border-color: var(--amber-border);
-    color: var(--amber);
-    background: none;
-  }
+  .share-btn:hover { border-color: var(--amber-border); color: var(--amber); background: none; }
 
-  /* Empty variant state */
-  .empty-variant {
-    text-align: center;
-    padding: 32px 16px;
-    color: var(--text-dim);
-  }
+  .empty-variant { text-align: center; padding: 32px 16px; color: var(--text-dim); }
+  .empty-icon { font-size: var(--fs-hero); display: block; margin-bottom: 8px; opacity: 0.5; }
+  .empty-text { margin: 0 0 4px 0; font-size: var(--fs-secondary); color: var(--text-muted); }
+  .empty-sub { margin: 0; font-size: var(--fs-badge); color: var(--text-dim); }
 
-  .empty-icon {
-    font-size: 28px;
-    display: block;
-    margin-bottom: 8px;
-    opacity: 0.5;
-  }
-
-  .empty-text {
-    margin: 0 0 4px 0;
-    font-size: 13px;
-    color: var(--text-muted);
-  }
-
-  .empty-sub {
-    margin: 0;
-    font-size: 11px;
-    color: var(--text-dim);
-  }
-
-  /* Pricing error */
   .pricing-error {
     margin-top: 16px;
     background-color: rgba(248, 113, 113, 0.08);
@@ -403,7 +321,7 @@
   }
 
   .error-icon { font-size: 1.1em; flex-shrink: 0; }
-  .error-text { color: var(--price-red); flex: 1; font-size: 12px; }
+  .error-text { color: var(--price-red); flex: 1; font-size: var(--fs-body); }
 
   .error-close {
     background-color: transparent;
@@ -419,24 +337,12 @@
   .error-close:hover { opacity: 0.7; background: none; }
 
   @media (max-width: 768px) {
-    .price-cards-row {
-      flex-wrap: wrap;
-    }
-
-    .price-cards-row > :global(.price-card) {
-      min-width: calc(50% - 4px);
-      flex: 0 0 calc(50% - 4px);
-    }
-
-    .share-section {
-      flex-wrap: wrap;
-    }
+    .price-cards-row { flex-wrap: wrap; }
+    .price-cards-row > :global(.price-card) { min-width: calc(50% - 4px); flex: 0 0 calc(50% - 4px); }
+    .share-section { flex-wrap: wrap; }
   }
 
   @media (max-width: 480px) {
-    .price-cards-row > :global(.price-card) {
-      min-width: 100%;
-      flex: 0 0 100%;
-    }
+    .price-cards-row > :global(.price-card) { min-width: 100%; flex: 0 0 100%; }
   }
 </style>
