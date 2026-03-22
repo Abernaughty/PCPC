@@ -161,7 +161,7 @@
   }
 
   .card-label {
-    font-size: 11px;
+    font-size: var(--fs-badge);
     font-weight: 500;
     color: var(--text-muted);
     text-transform: uppercase;
@@ -169,7 +169,7 @@
   }
 
   .trend-badge {
-    font-size: 10px;
+    font-size: var(--fs-micro);
     font-weight: 500;
     padding: 1px 5px;
     border-radius: 3px;
@@ -211,7 +211,7 @@
   }
 
   .low-price {
-    font-size: 10px;
+    font-size: var(--fs-micro);
     color: var(--text-dim);
     display: block;
     margin-top: 2px;
@@ -229,7 +229,7 @@
   }
 
   .detail-btn {
-    font-size: 10px;
+    font-size: var(--fs-micro);
     font-weight: 500;
     color: var(--amber);
     background: none;
