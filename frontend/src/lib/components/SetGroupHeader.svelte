@@ -1,12 +1,4 @@
 <script lang="ts">
-  /**
-   * SetGroupHeader — Presentational component for expansion group headers.
-   *
-   * Layout:
-   *   SCARLET & VIOLET                 2023 – present
-   *
-   * Sticky-positioned so it stays visible while scrolling within the group.
-   */
   import type { GroupedSets } from '$lib/types';
 
   interface Props {
@@ -36,7 +28,7 @@
   }
 
   .group-header__label {
-    font-size: 11px;
+    font-size: var(--fs-badge);
     font-weight: 500;
     color: var(--text-muted);
     text-transform: uppercase;
@@ -49,7 +41,7 @@
   }
 
   .group-header__range {
-    font-size: 10px;
+    font-size: var(--fs-micro);
     color: var(--text-dim);
     flex-shrink: 0;
     margin-left: 12px;
