@@ -1,13 +1,15 @@
 /**
  * Cards Store - Card data management using Svelte 5 runes
- * Reacts to selectedSet changes in setsStore
+ *
+ * Card loading is triggered imperatively by setsStore.selectSet(),
+ * NOT via a reactive $effect. This avoids an infinite loop where
+ * $effect -> loadCardsForSet -> mutate $state -> re-trigger $effect.
  */
 
 import { browser } from '$app/environment';
 import type { PokemonCard } from '$lib/types';
 import { api } from '$lib/services/api';
 import { db } from '$lib/services/db';
-import { setsStore } from './sets.svelte';
 import { createContextLogger } from '$lib/services/logger';
 
 const log = createContextLogger('cardStore');
@@ -36,7 +38,8 @@ function createCardsStore(): CardsStore {
   let cardName: string = $derived(selectedCard?.name || '');
 
   /**
-   * Load cards for a specific set
+   * Load cards for a specific set.
+   * Called imperatively from setsStore.selectSet() — not from a reactive $effect.
    */
   async function loadCardsForSet(setId: string): Promise<void> {
     if (isLoadingCards) return;
@@ -96,27 +99,6 @@ function createCardsStore(): CardsStore {
   function resetCards() {
     cardsInSet = [];
     selectedCard = null;
-  }
-
-  /**
-   * Effect: React to selectedSet changes and load cards.
-   * Uses $effect.root() because this store is created at module scope,
-   * outside of any Svelte component tree.
-   */
-  if (browser) {
-    $effect.root(() => {
-      $effect(() => {
-        const selectedSet = setsStore.selectedSet;
-        if (selectedSet) {
-          loadCardsForSet(selectedSet.id).catch((err) => {
-            log.error(`Failed to auto-load cards: ${err}`);
-          });
-        } else {
-          cardsInSet = [];
-          selectedCard = null;
-        }
-      });
-    });
   }
 
   return {

@@ -1,5 +1,9 @@
 /**
  * IndexedDB Service - Client-side caching for sets, cards, and pricing
+ *
+ * Cache TTLs are tuned to data volatility:
+ * - Sets/Cards: 7 days (static post-release, new sets launch ~quarterly)
+ * - Pricing: 24 hours (prices fluctuate but not minute-to-minute)
  */
 
 import type { PokemonSet, PokemonCard, PricingResult } from '$lib/types';
@@ -22,9 +26,9 @@ const STORE_NAMES = {
 
 // Cache durations (in milliseconds)
 const CACHE_DURATION = {
-  SETS: 24 * 60 * 60 * 1000, // 24 hours
-  CARDS: 24 * 60 * 60 * 1000, // 24 hours
-  PRICING: 60 * 60 * 1000, // 1 hour
+  SETS: 7 * 24 * 60 * 60 * 1000,    // 7 days — set list is static, new sets launch ~quarterly
+  CARDS: 7 * 24 * 60 * 60 * 1000,   // 7 days — card list per set never changes post-release
+  PRICING: 24 * 60 * 60 * 1000,     // 24 hours — prices fluctuate but not minute-to-minute
 } as const;
 
 /**

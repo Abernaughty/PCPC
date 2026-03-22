@@ -1,6 +1,10 @@
 /**
- * Expansion Mapper - Maps Pokémon sets to their expansion era
+ * Expansion Mapper - Maps Pokemon sets to their expansion era
  * Groups sets by expansion for dropdown display
+ *
+ * Sorting is fully dynamic based on releaseDate — no hardcoded
+ * expansion order array. Groups and sets within groups are both
+ * sorted newest-first.
  */
 
 import type { PokemonSet, GroupedSets } from '$lib/types';
@@ -8,180 +12,77 @@ import { createContextLogger } from './logger';
 
 const log = createContextLogger('expansionMapper');
 
-// Expansion priority order for dropdown display
-const EXPANSION_ORDER = [
-  'Scarlet & Violet',
-  'Sword & Shield',
-  'Sun & Moon',
-  'XY',
-  'Black & White',
-  'HeartGold & SoulSilver',
-  'Call of Legends',
-  'Platinum',
-  'Diamond & Pearl',
-  'EX',
-  'Neo',
-  'Gym',
-  'Base Set',
-  'Other',
-] as const;
-
-// Regex patterns for set codes mapping to expansions
-const EXPANSION_PATTERNS: Record<string, RegExp[]> = {
-  'Scarlet & Violet': [
-    /^SV\d+[a-z]?$/i,
-    /^sv/i,
-  ],
-  'Sword & Shield': [
-    /^SWSH\d+$/i,
-    /^s[1-9]/i,
-  ],
-  'Sun & Moon': [
-    /^SM\d+[a-z]?$/i,
-    /^us/i,
-  ],
-  'XY': [
-    /^XY\d+$/i,
-    /^xy\d+$/i,
-  ],
-  'Black & White': [
-    /^BW\d+$/i,
-    /^bw\d+$/i,
-  ],
-  'HeartGold & SoulSilver': [
-    /^HGSS\d+$/i,
-    /^hgss/i,
-  ],
-  'Call of Legends': [
-    /^COL\d+$/i,
-    /^col\d+$/i,
-  ],
-  'Platinum': [
-    /^PL\d+$/i,
-    /^pl\d+$/i,
-  ],
-  'Diamond & Pearl': [
-    /^DP\d+$/i,
-    /^dp\d+$/i,
-  ],
-  'EX': [
-    /^EX\d+$/i,
-    /^ex\d+$/i,
-  ],
-  'Neo': [
-    /^NEO\d+$/i,
-    /^neo\d+$/i,
-  ],
-  'Gym': [
-    /^GYM\d+$/i,
-    /^gym\d+$/i,
-  ],
-  'Base Set': [
-    /^BS\d+$/i,
-    /^base/i,
-  ],
-};
-
-// Special case mappings for specific set codes
-const SPECIAL_CASES: Record<string, string> = {
-  // Scarlet & Violet special cases
-  sv04: 'Scarlet & Violet',
-  sv04pt: 'Scarlet & Violet',
-  sv4pt: 'Scarlet & Violet',
-
-  // Sword & Shield special cases
-  swsh1: 'Sword & Shield',
-  swsh2: 'Sword & Shield',
-  swsh3: 'Sword & Shield',
-
-  // Sun & Moon special cases
-  sm1: 'Sun & Moon',
-  usm1: 'Sun & Moon',
-
-  // Older special cases
-  bs2: 'Base Set',
-  base: 'Base Set',
-};
-
-// Set name mappings for sets without codes (fallback)
-const SET_NAME_MAPPINGS: Record<string, string> = {
-  'Scarlet & Violet': 'Scarlet & Violet',
-  'Sword & Shield': 'Sword & Shield',
-  'Sun & Moon': 'Sun & Moon',
-  'XY': 'XY',
-  'Black & White': 'Black & White',
-  'HeartGold & SoulSilver': 'HeartGold & SoulSilver',
-  'Call of Legends': 'Call of Legends',
-  'Platinum': 'Platinum',
-  'Diamond & Pearl': 'Diamond & Pearl',
-  'EX': 'EX',
-  'Neo': 'Neo',
-  'Gym': 'Gym',
-  'Base Set': 'Base Set',
-
-  // Abbreviations
-  'S&V': 'Scarlet & Violet',
-  'S & V': 'Scarlet & Violet',
-  'SW&SH': 'Sword & Shield',
-  'SM': 'Sun & Moon',
-  'B&W': 'Black & White',
-  'HGSS': 'HeartGold & SoulSilver',
-  'DP': 'Diamond & Pearl',
-};
-
 const FALLBACK_EXPANSION = 'Other';
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Parse a releaseDate string (e.g. "2026/01/30" or "2026-01-30") into a
+ * comparable timestamp. Returns 0 for missing / unparseable dates so they
+ * sort to the end.
+ */
+function parseDateToTimestamp(dateStr?: string): number {
+  if (!dateStr) return 0;
+  // Normalise separators — Scrydex uses "/" but be safe with "-"
+  const ts = new Date(dateStr.replace(/\//g, '-')).getTime();
+  return Number.isNaN(ts) ? 0 : ts;
+}
+
+/**
+ * Format a timestamp to "Mon YYYY" (e.g. "Aug 2023").
+ * Returns empty string for missing dates.
+ */
+function formatMonthYear(dateStr?: string): string {
+  if (!dateStr) return '';
+  const d = new Date(dateStr.replace(/\//g, '-'));
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+}
+
+/**
+ * Derive a date range label for a group of sets.
+ * e.g. "2023 – present" or "2019 – 2022"
+ */
+function getDateRangeLabel(sets: PokemonSet[]): string {
+  const timestamps = sets
+    .map(s => parseDateToTimestamp(s.releaseDate))
+    .filter(t => t > 0);
+  if (timestamps.length === 0) return '';
+
+  const minYear = new Date(Math.min(...timestamps)).getFullYear();
+  const maxYear = new Date(Math.max(...timestamps)).getFullYear();
+  const currentYear = new Date().getFullYear();
+
+  if (maxYear >= currentYear) {
+    return `${minYear} – present`;
+  }
+  if (minYear === maxYear) {
+    return `${minYear}`;
+  }
+  return `${minYear} – ${maxYear}`;
+}
+
+// ---------------------------------------------------------------------------
+// Core API
+// ---------------------------------------------------------------------------
 
 /**
  * Get expansion era for a single set.
- * Scrydex provides a `series` field directly on expansions — use it as the
- * primary grouping key when available. Falls back to code/name pattern
- * matching for any sets where series is missing or unrecognized.
+ * Uses the Scrydex `series` field directly. Falls back to "Other".
  */
 export function getExpansionForSet(set: PokemonSet): string {
-  // Scrydex provides series directly — use it if it matches a known expansion
-  if (set.series && EXPANSION_ORDER.includes(set.series as any)) {
-    return set.series;
-  }
-
-  const code = set.code?.toLowerCase() || '';
-  const name = set.name || '';
-
-  // Check special cases first
-  if (code in SPECIAL_CASES) {
-    return SPECIAL_CASES[code];
-  }
-
-  // Try pattern matching on set code
-  if (code) {
-    for (const [expansion, patterns] of Object.entries(EXPANSION_PATTERNS)) {
-      for (const pattern of patterns) {
-        if (pattern.test(code)) {
-          log.debug(`Code "${code}" matched expansion "${expansion}"`);
-          return expansion;
-        }
-      }
-    }
-  }
-
-  // Try set name mapping
-  if (name in SET_NAME_MAPPINGS) {
-    return SET_NAME_MAPPINGS[name];
-  }
-
-  // If Scrydex provides a series that isn't in our known list, use it directly
-  // (e.g., a new expansion era we haven't added to EXPANSION_ORDER yet)
   if (set.series) {
-    log.debug(`Using Scrydex series "${set.series}" as expansion for set: ${name}`);
     return set.series;
   }
 
-  // Fallback
-  log.debug(`No expansion match for set: ${name} (code: ${code}), using fallback`);
+  log.debug(`No series for set: ${set.name} (code: ${set.code}), using fallback`);
   return FALLBACK_EXPANSION;
 }
 
 /**
- * Group sets by expansion era
+ * Group sets by expansion era.
  */
 export function groupSetsByExpansion(
   sets: PokemonSet[]
@@ -200,38 +101,59 @@ export function groupSetsByExpansion(
 }
 
 /**
- * Prepare grouped sets for dropdown display
- * Returns arrays in expansion priority order
+ * Prepare grouped sets for dropdown display.
+ *
+ * Sorting strategy (all dynamic, no hardcoded order):
+ *  1. Sets within each group: sorted by releaseDate descending (newest first)
+ *  2. Groups: sorted by the newest releaseDate among their sets (newest first)
+ *  3. "Other" group always sorts last regardless of dates
  */
 export function prepareGroupedSetsForDropdown(
   groupedSets: Record<string, PokemonSet[]>
 ): GroupedSets[] {
-  const result: GroupedSets[] = [];
+  const groups: GroupedSets[] = [];
 
-  // Iterate through expansions in priority order
-  for (const expansion of EXPANSION_ORDER) {
-    if (groupedSets[expansion]) {
-      result.push({
-        type: 'group',
-        label: expansion,
-        items: groupedSets[expansion],
-      });
-    }
-  }
-
-  // Add any unmapped expansions not in the order
   for (const [expansion, sets] of Object.entries(groupedSets)) {
-    if (!EXPANSION_ORDER.includes(expansion as any)) {
-      result.push({
-        type: 'group',
-        label: expansion,
-        items: sets,
-      });
-    }
+    // Sort sets within group by releaseDate descending
+    const sortedSets = [...sets].sort((a, b) => {
+      const tsA = parseDateToTimestamp(a.releaseDate);
+      const tsB = parseDateToTimestamp(b.releaseDate);
+      return tsB - tsA; // newest first
+    });
+
+    const dateRange = getDateRangeLabel(sortedSets);
+    const label = dateRange ? `${expansion}` : expansion;
+
+    groups.push({
+      type: 'group',
+      label,
+      items: sortedSets,
+      dateRange,
+    });
   }
 
-  return result;
+  // Sort groups by newest set date descending, "Other" always last
+  groups.sort((a, b) => {
+    if (a.label === FALLBACK_EXPANSION) return 1;
+    if (b.label === FALLBACK_EXPANSION) return -1;
+
+    const newestA = a.items.length > 0 ? parseDateToTimestamp(a.items[0].releaseDate) : 0;
+    const newestB = b.items.length > 0 ? parseDateToTimestamp(b.items[0].releaseDate) : 0;
+    return newestB - newestA; // newest group first
+  });
+
+  log.info(
+    `Prepared ${groups.length} expansion groups: ${groups.map(g => `${g.label} (${g.items.length})`).join(', ')}`
+  );
+
+  return groups;
 }
+
+// ---------------------------------------------------------------------------
+// Utility exports (used by components for display formatting)
+// ---------------------------------------------------------------------------
+
+export { parseDateToTimestamp, formatMonthYear, getDateRangeLabel };
 
 /**
  * Expansion mapper object - main export
@@ -240,6 +162,7 @@ export const expansionMapper = {
   getExpansionForSet,
   groupSetsByExpansion,
   prepareGroupedSetsForDropdown,
-  EXPANSION_ORDER,
+  formatMonthYear,
+  getDateRangeLabel,
   FALLBACK_EXPANSION,
 };

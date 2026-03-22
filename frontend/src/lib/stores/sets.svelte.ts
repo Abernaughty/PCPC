@@ -18,6 +18,7 @@ interface SetsStore {
   isLoadingSets: boolean;
   loadSets(forceRefresh?: boolean): Promise<void>;
   selectSet(set: PokemonSet): void;
+  clearSet(): void;
 }
 
 /**
@@ -90,9 +91,16 @@ function createSetsStore(): SetsStore {
     log.debug(`Selected set: ${set.name} (${set.code})`);
 
     // Trigger card loading for the selected set
-    // Import cardsStore at the top of the file to use this
     const { cardsStore } = await import('./cards.svelte');
     await cardsStore.loadCardsForSet(set.id);
+  }
+
+  /**
+   * Clear the selected set and reset dependent state
+   */
+  function clearSet(): void {
+    selectedSet = null;
+    log.debug('Cleared selected set');
   }
 
   return {
@@ -114,6 +122,7 @@ function createSetsStore(): SetsStore {
 
     loadSets,
     selectSet,
+    clearSet,
   };
 }
 

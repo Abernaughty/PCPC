@@ -517,3 +517,4 @@ These remain separate tasks:
 - **Issue #3**: Duplicate API calls — still open
 - **Issue #4**: Excessive IndexedDB writes (100 individual ops per card load) — still open
 - **Issue #5**: "No cards found" text persists — still open
+>>>>>>> origin/main
