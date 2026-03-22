@@ -14,8 +14,8 @@
   /* ── Text hierarchy ── */
   --text-primary: #e8eaef;        /* Headings, card names */
   --text-secondary: #d7dee3;      /* Body text, price values */
-  --text-muted: #6b7280;          /* Labels, metadata */
-  --text-dim: #4b5563;            /* Timestamps, ranges */
+  --text-muted: #9ca3af;          /* Labels, metadata (strong lift for contrast) */
+  --text-dim: #7c8493;            /* Timestamps, ranges (strong lift for contrast) */
   --text-faint: #374151;          /* Borders, least important text */
 
   /* ── Accent ── */
@@ -87,6 +87,14 @@
   --radius-input: 6px;
   --radius-badge: 4px;
   --radius-pill: 6px;
+
+  /* ── Font size scale (components reference these) ── */
+  --fs-micro: 10px;               /* Uppercase labels, badges, hints */
+  --fs-badge: 11px;               /* Metadata, secondary labels */
+  --fs-body: 12px;                /* Body text, inputs, card info */
+  --fs-secondary: 13px;           /* Secondary text */
+  --fs-card-name: 20px;           /* Card name heading */
+  --fs-hero: 28px;                /* Hero price */
 
   /* ── Layout scaling ── */
   --content-max-width: 1400px;
@@ -201,13 +209,13 @@ html, body {
 }
 
 /* ── Typography utility classes ── */
-.text-micro   { font-size: 10px; }
-.text-badge   { font-size: 11px; }
-.text-body    { font-size: 12px; }
-.text-secondary { font-size: 13px; }
+.text-micro   { font-size: var(--fs-micro); }
+.text-badge   { font-size: var(--fs-badge); }
+.text-body    { font-size: var(--fs-body); }
+.text-secondary { font-size: var(--fs-secondary); }
 .text-section { font-size: 16px; font-weight: 500; letter-spacing: -0.3px; }
 .text-card    { font-size: 18px; font-weight: 500; letter-spacing: -0.3px; }
-.text-hero    { font-size: 28px; font-weight: 500; letter-spacing: -0.3px; }
+.text-hero    { font-size: var(--fs-hero); font-weight: 500; letter-spacing: -0.3px; }
 
 /* ── Links ── */
 a {
@@ -222,7 +230,7 @@ a:visited { color: var(--color-link-visited); }
 label {
   display: block;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--fs-badge);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -329,18 +337,20 @@ button:disabled {
    Desktop scaling breakpoints (#12A)
    ============================================================ */
 
-/* Large desktop (1800px+): widen layout, bump font */
+/* Large desktop (1800px+): widen layout, bump fonts, increase padding */
 @media (min-width: 1800px) {
   :root {
     --content-max-width: 1600px;
+    --fs-micro: 11px;
+    --fs-badge: 12px;
+    --fs-body: 13px;
+    --fs-secondary: 14px;
+    --fs-card-name: 22px;
+    --fs-hero: 32px;
   }
 
   body {
     font-size: 14px;
-  }
-
-  .text-hero {
-    font-size: 32px;
   }
 }
 
@@ -357,7 +367,7 @@ button:disabled {
     font-size: 14px;
   }
 
-  .text-hero {
-    font-size: 24px;
+  :root {
+    --fs-hero: 24px;
   }
 }
