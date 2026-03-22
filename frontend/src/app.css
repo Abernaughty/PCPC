@@ -7,20 +7,20 @@
 
 :root {
   /* ── Surfaces (three depth levels) ── */
-  --surface-0: #0d0f14;           /* Deepest: page bg, footer */
-  --surface-1: #12141b;           /* Main content area */
-  --surface-2: #1a1d28;           /* Elevated: cards, inputs, hero price */
+  --surface-0: #0d0f14;
+  --surface-1: #12141b;
+  --surface-2: #1a1d28;
 
   /* ── Text hierarchy ── */
-  --text-primary: #e8eaef;        /* Headings, card names */
-  --text-secondary: #d7dee3;      /* Body text, price values */
-  --text-muted: #9ca3af;          /* Labels, metadata (strong lift for contrast) */
-  --text-dim: #7c8493;            /* Timestamps, ranges (strong lift for contrast) */
-  --text-faint: #374151;          /* Borders, least important text */
+  --text-primary: #e8eaef;
+  --text-secondary: #d7dee3;
+  --text-muted: #9ca3af;
+  --text-dim: #7c8493;
+  --text-faint: #374151;
 
   /* ── Accent ── */
-  --accent-red: #e8453c;          /* Primary button, active states */
-  --accent-red-dark: #d63a31;     /* Button hover */
+  --accent-red: #e8453c;
+  --accent-red-dark: #d63a31;
 
   /* ── Amber accent (v7) ── */
   --amber: #c49a6c;
@@ -28,9 +28,9 @@
   --amber-border: rgba(196, 154, 108, 0.25);
 
   /* ── Pricing ── */
-  --price-green: #4ade80;         /* Market price, positive trends */
-  --price-red: #f87171;           /* Negative trends */
-  --price-neutral: #9ca3af;       /* Flat trends */
+  --price-green: #4ade80;
+  --price-red: #f87171;
+  --price-neutral: #9ca3af;
 
   /* ── Language badges ── */
   --badge-en-bg: rgba(59, 130, 246, 0.1);
@@ -89,15 +89,17 @@
   --radius-pill: 6px;
 
   /* ── Font size scale (components reference these) ── */
-  --fs-micro: 10px;               /* Uppercase labels, badges, hints */
-  --fs-badge: 11px;               /* Metadata, secondary labels */
-  --fs-body: 12px;                /* Body text, inputs, card info */
-  --fs-secondary: 13px;           /* Secondary text */
-  --fs-card-name: 20px;           /* Card name heading */
-  --fs-hero: 28px;                /* Hero price */
+  --fs-micro: 10px;
+  --fs-badge: 11px;
+  --fs-body: 12px;
+  --fs-secondary: 13px;
+  --fs-card-name: 20px;
+  --fs-hero: 28px;
 
   /* ── Layout scaling ── */
   --content-max-width: 1400px;
+  --sidebar-width: 200px;
+  --layout-gap: 24px;
 
   /* ── Shadows ── */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -122,18 +124,14 @@
   --bg-dropdown: var(--surface-2);
   --bg-hover: rgba(255, 255, 255, 0.04);
   --bg-group-header: var(--surface-1);
-
   --border-input: var(--border-subtle);
   --border-focus: var(--accent-red);
   --border-primary: var(--border-subtle);
   --border-secondary: var(--border-faint);
-
   --text-inverse: var(--text-primary);
-
   --color-pokemon-blue: var(--text-secondary);
   --color-pokemon-red: var(--accent-red);
   --color-pokemon-red-dark: var(--accent-red-dark);
-
   --color-header-bg: var(--surface-1);
   --color-heading: var(--text-primary);
   --color-button-primary-bg: var(--accent-red);
@@ -154,15 +152,12 @@
   --button-disabled-bg: var(--surface-2);
   --button-disabled-text: var(--text-dim);
   --focus-ring-color: rgba(232, 69, 60, 0.25);
-
   --shadow-light: rgba(0, 0, 0, 0.3);
   --shadow-medium: rgba(0, 0, 0, 0.4);
   --shadow-heavy: rgba(0, 0, 0, 0.6);
-
   --scrollbar-track-bg: var(--surface-1);
   --scrollbar-thumb-bg: var(--surface-2);
   --scrollbar-thumb-hover-bg: var(--text-dim);
-
   --bg-image-opacity: 0;
 }
 
@@ -171,44 +166,24 @@
    ============================================================ */
 
 html, body {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Geist', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-tap-highlight-color: transparent;
+  width: 100%; height: 100%; margin: 0; padding: 0; box-sizing: border-box;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  color: var(--text-primary);
-  background-color: var(--surface-0);
-  font-size: 13px;
-  line-height: 1.5;
-  letter-spacing: -0.01em;
-  position: relative;
+  color: var(--text-primary); background-color: var(--surface-0);
+  font-size: 13px; line-height: 1.5; letter-spacing: -0.01em; position: relative;
 }
 
-/* Dot grid background pattern */
 body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
+  content: ''; position: fixed; inset: 0;
   background: radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 24px 24px;
-  pointer-events: none;
-  z-index: 0;
+  background-size: 24px 24px; pointer-events: none; z-index: 0;
 }
 
-/* Prevent horizontal overflow on mobile */
-html, body {
-  overflow-x: hidden;
-}
+html, body { overflow-x: hidden; }
 
-/* ── Typography utility classes ── */
 .text-micro   { font-size: var(--fs-micro); }
 .text-badge   { font-size: var(--fs-badge); }
 .text-body    { font-size: var(--fs-body); }
@@ -217,127 +192,47 @@ html, body {
 .text-card    { font-size: 18px; font-weight: 500; letter-spacing: -0.3px; }
 .text-hero    { font-size: var(--fs-hero); font-weight: 500; letter-spacing: -0.3px; }
 
-/* ── Links ── */
-a {
-  color: var(--color-link);
-  text-decoration: none;
-  transition: color var(--transition-speed) var(--transition-fn);
-}
+a { color: var(--color-link); text-decoration: none; transition: color var(--transition-speed) var(--transition-fn); }
 a:hover { color: var(--text-primary); }
 a:visited { color: var(--color-link-visited); }
 
-/* ── Form elements ── */
-label {
-  display: block;
-  color: var(--text-muted);
-  font-size: var(--fs-badge);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
+label { display: block; color: var(--text-muted); font-size: var(--fs-badge); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
 
 input, button, select, textarea {
-  font-family: inherit;
-  font-size: inherit;
-  padding: 0.5em 0.75em;
-  margin: 0;
-  box-sizing: border-box;
-  border: 0.5px solid var(--border-subtle);
-  border-radius: var(--radius-input);
-  background-color: var(--surface-2);
-  color: var(--text-primary);
-  transition: border-color var(--transition-speed) var(--transition-fn),
-              box-shadow var(--transition-speed) var(--transition-fn);
+  font-family: inherit; font-size: inherit; padding: 0.5em 0.75em; margin: 0; box-sizing: border-box;
+  border: 0.5px solid var(--border-subtle); border-radius: var(--radius-input);
+  background-color: var(--surface-2); color: var(--text-primary);
+  transition: border-color var(--transition-speed) var(--transition-fn), box-shadow var(--transition-speed) var(--transition-fn);
 }
 
-input:focus, select:focus, textarea:focus {
-  outline: none;
-  border-color: var(--accent-red);
-  box-shadow: var(--focus-ring);
-}
-
-input::placeholder {
-  color: var(--text-dim);
-}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent-red); box-shadow: var(--focus-ring); }
+input::placeholder { color: var(--text-dim); }
 
 button {
-  color: var(--button-text-color);
-  background-color: var(--accent-red);
-  border: none;
-  border-radius: var(--radius-input);
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color var(--transition-speed) var(--transition-fn),
-              box-shadow var(--transition-speed) var(--transition-fn);
+  color: var(--button-text-color); background-color: var(--accent-red); border: none;
+  border-radius: var(--radius-input); cursor: pointer; font-weight: 500;
+  transition: background-color var(--transition-speed) var(--transition-fn), box-shadow var(--transition-speed) var(--transition-fn);
 }
+button:hover:not(:disabled) { background-color: var(--accent-red-dark); }
+button:disabled { color: var(--button-disabled-text); background-color: var(--button-disabled-bg); cursor: not-allowed; }
 
-button:hover:not(:disabled) {
-  background-color: var(--accent-red-dark);
-}
-
-button:disabled {
-  color: var(--button-disabled-text);
-  background-color: var(--button-disabled-bg);
-  cursor: not-allowed;
-}
-
-/* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: var(--scrollbar-track-bg); }
-::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb-bg);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--scrollbar-thumb-hover-bg);
-}
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb-bg); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover-bg); }
 
-/* ── Skeleton loading animation ── */
-@keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+.skeleton { background: linear-gradient(90deg, var(--surface-2) 25%, rgba(255, 255, 255, 0.04) 50%, var(--surface-2) 75%); background-size: 200% 100%; animation: shimmer 1.5s ease-in-out infinite; border-radius: var(--radius-input); }
 
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--surface-2) 25%,
-    rgba(255, 255, 255, 0.04) 50%,
-    var(--surface-2) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
-  border-radius: var(--radius-input);
-}
-
-/* ── Toast animation ── */
-@keyframes toast-in {
-  from { transform: translateY(100%); opacity: 0; }
-  to   { transform: translateY(0); opacity: 1; }
-}
-
-@keyframes toast-out {
-  from { transform: translateY(0); opacity: 1; }
-  to   { transform: translateY(100%); opacity: 0; }
-}
-
-/* ── Live dot pulse animation ── */
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-
-/* ── Detail expand animation ── */
-@keyframes expand-in {
-  from { max-height: 0; opacity: 0; }
-  to   { max-height: 400px; opacity: 1; }
-}
+@keyframes toast-in { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes toast-out { from { transform: translateY(0); opacity: 1; } to { transform: translateY(100%); opacity: 0; } }
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes expand-in { from { max-height: 0; opacity: 0; } to { max-height: 400px; opacity: 1; } }
 
 /* ============================================================
    Desktop scaling breakpoints (#12A)
    ============================================================ */
 
-/* Large desktop (1800px+): widen layout, bump fonts, increase padding */
 @media (min-width: 1800px) {
   :root {
     --content-max-width: 1600px;
@@ -347,27 +242,17 @@ button:disabled {
     --fs-secondary: 14px;
     --fs-card-name: 22px;
     --fs-hero: 32px;
+    --sidebar-width: 280px;
+    --layout-gap: 32px;
   }
-
-  body {
-    font-size: 14px;
-  }
+  body { font-size: 14px; }
 }
 
-/* Ultra-wide (2200px+): even wider */
 @media (min-width: 2200px) {
-  :root {
-    --content-max-width: 1800px;
-  }
+  :root { --content-max-width: 1800px; }
 }
 
-/* ── Mobile base adjustments ── */
 @media (max-width: 768px) {
-  body {
-    font-size: 14px;
-  }
-
-  :root {
-    --fs-hero: 24px;
-  }
+  body { font-size: 14px; }
+  :root { --fs-hero: 24px; }
 }

@@ -63,7 +63,7 @@
 </div>
 
 <style>
-  .card-sidebar { flex-shrink: 0; width: 200px; }
+  .card-sidebar { flex-shrink: 0; width: var(--sidebar-width, 200px); }
   .card-image-button { position: relative; display: block; width: 100%; padding: 0; margin: 0; border: none; background: none; cursor: pointer; border-radius: 8px; overflow: visible; }
   .ambient-glow { position: absolute; bottom: -8px; left: 10%; right: 10%; height: 60%; border-radius: 50%; filter: blur(16px); opacity: 0.5; z-index: 0; pointer-events: none; }
   .card-image { width: 100%; height: auto; display: block; border-radius: 8px; position: relative; z-index: 1; transition: transform 0.3s ease; }
