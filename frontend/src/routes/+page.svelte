@@ -133,7 +133,7 @@
   .offline-message { background-color: rgba(255, 165, 0, 0.1); border: 0.5px solid var(--color-pokemon-red); border-radius: var(--radius-input); padding: 10px 14px; margin-bottom: 16px; color: var(--text-primary); text-align: center; font-size: var(--fs-body); }
   .results-container { background-color: var(--bg-container); border: 0.5px solid var(--border-subtle); border-radius: var(--radius-card); padding: 24px; box-shadow: var(--shadow-sm); position: relative; }
   .results-container::before { content: ''; position: absolute; top: 0; left: 20px; right: 20px; height: 1px; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08) 30%, rgba(255, 255, 255, 0.12) 50%, rgba(255, 255, 255, 0.08) 70%, transparent); border-radius: 1px; pointer-events: none; }
-  .results-layout { display: flex; gap: 24px; align-items: flex-start; }
+  .results-layout { display: flex; gap: var(--layout-gap, 24px); align-items: flex-start; }
   .results-sidebar { flex-shrink: 0; position: sticky; top: 24px; align-self: flex-start; }
   .results-main { flex: 1; min-width: 0; overflow: visible; position: relative; }
   .card-header { margin-bottom: 4px; }
