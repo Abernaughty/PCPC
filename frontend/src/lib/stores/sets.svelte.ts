@@ -1,5 +1,5 @@
 /**
- * Sets Store - Pokémon set data management using Svelte 5 runes
+ * Sets Store - Pok\u00e9mon set data management using Svelte 5 runes
  */
 
 import { browser } from '$app/environment';
@@ -84,15 +84,18 @@ function createSetsStore(): SetsStore {
   }
 
   /**
-   * Select a set and update the store
+   * Select a set and trigger card loading.
+   * Passes the set's expected total to the card store so it can
+   * detect and invalidate stale partial caches in IndexedDB.
    */
   async function selectSet(set: PokemonSet): Promise<void> {
     selectedSet = set;
     log.debug(`Selected set: ${set.name} (${set.code})`);
 
-    // Trigger card loading for the selected set
+    // Pass expected total for stale-cache detection
+    const expectedTotal = set.total ?? set.cardCount ?? undefined;
     const { cardsStore } = await import('./cards.svelte');
-    await cardsStore.loadCardsForSet(set.id);
+    await cardsStore.loadCardsForSet(set.id, expectedTotal);
   }
 
   /**

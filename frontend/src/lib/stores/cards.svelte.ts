@@ -19,7 +19,7 @@ interface CardsStore {
   selectedCard: PokemonCard | null;
   cardName: string;
   isLoadingCards: boolean;
-  loadCardsForSet(setId: string): Promise<void>;
+  loadCardsForSet(setId: string, expectedTotal?: number): Promise<void>;
   selectCard(card: PokemonCard): void;
   resetCards(): void;
 }
@@ -40,8 +40,11 @@ function createCardsStore(): CardsStore {
   /**
    * Load cards for a specific set.
    * Called imperatively from setsStore.selectSet() — not from a reactive $effect.
+   * @param setId - The set ID to load cards for
+   * @param expectedTotal - The expected number of cards in the set (from set metadata).
+   *                        Used to detect stale partial data in IndexedDB cache.
    */
-  async function loadCardsForSet(setId: string): Promise<void> {
+  async function loadCardsForSet(setId: string, expectedTotal?: number): Promise<void> {
     if (isLoadingCards) return;
 
     isLoadingCards = true;
@@ -50,9 +53,9 @@ function createCardsStore(): CardsStore {
     try {
       let cards: PokemonCard[] | null = null;
 
-      // Try cache first
+      // Try cache first, passing expectedTotal for stale-data detection
       if (browser) {
-        cards = await db.getCardsForSet(setId);
+        cards = await db.getCardsForSet(setId, expectedTotal);
         if (cards) {
           log.info(`Retrieved ${cards.length} cards from cache`);
         }

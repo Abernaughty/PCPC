@@ -17,7 +17,7 @@ import {
 import { getConfig } from '$lib/server/config';
 import type { Card, CardImage } from '$lib/server/models/types';
 
-/** Map backend Card → frontend PokemonCard shape */
+/** Map backend Card to frontend PokemonCard shape */
 function cardToFrontend(card: Card) {
   return {
     id: card.id,
@@ -95,16 +95,53 @@ export const GET: RequestHandler = async ({ params, url }) => {
       }
     }
 
+    // Fetch expected total from Scrydex set metadata for count validation.
+    // This is a lightweight call that helps us detect stale partial data
+    // in Cosmos DB (e.g. 100 cards cached before the pagination fix).
+    let expectedTotal = 0;
+    if (!cards) {
+      try {
+        const scrydexService = getScrydexApiService();
+        const expansion = await scrydexService.getExpansion(setId);
+        if (expansion) {
+          expectedTotal = expansion.total || 0;
+          console.log(`[GetCardsBySet] Set ${setId} expected total: ${expectedTotal}`);
+        }
+      } catch (err: any) {
+        console.warn(`[GetCardsBySet] Could not fetch set metadata for ${setId}: ${err.message}`);
+        // Non-fatal: we'll still try Cosmos/Scrydex without count validation
+      }
+    }
+
     // Check Cosmos DB
     if (!cards) {
       console.log(`[GetCardsBySet] Checking Cosmos DB for set ${setId}`);
       const cosmosService = getCosmosDbService();
-      cards = await cosmosService.getCardsBySetId(setId);
+      const cosmosCards = await cosmosService.getCardsBySetId(setId);
 
-      if (cards && cards.length > 0) {
-        console.log(
-          `[GetCardsBySet] Found ${cards.length} cards in Cosmos DB for set ${setId}`
-        );
+      if (cosmosCards && cosmosCards.length > 0) {
+        // Validate: if we know the expected total and Cosmos has fewer, the data is stale.
+        // Fall through to Scrydex to get the complete set.
+        if (expectedTotal > 0 && cosmosCards.length < expectedTotal) {
+          console.log(
+            `[GetCardsBySet] Cosmos DB has stale data for set ${setId}: ` +
+            `${cosmosCards.length} cards vs ${expectedTotal} expected. Falling through to Scrydex API.`
+          );
+
+          monitoring.trackEvent('cosmos.stale', {
+            functionName: 'GetCardsBySet',
+            correlationId,
+            setId,
+            cosmosCount: cosmosCards.length,
+            expectedTotal,
+          });
+          // cards remains null — will proceed to Scrydex fetch below
+        } else {
+          console.log(
+            `[GetCardsBySet] Found ${cosmosCards.length} cards in Cosmos DB for set ${setId}`
+          );
+          cards = cosmosCards;
+        }
       }
     }
 

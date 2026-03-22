@@ -26,9 +26,9 @@ const STORE_NAMES = {
 
 // Cache durations (in milliseconds)
 const CACHE_DURATION = {
-  SETS: 7 * 24 * 60 * 60 * 1000,    // 7 days — set list is static, new sets launch ~quarterly
-  CARDS: 7 * 24 * 60 * 60 * 1000,   // 7 days — card list per set never changes post-release
-  PRICING: 24 * 60 * 60 * 1000,     // 24 hours — prices fluctuate but not minute-to-minute
+  SETS: 7 * 24 * 60 * 60 * 1000,    // 7 days
+  CARDS: 7 * 24 * 60 * 60 * 1000,   // 7 days
+  PRICING: 24 * 60 * 60 * 1000,     // 24 hours
 } as const;
 
 /**
@@ -136,6 +136,36 @@ async function clearStore(storeName: string): Promise<void> {
 }
 
 /**
+ * Delete specific records from a store by their IDs
+ */
+async function deleteFromStore(storeName: string, ids: IDBValidKey[]): Promise<void> {
+  if (ids.length === 0) return;
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeName, 'readwrite');
+    const store = transaction.objectStore(storeName);
+    let completed = 0;
+    let hasError = false;
+
+    for (const id of ids) {
+      const request = store.delete(id);
+      request.onerror = () => {
+        if (!hasError) {
+          hasError = true;
+          reject(request.error);
+        }
+      };
+      request.onsuccess = () => {
+        completed++;
+        if (completed === ids.length && !hasError) {
+          resolve();
+        }
+      };
+    }
+  });
+}
+
+/**
  * Database service - main export
  */
 export const db = {
@@ -180,9 +210,29 @@ export const db = {
   },
 
   /**
-   * Save cards for a specific set
+   * Save cards for a specific set.
+   * Clears any existing cached cards for this set first to prevent
+   * stale partial data from persisting alongside the fresh batch.
    */
   async saveCardsForSet(setId: string | number, cards: PokemonCard[]): Promise<void> {
+    // First, clear any existing cards for this set to prevent stale partial data
+    try {
+      const existingRecords = await getAllFromStore<{ id: string; setId: string | number }>(
+        STORE_NAMES.CARDS_BY_SET
+      );
+      const staleIds = existingRecords
+        .filter((r) => r.setId === setId)
+        .map((r) => r.id);
+
+      if (staleIds.length > 0) {
+        log.debug(`Clearing ${staleIds.length} stale cached cards for set ${setId}`);
+        await deleteFromStore(STORE_NAMES.CARDS_BY_SET, staleIds);
+      }
+    } catch (err) {
+      log.warn(`Failed to clear stale cards for set ${setId}, proceeding with save:`, err);
+    }
+
+    // Now save the fresh batch
     for (const card of cards) {
       await putInStore(STORE_NAMES.CARDS_BY_SET, {
         setId,
@@ -195,9 +245,11 @@ export const db = {
   },
 
   /**
-   * Get cached cards for a specific set
+   * Get cached cards for a specific set.
+   * If expectedTotal is provided and the cached count is lower,
+   * treats the cache as stale and returns null.
    */
-  async getCardsForSet(setId: string | number): Promise<PokemonCard[] | null> {
+  async getCardsForSet(setId: string | number, expectedTotal?: number): Promise<PokemonCard[] | null> {
     try {
       const records = await getAllFromStore<{
         setId: string | number;
@@ -209,10 +261,18 @@ export const db = {
 
       if (!cardsForSet.length) return null;
 
-      // Check if cache is still valid
+      // Check if cache is still valid (TTL)
       const cacheTime = cardsForSet[0].cacheTime;
       if (Date.now() - cacheTime > CACHE_DURATION.CARDS) {
         log.debug(`Card cache expired for set ${setId}`);
+        return null;
+      }
+
+      // Check if cache has the expected number of cards
+      if (expectedTotal && expectedTotal > 0 && cardsForSet.length < expectedTotal) {
+        log.debug(
+          `Card cache for set ${setId} has ${cardsForSet.length} cards but expected ${expectedTotal}. Treating as stale.`
+        );
         return null;
       }
 
