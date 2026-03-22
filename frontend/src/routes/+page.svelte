@@ -128,18 +128,11 @@
       </div>
     {/if}
 
-    <!-- Pricing Loading Skeleton -->
-    {#if pricingStore.isLoading}
-      <div class="results-container">
-        <SkeletonLoader variant="pricing" />
-      </div>
-    {/if}
-
-    <!-- Results Section -->
-    {#if !pricingStore.isLoading && setsStore.selectedSet && cardsStore.selectedCard}
+    <!-- Results Section: CardDetailPanel stays mounted while pricing loads -->
+    {#if setsStore.selectedSet && cardsStore.selectedCard}
       <div class="results-container">
         <div class="results-layout">
-          <!-- Left: Sticky card sidebar -->
+          <!-- Left: Sticky card sidebar (always visible when card selected) -->
           <div class="results-sidebar">
             <CardDetailPanel
               card={cardsStore.selectedCard}
@@ -164,7 +157,9 @@
               </p>
             </div>
 
-            {#if currentPricing}
+            {#if pricingStore.isLoading}
+              <SkeletonLoader variant="pricing" />
+            {:else if currentPricing}
               <PricingPanel pricing={currentPricing} />
             {/if}
           </div>
@@ -211,7 +206,7 @@
   }
 
   .header-content {
-    max-width: 1200px;
+    max-width: var(--content-max-width, 1400px);
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
@@ -241,7 +236,7 @@
 
   .main-content {
     flex: 1;
-    max-width: 1200px;
+    max-width: var(--content-max-width, 1400px);
     margin: 0 auto;
     width: 100%;
     padding: 24px;

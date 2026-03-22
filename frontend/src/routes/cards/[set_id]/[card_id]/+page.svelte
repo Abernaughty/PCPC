@@ -52,6 +52,10 @@
     return 'Loading... | PCPC';
   });
 
+  // Track whether we have enough data to show the card sidebar
+  // (separate from pricing loading, so the panel doesn't flash)
+  let cardReady = $derived(!!setsStore.selectedSet && !!cardsStore.selectedCard);
+
   function handlePriceFetched(info: { setId: string; cardId: string; name: string; imageUrl: string | null; setName: string }) {
     recentLookupsRef?.addLookup(info);
     goto(`/cards/${info.setId}/${info.cardId}`, { replaceState: true });
@@ -200,13 +204,15 @@
       </div>
     {/if}
 
-    {#if isDeepLinkLoading || pricingStore.isLoading}
+    <!-- Deep link initial loading (before card data is available) -->
+    {#if isDeepLinkLoading && !cardReady}
       <div class="results-container">
         <SkeletonLoader variant="pricing" />
       </div>
     {/if}
 
-    {#if !isDeepLinkLoading && !pricingStore.isLoading && setsStore.selectedSet && cardsStore.selectedCard}
+    <!-- Results: CardDetailPanel stays mounted, only pricing section loads -->
+    {#if cardReady}
       <div class="results-container">
         <div class="results-layout">
           <div class="results-sidebar">
@@ -232,7 +238,9 @@
               </p>
             </div>
 
-            {#if currentPricing}
+            {#if isDeepLinkLoading || pricingStore.isLoading}
+              <SkeletonLoader variant="pricing" />
+            {:else if currentPricing}
               <PricingPanel pricing={currentPricing} />
             {/if}
           </div>
@@ -278,7 +286,7 @@
   }
 
   .header-content {
-    max-width: 1200px;
+    max-width: var(--content-max-width, 1400px);
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
@@ -323,7 +331,7 @@
 
   .main-content {
     flex: 1;
-    max-width: 1200px;
+    max-width: var(--content-max-width, 1400px);
     margin: 0 auto;
     width: 100%;
     padding: 24px;

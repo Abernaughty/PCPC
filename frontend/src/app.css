@@ -88,6 +88,9 @@
   --radius-badge: 4px;
   --radius-pill: 6px;
 
+  /* ── Layout scaling ── */
+  --content-max-width: 1400px;
+
   /* ── Shadows ── */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
@@ -320,6 +323,32 @@ button:disabled {
 @keyframes expand-in {
   from { max-height: 0; opacity: 0; }
   to   { max-height: 400px; opacity: 1; }
+}
+
+/* ============================================================
+   Desktop scaling breakpoints (#12A)
+   ============================================================ */
+
+/* Large desktop (1800px+): widen layout, bump font */
+@media (min-width: 1800px) {
+  :root {
+    --content-max-width: 1600px;
+  }
+
+  body {
+    font-size: 14px;
+  }
+
+  .text-hero {
+    font-size: 32px;
+  }
+}
+
+/* Ultra-wide (2200px+): even wider */
+@media (min-width: 2200px) {
+  :root {
+    --content-max-width: 1800px;
+  }
 }
 
 /* ── Mobile base adjustments ── */
