@@ -5,12 +5,14 @@
   import { cardsStore } from '$lib/stores/cards.svelte';
   import { pricingStore } from '$lib/stores/pricing.svelte';
 
-  interface RecentLookup {
+  export interface RecentLookup {
     setId: string;
     cardId: string;
     name: string;
     imageUrl: string | null;
     setName: string;
+    /** Language filter needed to find this set ('en' | 'jp' | 'both'). */
+    language?: string;
   }
 
   const STORAGE_KEY = 'pcpc_recent_lookups';
@@ -41,7 +43,45 @@
     persist();
   }
 
+  /**
+   * Ensure the language filter includes the set we need.
+   * Uses the stored language from the lookup entry, falling back to
+   * heuristic detection from the set ID.
+   */
+  async function ensureLanguageForSet(lookup: RecentLookup): Promise<void> {
+    const currentLang = setsStore.language;
+
+    // Determine what language this set needs
+    const needsJp = lookup.language === 'jp' || lookup.language === 'both'
+      || lookup.setId.endsWith('_ja') || lookup.setId.includes('_ja_') || lookup.setId.includes('_ja-');
+    const needsEn = !needsJp;
+
+    // If current filter already covers this set, nothing to do
+    if (currentLang === 'both') return;
+    if (needsJp && currentLang === 'jp') return;
+    if (needsEn && currentLang === 'en') return;
+
+    // Switch to 'both' to cover both languages
+    await setsStore.setLanguage('both');
+  }
+
+  /**
+   * Find a set by ID in the current store data.
+   */
+  function findSetInStore(setId: string): import('$lib/types').PokemonSet | null {
+    const direct = setsStore.availableSets.find((s) => s.id === setId);
+    if (direct) return direct;
+    for (const group of setsStore.groupedSetsForDropdown) {
+      if (group.type === 'group') {
+        const found = group.items.find((s) => s.id === setId);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
   async function handleChipClick(lookup: RecentLookup): Promise<void> {
+    // If the set is already selected, just find the card in the current list
     const currentSetId = setsStore.selectedSet?.id;
     if (currentSetId === lookup.setId) {
       const card = cardsStore.cardsInSet.find((c) => c.id === lookup.cardId);
@@ -53,15 +93,18 @@
       }
       return;
     }
-    const allSets = setsStore.groupedSetsForDropdown;
-    let targetSet = null;
-    for (const group of allSets) {
-      if (group.type === 'group') {
-        const found = group.items.find((s) => s.id === lookup.setId);
-        if (found) { targetSet = found; break; }
-      }
+
+    // Try to find the set in current store data
+    let targetSet = findSetInStore(lookup.setId);
+
+    // If not found, switch language filter and retry
+    if (!targetSet) {
+      await ensureLanguageForSet(lookup);
+      targetSet = findSetInStore(lookup.setId);
     }
+
     if (!targetSet) return;
+
     await setsStore.selectSet(targetSet);
     const card = cardsStore.cardsInSet.find((c) => c.id === lookup.cardId);
     if (card) {

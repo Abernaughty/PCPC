@@ -11,7 +11,7 @@
   interface Props {
     onsetselect?: (set: PokemonSet | null) => void;
     oncardselect?: (card: PokemonCard | null) => void;
-    onpricefetched?: (info: { setId: string; cardId: string; name: string; imageUrl: string | null; setName: string }) => void;
+    onpricefetched?: (info: { setId: string; cardId: string; name: string; imageUrl: string | null; setName: string; language: string }) => void;
   }
 
   let { onsetselect, oncardselect, onpricefetched }: Props = $props();
@@ -57,6 +57,7 @@
           name: card.name,
           imageUrl: imgUrl,
           setName: set.name,
+          language: setsStore.language,
         });
       }
     });

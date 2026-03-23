@@ -48,7 +48,7 @@
 
   let cardReady = $derived(!!setsStore.selectedSet && !!cardsStore.selectedCard);
 
-  function handlePriceFetched(info: { setId: string; cardId: string; name: string; imageUrl: string | null; setName: string }) {
+  function handlePriceFetched(info: { setId: string; cardId: string; name: string; imageUrl: string | null; setName: string; language: string }) {
     recentLookupsRef?.addLookup(info);
     goto(`/cards/${info.setId}/${info.cardId}`, { replaceState: true });
   }
@@ -61,17 +61,15 @@
   function handleBack() { goto('/'); }
 
   /**
-   * Find a set by ID across all available sets.
-   * If not found and the set ID suggests a different language (e.g. _ja suffix),
-   * switch the language filter to 'both' and retry so deep links work
-   * regardless of the user's saved language preference.
+   * Find a set by ID, auto-switching language filter if needed.
+   * Detects language mismatch from the set ID pattern and switches
+   * to 'both' so deep links work regardless of saved preference.
    */
   async function findSetById(setId: string): Promise<import('$lib/types').PokemonSet | null> {
-    // First: check current available sets
+    // Check current available sets
     let target = setsStore.availableSets.find((s) => s.id === setId) ?? null;
     if (target) return target;
 
-    // Also check grouped dropdown (may differ from availableSets due to online-only filter)
     for (const group of setsStore.groupedSetsForDropdown) {
       if (group.type === 'group') {
         const found = group.items.find((s) => s.id === setId);
@@ -79,13 +77,11 @@
       }
     }
 
-    // Not found — the set may be excluded by the current language filter.
-    // Detect if the set ID implies a specific language and switch if needed.
-    const isJpSet = setId.endsWith('_ja') || setId.includes('_ja_');
+    // Not found — likely a language filter mismatch. Switch to 'both' and retry.
+    const isJpSet = setId.endsWith('_ja') || setId.includes('_ja_') || setId.includes('_ja-');
     const currentLang = setsStore.language;
 
     if ((isJpSet && currentLang === 'en') || (!isJpSet && currentLang === 'jp')) {
-      // Language mismatch — switch to 'both' so we can find the set
       await setsStore.setLanguage('both');
 
       target = setsStore.availableSets.find((s) => s.id === setId) ?? null;
@@ -117,7 +113,17 @@
       if (!targetCard) { deepLinkError = `Card "${cardId}" not found in ${targetSet.name}.`; isDeepLinkLoading = false; return; }
       cardsStore.selectCard(targetCard);
       const result = await pricingStore.fetchCardPrice(setId, cardId);
-      if (result) { const imgUrl = targetCard.images?.[0]?.small ?? null; recentLookupsRef?.addLookup({ setId, cardId, name: targetCard.name, imageUrl: imgUrl, setName: targetSet.name }); }
+      if (result) {
+        const imgUrl = targetCard.images?.[0]?.small ?? null;
+        recentLookupsRef?.addLookup({
+          setId,
+          cardId,
+          name: targetCard.name,
+          imageUrl: imgUrl,
+          setName: targetSet.name,
+          language: setsStore.language,
+        });
+      }
     } catch (err) { const msg = err instanceof Error ? err.message : 'Unknown error'; deepLinkError = `Failed to load card: ${msg}`; }
     finally { isDeepLinkLoading = false; }
   });

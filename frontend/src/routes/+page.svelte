@@ -72,7 +72,7 @@
   let rarityColor = $derived(getRarityColor(cardsStore.selectedCard?.rarity));
   let rarityGradient = $derived(isGradientRarity(cardsStore.selectedCard?.rarity));
 
-  function handlePriceFetched(info: { setId: string; cardId: string; name: string; imageUrl: string | null; setName: string }) {
+  function handlePriceFetched(info: { setId: string; cardId: string; name: string; imageUrl: string | null; setName: string; language: string }) {
     recentLookupsRef?.addLookup(info);
     // Update URL without triggering SvelteKit navigation (avoids re-render flash)
     if (browser) {
