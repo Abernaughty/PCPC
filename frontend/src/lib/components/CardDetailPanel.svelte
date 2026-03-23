@@ -22,17 +22,6 @@
     return 'rgba(255, 255, 255, 0.06)';
   });
 
-  let rarityColor = $derived.by(() => {
-    const r = card.rarity?.toLowerCase() ?? '';
-    if (r.includes('special art') || r.includes('sar')) return '#fbbf24';
-    if (r.includes('ultra') || r.includes('ur')) return '#fbbf24';
-    if (r.includes('full art')) return '#f472b6';
-    if (r.includes('holo')) return '#a78bfa';
-    if (r.includes('rare')) return '#60a5fa';
-    if (r.includes('uncommon')) return '#4ade80';
-    return '#6b7280';
-  });
-
   function openLightbox() {
     if (largeImageUrl && onlightbox) onlightbox(largeImageUrl);
   }
@@ -48,18 +37,6 @@
   {:else}
     <div class="card-back"><div class="card-back-inner"><div class="pokeball-orb"><div class="pokeball-top"></div><div class="pokeball-line"></div><div class="pokeball-center"></div></div></div></div>
   {/if}
-
-  <div class="meta-chips">
-    {#if card.rarity}
-      <span class="chip chip-rarity">
-        <span class="rarity-dot" style="background-color: {rarityColor};"></span>
-        <span class="chip-text" style="color: {rarityColor};">{card.rarity}</span>
-      </span>
-    {/if}
-    {#if set.code}<span class="chip"><span class="chip-text">{set.code.toUpperCase()}</span></span>{/if}
-    {#if card.number || card.cardNumber}<span class="chip"><span class="chip-text">#{card.number || card.cardNumber}</span></span>{/if}
-    {#if card.artist}<span class="chip"><span class="chip-text">{card.artist}</span></span>{/if}
-  </div>
 </div>
 
 <style>
@@ -77,9 +54,5 @@
   .pokeball-top { position: absolute; top: 0; left: 0; right: 0; height: 50%; background: rgba(232, 69, 60, 0.4); }
   .pokeball-line { position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: rgba(255, 255, 255, 0.2); transform: translateY(-50%); }
   .pokeball-center { position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; border-radius: 50%; background: rgba(255, 255, 255, 0.15); border: 2px solid rgba(255, 255, 255, 0.25); transform: translate(-50%, -50%); }
-  .meta-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
-  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: var(--radius-badge); border: 0.5px solid var(--amber-border); background-color: var(--amber-dim); }
-  .rarity-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-  .chip-text { font-size: var(--fs-micro); font-weight: 500; letter-spacing: 0.3px; color: var(--amber); }
-  @media (max-width: 768px) { .card-sidebar { width: 180px; } .meta-chips { justify-content: center; } }
+  @media (max-width: 768px) { .card-sidebar { width: 180px; } }
 </style>
