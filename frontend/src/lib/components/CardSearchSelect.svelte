@@ -133,7 +133,7 @@
 
 <div class="card-search-select-container" class:disabled>
   <div class="input-wrapper">
-    <input bind:this={inputElement} type="text" placeholder={disabled ? 'Select a set first...' : placeholder} value={searchText} class="search-input" aria-label="Search cards" {disabled} />
+    <input bind:this={inputElement} type="text" placeholder={disabled ? placeholder : placeholder} value={searchText} class="search-input" aria-label="Search cards" {disabled} />
     {#if selectedCard}<button onclick={handleClear} class="clear-btn" aria-label="Clear selection" type="button">&#x2715;</button>{/if}
     <span class="dropdown-icon">&#x25BC;</span>
   </div>
@@ -166,6 +166,7 @@
                 <span class="card-name">{card.name}</span>
                 {#if nmPrice !== null}
                   <span class="price-badge" class:price-up={trend.direction === 'up'} class:price-down={trend.direction === 'down'}>
+                    <span class="price-period">(30d)</span>
                     {pricingStore.formatPrice(nmPrice, currency)}
                     {#if trend.direction === 'up'}<span class="trend-arrow">&#x25B2;</span>{:else if trend.direction === 'down'}<span class="trend-arrow">&#x25BC;</span>{/if}
                   </span>
@@ -215,11 +216,12 @@
   .card-info { display: flex; flex-direction: column; min-width: 0; gap: 1px; flex: 1; }
   .card-name-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
   .card-name { font-size: var(--fs-body); font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .price-badge { flex-shrink: 0; font-size: var(--fs-micro); color: var(--price-green); font-weight: 500; font-variant-numeric: tabular-nums; margin-left: auto; }
+  .price-badge { flex-shrink: 0; font-size: var(--fs-micro); color: var(--price-green); font-weight: 500; font-variant-numeric: tabular-nums; margin-left: auto; display: inline-flex; align-items: center; gap: 3px; }
   .price-badge.price-up { color: var(--price-green); }
   .price-badge.price-down { color: var(--price-red); }
   .price-badge.no-price { color: var(--text-faint); font-weight: 400; }
-  .trend-arrow { font-size: 8px; margin-left: 2px; }
+  .price-period { font-weight: 400; opacity: 0.6; font-size: 9px; }
+  .trend-arrow { font-size: 8px; }
   .card-number { font-size: var(--fs-micro); color: var(--text-muted); }
   .no-results { padding: 16px 8px; color: var(--text-muted); text-align: center; font-size: var(--fs-body); }
   .rarity-legend { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-top: 1px solid var(--border-faint); flex-shrink: 0; flex-wrap: wrap; }
