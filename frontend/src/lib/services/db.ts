@@ -1,6 +1,11 @@
 /**
  * IndexedDB Service - Client-side caching for sets, cards, and pricing
  *
+ * Uses batched transactions for write operations to minimize I/O overhead.
+ * Each bulk write (sets, cards) opens the database once and issues all
+ * puts within a single transaction, rather than opening N connections
+ * for N records.
+ *
  * Cache TTLs are tuned to data volatility:
  * - Sets/Cards: 7 days (static post-release, new sets launch ~quarterly)
  * - Pricing: 24 hours (prices fluctuate but not minute-to-minute)
@@ -31,8 +36,14 @@ const CACHE_DURATION = {
   PRICING: 24 * 60 * 60 * 1000,     // 24 hours
 } as const;
 
+// ----------------------------------------------------------------
+// Low-level helpers
+// ----------------------------------------------------------------
+
 /**
- * Open or create the IndexedDB database
+ * Open or create the IndexedDB database.
+ * All helpers below open the DB themselves so callers don't manage
+ * connection lifecycle.
  */
 function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -44,7 +55,6 @@ function openDatabase(): Promise<IDBDatabase> {
     };
 
     request.onsuccess = () => {
-      log.debug('Database opened successfully');
       resolve(request.result);
     };
 
@@ -52,7 +62,6 @@ function openDatabase(): Promise<IDBDatabase> {
       const db = (event.target as IDBOpenDBRequest).result;
       log.debug(`Upgrading database from version ${event.oldVersion} to ${DB_VERSION}`);
 
-      // Create stores if they don't exist
       const storeNames = Object.values(STORE_NAMES);
       for (const store of storeNames) {
         if (!db.objectStoreNames.contains(store)) {
@@ -64,7 +73,7 @@ function openDatabase(): Promise<IDBDatabase> {
 }
 
 /**
- * Get all records from a store
+ * Get all records from a store in a single read transaction.
  */
 async function getAllFromStore<T>(
   storeName: string,
@@ -72,8 +81,8 @@ async function getAllFromStore<T>(
 ): Promise<T[]> {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction(storeName, 'readonly');
-    const store = transaction.objectStore(storeName);
+    const tx = db.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
     const request = query ? store.getAll(query) : store.getAll();
 
     request.onerror = () => reject(request.error);
@@ -82,7 +91,7 @@ async function getAllFromStore<T>(
 }
 
 /**
- * Get a single record from a store
+ * Get a single record from a store.
  */
 async function getFromStore<T>(
   storeName: string,
@@ -90,8 +99,8 @@ async function getFromStore<T>(
 ): Promise<T | undefined> {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction(storeName, 'readonly');
-    const store = transaction.objectStore(storeName);
+    const tx = db.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
     const request = store.get(key);
 
     request.onerror = () => reject(request.error);
@@ -100,91 +109,154 @@ async function getFromStore<T>(
 }
 
 /**
- * Put a record into a store
+ * Put a single record into a store.
+ * Use for one-off writes (e.g. pricing, config). For bulk writes
+ * prefer batchPutInStore or clearAndBatchPut.
  */
 async function putInStore<T>(storeName: string, value: T): Promise<IDBValidKey> {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction(storeName, 'readwrite');
-    const store = transaction.objectStore(storeName);
+    const tx = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
     const request = store.put(value);
 
     request.onerror = () => reject(request.error);
-    request.onsuccess = () => {
-      log.debug(`Saved record to store: ${storeName}`);
-      resolve(request.result);
-    };
+    request.onsuccess = () => resolve(request.result);
   });
 }
 
 /**
- * Clear all records from a store
+ * Batch-put multiple records into a store in a single transaction.
+ * Opens the database once and issues all puts within one readwrite
+ * transaction, letting IndexedDB commit them atomically.
+ *
+ * This is the core optimisation for issue #4 — avoids N separate
+ * openDatabase() + transaction cycles for N records.
  */
-async function clearStore(storeName: string): Promise<void> {
+async function batchPutInStore<T>(storeName: string, values: T[]): Promise<void> {
+  if (values.length === 0) return;
+
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction(storeName, 'readwrite');
-    const store = transaction.objectStore(storeName);
-    const request = store.clear();
+    const tx = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
 
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => {
-      log.debug(`Cleared store: ${storeName}`);
-      resolve();
-    };
+    for (const value of values) {
+      store.put(value);
+    }
+
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error ?? new Error(`Transaction aborted on ${storeName}`));
   });
 }
 
 /**
- * Delete specific records from a store by their IDs
+ * Clear all records in a store then batch-put new records, all within
+ * a single transaction. Used by saveSetList where we want an atomic
+ * replace of the entire store contents.
+ */
+async function clearAndBatchPut<T>(storeName: string, values: T[]): Promise<void> {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+
+    // Clear first — the puts below execute within the same transaction
+    store.clear();
+
+    for (const value of values) {
+      store.put(value);
+    }
+
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error ?? new Error(`Transaction aborted on ${storeName}`));
+  });
+}
+
+/**
+ * Delete specific records by ID then batch-put new records, all
+ * within a single transaction. Used by saveCardsForSet where we
+ * need to remove stale entries for one set before inserting fresh ones.
+ */
+async function deleteIdsAndBatchPut<T>(
+  storeName: string,
+  idsToDelete: IDBValidKey[],
+  values: T[]
+): Promise<void> {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+
+    for (const id of idsToDelete) {
+      store.delete(id);
+    }
+
+    for (const value of values) {
+      store.put(value);
+    }
+
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error ?? new Error(`Transaction aborted on ${storeName}`));
+  });
+}
+
+/**
+ * Delete specific records from a store by their IDs in a single transaction.
  */
 async function deleteFromStore(storeName: string, ids: IDBValidKey[]): Promise<void> {
   if (ids.length === 0) return;
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction(storeName, 'readwrite');
-    const store = transaction.objectStore(storeName);
-    let completed = 0;
-    let hasError = false;
+    const tx = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
 
     for (const id of ids) {
-      const request = store.delete(id);
-      request.onerror = () => {
-        if (!hasError) {
-          hasError = true;
-          reject(request.error);
-        }
-      };
-      request.onsuccess = () => {
-        completed++;
-        if (completed === ids.length && !hasError) {
-          resolve();
-        }
-      };
+      store.delete(id);
     }
+
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error ?? new Error(`Transaction aborted on ${storeName}`));
   });
 }
 
 /**
- * Database service - main export
+ * Clear all records from a store.
  */
+async function clearStore(storeName: string): Promise<void> {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    const request = store.clear();
+
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve();
+  });
+}
+
+// ----------------------------------------------------------------
+// Public database service
+// ----------------------------------------------------------------
+
 export const db = {
   /**
-   * Save the list of all sets
+   * Save the list of all sets.
+   * Clears the store and writes all sets in a single atomic transaction.
    */
   async saveSetList(sets: PokemonSet[]): Promise<void> {
-    await clearStore(STORE_NAMES.SET_LIST);
-    for (const set of sets) {
-      await putInStore(STORE_NAMES.SET_LIST, {
-        ...set,
-        cacheTime: Date.now(),
-      });
-    }
-    log.info(`Saved ${sets.length} sets to cache`);
+    const now = Date.now();
+    const records = sets.map((set) => ({ ...set, cacheTime: now }));
+    await clearAndBatchPut(STORE_NAMES.SET_LIST, records);
+    log.info(`Saved ${sets.length} sets to cache (1 transaction)`);
   },
 
   /**
-   * Get the cached set list
+   * Get the cached set list.
    */
   async getSetList(): Promise<PokemonSet[] | null> {
     try {
@@ -194,7 +266,6 @@ export const db = {
 
       if (!sets.length) return null;
 
-      // Check if cache is still valid
       const cacheTime = sets[0].cacheTime;
       if (Date.now() - cacheTime > CACHE_DURATION.SETS) {
         log.debug('Set list cache expired');
@@ -211,37 +282,42 @@ export const db = {
 
   /**
    * Save cards for a specific set.
-   * Clears any existing cached cards for this set first to prevent
-   * stale partial data from persisting alongside the fresh batch.
+   * Clears any existing cached cards for this set then writes the
+   * fresh batch — all in a single atomic transaction.
    */
   async saveCardsForSet(setId: string | number, cards: PokemonCard[]): Promise<void> {
-    // First, clear any existing cards for this set to prevent stale partial data
+    const now = Date.now();
+
+    // Build the new records
+    const records = cards.map((card) => ({
+      setId,
+      card,
+      cacheTime: now,
+      id: `${setId}_${card.id}`,
+    }));
+
+    // Find stale IDs to delete (cards for this set from a previous cache)
+    let staleIds: IDBValidKey[] = [];
     try {
-      const existingRecords = await getAllFromStore<{ id: string; setId: string | number }>(
+      const existing = await getAllFromStore<{ id: string; setId: string | number }>(
         STORE_NAMES.CARDS_BY_SET
       );
-      const staleIds = existingRecords
+      staleIds = existing
         .filter((r) => r.setId === setId)
         .map((r) => r.id);
-
-      if (staleIds.length > 0) {
-        log.debug(`Clearing ${staleIds.length} stale cached cards for set ${setId}`);
-        await deleteFromStore(STORE_NAMES.CARDS_BY_SET, staleIds);
-      }
     } catch (err) {
-      log.warn(`Failed to clear stale cards for set ${setId}, proceeding with save:`, err);
+      log.warn(`Failed to read stale cards for set ${setId}, proceeding with save:`, err);
     }
 
-    // Now save the fresh batch
-    for (const card of cards) {
-      await putInStore(STORE_NAMES.CARDS_BY_SET, {
-        setId,
-        card,
-        cacheTime: Date.now(),
-        id: `${setId}_${card.id}`,
-      });
+    // Delete stale + insert fresh in one transaction
+    if (staleIds.length > 0) {
+      log.debug(`Replacing ${staleIds.length} stale cards with ${records.length} fresh cards for set ${setId}`);
+      await deleteIdsAndBatchPut(STORE_NAMES.CARDS_BY_SET, staleIds, records);
+    } else {
+      await batchPutInStore(STORE_NAMES.CARDS_BY_SET, records);
     }
-    log.info(`Saved ${cards.length} cards for set ${setId}`);
+
+    log.info(`Saved ${cards.length} cards for set ${setId} (1 transaction)`);
   },
 
   /**
@@ -261,14 +337,12 @@ export const db = {
 
       if (!cardsForSet.length) return null;
 
-      // Check if cache is still valid (TTL)
       const cacheTime = cardsForSet[0].cacheTime;
       if (Date.now() - cacheTime > CACHE_DURATION.CARDS) {
         log.debug(`Card cache expired for set ${setId}`);
         return null;
       }
 
-      // Check if cache has the expected number of cards
       if (expectedTotal && expectedTotal > 0 && cardsForSet.length < expectedTotal) {
         log.debug(
           `Card cache for set ${setId} has ${cardsForSet.length} cards but expected ${expectedTotal}. Treating as stale.`
@@ -286,7 +360,8 @@ export const db = {
   },
 
   /**
-   * Save pricing data for a card
+   * Save pricing data for a single card.
+   * Single-record write — putInStore is appropriate here.
    */
   async saveCardPricing(
     setId: string | number,
@@ -304,7 +379,7 @@ export const db = {
   },
 
   /**
-   * Get cached pricing for a card
+   * Get cached pricing for a card.
    */
   async getCardPricing(
     setId: string | number,
@@ -319,7 +394,6 @@ export const db = {
 
       if (!record) return null;
 
-      // Check if cache is still valid
       if (Date.now() - record.cacheTime > CACHE_DURATION.PRICING) {
         log.debug(`Pricing cache expired for card ${cardId}`);
         return null;
@@ -334,7 +408,7 @@ export const db = {
   },
 
   /**
-   * Save set list timestamp
+   * Save set list timestamp.
    */
   async saveSetListTimestamp(timestamp: number): Promise<void> {
     await putInStore(STORE_NAMES.CONFIG, {
@@ -344,7 +418,7 @@ export const db = {
   },
 
   /**
-   * Get set list timestamp
+   * Get set list timestamp.
    */
   async getSetListTimestamp(): Promise<number | null> {
     try {
@@ -360,7 +434,7 @@ export const db = {
   },
 
   /**
-   * Clear all cached data
+   * Clear all cached data.
    */
   async clearAllData(): Promise<void> {
     try {
@@ -374,7 +448,7 @@ export const db = {
   },
 
   /**
-   * Clean up expired pricing data
+   * Clean up expired pricing data in a single batched delete.
    */
   async cleanupExpiredPricingData(): Promise<number> {
     try {
@@ -383,29 +457,17 @@ export const db = {
         cacheTime: number;
       }>(STORE_NAMES.CARD_PRICING);
 
-      let deletedCount = 0;
       const now = Date.now();
+      const expiredIds = records
+        .filter((r) => now - r.cacheTime > CACHE_DURATION.PRICING)
+        .map((r) => r.id);
 
-      for (const record of records) {
-        if (now - record.cacheTime > CACHE_DURATION.PRICING) {
-          const db = await openDatabase();
-          await new Promise<void>((resolve, reject) => {
-            const transaction = db.transaction(STORE_NAMES.CARD_PRICING, 'readwrite');
-            const store = transaction.objectStore(STORE_NAMES.CARD_PRICING);
-            const request = store.delete(record.id);
-
-            request.onerror = () => reject(request.error);
-            request.onsuccess = () => resolve();
-          });
-          deletedCount++;
-        }
+      if (expiredIds.length > 0) {
+        await deleteFromStore(STORE_NAMES.CARD_PRICING, expiredIds);
+        log.info(`Cleaned up ${expiredIds.length} expired pricing records (1 transaction)`);
       }
 
-      if (deletedCount > 0) {
-        log.info(`Cleaned up ${deletedCount} expired pricing records`);
-      }
-
-      return deletedCount;
+      return expiredIds.length;
     } catch (err) {
       log.error('Error cleaning up expired pricing data:', err);
       return 0;
