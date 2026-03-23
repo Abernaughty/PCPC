@@ -51,13 +51,32 @@ async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
 
 export const api = {
   /**
-   * Get all Pokémon sets
+   * Get all Pok\u00e9mon sets.
+   * @param forceRefresh - Bypass server cache
+   * @param language - Language filter: 'en', 'jp', or 'both'
    */
-  async getSets(forceRefresh = false): Promise<PokemonSet[]> {
+  async getSets(forceRefresh = false, language = 'en'): Promise<PokemonSet[]> {
     const params = new URLSearchParams();
     if (forceRefresh) params.set('forceRefresh', 'true');
     params.set('all', 'true');
 
+    if (language === 'both') {
+      // Fetch EN and JP in parallel, merge results
+      params.set('language', 'en');
+      const enPromise = fetchApi<{ sets: PokemonSet[] }>(
+        `/sets?${params.toString()}`
+      );
+
+      params.set('language', 'jp');
+      const jpPromise = fetchApi<{ sets: PokemonSet[] }>(
+        `/sets?${params.toString()}`
+      );
+
+      const [enResult, jpResult] = await Promise.all([enPromise, jpPromise]);
+      return [...enResult.sets, ...jpResult.sets];
+    }
+
+    params.set('language', language);
     const result = await fetchApi<{ sets: PokemonSet[] }>(
       `/sets?${params.toString()}`
     );
@@ -65,7 +84,8 @@ export const api = {
   },
 
   /**
-   * Get cards for a specific set
+   * Get cards for a specific set.
+   * Cards now include pricing data from the list fetch (?include=prices).
    */
   async getCardsForSet(setId: string): Promise<PokemonCard[]> {
     const result = await fetchApi<{ cards: PokemonCard[]; pagination: any }>(
@@ -77,6 +97,8 @@ export const api = {
   /**
    * Get full card data including pricing for a specific card.
    * The card detail route returns the full card with variants/pricing inline.
+   * This is now a fallback for deep-link entry and global search —
+   * the primary flow gets pricing from the card list fetch.
    */
   async getCardPricing(
     setId: string,

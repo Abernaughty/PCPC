@@ -23,7 +23,7 @@ export interface GroupedSets {
   type: 'group';
   label: string;
   items: PokemonSet[];
-  /** Date range derived from set releaseDates, e.g. "2023 – present" */
+  /** Date range derived from set releaseDates, e.g. "2023 \u2013 present" */
   dateRange?: string;
 }
 
@@ -39,6 +39,8 @@ export interface PokemonCard {
   artist?: string;
   images?: CardImage[];
   variants?: CardVariant[];
+  /** Timestamp of when pricing was last fetched for this card */
+  pricingLastUpdated?: string;
 }
 
 export interface CardImage {
