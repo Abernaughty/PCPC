@@ -60,15 +60,58 @@
   function closeVariantSelector() { showVariantSelector = false; }
   function handleBack() { goto('/'); }
 
+  /**
+   * Find a set by ID across all available sets.
+   * If not found and the set ID suggests a different language (e.g. _ja suffix),
+   * switch the language filter to 'both' and retry so deep links work
+   * regardless of the user's saved language preference.
+   */
+  async function findSetById(setId: string): Promise<import('$lib/types').PokemonSet | null> {
+    // First: check current available sets
+    let target = setsStore.availableSets.find((s) => s.id === setId) ?? null;
+    if (target) return target;
+
+    // Also check grouped dropdown (may differ from availableSets due to online-only filter)
+    for (const group of setsStore.groupedSetsForDropdown) {
+      if (group.type === 'group') {
+        const found = group.items.find((s) => s.id === setId);
+        if (found) return found;
+      }
+    }
+
+    // Not found — the set may be excluded by the current language filter.
+    // Detect if the set ID implies a specific language and switch if needed.
+    const isJpSet = setId.endsWith('_ja') || setId.includes('_ja_');
+    const currentLang = setsStore.language;
+
+    if ((isJpSet && currentLang === 'en') || (!isJpSet && currentLang === 'jp')) {
+      // Language mismatch — switch to 'both' so we can find the set
+      await setsStore.setLanguage('both');
+
+      target = setsStore.availableSets.find((s) => s.id === setId) ?? null;
+      if (target) return target;
+
+      for (const group of setsStore.groupedSetsForDropdown) {
+        if (group.type === 'group') {
+          const found = group.items.find((s) => s.id === setId);
+          if (found) return found;
+        }
+      }
+    }
+
+    return null;
+  }
+
   onMount(async () => {
     const setId = $page.params.set_id;
     const cardId = $page.params.card_id;
     if (!setId || !cardId) { deepLinkError = 'Invalid card URL.'; isDeepLinkLoading = false; return; }
     try {
       if (setsStore.availableSets.length === 0) await setsStore.loadSets();
-      let targetSet = setsStore.availableSets.find((s) => s.id === setId) ?? null;
-      if (!targetSet) { for (const group of setsStore.groupedSetsForDropdown) { if (group.type === 'group') { const found = group.items.find((s) => s.id === setId); if (found) { targetSet = found; break; } } } }
+
+      const targetSet = await findSetById(setId);
       if (!targetSet) { deepLinkError = `Set "${setId}" not found.`; isDeepLinkLoading = false; return; }
+
       await setsStore.selectSet(targetSet);
       const targetCard = cardsStore.cardsInSet.find((c) => c.id === cardId) ?? null;
       if (!targetCard) { deepLinkError = `Card "${cardId}" not found in ${targetSet.name}.`; isDeepLinkLoading = false; return; }
