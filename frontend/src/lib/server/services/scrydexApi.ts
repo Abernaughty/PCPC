@@ -78,9 +78,10 @@ export interface ScrydexPrice {
  * Raw paginated response shape from the Scrydex API (snake_case).
  * The API returns: data, page, page_size, count, total_count
  *
- * NOTE: Some query params (e.g. ?select=) can strip pagination metadata
+ * NOTE: Some query params (e.g. ?select=) strip pagination metadata
  * from the response, making page/total_count undefined. All pagination
- * loops must be resilient to missing metadata.
+ * loops must be resilient to missing metadata — they use
+ * `data.length < fetchPageSize` as the stop condition.
  */
 interface ScrydexRawPaginatedResponse<T> {
   data: T[];
@@ -149,11 +150,12 @@ export interface ListingOptions {
 
 /**
  * Fields to select when fetching card lists from the Scrydex API.
+ * Trims ~15 unused game-data fields per card to reduce payload size.
  *
- * NOTE: ?select= is currently DISABLED because it strips pagination
- * metadata (page, total_count) from the response, breaking multi-page
- * fetches. See gotcha #13 in scrydex.md. This constant is retained
- * for documentation and future use if the API behavior is fixed.
+ * IMPORTANT: ?select= strips pagination metadata (page, total_count)
+ * from the Scrydex response. All pagination loops MUST use the hardened
+ * `data.length < fetchPageSize` stop condition, NOT totalCount.
+ * See gotcha #13 in scrydex.md.
  *
  * Only top-level fields are supported (no dot notation).
  * `variants` MUST be included to receive pricing data with ?include=prices.
@@ -434,15 +436,16 @@ export class ScrydexApiService implements IScrydexApiService {
         `[ScrydexApiService] Fetching cards for expansion ${expansionId} (page ${page}, pageSize ${pageSize})`
       );
 
-      // NOTE: ?select= is intentionally omitted — it strips pagination metadata
-      // from the response (page, total_count become undefined), breaking multi-page
-      // fetches. See gotcha #13 in scrydex.md. ?include=prices works fine alone.
-      const url = `${this.baseUrl}/expansions/${expansionId}/cards?page=${page}&page_size=${pageSize}&include=prices`;
+      // ?select= trims ~15 unused game-data fields per card (attacks, abilities, etc.)
+      // ?include=prices bundles pricing data with the card list (no separate fetch needed)
+      // NOTE: ?select= strips pagination metadata from the response — pagination
+      // loops use data.length < fetchPageSize as stop condition, not totalCount.
+      const url = `${this.baseUrl}/expansions/${expansionId}/cards?page=${page}&page_size=${pageSize}&select=${CARD_LIST_SELECT_FIELDS}&include=prices`;
 
       const response = await this.fetchPaginated<ScrydexCard>(url);
 
       console.log(
-        `[ScrydexApiService] Retrieved ${response.data.length} cards for expansion ${expansionId} (page ${response.page}, totalCount ${response.totalCount})`
+        `[ScrydexApiService] Retrieved ${response.data.length} cards for expansion ${expansionId} (page ${response.page || page}, totalCount ${response.totalCount || 'n/a'})`
       );
 
       this.cardsCache[cacheKey] = {
@@ -463,10 +466,11 @@ export class ScrydexApiService implements IScrydexApiService {
   /**
    * Fetch ALL cards in an expansion by paginating through every page.
    * Use this when hydrating Cosmos DB or when you need the complete set.
-   * Cards are fetched with ?include=prices for bundled pricing data.
+   * Cards are fetched with ?select= and ?include=prices for optimal payloads.
    *
-   * Pagination is resilient to missing totalCount metadata — stops when
-   * a page returns fewer items than the page size (last page) or is empty.
+   * Pagination is resilient to missing totalCount metadata (caused by ?select=)
+   * — stops when a page returns fewer items than the page size (last page)
+   * or is empty.
    */
   async getAllCardsInExpansion(expansionId: string): Promise<ScrydexCard[]> {
     const allCards: ScrydexCard[] = [];
