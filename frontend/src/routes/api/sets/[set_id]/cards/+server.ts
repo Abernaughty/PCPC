@@ -33,7 +33,14 @@ function cardToFrontend(card: Card) {
     setCode: card.setCode,
     setId: card.setId,
     setName: card.setName,
+    pricingLastUpdated: card.pricingLastUpdated,
   };
+}
+
+/** Check whether a card has any actual price values in its variants */
+function cardHasPricing(card: Card | null): boolean {
+  if (!card?.variants || card.variants.length === 0) return false;
+  return card.variants.some((v) => v.prices && v.prices.length > 0);
 }
 
 export const GET: RequestHandler = async ({ params, url }) => {
@@ -146,6 +153,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
     }
 
     // Fetch from Scrydex API — paginate through ALL pages to avoid truncation
+    // Cards now include pricing data via ?select=...&include=prices
     if (!cards || cards.length === 0) {
       console.log(`[GetCardsBySet] Fetching cards from Scrydex API for set ${setId}`);
       const apiStartTime = Date.now();
@@ -166,7 +174,9 @@ export const GET: RequestHandler = async ({ params, url }) => {
         });
 
         // Transform Scrydex cards to internal Card format and save to Cosmos DB
+        // Pricing data is now included from the list fetch via ?include=prices
         const cosmosService = getCosmosDbService();
+        const now = new Date().toISOString();
         const cardsToSave = allScrydexCards.map((card) => {
           const images: CardImage[] | undefined = card.images?.map((img) => ({
             type: img.type,
@@ -174,6 +184,9 @@ export const GET: RequestHandler = async ({ params, url }) => {
             medium: img.medium,
             large: img.large,
           }));
+
+          const variants = card.variants?.map(mapScrydexVariantToCardVariant);
+          const hasPricing = variants?.some((v) => v.prices && v.prices.length > 0) ?? false;
 
           const cosmosCard: Card = {
             id: card.id,
@@ -188,10 +201,12 @@ export const GET: RequestHandler = async ({ params, url }) => {
             rarityCode: card.rarity_code,
             artist: card.artist,
             images,
-            variants: card.variants?.map(mapScrydexVariantToCardVariant),
+            variants,
             language: card.language,
             languageCode: card.language_code,
-            lastUpdated: new Date().toISOString(),
+            lastUpdated: now,
+            // Track when pricing was last fetched so caches can check staleness
+            pricingLastUpdated: hasPricing ? now : undefined,
           };
           return cosmosCard;
         });
@@ -235,6 +250,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
     }
 
     const duration = Date.now() - startTime;
+    const pricingIncluded = cards.some((c) => cardHasPricing(c));
 
     monitoring.trackMetric('function.duration', duration, {
       functionName: 'GetCardsBySet',
@@ -252,10 +268,11 @@ export const GET: RequestHandler = async ({ params, url }) => {
       page,
       pageSize,
       resultCount: paginatedCards.length,
+      pricingIncluded,
     });
 
     console.log(
-      `[GetCardsBySet] Successfully returning ${paginatedCards.length} cards (${duration}ms)`
+      `[GetCardsBySet] Successfully returning ${paginatedCards.length} cards (${duration}ms, pricing: ${pricingIncluded})`
     );
 
     return apiSuccess(
