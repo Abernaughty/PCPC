@@ -4,10 +4,15 @@
  * Pricing is now variant-based (from Scrydex API). Each card can have
  * multiple variants, each with an array of VariantPrice entries for
  * different conditions (raw) and grades (graded).
+ *
+ * Primary flow: pricing data comes bundled with cards from the list
+ * fetch (?include=prices). The fetchCardPrice() method checks for
+ * pre-loaded pricing first and only falls back to the card detail
+ * endpoint when needed (deep links, global search).
  */
 
 import { browser } from '$app/environment';
-import type { PricingResult, VariantPrice, CardVariant } from '$lib/types';
+import type { PricingResult, VariantPrice, CardVariant, PokemonCard } from '$lib/types';
 import { api } from '$lib/services/api';
 import { db } from '$lib/services/db';
 import { createContextLogger } from '$lib/services/logger';
@@ -23,13 +28,22 @@ interface PricingStore {
   pricingIsStale: boolean;
   fetchCardPrice(
     setId: string,
-    cardId: string
+    cardId: string,
+    preloadedCard?: PokemonCard | null
   ): Promise<PricingResult | null>;
   getMarketPrice(pricing: PricingResult, variantName?: string): VariantPrice | null;
   getRawPrices(variant: CardVariant): VariantPrice[];
   getGradedPrices(variant: CardVariant): VariantPrice[];
   formatPrice(price: number | undefined, currency?: string): string;
   clearError(): void;
+}
+
+/**
+ * Check whether a card has any actual pricing data in its variants.
+ */
+function cardHasPricingData(card: PokemonCard | null | undefined): boolean {
+  if (!card?.variants || card.variants.length === 0) return false;
+  return card.variants.some((v) => v.prices && v.prices.length > 0);
 }
 
 /**
@@ -44,23 +58,58 @@ function createPricingStore(): PricingStore {
   let pricingIsStale: boolean = $state(false);
 
   /**
-   * Fetch pricing for a specific card
+   * Fetch pricing for a specific card.
+   *
+   * Fast path: if `preloadedCard` has pricing data in its variants
+   * (from the list fetch with ?include=prices), use it directly
+   * without making an API call. This path is synchronous — no loading
+   * state is shown, so the UI updates instantly with no flash.
+   *
+   * Fallback: fetch from the card detail endpoint (deep links, search).
+   * This path sets isLoading = true and shows a skeleton.
    */
   async function fetchCardPrice(
     setId: string,
-    cardId: string
+    cardId: string,
+    preloadedCard?: PokemonCard | null
   ): Promise<PricingResult | null> {
     const key = `${setId}_${cardId}`;
+    pricingError = null;
+
+    // ---- Fast path: pre-loaded pricing from card list fetch ----
+    // No loading state, no skeleton flash — instant display.
+    if (preloadedCard && cardHasPricingData(preloadedCard)) {
+      log.debug(`Using pre-loaded pricing for card ${cardId} (from list fetch)`);
+      const pricing: PricingResult = {
+        variants: preloadedCard.variants,
+        metadata: {
+          timestamp: Date.now(),
+          fromCache: false,
+          isStale: false,
+        },
+      };
+
+      priceData = { ...priceData, [key]: pricing };
+      pricingTimestamp = Date.now();
+      pricingFromCache = false;
+      pricingIsStale = false;
+      isLoading = false;
+
+      log.info(`Pricing loaded for card ${cardId} (preloaded, instant)`);
+      return pricing;
+    }
+
+    // ---- Async paths: cache or API fallback ----
+    // Show loading state since these involve async I/O.
     isLoading = true;
     pricingFromCache = false;
     pricingIsStale = false;
-    pricingError = null;
 
     try {
       let pricing: PricingResult | null = null;
 
-      // Try cache first
-      if (browser) {
+      // Try IndexedDB cache
+      if (!pricing && browser) {
         pricing = await db.getCardPricing(setId, cardId);
         if (pricing) {
           log.debug(`Retrieved pricing from cache for card ${cardId}`);
@@ -68,7 +117,7 @@ function createPricingStore(): PricingStore {
         }
       }
 
-      // Fetch from API if not in cache
+      // Fallback: fetch from card detail API endpoint
       if (!pricing) {
         pricing = await api.getCardPricing(setId, cardId);
         log.debug(`Retrieved pricing from API for card ${cardId}`);
@@ -172,7 +221,7 @@ function createPricingStore(): PricingStore {
     if (price === undefined || price === null) return 'N/A';
 
     if (currency === 'JPY') {
-      return `¥${Math.round(price).toLocaleString()}`;
+      return `\u00A5${Math.round(price).toLocaleString()}`;
     }
 
     return `$${price.toFixed(2)}`;

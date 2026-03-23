@@ -33,7 +33,31 @@ function cardToFrontend(card: Card) {
     setCode: card.setCode,
     setId: card.setId,
     setName: card.setName,
+    pricingLastUpdated: card.pricingLastUpdated,
   };
+}
+
+/** Check whether a card has any actual price values in its variants */
+function cardHasPricing(card: Card | null): boolean {
+  if (!card?.variants || card.variants.length === 0) return false;
+  return card.variants.some((v) => v.prices && v.prices.length > 0);
+}
+
+/**
+ * Check whether a set of cards from cache/DB includes pricing data.
+ * If fewer than 10% of cards have pricing, the data is likely from a
+ * pre-#19 fetch that didn't use ?include=prices, OR from a new set
+ * where pricing wasn't yet available. In either case, we should
+ * re-fetch from Scrydex to see if pricing is now available.
+ *
+ * This enables self-correction: when pricing eventually appears on
+ * Scrydex for a new set, the next user request detects the gap,
+ * re-fetches, and saveCards() upserts the enriched data into Cosmos.
+ */
+function cardsHavePricingData(cards: Card[]): boolean {
+  if (cards.length === 0) return false;
+  const withPricing = cards.filter(cardHasPricing).length;
+  return withPricing > cards.length * 0.1;
 }
 
 export const GET: RequestHandler = async ({ params, url }) => {
@@ -120,8 +144,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
       const cosmosCards = await cosmosService.getCardsBySetId(setId);
 
       if (cosmosCards && cosmosCards.length > 0) {
-        // Validate: if we know the expected total and Cosmos has fewer, the data is stale.
-        // Fall through to Scrydex to get the complete set.
+        // Staleness check 1: count mismatch
+        // If we know the expected total and Cosmos has fewer, the data is stale.
         if (expectedTotal > 0 && cosmosCards.length < expectedTotal) {
           console.log(
             `[GetCardsBySet] Cosmos DB has stale data for set ${setId}: ` +
@@ -134,6 +158,28 @@ export const GET: RequestHandler = async ({ params, url }) => {
             setId,
             cosmosCount: cosmosCards.length,
             expectedTotal,
+            reason: 'count_mismatch',
+          });
+          // cards remains null — will proceed to Scrydex fetch below
+        }
+        // Staleness check 2: missing pricing data
+        // Cards exist but lack pricing — either from a pre-#19 fetch or a new
+        // set where pricing wasn't available yet. Re-fetch to check if pricing
+        // is now available on Scrydex. saveCards() will upsert to self-correct.
+        else if (!cardsHavePricingData(cosmosCards)) {
+          const withPricing = cosmosCards.filter(cardHasPricing).length;
+          console.log(
+            `[GetCardsBySet] Cosmos DB cards for set ${setId} lack pricing data: ` +
+            `${withPricing}/${cosmosCards.length} have pricing. Falling through to Scrydex API.`
+          );
+
+          monitoring.trackEvent('cosmos.stale', {
+            functionName: 'GetCardsBySet',
+            correlationId,
+            setId,
+            cosmosCount: cosmosCards.length,
+            cardsWithPricing: withPricing,
+            reason: 'no_pricing',
           });
           // cards remains null — will proceed to Scrydex fetch below
         } else {
@@ -146,6 +192,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
     }
 
     // Fetch from Scrydex API — paginate through ALL pages to avoid truncation
+    // Cards now include pricing data via ?select=...&include=prices
     if (!cards || cards.length === 0) {
       console.log(`[GetCardsBySet] Fetching cards from Scrydex API for set ${setId}`);
       const apiStartTime = Date.now();
@@ -166,7 +213,9 @@ export const GET: RequestHandler = async ({ params, url }) => {
         });
 
         // Transform Scrydex cards to internal Card format and save to Cosmos DB
+        // Pricing data is now included from the list fetch via ?include=prices
         const cosmosService = getCosmosDbService();
+        const now = new Date().toISOString();
         const cardsToSave = allScrydexCards.map((card) => {
           const images: CardImage[] | undefined = card.images?.map((img) => ({
             type: img.type,
@@ -174,6 +223,9 @@ export const GET: RequestHandler = async ({ params, url }) => {
             medium: img.medium,
             large: img.large,
           }));
+
+          const variants = card.variants?.map(mapScrydexVariantToCardVariant);
+          const hasPricing = variants?.some((v) => v.prices && v.prices.length > 0) ?? false;
 
           const cosmosCard: Card = {
             id: card.id,
@@ -188,10 +240,12 @@ export const GET: RequestHandler = async ({ params, url }) => {
             rarityCode: card.rarity_code,
             artist: card.artist,
             images,
-            variants: card.variants?.map(mapScrydexVariantToCardVariant),
+            variants,
             language: card.language,
             languageCode: card.language_code,
-            lastUpdated: new Date().toISOString(),
+            lastUpdated: now,
+            // Track when pricing was last fetched so caches can check staleness
+            pricingLastUpdated: hasPricing ? now : undefined,
           };
           return cosmosCard;
         });
@@ -235,6 +289,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
     }
 
     const duration = Date.now() - startTime;
+    const pricingIncluded = cards.some((c) => cardHasPricing(c));
 
     monitoring.trackMetric('function.duration', duration, {
       functionName: 'GetCardsBySet',
@@ -252,10 +307,11 @@ export const GET: RequestHandler = async ({ params, url }) => {
       page,
       pageSize,
       resultCount: paginatedCards.length,
+      pricingIncluded,
     });
 
     console.log(
-      `[GetCardsBySet] Successfully returning ${paginatedCards.length} cards (${duration}ms)`
+      `[GetCardsBySet] Successfully returning ${paginatedCards.length} cards (${duration}ms, pricing: ${pricingIncluded})`
     );
 
     return apiSuccess(

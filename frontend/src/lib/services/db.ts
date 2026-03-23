@@ -6,9 +6,10 @@
  * puts within a single transaction, rather than opening N connections
  * for N records.
  *
- * Cache TTLs are tuned to data volatility:
- * - Sets/Cards: 7 days (static post-release, new sets launch ~quarterly)
- * - Pricing: 24 hours (prices fluctuate but not minute-to-minute)
+ * Cache TTLs:
+ * - Sets: 7 days (static post-release, new sets launch ~quarterly)
+ * - Cards: 24 hours (now includes pricing data from list fetch)
+ * - Pricing (legacy): 24 hours (separate pricing cache for deep-link fallback)
  */
 
 import type { PokemonSet, PokemonCard, PricingResult } from '$lib/types';
@@ -32,7 +33,7 @@ const STORE_NAMES = {
 // Cache durations (in milliseconds)
 const CACHE_DURATION = {
   SETS: 7 * 24 * 60 * 60 * 1000,    // 7 days
-  CARDS: 7 * 24 * 60 * 60 * 1000,   // 7 days
+  CARDS: 24 * 60 * 60 * 1000,       // 24 hours (unified with pricing)
   PRICING: 24 * 60 * 60 * 1000,     // 24 hours
 } as const;
 
@@ -361,7 +362,9 @@ export const db = {
 
   /**
    * Save pricing data for a single card.
-   * Single-record write — putInStore is appropriate here.
+   * This is the legacy fallback for deep-link and search flows where
+   * pricing is fetched separately via the card detail endpoint.
+   * For the primary flow, pricing is now bundled with cards from the list fetch.
    */
   async saveCardPricing(
     setId: string | number,
