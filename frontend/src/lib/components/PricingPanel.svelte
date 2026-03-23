@@ -215,7 +215,7 @@
 <Toast message={toastMessage} />
 
 <style>
-  .pricing-section { margin-top: 16px; }
+  .pricing-section { /* no top margin — aligns flush with card image column */ }
 
   .section-header {
     display: flex;
