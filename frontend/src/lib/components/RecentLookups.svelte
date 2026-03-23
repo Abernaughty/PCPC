@@ -36,6 +36,11 @@
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(lookups)); } catch {}
   }
 
+  function removeLookup(lookup: RecentLookup): void {
+    lookups = lookups.filter((l) => !(l.setId === lookup.setId && l.cardId === lookup.cardId));
+    persist();
+  }
+
   async function handleChipClick(lookup: RecentLookup): Promise<void> {
     const currentSetId = setsStore.selectedSet?.id;
     if (currentSetId === lookup.setId) {
@@ -85,6 +90,14 @@
             <span class="chip-thumb-placeholder"></span>
           {/if}
           <span class="chip-name">{lookup.name}</span>
+          <span
+            class="chip-remove"
+            role="button"
+            tabindex="-1"
+            aria-label="Remove {lookup.name} from recent"
+            onclick={(e) => { e.stopPropagation(); removeLookup(lookup); }}
+            onkeydown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); removeLookup(lookup); } }}
+          >&#x00D7;</span>
         </button>
       {/each}
     </div>
@@ -101,11 +114,14 @@
   .chips-scroll::-webkit-scrollbar { height: 3px; }
   .chips-scroll::-webkit-scrollbar-track { background: transparent; }
   .chips-scroll::-webkit-scrollbar-thumb { background-color: var(--border-subtle); border-radius: 3px; }
-  .lookup-chip { display: flex; align-items: center; gap: 6px; padding: 5px 10px 5px 6px; background-color: var(--surface-2); border: 1px solid var(--border-subtle); border-radius: var(--radius-input); cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: border-color 0.15s ease, background-color 0.15s ease; min-height: 36px; }
+  .lookup-chip { display: flex; align-items: center; gap: 6px; padding: 5px 10px 5px 6px; background-color: var(--surface-2); border: 1px solid var(--border-subtle); border-radius: var(--radius-input); cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: border-color 0.15s ease, background-color 0.15s ease; min-height: 36px; position: relative; }
   .lookup-chip:hover { border-color: rgba(255, 255, 255, 0.1); background-color: rgba(255, 255, 255, 0.03); }
   .chip-thumb { width: 18px; height: 25px; object-fit: cover; border-radius: 2px; flex-shrink: 0; }
   .chip-thumb-placeholder { width: 18px; height: 25px; background-color: rgba(255, 255, 255, 0.04); border-radius: 2px; flex-shrink: 0; }
   .chip-name { font-size: var(--fs-badge); font-weight: 500; color: var(--text-secondary); max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
-  @media (max-width: 768px) { .lookup-chip { min-height: 44px; padding: 8px 10px 8px 6px; } .chip-name { max-width: 100px; } }
+  .chip-remove { display: flex; align-items: center; justify-content: center; width: 14px; height: 14px; font-size: 11px; line-height: 1; color: var(--text-dim); border-radius: 50%; flex-shrink: 0; opacity: 0; transition: opacity 0.15s ease, color 0.15s ease, background-color 0.15s ease; cursor: pointer; margin-left: -2px; }
+  .chip-remove:hover { color: var(--text-primary); background-color: rgba(255, 255, 255, 0.08); }
+  .lookup-chip:hover .chip-remove { opacity: 1; }
+  @media (max-width: 768px) { .lookup-chip { min-height: 44px; padding: 8px 10px 8px 6px; } .chip-name { max-width: 100px; } .chip-remove { opacity: 1; } }
   @media (max-width: 480px) { .chip-name { max-width: 80px; font-size: var(--fs-micro); } }
 </style>
