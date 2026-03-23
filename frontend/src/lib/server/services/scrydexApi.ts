@@ -1,7 +1,7 @@
 import type { CardImage, CardVariant, VariantPrice, PriceTrends, TrendData } from '../models/types';
 import { getConfig } from '../config';
 
-// ─── Scrydex API response types ───────────────────────────────────────────────
+// ─── Scrydex API response types ─────────────────────────────────────────────────────────────
 
 export interface ScrydexExpansion {
   id: string;
@@ -140,7 +140,39 @@ export interface ListingOptions {
   condition?: string;
 }
 
-// ─── Service interface ────────────────────────────────────────────────────────
+// ─── Card list field selection ─────────────────────────────────────────────────────────
+
+/**
+ * Fields to select when fetching card lists from the Scrydex API.
+ *
+ * Only top-level fields are supported (no dot notation).
+ * `variants` MUST be included to receive pricing data with ?include=prices.
+ *
+ * Omitted fields (saves bandwidth per card):
+ *   supertype, subtypes, types, hp, level, evolves_from, rules, ancient_trait,
+ *   abilities, attacks, weaknesses, resistances, retreat_cost,
+ *   converted_retreat_cost, national_pokedex_numbers, flavor_text,
+ *   regulation_mark, expansion_sort_order
+ *
+ * When #22 (rich card data panel) is implemented, expand this list to include:
+ *   supertype, subtypes, types, hp, abilities, attacks, flavor_text
+ */
+export const CARD_LIST_SELECT_FIELDS = [
+  'id',
+  'name',
+  'number',
+  'printed_number',
+  'rarity',
+  'rarity_code',
+  'artist',
+  'images',
+  'variants',
+  'expansion',
+  'language',
+  'language_code',
+].join(',');
+
+// ─── Service interface ────────────────────────────────────────────────────────────────
 
 export interface IScrydexApiService {
   getAllExpansions(language?: string): Promise<ScrydexExpansion[]>;
@@ -163,7 +195,7 @@ export interface IScrydexApiService {
   getUsage(): Promise<ScrydexUsage | null>;
 }
 
-// ─── Implementation ───────────────────────────────────────────────────────────
+// ─── Implementation ───────────────────────────────────────────────────────────────────
 
 export class ScrydexApiService implements IScrydexApiService {
   private apiKey: string;
@@ -278,7 +310,7 @@ export class ScrydexApiService implements IScrydexApiService {
     return mapPaginatedResponse(raw);
   }
 
-  // ─── Expansion endpoints ──────────────────────────────────────────────────
+  // ─── Expansion endpoints ──────────────────────────────────────────────────────────
 
   async getAllExpansions(language: string = 'en'): Promise<ScrydexExpansion[]> {
     // Check language-keyed cache
@@ -375,7 +407,7 @@ export class ScrydexApiService implements IScrydexApiService {
     }
   }
 
-  // ─── Card endpoints ───────────────────────────────────────────────────────
+  // ─── Card endpoints ─────────────────────────────────────────────────────────────
 
   async getCardsInExpansion(
     expansionId: string,
@@ -399,9 +431,9 @@ export class ScrydexApiService implements IScrydexApiService {
         `[ScrydexApiService] Fetching cards for expansion ${expansionId} (page ${page}, pageSize ${pageSize})`
       );
 
-      const response = await this.fetchPaginated<ScrydexCard>(
-        `${this.baseUrl}/expansions/${expansionId}/cards?page=${page}&page_size=${pageSize}`
-      );
+      const url = `${this.baseUrl}/expansions/${expansionId}/cards?page=${page}&page_size=${pageSize}&select=${CARD_LIST_SELECT_FIELDS}&include=prices`;
+
+      const response = await this.fetchPaginated<ScrydexCard>(url);
 
       console.log(
         `[ScrydexApiService] Retrieved ${response.data.length} cards for expansion ${expansionId} (page ${response.page}, totalCount ${response.totalCount})`
@@ -425,6 +457,7 @@ export class ScrydexApiService implements IScrydexApiService {
   /**
    * Fetch ALL cards in an expansion by paginating through every page.
    * Use this when hydrating Cosmos DB or when you need the complete set.
+   * Cards are fetched with ?select= and ?include=prices for optimal payloads.
    */
   async getAllCardsInExpansion(expansionId: string): Promise<ScrydexCard[]> {
     const allCards: ScrydexCard[] = [];
@@ -545,7 +578,7 @@ export class ScrydexApiService implements IScrydexApiService {
     }
   }
 
-  // ─── Listings endpoint ────────────────────────────────────────────────────
+  // ─── Listings endpoint ────────────────────────────────────────────────────────────
 
   async getCardListings(
     cardId: string,
@@ -585,7 +618,7 @@ export class ScrydexApiService implements IScrydexApiService {
     }
   }
 
-  // ─── Usage / account endpoint ─────────────────────────────────────────────
+  // ─── Usage / account endpoint ─────────────────────────────────────────────────────
 
   async getUsage(): Promise<ScrydexUsage | null> {
     try {
@@ -612,7 +645,7 @@ export class ScrydexApiService implements IScrydexApiService {
   }
 }
 
-// ─── Mapping helpers (Scrydex API → internal types) ──────────────────────────
+// ─── Mapping helpers (Scrydex API → internal types) ──────────────────────────────────
 
 function mapTrendData(
   apiTrend?: { price_change: number; percent_change: number }
@@ -668,7 +701,7 @@ export function mapScrydexVariantToCardVariant(variant: ScrydexVariant): CardVar
   };
 }
 
-// ─── Singleton accessor ──────────────────────────────────────────────────────
+// ─── Singleton accessor ────────────────────────────────────────────────────────────────
 
 let scrydexApiServiceInstance: ScrydexApiService | null = null;
 
