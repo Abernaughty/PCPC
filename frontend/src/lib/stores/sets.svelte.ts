@@ -167,6 +167,8 @@ function createSetsStore(): SetsStore {
 
   /**
    * Change the language filter and reload sets.
+   * Clears the selected set and cards since they may not exist
+   * in the new language.
    */
   async function setLanguage(lang: LanguageFilter): Promise<void> {
     if (lang === language) return;
@@ -175,8 +177,14 @@ function createSetsStore(): SetsStore {
     savePrefs({ language, showOnlineOnly });
     log.info(`Language changed to: ${lang}`);
 
-    // Clear selected set since it may not exist in the new language
+    // Clear selected set and cards since they may not exist in the new language
     selectedSet = null;
+    try {
+      const { cardsStore } = await import('./cards.svelte');
+      cardsStore.resetCards();
+    } catch {
+      // cardsStore may not be loaded yet
+    }
 
     // Force refresh from API with new language
     await loadSets(true);
@@ -184,7 +192,7 @@ function createSetsStore(): SetsStore {
 
   /**
    * Toggle online-only set visibility.
-   * This is a client-side filter — no API re-fetch needed.
+   * This is a client-side filter \u2014 no API re-fetch needed.
    */
   function setShowOnlineOnly(show: boolean): void {
     showOnlineOnly = show;

@@ -30,7 +30,14 @@
 
   const displayText = $derived.by(() => { if (!value) return ''; return `${value[labelField] || ''} ${secondaryField && value[secondaryField] ? `(${value[secondaryField]})` : ''}`.trim(); });
 
-  $effect(() => { if (value && !showDropdown) searchText = displayText; });
+  // Sync searchText with value: show display text when selected, clear when value is null
+  $effect(() => {
+    if (value && !showDropdown) {
+      searchText = displayText;
+    } else if (!value) {
+      searchText = '';
+    }
+  });
 
   $effect(() => {
     if (!showDropdown) return;

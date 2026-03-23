@@ -108,7 +108,8 @@
   function formatCardNumber(card: PokemonCard): string { const num = card.number || card.cardNumber || ''; if (!num) return ''; const total = printedTotal; return total ? `#${num}/${total}` : `#${num}`; }
   function getThumbnailUrl(card: PokemonCard): string | null { if (!card.images || card.images.length === 0) return null; return card.images[0].small || card.images[0].medium || null; }
 
-  const displayText = $derived.by(() => { if (!selectedCard) return ''; const num = selectedCard.number || selectedCard.cardNumber || ''; return num ? `${selectedCard.name} (#${num})` : selectedCard.name; });
+  // Display just the card name (no #id) so re-opening the dropdown still matches
+  const displayText = $derived.by(() => { if (!selectedCard) return ''; return selectedCard.name; });
 
   $effect(() => { if (selectedCard && !showDropdown) { searchText = displayText; } else if (!selectedCard) { searchText = ''; } });
 
@@ -133,7 +134,7 @@
 
 <div class="card-search-select-container" class:disabled>
   <div class="input-wrapper">
-    <input bind:this={inputElement} type="text" placeholder={disabled ? placeholder : placeholder} value={searchText} class="search-input" aria-label="Search cards" {disabled} />
+    <input bind:this={inputElement} type="text" {placeholder} value={searchText} class="search-input" aria-label="Search cards" {disabled} />
     {#if selectedCard}<button onclick={handleClear} class="clear-btn" aria-label="Clear selection" type="button">&#x2715;</button>{/if}
     <span class="dropdown-icon">&#x25BC;</span>
   </div>
