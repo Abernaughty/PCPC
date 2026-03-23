@@ -2,7 +2,7 @@
 
 > **Source of truth:** `apps/pcpc/docs/vendors/scrydex/raw/` (vendor docs).
 > This file distills the parts PCPC actually uses and documents project-specific decisions.
-> Last synced with vendor docs: 2026-03-22.
+> Last synced with vendor docs: 2026-03-23.
 
 ---
 
@@ -266,11 +266,11 @@ Supports filters: `days`, `source`, `variant`, `grade`, `company`, `condition`, 
 | `currency` | string | USD, JPY |
 | `sold_at` | string | Date sold (YYYY/MM/DD) |
 
-**PCPC status:** Service layer implemented (`getCardListings`), but **not yet exposed in UI**.
+**PCPC status:** Service layer implemented (`getCardListings`), but **not yet exposed in UI**. See Issue #21.
 
 ### 6.5 Sealed Products (not in scope)
 
-Endpoints exist at `/pokemon/v1/sealed` and `/pokemon/v1/expansions/{id}/sealed`. Same pagination, search, and pricing patterns as cards. **Not used by PCPC currently.**
+Endpoints exist at `/pokemon/v1/sealed` and `/pokemon/v1/expansions/{id}/sealed`. Same pagination, search, and pricing patterns as cards. **Not used by PCPC currently.** See Issue #26.
 
 ---
 
@@ -291,7 +291,7 @@ All search endpoints (`/cards`, `/expansions`, `/sealed`) support a `q` paramete
 | Range (exclusive) | `hp:{100 TO 200}` | 100 < HP < 200 |
 | Nested field | `expansion.id:sm1` | Expansion ID is sm1 |
 
-**PCPC usage:** Currently no direct search queries are constructed in the UI. Card and expansion fetching is done by expansion ID, not by search. The `searchCards` method exists in the service layer but is not used in the current UI flow.
+**PCPC usage:** Currently no direct search queries are constructed in the UI. Card and expansion fetching is done by expansion ID, not by search. The `searchCards` method exists in the service layer but is not used in the current UI flow. See Issue #20 for planned global search feature.
 
 ---
 
@@ -309,6 +309,38 @@ These parameters work on all paginated/search endpoints. Both snake_case and cam
 | `orderBy` | Sort field(s), prefix with `-` for descending (e.g., `name,-number`) |
 | `casing` | Response field casing: `camel` or `snake` (default: snake) |
 
+### 8.1 `?select=` Field Filtering (confirmed behavior, Mar 2026)
+
+The `select` parameter limits which fields are returned in the response. Key behaviors confirmed via live API testing:
+
+- **Top-level fields only** — dot notation does NOT work. `?select=variants.name` will not select a nested sub-field; it will either fail silently or return nothing for that field.
+- **`variants` must be in the select list to get pricing data** — if you use `?select=id,name` with `?include=prices`, no pricing data is returned because the `variants` field (which carries the prices) is not selected.
+- **If `select` is omitted**, all fields are returned (full payload, same as today).
+- **Works on all endpoints** — expansions, cards, sealed, listings.
+
+**PCPC project decision (planned, Issue #19):** Add `?select=` to card list fetches to trim unused game-data fields (`attacks`, `abilities`, `weaknesses`, etc.). Expansion payloads are already lean — not worth adding `?select=` to expansion fetches. The select field list should be maintained as a named constant (`CARD_LIST_SELECT_FIELDS`) so it's easy to expand when new features need additional fields (e.g., Issue #22 rich card data).
+
+**Planned card list select fields:**
+```
+id,name,number,printed_number,rarity,rarity_code,artist,images,variants,expansion,language,language_code
+```
+
+### 8.2 `?include=prices` Scope
+
+The `include=prices` parameter opts into pricing data that is excluded by default.
+
+**Supported on:**
+- Cards (list, get, search) — populates `variants[].prices[]`
+- Sealed products (list, get, search) — populates `variants[].prices[]`
+- Listings (search) — includes pricing context
+
+**NOT supported on:**
+- Expansions — no pricing data exists on expansion objects
+
+**Credit cost:** Including prices does **not** change the credit cost. A card fetch is 1 credit whether prices are included or not.
+
+**PCPC project decision (planned, Issue #19):** Add `?include=prices` to the card-list-by-expansion fetch (`getCardsInExpansion`). This eliminates the separate single-card pricing fetch and enables client-side price sorting/filtering in the card dropdown. The single-card fetch with `?include=prices` remains necessary for deep links and future global search.
+
 ---
 
 ## 9. Image URLs
@@ -319,7 +351,7 @@ Sizes: `small`, `medium`, `large`.
 
 **Important (from vendor best practices):** Never assume URL patterns — always use URLs as returned by the API. The pattern is generally consistent but not guaranteed.
 
-**PCPC project decision:** Images are hotlinked directly from Scrydex. No self-hosting or CDN caching. Consuming images does not cost API credits. If the app becomes image-heavy, consider self-hosting later.
+**PCPC project decision:** Images are hotlinked directly from Scrydex. No self-hosting or CDN caching. Consuming images does not cost API credits. See Issue #17 for planned self-hosting.
 
 Expansion images use a different pattern:
 - Logo: `https://images.scrydex.com/pokemon/{expansion-id}-logo/logo`
@@ -340,6 +372,8 @@ Vendor recommendation: cache aggressively. Pricing changes at most once per day.
 | L3 (server, in-memory) | ScrydexApiService class | 24h (expansions, cards, pricing), 4h (listings) | All API responses |
 
 Redis is configured but **disabled** in production (`ENABLE_REDIS_CACHE` not set).
+
+> **Note (Issue #19):** If pricing is bundled with the card list fetch via `?include=prices`, the IndexedDB card cache will carry pricing data. The 24h pricing TTL becomes the binding constraint for card cache freshness, not the 7-day card metadata TTL.
 
 ---
 
@@ -390,17 +424,27 @@ The casing boundary is in `src/lib/server/services/scrydexApi.ts`. Raw Scrydex r
 
 9. **Usage endpoint lag:** The `/account/v1/usage` endpoint is updated every 20-30 minutes, not in real-time.
 
+10. **`?select=` is top-level only:** Dot notation does not work for selecting nested fields. You cannot do `?select=variants.name` to get only variant names — you must select the entire `variants` field or nothing.
+
+11. **`?select=` and `?include=prices` interaction:** The `variants` field must be in the `?select=` list for `?include=prices` to have any effect. If you select `id,name` with `include=prices`, no pricing data is returned.
+
+12. **`?include=prices` scope:** Only supported on card, sealed, and listing endpoints. Expansions do not support `?include=` because they have no pricing data.
+
 ---
 
-## 13. Endpoints NOT Used by PCPC
+## 13. Endpoints NOT Used by PCPC (with planned issues)
 
-For completeness, these exist in the Scrydex API but PCPC does not use them:
+These exist in the Scrydex API. Some have planned PCPC features:
 
-- **Sealed products:** `/pokemon/v1/sealed`, `/pokemon/v1/expansions/{id}/sealed` — full CRUD with same patterns as cards.
-- **Price history:** `/pokemon/v1/cards/{id}/price_history` — 3 credits per request. Could be used for historical charts.
+- **Sealed products:** `/pokemon/v1/sealed`, `/pokemon/v1/expansions/{id}/sealed` — full CRUD with same patterns as cards. **Planned: Issue #26.**
+- **Price history:** `/pokemon/v1/cards/{id}/price_history` — 3 credits per request. Could be used for historical charts. **Planned: Issue #23.**
+- **Card search:** `/pokemon/v1/{lang}/cards/search` — Lucene-like search across all sets. Service method exists but no UI. **Planned: Issue #20.**
+- **Listings UI:** Service method exists for `/cards/{id}/listings` but not exposed in UI. **Planned: Issue #21.**
 - **Image analysis:** Coming soon per vendor docs.
+- **Webhooks:** Coming soon per vendor docs — will enable event-driven cache invalidation.
 - **`?casing=camel`:** Available but we handle casing conversion ourselves.
-- **`?select=` field filtering:** Available but we always fetch full objects.
+- **`?select=` field filtering:** Available, planned for card list fetches. **Planned: Issue #19.**
+- **`?orderBy=` server-side sorting:** Available on list/search endpoints, not currently used. Could complement client-side sorting.
 
 ---
 
