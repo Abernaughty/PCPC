@@ -74,11 +74,42 @@ export interface ScrydexPrice {
   };
 }
 
+/**
+ * Raw paginated response shape from the Scrydex API (snake_case).
+ * The API returns: data, page, page_size, count, total_count
+ */
+interface ScrydexRawPaginatedResponse<T> {
+  data: T[];
+  page: number;
+  page_size: number;
+  count: number;
+  total_count: number;
+}
+
+/**
+ * Internal paginated response (camelCase).
+ * All code outside this file uses this shape.
+ */
 export interface ScrydexPaginatedResponse<T> {
   data: T[];
   page: number;
   pageSize: number;
+  count: number;
   totalCount: number;
+}
+
+/**
+ * Map the raw snake_case API response to our internal camelCase type.
+ * This is the single boundary where the casing conversion happens.
+ */
+function mapPaginatedResponse<T>(raw: ScrydexRawPaginatedResponse<T>): ScrydexPaginatedResponse<T> {
+  return {
+    data: raw.data,
+    page: raw.page,
+    pageSize: raw.page_size,
+    count: raw.count,
+    totalCount: raw.total_count,
+  };
 }
 
 export interface ScrydexUsage {
@@ -238,6 +269,15 @@ export class ScrydexApiService implements IScrydexApiService {
     throw lastError || new Error(`Scrydex API request failed after ${maxRetries} retries`);
   }
 
+  /**
+   * Fetch a paginated endpoint, mapping the raw snake_case response
+   * to our internal camelCase ScrydexPaginatedResponse type.
+   */
+  private async fetchPaginated<T>(url: string): Promise<ScrydexPaginatedResponse<T>> {
+    const raw = await this.fetchWithRetry<ScrydexRawPaginatedResponse<T>>(url);
+    return mapPaginatedResponse(raw);
+  }
+
   // ─── Expansion endpoints ──────────────────────────────────────────────────
 
   async getAllExpansions(language: string = 'en'): Promise<ScrydexExpansion[]> {
@@ -276,13 +316,17 @@ export class ScrydexApiService implements IScrydexApiService {
       let totalCount = Infinity;
 
       while (allExpansions.length < totalCount) {
-        const response = await this.fetchWithRetry<
-          ScrydexPaginatedResponse<ScrydexExpansion>
-        >(`${this.baseUrl}/${language}/expansions?page=${currentPage}&page_size=${fetchPageSize}`);
+        const response = await this.fetchPaginated<ScrydexExpansion>(
+          `${this.baseUrl}/${language}/expansions?page=${currentPage}&page_size=${fetchPageSize}`
+        );
 
         allExpansions.push(...response.data);
         totalCount = response.totalCount;
         currentPage++;
+
+        console.log(
+          `[ScrydexApiService] Expansions page ${response.page}: ${response.data.length} items, ${allExpansions.length}/${totalCount} total`
+        );
 
         // Safety: break if we got an empty page (shouldn't happen, but prevents infinite loops)
         if (response.data.length === 0) break;
@@ -355,14 +399,12 @@ export class ScrydexApiService implements IScrydexApiService {
         `[ScrydexApiService] Fetching cards for expansion ${expansionId} (page ${page}, pageSize ${pageSize})`
       );
 
-      const response = await this.fetchWithRetry<
-        ScrydexPaginatedResponse<ScrydexCard>
-      >(
+      const response = await this.fetchPaginated<ScrydexCard>(
         `${this.baseUrl}/expansions/${expansionId}/cards?page=${page}&page_size=${pageSize}`
       );
 
       console.log(
-        `[ScrydexApiService] Retrieved ${response.data.length} cards for expansion ${expansionId}`
+        `[ScrydexApiService] Retrieved ${response.data.length} cards for expansion ${expansionId} (page ${response.page}, totalCount ${response.totalCount})`
       );
 
       this.cardsCache[cacheKey] = {
@@ -404,6 +446,10 @@ export class ScrydexApiService implements IScrydexApiService {
       allCards.push(...response.data);
       totalCount = response.totalCount;
       currentPage++;
+
+      console.log(
+        `[ScrydexApiService] Cards page ${response.page}: ${response.data.length} items, ${allCards.length}/${totalCount} total`
+      );
 
       // Safety: break if we got an empty page
       if (response.data.length === 0) break;
@@ -481,9 +527,9 @@ export class ScrydexApiService implements IScrydexApiService {
         page_size: String(pageSize),
       });
 
-      const response = await this.fetchWithRetry<
-        ScrydexPaginatedResponse<ScrydexCard>
-      >(`${this.baseUrl}/${language}/cards/search?${params}`);
+      const response = await this.fetchPaginated<ScrydexCard>(
+        `${this.baseUrl}/${language}/cards/search?${params}`
+      );
 
       console.log(
         `[ScrydexApiService] Search returned ${response.data.length} of ${response.totalCount} results`
@@ -521,9 +567,9 @@ export class ScrydexApiService implements IScrydexApiService {
         params.set('condition', condition);
       }
 
-      const response = await this.fetchWithRetry<
-        ScrydexPaginatedResponse<ScrydexListing>
-      >(`${this.baseUrl}/cards/${cardId}/listings?${params}`);
+      const response = await this.fetchPaginated<ScrydexListing>(
+        `${this.baseUrl}/cards/${cardId}/listings?${params}`
+      );
 
       console.log(
         `[ScrydexApiService] Retrieved ${response.data.length} listings for card ${cardId}`
