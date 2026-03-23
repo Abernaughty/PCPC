@@ -93,10 +93,10 @@
 
 <style>
   .recent-lookups { margin-bottom: 16px; }
-  .recent-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-  .recent-label { font-size: var(--fs-micro); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
-  .clear-btn { background: none; border: none; font-size: 9px; color: var(--text-faint); cursor: pointer; padding: 1px 4px; border-radius: 3px; transition: color 0.15s ease, background-color 0.15s ease; text-transform: lowercase; letter-spacing: 0.3px; line-height: 1.2; }
-  .clear-btn:hover { color: var(--text-dim); background-color: rgba(255, 255, 255, 0.03); }
+  .recent-header { display: flex; align-items: flex-end; gap: 6px; margin-bottom: 8px; }
+  .recent-label { font-size: var(--fs-micro); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); line-height: 1; }
+  .clear-btn { background: none; border: none; font-size: 9px; color: var(--text-dim); cursor: pointer; padding: 0 2px; border-radius: 3px; transition: color 0.15s ease; text-transform: lowercase; letter-spacing: 0.3px; line-height: 1; }
+  .clear-btn:hover { color: var(--text-muted); }
   .chips-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; scrollbar-color: var(--border-subtle) transparent; position: relative; -webkit-overflow-scrolling: touch; }
   .chips-scroll::-webkit-scrollbar { height: 3px; }
   .chips-scroll::-webkit-scrollbar-track { background: transparent; }

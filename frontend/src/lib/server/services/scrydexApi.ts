@@ -77,13 +77,17 @@ export interface ScrydexPrice {
 /**
  * Raw paginated response shape from the Scrydex API (snake_case).
  * The API returns: data, page, page_size, count, total_count
+ *
+ * NOTE: Some query params (e.g. ?select=) can strip pagination metadata
+ * from the response, making page/total_count undefined. All pagination
+ * loops must be resilient to missing metadata.
  */
 interface ScrydexRawPaginatedResponse<T> {
   data: T[];
-  page: number;
-  page_size: number;
-  count: number;
-  total_count: number;
+  page?: number;
+  page_size?: number;
+  count?: number;
+  total_count?: number;
 }
 
 /**
@@ -101,14 +105,15 @@ export interface ScrydexPaginatedResponse<T> {
 /**
  * Map the raw snake_case API response to our internal camelCase type.
  * This is the single boundary where the casing conversion happens.
+ * Handles missing pagination fields gracefully (defaults to 0).
  */
 function mapPaginatedResponse<T>(raw: ScrydexRawPaginatedResponse<T>): ScrydexPaginatedResponse<T> {
   return {
-    data: raw.data,
-    page: raw.page,
-    pageSize: raw.page_size,
-    count: raw.count,
-    totalCount: raw.total_count,
+    data: raw.data ?? [],
+    page: raw.page ?? 0,
+    pageSize: raw.page_size ?? 0,
+    count: raw.count ?? (raw.data?.length ?? 0),
+    totalCount: raw.total_count ?? 0,
   };
 }
 
@@ -145,14 +150,13 @@ export interface ListingOptions {
 /**
  * Fields to select when fetching card lists from the Scrydex API.
  *
+ * NOTE: ?select= is currently DISABLED because it strips pagination
+ * metadata (page, total_count) from the response, breaking multi-page
+ * fetches. See gotcha #13 in scrydex.md. This constant is retained
+ * for documentation and future use if the API behavior is fixed.
+ *
  * Only top-level fields are supported (no dot notation).
  * `variants` MUST be included to receive pricing data with ?include=prices.
- *
- * Omitted fields (saves bandwidth per card):
- *   supertype, subtypes, types, hp, level, evolves_from, rules, ancient_trait,
- *   abilities, attacks, weaknesses, resistances, retreat_cost,
- *   converted_retreat_cost, national_pokedex_numbers, flavor_text,
- *   regulation_mark, expansion_sort_order
  *
  * When #22 (rich card data panel) is implemented, expand this list to include:
  *   supertype, subtypes, types, hp, abilities, attacks, flavor_text
@@ -341,27 +345,26 @@ export class ScrydexApiService implements IScrydexApiService {
         `[ScrydexApiService] Fetching all expansions (language: ${language})`
       );
 
-      // Paginate through all pages to avoid truncating sets
+      // Paginate until we get a page smaller than fetchPageSize (last page)
+      // or an empty page. This is resilient to missing totalCount metadata.
       const allExpansions: ScrydexExpansion[] = [];
       let currentPage = 1;
       const fetchPageSize = 100;
-      let totalCount = Infinity;
 
-      while (allExpansions.length < totalCount) {
+      while (true) {
         const response = await this.fetchPaginated<ScrydexExpansion>(
           `${this.baseUrl}/${language}/expansions?page=${currentPage}&page_size=${fetchPageSize}`
         );
 
         allExpansions.push(...response.data);
-        totalCount = response.totalCount;
         currentPage++;
 
         console.log(
-          `[ScrydexApiService] Expansions page ${response.page}: ${response.data.length} items, ${allExpansions.length}/${totalCount} total`
+          `[ScrydexApiService] Expansions page ${response.page || currentPage - 1}: ${response.data.length} items, ${allExpansions.length} total so far`
         );
 
-        // Safety: break if we got an empty page (shouldn't happen, but prevents infinite loops)
-        if (response.data.length === 0) break;
+        // Stop if we got fewer items than page size (last page) or empty page
+        if (response.data.length === 0 || response.data.length < fetchPageSize) break;
       }
 
       const duration = Date.now() - startTime;
@@ -431,7 +434,10 @@ export class ScrydexApiService implements IScrydexApiService {
         `[ScrydexApiService] Fetching cards for expansion ${expansionId} (page ${page}, pageSize ${pageSize})`
       );
 
-      const url = `${this.baseUrl}/expansions/${expansionId}/cards?page=${page}&page_size=${pageSize}&select=${CARD_LIST_SELECT_FIELDS}&include=prices`;
+      // NOTE: ?select= is intentionally omitted — it strips pagination metadata
+      // from the response (page, total_count become undefined), breaking multi-page
+      // fetches. See gotcha #13 in scrydex.md. ?include=prices works fine alone.
+      const url = `${this.baseUrl}/expansions/${expansionId}/cards?page=${page}&page_size=${pageSize}&include=prices`;
 
       const response = await this.fetchPaginated<ScrydexCard>(url);
 
@@ -457,19 +463,21 @@ export class ScrydexApiService implements IScrydexApiService {
   /**
    * Fetch ALL cards in an expansion by paginating through every page.
    * Use this when hydrating Cosmos DB or when you need the complete set.
-   * Cards are fetched with ?select= and ?include=prices for optimal payloads.
+   * Cards are fetched with ?include=prices for bundled pricing data.
+   *
+   * Pagination is resilient to missing totalCount metadata — stops when
+   * a page returns fewer items than the page size (last page) or is empty.
    */
   async getAllCardsInExpansion(expansionId: string): Promise<ScrydexCard[]> {
     const allCards: ScrydexCard[] = [];
     let currentPage = 1;
     const fetchPageSize = 100;
-    let totalCount = Infinity;
 
     console.log(
       `[ScrydexApiService] Fetching ALL cards for expansion ${expansionId}`
     );
 
-    while (allCards.length < totalCount) {
+    while (true) {
       const response = await this.getCardsInExpansion(
         expansionId,
         currentPage,
@@ -477,19 +485,18 @@ export class ScrydexApiService implements IScrydexApiService {
       );
 
       allCards.push(...response.data);
-      totalCount = response.totalCount;
       currentPage++;
 
       console.log(
-        `[ScrydexApiService] Cards page ${response.page}: ${response.data.length} items, ${allCards.length}/${totalCount} total`
+        `[ScrydexApiService] Cards page ${response.page || currentPage - 1}: ${response.data.length} items, ${allCards.length} total so far`
       );
 
-      // Safety: break if we got an empty page
-      if (response.data.length === 0) break;
+      // Stop if we got fewer items than page size (last page) or empty page
+      if (response.data.length === 0 || response.data.length < fetchPageSize) break;
     }
 
     console.log(
-      `[ScrydexApiService] Retrieved all ${allCards.length}/${totalCount} cards for expansion ${expansionId}`
+      `[ScrydexApiService] Retrieved all ${allCards.length} cards for expansion ${expansionId}`
     );
 
     return allCards;
