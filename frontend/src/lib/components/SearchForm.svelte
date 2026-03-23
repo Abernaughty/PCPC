@@ -72,8 +72,9 @@
 </script>
 
 <div class="search-container">
-  <div class="search-form">
-    <div class="search-fields">
+  <div class="search-fields">
+    <!-- Expansion column: dropdown + skeleton + filter row -->
+    <div class="field-column">
       <div class="field-group">
         <label class="field-label">EXPANSION</label>
         <SearchableSelect items={setsStore.groupedSetsForDropdown} placeholder="Search sets..." labelField="name" searchFields={['name', 'code']} value={setsStore.selectedSet} onselect={handleSetSelect}>
@@ -82,6 +83,22 @@
         </SearchableSelect>
         {#if setsStore.isLoadingSets}<div class="loading-skeleton"><SkeletonLoader variant="set-rows" /></div>{/if}
       </div>
+      <div class="filter-row">
+        <div class="language-toggle">
+          <span class="filter-label">Language:</span>
+          <button type="button" class="lang-btn" class:active={setsStore.language === 'en'} onclick={() => handleLanguageChange('en')}>EN</button>
+          <button type="button" class="lang-btn" class:active={setsStore.language === 'jp'} onclick={() => handleLanguageChange('jp')}>JP</button>
+          <button type="button" class="lang-btn" class:active={setsStore.language === 'both'} onclick={() => handleLanguageChange('both')}>Both</button>
+        </div>
+        <label class="online-toggle">
+          <input type="checkbox" checked={setsStore.showOnlineOnly} onchange={handleOnlineOnlyToggle} />
+          <span class="toggle-label">Include online-only</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Card column: dropdown + skeleton (independent) -->
+    <div class="field-column">
       <div class="field-group">
         <label class="field-label">CARD</label>
         <CardSearchSelect cards={cardsStore.cardsInSet} placeholder={cardPlaceholder} selectedCard={cardsStore.selectedCard} disabled={cardSelectDisabled} {printedTotal} onselect={handleCardSelect} />
@@ -89,29 +106,16 @@
       </div>
     </div>
   </div>
-
-  <div class="filter-row">
-    <div class="language-toggle">
-      <span class="filter-label">Sets:</span>
-      <button type="button" class="lang-btn" class:active={setsStore.language === 'en'} onclick={() => handleLanguageChange('en')}>EN</button>
-      <button type="button" class="lang-btn" class:active={setsStore.language === 'jp'} onclick={() => handleLanguageChange('jp')}>JP</button>
-      <button type="button" class="lang-btn" class:active={setsStore.language === 'both'} onclick={() => handleLanguageChange('both')}>Both</button>
-    </div>
-    <label class="online-toggle">
-      <input type="checkbox" checked={setsStore.showOnlineOnly} onchange={handleOnlineOnlyToggle} />
-      <span class="toggle-label">Include online-only</span>
-    </label>
-  </div>
 </div>
 
 <style>
   .search-container { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
-  .search-form { display: flex; align-items: flex-end; gap: 12px; }
   .search-fields { display: flex; gap: 12px; flex: 1; min-width: 0; }
-  .field-group { flex: 1; min-width: 0; }
+  .field-column { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .field-group { flex: none; }
   .field-label { display: block; font-size: var(--fs-micro); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 6px; }
   .loading-skeleton { margin-top: 6px; padding: 2px 0; }
-  .filter-row { display: flex; align-items: center; gap: 16px; padding: 0 2px; }
+  .filter-row { display: flex; align-items: center; gap: 16px; padding: 0 2px; margin-top: 8px; }
   .filter-label { font-size: var(--fs-micro); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
   .language-toggle { display: flex; align-items: center; gap: 4px; }
   .lang-btn { font-size: var(--fs-micro); padding: 2px 10px; border-radius: var(--radius-badge); background: transparent; color: var(--text-muted); border: 1px solid var(--border-subtle); cursor: pointer; font-weight: 500; line-height: 1.4; font-family: inherit; transition: all 0.15s ease; }
@@ -120,5 +124,8 @@
   .online-toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; }
   .online-toggle input { width: 14px; height: 14px; accent-color: var(--accent-red); cursor: pointer; }
   .toggle-label { font-size: var(--fs-micro); color: var(--text-muted); letter-spacing: 0.3px; user-select: none; }
-  @media (max-width: 768px) { .filter-row { flex-wrap: wrap; gap: 8px; } .search-form { flex-direction: column; align-items: stretch; } .search-fields { flex-direction: column; } }
+  @media (max-width: 768px) {
+    .search-fields { flex-direction: column; }
+    .filter-row { flex-wrap: wrap; gap: 8px; }
+  }
 </style>
