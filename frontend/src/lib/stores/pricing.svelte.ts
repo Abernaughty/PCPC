@@ -62,9 +62,11 @@ function createPricingStore(): PricingStore {
    *
    * Fast path: if `preloadedCard` has pricing data in its variants
    * (from the list fetch with ?include=prices), use it directly
-   * without making an API call.
+   * without making an API call. This path is synchronous — no loading
+   * state is shown, so the UI updates instantly with no flash.
    *
    * Fallback: fetch from the card detail endpoint (deep links, search).
+   * This path sets isLoading = true and shows a skeleton.
    */
   async function fetchCardPrice(
     setId: string,
@@ -72,27 +74,39 @@ function createPricingStore(): PricingStore {
     preloadedCard?: PokemonCard | null
   ): Promise<PricingResult | null> {
     const key = `${setId}_${cardId}`;
+    pricingError = null;
+
+    // ---- Fast path: pre-loaded pricing from card list fetch ----
+    // No loading state, no skeleton flash — instant display.
+    if (preloadedCard && cardHasPricingData(preloadedCard)) {
+      log.debug(`Using pre-loaded pricing for card ${cardId} (from list fetch)`);
+      const pricing: PricingResult = {
+        variants: preloadedCard.variants,
+        metadata: {
+          timestamp: Date.now(),
+          fromCache: false,
+          isStale: false,
+        },
+      };
+
+      priceData = { ...priceData, [key]: pricing };
+      pricingTimestamp = Date.now();
+      pricingFromCache = false;
+      pricingIsStale = false;
+      isLoading = false;
+
+      log.info(`Pricing loaded for card ${cardId} (preloaded, instant)`);
+      return pricing;
+    }
+
+    // ---- Async paths: cache or API fallback ----
+    // Show loading state since these involve async I/O.
     isLoading = true;
     pricingFromCache = false;
     pricingIsStale = false;
-    pricingError = null;
 
     try {
       let pricing: PricingResult | null = null;
-
-      // Fast path: use pre-loaded pricing from card list fetch
-      if (preloadedCard && cardHasPricingData(preloadedCard)) {
-        log.debug(`Using pre-loaded pricing for card ${cardId} (from list fetch)`);
-        pricing = {
-          variants: preloadedCard.variants,
-          metadata: {
-            timestamp: Date.now(),
-            fromCache: false,
-            isStale: false,
-          },
-        };
-        pricingFromCache = false;
-      }
 
       // Try IndexedDB cache
       if (!pricing && browser) {
@@ -135,7 +149,7 @@ function createPricingStore(): PricingStore {
       pricingTimestamp = pricing.metadata?.timestamp || Date.now();
       pricingIsStale = pricing.metadata?.isStale || false;
 
-      log.info(`Pricing loaded for card ${cardId} (hasPrices: ${hasPrices}, preloaded: ${!!preloadedCard && cardHasPricingData(preloadedCard)})`);
+      log.info(`Pricing loaded for card ${cardId} (hasPrices: ${hasPrices})`);
       return pricing;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';

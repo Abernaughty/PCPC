@@ -43,6 +43,23 @@ function cardHasPricing(card: Card | null): boolean {
   return card.variants.some((v) => v.prices && v.prices.length > 0);
 }
 
+/**
+ * Check whether a set of cards from cache/DB includes pricing data.
+ * If fewer than 10% of cards have pricing, the data is likely from a
+ * pre-#19 fetch that didn't use ?include=prices, OR from a new set
+ * where pricing wasn't yet available. In either case, we should
+ * re-fetch from Scrydex to see if pricing is now available.
+ *
+ * This enables self-correction: when pricing eventually appears on
+ * Scrydex for a new set, the next user request detects the gap,
+ * re-fetches, and saveCards() upserts the enriched data into Cosmos.
+ */
+function cardsHavePricingData(cards: Card[]): boolean {
+  if (cards.length === 0) return false;
+  const withPricing = cards.filter(cardHasPricing).length;
+  return withPricing > cards.length * 0.1;
+}
+
 export const GET: RequestHandler = async ({ params, url }) => {
   const startTime = Date.now();
   const correlationId = monitoring.createCorrelationId();
@@ -127,8 +144,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
       const cosmosCards = await cosmosService.getCardsBySetId(setId);
 
       if (cosmosCards && cosmosCards.length > 0) {
-        // Validate: if we know the expected total and Cosmos has fewer, the data is stale.
-        // Fall through to Scrydex to get the complete set.
+        // Staleness check 1: count mismatch
+        // If we know the expected total and Cosmos has fewer, the data is stale.
         if (expectedTotal > 0 && cosmosCards.length < expectedTotal) {
           console.log(
             `[GetCardsBySet] Cosmos DB has stale data for set ${setId}: ` +
@@ -141,6 +158,28 @@ export const GET: RequestHandler = async ({ params, url }) => {
             setId,
             cosmosCount: cosmosCards.length,
             expectedTotal,
+            reason: 'count_mismatch',
+          });
+          // cards remains null — will proceed to Scrydex fetch below
+        }
+        // Staleness check 2: missing pricing data
+        // Cards exist but lack pricing — either from a pre-#19 fetch or a new
+        // set where pricing wasn't available yet. Re-fetch to check if pricing
+        // is now available on Scrydex. saveCards() will upsert to self-correct.
+        else if (!cardsHavePricingData(cosmosCards)) {
+          const withPricing = cosmosCards.filter(cardHasPricing).length;
+          console.log(
+            `[GetCardsBySet] Cosmos DB cards for set ${setId} lack pricing data: ` +
+            `${withPricing}/${cosmosCards.length} have pricing. Falling through to Scrydex API.`
+          );
+
+          monitoring.trackEvent('cosmos.stale', {
+            functionName: 'GetCardsBySet',
+            correlationId,
+            setId,
+            cosmosCount: cosmosCards.length,
+            cardsWithPricing: withPricing,
+            reason: 'no_pricing',
           });
           // cards remains null — will proceed to Scrydex fetch below
         } else {

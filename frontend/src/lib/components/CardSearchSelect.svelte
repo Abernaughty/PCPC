@@ -71,6 +71,26 @@
     return 'USD';
   }
 
+  /**
+   * Get the 30-day trend direction for a card's NM price.
+   * Returns 'up', 'down', or null (no change / no data).
+   */
+  function getCardTrend(card: PokemonCard): { direction: 'up' | 'down' | null; percent: number } {
+    if (!card.variants) return { direction: null, percent: 0 };
+    for (const variant of card.variants) {
+      if (!variant.prices) continue;
+      const nmRaw = variant.prices.find((p) => p.type === 'raw' && p.condition === 'NM');
+      const price = nmRaw ?? variant.prices.find((p) => p.type === 'raw');
+      if (price?.trends?.days30) {
+        const pct = price.trends.days30.percentChange;
+        if (pct > 0) return { direction: 'up', percent: pct };
+        if (pct < 0) return { direction: 'down', percent: Math.abs(pct) };
+        return { direction: null, percent: 0 };
+      }
+    }
+    return { direction: null, percent: 0 };
+  }
+
   const filteredCards = $derived.by(() => {
     let result = cards;
     if (searchText.trim()) { const lowerSearch = searchText.toLowerCase(); result = cards.filter((card) => { const name = String(card.name || '').toLowerCase(); const number = String(card.number || card.cardNumber || '').toLowerCase(); return name.includes(lowerSearch) || number.includes(lowerSearch); }); }
@@ -137,6 +157,7 @@
           {@const isSelected = selectedCard?.id === card.id}
           {@const nmPrice = getCardNmPrice(card)}
           {@const currency = getCardCurrency(card)}
+          {@const trend = getCardTrend(card)}
           <div class="card-item" class:highlighted={highlightedIndex === idx} class:selected={isSelected} onmouseover={() => handleMouseOver(idx)} onclick={() => handleCardSelect(card)} role="option" aria-selected={highlightedIndex === idx}>
             <div class="card-thumb">{#if thumbUrl}<img data-src={thumbUrl} alt="" class="thumb-img" width="22" height="30" />{:else}<div class="thumb-placeholder"></div>{/if}</div>
             <span class="rarity-dot" class:gradient-dot={gradient} style:background-color={gradient ? undefined : rarityColor} style:background-image={gradient ? `linear-gradient(135deg, var(--rarity-sar-from), var(--rarity-sar-to))` : undefined} title={getRarityInfo(card.rarity).label}></span>
@@ -144,7 +165,12 @@
               <div class="card-name-row">
                 <span class="card-name">{card.name}</span>
                 {#if nmPrice !== null}
-                  <span class="price-badge">{pricingStore.formatPrice(nmPrice, currency)}</span>
+                  <span class="price-badge" class:price-up={trend.direction === 'up'} class:price-down={trend.direction === 'down'}>
+                    {pricingStore.formatPrice(nmPrice, currency)}
+                    {#if trend.direction === 'up'}<span class="trend-arrow">&#x25B2;</span>{:else if trend.direction === 'down'}<span class="trend-arrow">&#x25BC;</span>{/if}
+                  </span>
+                {:else}
+                  <span class="price-badge no-price">&#x2013;</span>
                 {/if}
               </div>
               {#if cardNum}<span class="card-number">{cardNum}</span>{/if}
@@ -190,6 +216,10 @@
   .card-name-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
   .card-name { font-size: var(--fs-body); font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .price-badge { flex-shrink: 0; font-size: var(--fs-micro); color: var(--price-green); font-weight: 500; font-variant-numeric: tabular-nums; margin-left: auto; }
+  .price-badge.price-up { color: var(--price-green); }
+  .price-badge.price-down { color: var(--price-red); }
+  .price-badge.no-price { color: var(--text-faint); font-weight: 400; }
+  .trend-arrow { font-size: 8px; margin-left: 2px; }
   .card-number { font-size: var(--fs-micro); color: var(--text-muted); }
   .no-results { padding: 16px 8px; color: var(--text-muted); text-align: center; font-size: var(--fs-body); }
   .rarity-legend { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-top: 1px solid var(--border-faint); flex-shrink: 0; flex-wrap: wrap; }

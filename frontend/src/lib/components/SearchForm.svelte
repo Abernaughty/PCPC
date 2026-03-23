@@ -53,7 +53,29 @@
 </script>
 
 <div class="search-container">
-  <!-- Search filter row -->
+  <!-- Search fields -->
+  <div class="search-form">
+    <div class="search-fields">
+      <div class="field-group">
+        <label class="field-label">EXPANSION</label>
+        <SearchableSelect items={setsStore.groupedSetsForDropdown} placeholder="Search sets..." labelField="name" searchFields={['name', 'code']} value={setsStore.selectedSet} onselect={handleSetSelect}>
+          {#snippet item(set, selected)}<SetDropdownItem {set} {selected} />{/snippet}
+          {#snippet groupHeader(group)}<SetGroupHeader {group} />{/snippet}
+        </SearchableSelect>
+        {#if setsStore.isLoadingSets}<div class="loading-skeleton"><SkeletonLoader variant="set-rows" /></div>{/if}
+      </div>
+      <div class="field-group">
+        <label class="field-label">CARD</label>
+        <CardSearchSelect cards={cardsStore.cardsInSet} placeholder="Search cards..." selectedCard={cardsStore.selectedCard} disabled={cardSelectDisabled} {printedTotal} onselect={handleCardSelect} />
+        {#if cardsStore.isLoadingCards}<div class="loading-skeleton"><SkeletonLoader variant="card-rows" /></div>{/if}
+      </div>
+    </div>
+    <button class="get-price-btn" onclick={handleGetPrice} disabled={!setsStore.selectedSet || !cardsStore.selectedCard || pricingStore.isLoading} type="button">
+      {pricingStore.isLoading ? 'Getting Price...' : 'Get Price'}
+    </button>
+  </div>
+
+  <!-- Search filter row (below search bar) -->
   <div class="filter-row">
     <div class="language-toggle">
       <span class="filter-label">Sets:</span>
@@ -85,43 +107,10 @@
       <span class="toggle-label">Include online-only</span>
     </label>
   </div>
-
-  <!-- Search fields -->
-  <div class="search-form">
-    <div class="search-fields">
-      <div class="field-group">
-        <label class="field-label">EXPANSION</label>
-        <SearchableSelect items={setsStore.groupedSetsForDropdown} placeholder="Search sets..." labelField="name" searchFields={['name', 'code']} value={setsStore.selectedSet} onselect={handleSetSelect}>
-          {#snippet item(set, selected)}<SetDropdownItem {set} {selected} />{/snippet}
-          {#snippet groupHeader(group)}<SetGroupHeader {group} />{/snippet}
-        </SearchableSelect>
-        {#if setsStore.isLoadingSets}<div class="loading-skeleton"><SkeletonLoader variant="set-rows" /></div>{/if}
-      </div>
-      <div class="field-group">
-        <label class="field-label">CARD</label>
-        <CardSearchSelect cards={cardsStore.cardsInSet} placeholder="Search cards..." selectedCard={cardsStore.selectedCard} disabled={cardSelectDisabled} {printedTotal} onselect={handleCardSelect} />
-        {#if cardsStore.isLoadingCards}<div class="loading-skeleton"><SkeletonLoader variant="card-rows" /></div>{/if}
-      </div>
-    </div>
-    <button class="get-price-btn" onclick={handleGetPrice} disabled={!setsStore.selectedSet || !cardsStore.selectedCard || pricingStore.isLoading} type="button">
-      {pricingStore.isLoading ? 'Getting Price...' : 'Get Price'}
-    </button>
-  </div>
 </div>
 
 <style>
   .search-container { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
-
-  /* Filter row */
-  .filter-row { display: flex; align-items: center; gap: 16px; padding: 0 2px; }
-  .filter-label { font-size: var(--fs-micro); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
-  .language-toggle { display: flex; align-items: center; gap: 4px; }
-  .lang-btn { font-size: var(--fs-micro); padding: 2px 10px; border-radius: var(--radius-badge); background: transparent; color: var(--text-muted); border: 1px solid var(--border-subtle); cursor: pointer; font-weight: 500; line-height: 1.4; font-family: inherit; transition: all 0.15s ease; }
-  .lang-btn:hover:not(.active) { background: var(--bg-hover); color: var(--text-secondary); }
-  .lang-btn.active { background: rgba(232, 69, 60, 0.12); color: var(--accent-red); border-color: var(--accent-red); }
-  .online-toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; }
-  .online-toggle input { width: 14px; height: 14px; accent-color: var(--accent-red); cursor: pointer; }
-  .toggle-label { font-size: var(--fs-micro); color: var(--text-muted); letter-spacing: 0.3px; user-select: none; }
 
   /* Search form */
   .search-form { display: flex; align-items: flex-end; gap: 12px; }
@@ -132,6 +121,17 @@
   .get-price-btn { flex-shrink: 0; padding: 9px 20px; border: none; border-radius: var(--radius-input); font-size: var(--fs-body); font-weight: 500; cursor: pointer; transition: all 0.15s ease; font-family: inherit; letter-spacing: 0.2px; white-space: nowrap; background-color: var(--amber); color: #0d0f14; }
   .get-price-btn:hover:not(:disabled) { background-color: #d4a574; box-shadow: 0 2px 8px rgba(196, 154, 108, 0.25); }
   .get-price-btn:disabled { background-color: var(--surface-2); color: var(--text-dim); cursor: not-allowed; border: 0.5px solid var(--border-subtle); }
+
+  /* Filter row (below search bar) */
+  .filter-row { display: flex; align-items: center; gap: 16px; padding: 0 2px; }
+  .filter-label { font-size: var(--fs-micro); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+  .language-toggle { display: flex; align-items: center; gap: 4px; }
+  .lang-btn { font-size: var(--fs-micro); padding: 2px 10px; border-radius: var(--radius-badge); background: transparent; color: var(--text-muted); border: 1px solid var(--border-subtle); cursor: pointer; font-weight: 500; line-height: 1.4; font-family: inherit; transition: all 0.15s ease; }
+  .lang-btn:hover:not(.active) { background: var(--bg-hover); color: var(--text-secondary); }
+  .lang-btn.active { background: rgba(232, 69, 60, 0.12); color: var(--accent-red); border-color: var(--accent-red); }
+  .online-toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .online-toggle input { width: 14px; height: 14px; accent-color: var(--accent-red); cursor: pointer; }
+  .toggle-label { font-size: var(--fs-micro); color: var(--text-muted); letter-spacing: 0.3px; user-select: none; }
 
   @media (max-width: 768px) {
     .filter-row { flex-wrap: wrap; gap: 8px; }

@@ -74,7 +74,7 @@
   <div class="recent-lookups">
     <div class="recent-header">
       <span class="recent-label">RECENT</span>
-      <button class="clear-btn" onclick={handleRemoveAll} type="button" aria-label="Clear recent lookups">Clear</button>
+      <button class="clear-btn" onclick={handleRemoveAll} type="button" aria-label="Clear recent lookups">clear</button>
     </div>
     <div class="chips-scroll">
       {#each lookups as lookup (`${lookup.setId}_${lookup.cardId}`)}
@@ -93,10 +93,10 @@
 
 <style>
   .recent-lookups { margin-bottom: 16px; }
-  .recent-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .recent-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
   .recent-label { font-size: var(--fs-micro); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
-  .clear-btn { background: none; border: none; font-size: var(--fs-micro); color: var(--text-dim); cursor: pointer; padding: 2px 6px; border-radius: 3px; transition: color 0.15s ease, background-color 0.15s ease; }
-  .clear-btn:hover { color: var(--text-secondary); background-color: rgba(255, 255, 255, 0.04); }
+  .clear-btn { background: none; border: none; font-size: 9px; color: var(--text-faint); cursor: pointer; padding: 1px 4px; border-radius: 3px; transition: color 0.15s ease, background-color 0.15s ease; text-transform: lowercase; letter-spacing: 0.3px; line-height: 1.2; }
+  .clear-btn:hover { color: var(--text-dim); background-color: rgba(255, 255, 255, 0.03); }
   .chips-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; scrollbar-color: var(--border-subtle) transparent; position: relative; -webkit-overflow-scrolling: touch; }
   .chips-scroll::-webkit-scrollbar { height: 3px; }
   .chips-scroll::-webkit-scrollbar-track { background: transparent; }
