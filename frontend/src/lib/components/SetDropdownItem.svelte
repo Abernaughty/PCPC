@@ -9,9 +9,14 @@
 
   let { set, selected = false }: Props = $props();
 
-  const languageCode = $derived(
-    set.languageCode?.toUpperCase() ?? (set.language?.toLowerCase() === 'japanese' ? 'JP' : 'EN')
-  );
+  // Language code is normalized to JP at the server boundary.
+  // Fall back to checking the language string for older cached data.
+  const languageCode = $derived.by(() => {
+    const code = set.languageCode?.toUpperCase() ?? '';
+    if (code === 'JP' || code === 'JA') return 'JP';
+    if (set.language?.toLowerCase() === 'japanese') return 'JP';
+    return code || 'EN';
+  });
   const isJapanese = $derived(languageCode === 'JP');
   const cardCount = $derived(set.cardCount ?? set.total ?? null);
   const formattedDate = $derived(formatMonthYear(set.releaseDate));
@@ -38,7 +43,9 @@
   </div>
   <div class="set-item__content">
     <div class="set-item__row1">
-      <span class="set-item__name">{set.name}</span>
+      <span class="set-item__name">
+        {set.name}{#if set.nativeName}<span class="set-item__native-name"> ({set.nativeName})</span>{/if}
+      </span>
       <span class="set-item__badge" class:set-item__badge--en={!isJapanese} class:set-item__badge--jp={isJapanese}>{languageCode}</span>
     </div>
     {#if subtitleParts.length > 0}
@@ -55,6 +62,7 @@
   .set-item__content { flex: 1; min-width: 0; }
   .set-item__row1 { display: flex; align-items: center; gap: 6px; }
   .set-item__name { font-size: var(--fs-body); font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
+  .set-item__native-name { font-weight: 400; color: var(--text-dim); font-size: var(--fs-badge); }
   .set-item__badge { flex-shrink: 0; font-size: var(--fs-micro); font-weight: 500; padding: 1px 5px; border-radius: var(--radius-badge, 4px); letter-spacing: 0.3px; line-height: 1.4; }
   .set-item__badge--en { background-color: var(--badge-en-bg); color: var(--badge-en-text); }
   .set-item__badge--jp { background-color: var(--badge-jp-bg); color: var(--badge-jp-text); }

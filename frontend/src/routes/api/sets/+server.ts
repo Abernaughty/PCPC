@@ -1,5 +1,5 @@
 import type { RequestHandler } from './$types';
-import { getScrydexApiService } from '$lib/server/services/scrydexApi';
+import { getScrydexApiService, normalizeLanguageCode } from '$lib/server/services/scrydexApi';
 import { getRedisCacheService } from '$lib/server/services/redisCache';
 import { monitoring } from '$lib/server/services/monitoring';
 import { apiError, apiSuccess } from '$lib/server/utils/errors';
@@ -94,20 +94,34 @@ export const GET: RequestHandler = async ({ url }) => {
         const apiDuration = Date.now() - apiStartTime;
 
         // Map Scrydex expansions to our internal PokemonSet shape
-        sets = expansions.map((expansion) => ({
-          id: expansion.id,
-          code: expansion.code,
-          name: expansion.name,
-          series: expansion.series,
-          releaseDate: expansion.release_date,
-          total: expansion.total,
-          printedTotal: expansion.printed_total,
-          language: expansion.language,
-          languageCode: expansion.language_code,
-          isOnlineOnly: expansion.is_online_only,
-          logo: expansion.logo,
-          symbol: expansion.symbol,
-        }));
+        sets = expansions.map((expansion) => {
+          const normalizedLangCode = normalizeLanguageCode(expansion.language_code);
+          const isJP = normalizedLangCode === 'JP';
+
+          // For JP sets: prefer English translation, keep original as nativeName
+          const translatedName = expansion.translation?.en?.name;
+          const displayName = (isJP && translatedName) ? translatedName : expansion.name;
+          // Only set nativeName if we actually translated (original differs from display)
+          const nativeName = (isJP && translatedName && translatedName !== expansion.name)
+            ? expansion.name
+            : undefined;
+
+          return {
+            id: expansion.id,
+            code: expansion.code,
+            name: displayName,
+            nativeName,
+            series: expansion.series,
+            releaseDate: expansion.release_date,
+            total: expansion.total,
+            printedTotal: expansion.printed_total,
+            language: expansion.language,
+            languageCode: normalizedLangCode,
+            isOnlineOnly: expansion.is_online_only,
+            logo: expansion.logo,
+            symbol: expansion.symbol,
+          };
+        });
 
         console.log(
           `[GetSets] Scrydex API returned ${expansions.length} expansions for language ${language} (${apiDuration}ms)`

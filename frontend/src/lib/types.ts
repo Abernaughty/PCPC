@@ -17,6 +17,8 @@ export interface PokemonSet {
   logo?: string;
   symbol?: string;
   cardCount?: number;
+  /** Original native name (e.g. Japanese) when name has been translated */
+  nativeName?: string;
 }
 
 export interface GroupedSets {
