@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { PricingResult, CardVariant, VariantPrice } from '$lib/types';
+  import type { PricingResult } from '$lib/types';
   import { pricingStore } from '$lib/stores/pricing.svelte';
   import HeroPrice from './HeroPrice.svelte';
   import VariantPills from './VariantPills.svelte';

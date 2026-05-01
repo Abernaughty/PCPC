@@ -17,7 +17,7 @@
 
   let cardVariants = $state<any[]>([]);
   let showVariantSelector = $state(false);
-  let selectedVariant = $state<any>(null);
+  let _selectedVariant = $state<any>(null);
   let isDeepLinkLoading = $state(true);
   let deepLinkError = $state<string | null>(null);
   let recentLookupsRef: ReturnType<typeof RecentLookups> | undefined = $state(undefined);
@@ -36,8 +36,8 @@
     goto(`/cards/${info.setId}/${info.cardId}`, { replaceState: true });
   }
 
-  function handleVariantSelect(variant: any) { selectedVariant = variant; }
-  function handleVariantConfirm(variant: any) { selectedVariant = variant; showVariantSelector = false; }
+  function handleVariantSelect(variant: any) { _selectedVariant = variant; }
+  function handleVariantConfirm(variant: any) { _selectedVariant = variant; showVariantSelector = false; }
   function closeVariantSelector() { showVariantSelector = false; }
   function handleBack() { goto('/'); }
 
