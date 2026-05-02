@@ -8,7 +8,7 @@
     onlightbox?: (imageUrl: string) => void;
   }
 
-  let { card, set, imageUrl = null, onlightbox }: Props = $props();
+  let { card, set: _set, imageUrl = null, onlightbox }: Props = $props();
 
   let largeImageUrl = $derived(card.images?.[0]?.large ?? card.images?.[0]?.medium ?? imageUrl ?? '');
 

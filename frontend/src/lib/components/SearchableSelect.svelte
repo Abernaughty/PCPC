@@ -71,7 +71,7 @@
           {#if group.items && group.items.length > 0}
             <div class="group">
               {#if groupHeaderSnippet}{@render groupHeaderSnippet(group)}{:else}<div class="group-label">{group.label}</div>{/if}
-              {#each group.items as groupItem, idx (groupItem.id)}
+              {#each group.items as groupItem (groupItem.id)}
                 {@const globalIdx = allSelectableItems.indexOf(groupItem)}
                 {@const isHighlighted = highlightedIndex === globalIdx}
                 <div class="dropdown-item" class:highlighted={isHighlighted} class:selected={value?.id === groupItem.id} onmouseover={() => handleMouseOver(globalIdx)} onclick={() => handleItemSelect(groupItem)} role="option" aria-selected={isHighlighted}>

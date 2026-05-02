@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
-  import { SearchForm, CardVariantSelector, RecentLookups, CardResultsPanel, SkeletonLoader } from '$lib/components';
+  import { SearchForm, CardVariantSelector, RecentLookups, CardResultsPanel } from '$lib/components';
   import { setsStore } from '$lib/stores/sets.svelte';
   import { cardsStore } from '$lib/stores/cards.svelte';
   import { pricingStore } from '$lib/stores/pricing.svelte';
@@ -17,7 +17,7 @@
 
   let cardVariants = $state<any[]>([]);
   let showVariantSelector = $state(false);
-  let selectedVariant = $state<any>(null);
+  let _selectedVariant = $state<any>(null);
   let recentLookupsRef: ReturnType<typeof RecentLookups> | undefined = $state(undefined);
 
   let currentPricing = $derived.by(() => {
@@ -49,8 +49,8 @@
     }
   }
 
-  function handleVariantSelect(variant: any) { selectedVariant = variant; }
-  function handleVariantConfirm(variant: any) { selectedVariant = variant; showVariantSelector = false; }
+  function handleVariantSelect(variant: any) { _selectedVariant = variant; }
+  function handleVariantConfirm(variant: any) { _selectedVariant = variant; showVariantSelector = false; }
   function closeVariantSelector() { showVariantSelector = false; }
 
   onMount(() => { setsStore.loadSets(); });

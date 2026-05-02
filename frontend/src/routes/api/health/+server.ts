@@ -1,7 +1,6 @@
 import type { RequestHandler } from './$types';
 import { getCosmosDbService } from '$lib/server/services/cosmosDb';
 import { getRedisCacheService } from '$lib/server/services/redisCache';
-import { getScrydexApiService } from '$lib/server/services/scrydexApi';
 import { monitoring } from '$lib/server/services/monitoring';
 import { getConfig } from '$lib/server/config';
 import type { HealthCheckResult, ComponentHealth } from '$lib/server/models/types';
