@@ -101,7 +101,7 @@
         responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, layout: { padding: { top: 36, left: 0, right: 0, bottom: 0 } },
         plugins: {
           legend: { display: false },
-          tooltip: { backgroundColor: 'rgba(13, 15, 20, 0.95)', titleColor: '#e8eaef', bodyColor: '#d7dee3', borderColor: 'rgba(255,255,255,0.06)', borderWidth: 0.5, padding: 8, caretSize: 4, caretPadding: 6, bodyFont: { family: 'Geist, sans-serif', size: 11 }, titleFont: { family: 'Geist, sans-serif', size: 11, weight: '500' }, callbacks: { label: (ctx: any) => { const val = ctx.parsed.y; if (!price) return ''; const diff = val - price.market; const pct = price.market !== 0 ? ((diff / price.market) * 100).toFixed(1) : '0.0'; const sign = diff >= 0 ? '+' : ''; return `${pricingStore.formatPrice(val, price.currency)}  ${sign}${pricingStore.formatPrice(Math.abs(diff), price.currency)}  (${sign}${pct}%)`; } } },
+          tooltip: { backgroundColor: 'rgba(13, 15, 20, 0.95)', titleColor: '#e8eaef', bodyColor: '#d7dee3', borderColor: 'rgba(255,255,255,0.06)', borderWidth: 0.5, padding: 8, caretSize: 4, caretPadding: 6, bodyFont: { family: 'Geist, sans-serif', size: 11 }, titleFont: { family: 'Geist, sans-serif', size: 11, weight: 500 }, callbacks: { label: (ctx: any) => { const val = ctx.parsed.y; if (!price) return ''; const diff = val - price.market; const pct = price.market !== 0 ? ((diff / price.market) * 100).toFixed(1) : '0.0'; const sign = diff >= 0 ? '+' : ''; return `${pricingStore.formatPrice(val, price.currency)}  ${sign}${pricingStore.formatPrice(Math.abs(diff), price.currency)}  (${sign}${pct}%)`; } } },
           // @ts-ignore
           heroCurrentPriceLine: { price: price.market, color: lineColor },
         },
