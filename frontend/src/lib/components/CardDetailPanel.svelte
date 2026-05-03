@@ -2,18 +2,18 @@
   import type { PokemonCard, PokemonSet } from '$lib/types';
 
   interface Props {
-    card: PokemonCard;
-    set: PokemonSet;
+    card: PokemonCard | null;
+    set: PokemonSet | null;
     imageUrl?: string | null;
     onlightbox?: (imageUrl: string) => void;
   }
 
   let { card, set: _set, imageUrl = null, onlightbox }: Props = $props();
 
-  let largeImageUrl = $derived(card.images?.[0]?.large ?? card.images?.[0]?.medium ?? imageUrl ?? '');
+  let largeImageUrl = $derived(card?.images?.[0]?.large ?? card?.images?.[0]?.medium ?? imageUrl ?? '');
 
   let glowColor = $derived.by(() => {
-    const r = card.rarity?.toLowerCase() ?? '';
+    const r = card?.rarity?.toLowerCase() ?? '';
     if (r.includes('special art') || r.includes('sar')) return 'rgba(251, 191, 36, 0.25)';
     if (r.includes('ultra') || r.includes('ur')) return 'rgba(251, 191, 36, 0.2)';
     if (r.includes('full art')) return 'rgba(244, 114, 182, 0.2)';
@@ -29,9 +29,9 @@
 
 <div class="card-sidebar">
   {#if imageUrl}
-    <button class="card-image-button" onclick={openLightbox} type="button" aria-label="View full size image of {card.name}">
+    <button class="card-image-button" onclick={openLightbox} type="button" aria-label="View full size image of {card?.name ?? 'card'}">
       <div class="ambient-glow" style="background: {glowColor};"></div>
-      <img src={imageUrl} alt="{card.name} card image" class="card-image" loading="lazy" />
+      <img src={imageUrl} alt="{card?.name ?? 'card'} image" class="card-image" loading="lazy" />
       <div class="zoom-overlay"><span class="zoom-label">Zoom</span></div>
     </button>
   {:else}

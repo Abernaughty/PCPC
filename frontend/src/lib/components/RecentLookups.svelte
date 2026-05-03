@@ -1,10 +1,4 @@
-<script lang="ts">
-  import { browser } from '$app/environment';
-  import { goto } from '$app/navigation';
-  import { setsStore } from '$lib/stores/sets.svelte';
-  import { cardsStore } from '$lib/stores/cards.svelte';
-  import { pricingStore } from '$lib/stores/pricing.svelte';
-
+<script module lang="ts">
   export interface RecentLookup {
     setId: string;
     cardId: string;
@@ -14,6 +8,14 @@
     /** Language filter needed to find this set ('en' | 'jp' | 'both'). */
     language?: string;
   }
+</script>
+
+<script lang="ts">
+  import { browser } from '$app/environment';
+  import { goto } from '$app/navigation';
+  import { setsStore } from '$lib/stores/sets.svelte';
+  import { cardsStore } from '$lib/stores/cards.svelte';
+  import { pricingStore } from '$lib/stores/pricing.svelte';
 
   const STORAGE_KEY = 'pcpc_recent_lookups';
   const MAX_LOOKUPS = 8;

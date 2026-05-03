@@ -62,7 +62,7 @@
         responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, layout: { padding: { top: 36 } },
         plugins: {
           legend: { display: false },
-          tooltip: { backgroundColor: 'rgba(13, 15, 20, 0.95)', titleColor: '#e8eaef', bodyColor: '#d7dee3', borderColor: 'rgba(255,255,255,0.06)', borderWidth: 0.5, padding: 8, caretSize: 4, caretPadding: 6, bodyFont: { family: 'Geist, sans-serif', size: 11 }, titleFont: { family: 'Geist, sans-serif', size: 11, weight: '500' }, callbacks: { label: (ctx: any) => { const val = ctx.parsed.y; const current = price.market; const diff = val - current; const pct = current !== 0 ? ((diff / current) * 100).toFixed(1) : '0.0'; const sign = diff >= 0 ? '+' : ''; return `${pricingStore.formatPrice(val, price.currency)}  ${sign}${pricingStore.formatPrice(Math.abs(diff), price.currency)}  (${sign}${pct}%)`; } } },
+          tooltip: { backgroundColor: 'rgba(13, 15, 20, 0.95)', titleColor: '#e8eaef', bodyColor: '#d7dee3', borderColor: 'rgba(255,255,255,0.06)', borderWidth: 0.5, padding: 8, caretSize: 4, caretPadding: 6, bodyFont: { family: 'Geist, sans-serif', size: 11 }, titleFont: { family: 'Geist, sans-serif', size: 11, weight: 500 }, callbacks: { label: (ctx: any) => { const val = ctx.parsed.y; const current = price.market; const diff = val - current; const pct = current !== 0 ? ((diff / current) * 100).toFixed(1) : '0.0'; const sign = diff >= 0 ? '+' : ''; return `${pricingStore.formatPrice(val, price.currency)}  ${sign}${pricingStore.formatPrice(Math.abs(diff), price.currency)}  (${sign}${pct}%)`; } } },
           // @ts-ignore
           currentPriceLine: { price: price.market, color: lineColor },
         },

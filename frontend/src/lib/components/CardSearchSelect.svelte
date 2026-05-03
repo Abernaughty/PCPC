@@ -9,13 +9,13 @@
   interface Props {
     cards?: PokemonCard[];
     placeholder?: string;
-    selectedCard?: PokemonCard;
+    selectedCard?: PokemonCard | null;
     printedTotal?: number | null;
     disabled?: boolean;
     onselect?: (card: PokemonCard | null) => void;
   }
 
-  let { cards = [], placeholder = 'Search cards...', selectedCard = undefined, printedTotal = null, disabled = false, onselect }: Props = $props();
+  let { cards = [], placeholder = 'Search cards...', selectedCard = null, printedTotal = null, disabled = false, onselect }: Props = $props();
 
   let searchText = $state('');
   let showDropdown = $state(false);
