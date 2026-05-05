@@ -27,20 +27,20 @@ jobs:
       - script: |
           npm ci
         displayName: "Install Backend Dependencies"
-        workingDirectory: $(System.DefaultWorkingDirectory)/app/backend
+        workingDirectory: $(System.DefaultWorkingDirectory)/backend/functions
 
       # Run ESLint
       - script: |
           npm run lint || echo "⚠️  Linting warnings found (non-blocking)"
         displayName: "Lint Backend Code"
-        workingDirectory: $(System.DefaultWorkingDirectory)/app/backend
+        workingDirectory: $(System.DefaultWorkingDirectory)/backend/functions
         continueOnError: true
 
       # TypeScript compilation check
       - script: |
           npx tsc --noEmit
         displayName: "TypeScript Compilation Check"
-        workingDirectory: $(System.DefaultWorkingDirectory)/app/backend
+        workingDirectory: $(System.DefaultWorkingDirectory)/backend/functions
 
       # Run tests with coverage
       - script: |
@@ -54,7 +54,7 @@ jobs:
       - script: |
           npm run build
         displayName: "Build Backend"
-        workingDirectory: $(System.DefaultWorkingDirectory)/app/backend
+        workingDirectory: $(System.DefaultWorkingDirectory)/backend/functions
 
       # Verify build output
       - script: |
@@ -68,13 +68,13 @@ jobs:
           fi
           echo "✅ Build verification passed"
         displayName: "Verify Build Output"
-        workingDirectory: $(System.DefaultWorkingDirectory)/app/backend
+        workingDirectory: $(System.DefaultWorkingDirectory)/backend/functions
 
       # Security audit (non-blocking)
       - script: |
           npm audit --audit-level=high || echo "⚠️  Security vulnerabilities found (non-blocking)"
         displayName: "Security Audit (npm audit)"
-        workingDirectory: $(System.DefaultWorkingDirectory)/app/backend
+        workingDirectory: $(System.DefaultWorkingDirectory)/backend/functions
         continueOnError: true
 
       # Publish test results

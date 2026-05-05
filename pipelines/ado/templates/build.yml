@@ -239,12 +239,12 @@ jobs:
           echo "Building backend application..."
           npm ci
         displayName: "Install Backend Dependencies"
-        workingDirectory: $(System.DefaultWorkingDirectory)/app/backend
+        workingDirectory: $(System.DefaultWorkingDirectory)/backend/functions
 
       - script: |
           npm run build
         displayName: "Build Backend (TypeScript)"
-        workingDirectory: $(System.DefaultWorkingDirectory)/app/backend
+        workingDirectory: $(System.DefaultWorkingDirectory)/backend/functions
 
       - script: |
           if [ ! -d "dist" ]; then
@@ -254,7 +254,7 @@ jobs:
           echo "Backend build verification passed"
           ls -lah dist/
         displayName: "Verify Backend Build"
-        workingDirectory: $(System.DefaultWorkingDirectory)/app/backend
+        workingDirectory: $(System.DefaultWorkingDirectory)/backend/functions
 
       # ============================================================================
       # CREATE UNIFIED ARTIFACT
@@ -294,7 +294,7 @@ jobs:
       - task: CopyFiles@2
         displayName: "Copy Backend Build to Artifact"
         inputs:
-          SourceFolder: "$(System.DefaultWorkingDirectory)/app/backend"
+          SourceFolder: "$(System.DefaultWorkingDirectory)/backend/functions"
           Contents: |
             dist/**
             host.json

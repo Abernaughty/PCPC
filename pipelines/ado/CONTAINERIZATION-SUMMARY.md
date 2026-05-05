@@ -89,7 +89,7 @@ Images are built via the CI Images pipeline:
 
 ```bash
 # Trigger the pipeline
-.ado/azure-pipelines-ci-images.yml
+pipelines/ado/azure-pipelines-ci-images.yml
 ```
 
 This pipeline:
@@ -105,7 +105,7 @@ After building new images:
 
 1. Run `azure-pipelines-ci-images.yml`
 2. Download the `ci-image-digests` artifact
-3. Copy contents of `ci-images-variables.yml` to `.ado/variables/ci-images.yml`
+3. Copy contents of `ci-images-variables.yml` to `pipelines/ado/variables/ci-images.yml`
 
 Example digest-based reference:
 
@@ -192,7 +192,7 @@ jobs:
 
    ```bash
    # After pipeline completes, download ci-image-digests artifact
-   # Copy ci-images-variables.yml contents to .ado/variables/ci-images.yml
+   # Copy ci-images-variables.yml contents to pipelines/ado/variables/ci-images.yml
    ```
 
 3. **Test PR Pipeline**

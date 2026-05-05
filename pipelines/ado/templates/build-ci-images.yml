@@ -1,6 +1,6 @@
 # Build and Push CI Images, then capture digests
 # Usage:
-# - template: .ado/templates/build-ci-images.yml
+# - template: pipelines/ado/templates/build-ci-images.yml
 #   parameters:
 #     acrRegistryServiceConnection: pcpc-acr-service-connection   # Docker Registry → ACR
 #     azureSubscription: pcpc-azure-subscription                   # Azure Resource Manager
