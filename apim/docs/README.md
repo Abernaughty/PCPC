@@ -33,7 +33,7 @@ This directory contains a complete Infrastructure as Code (IaC) implementation f
    export TF_VAR_function_app_key="$FUNCTION_APP_KEY"
    ```
 
-   > ℹ️ Azure DevOps pipelines use the `.ado/templates/deploy-apim.yml` template to fetch and secure this key automatically between Function App deployment and the Terraform APIM step.
+   > ℹ️ Azure DevOps pipelines use the `pipelines/ado/templates/deploy-apim.yml` template to fetch and secure this key automatically between Function App deployment and the Terraform APIM step.
 
 2. **Initialize Development Environment**:
 

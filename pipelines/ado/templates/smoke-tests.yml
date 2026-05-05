@@ -36,7 +36,7 @@ steps:
         echo "=========================================="
         echo ""
 
-        source ".ado/scripts/lib/apim.sh"
+        source "pipelines/ado/scripts/lib/apim.sh"
 
         PASSED=0
         FAILED=0
@@ -105,10 +105,10 @@ steps:
           FUNCTION_KEY=$(printf '%s' "$FUNCTION_KEY" | tr -d '\r\n')
 
           if [ -n "$FUNCTION_KEY" ]; then
-            run_health_check "Function App" ".ado/scripts/health-check-functions.sh" "$FUNCTION_APP_URL" "$FUNCTION_KEY"
+            run_health_check "Function App" "pipelines/ado/scripts/health-check-functions.sh" "$FUNCTION_APP_URL" "$FUNCTION_KEY"
           else
             echo "⚠ Could not retrieve function key for GetSetList - running anonymous checks only"
-            run_health_check "Function App" ".ado/scripts/health-check-functions.sh" "$FUNCTION_APP_URL"
+            run_health_check "Function App" "pipelines/ado/scripts/health-check-functions.sh" "$FUNCTION_APP_URL"
           fi
         else
           echo "⊘ Function App not configured - skipping"
@@ -124,7 +124,7 @@ steps:
             --query "defaultHostname" -o tsv 2>/dev/null || echo "")
 
           if [ -n "$SWA_URL" ]; then
-            run_health_check "Static Web App" ".ado/scripts/health-check-swa.sh" "https://$SWA_URL"
+            run_health_check "Static Web App" "pipelines/ado/scripts/health-check-swa.sh" "https://$SWA_URL"
           else
             echo "⚠ Could not retrieve Static Web App URL"
             increment_warnings
@@ -143,7 +143,7 @@ steps:
             --query "gatewayUrl" -o tsv 2>/dev/null || echo "")
 
           if [ -n "$APIM_URL" ]; then
-            run_health_check "API Management" ".ado/scripts/health-check-apim.sh" "$APIM_URL"
+            run_health_check "API Management" "pipelines/ado/scripts/health-check-apim.sh" "$APIM_URL"
           else
             echo "⚠ Could not retrieve APIM URL"
             increment_warnings

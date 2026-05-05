@@ -82,7 +82,7 @@ Reusable templates are located in the `templates/` directory:
    - Go to Pipelines → New pipeline
    - Select your repository
    - Choose "Existing Azure Pipelines YAML file"
-   - Select `.ado/azure-pipelines-pr.yml`
+   - Select `pipelines/ado/azure-pipelines-pr.yml`
    - Save (do not run)
 
 2. **Configure PR Triggers:**
