@@ -1,206 +1,111 @@
-# Pokemon Card Price Checker (PCPC)
+# PCPC — Pokémon Card Price Checker
 
-[![Tests](https://img.shields.io/badge/Tests-Passing-brightgreen.svg)](tests/README.md)
-[![Infrastructure](https://img.shields.io/badge/IaC-Terraform-purple.svg)](infra/README.md)
-[![DevContainer](https://img.shields.io/badge/DevContainer-ACR%20Optimized-blue.svg)](.devcontainer/README.md)
+A single product (Pokémon card pricing) deployed three ways from one repo to demonstrate architectural range across modern-edge, enterprise-cloud, and managed-container patterns. **One frontend, three interchangeable backends, one shared schema.**
 
-A full-stack web application for looking up Pokémon card pricing data, built on Azure serverless
-architecture with a Svelte frontend, Azure Functions backend, Cosmos DB, and fully automated
-infrastructure via Terraform.
+> **Status:** Phase 0 of 3 (consolidation in progress) — see [`docs/PORTFOLIO_PLAN.md`](docs/PORTFOLIO_PLAN.md).
+> **Live demo:** `pcpc.maber.io` (wired in Phase 1)
+> **Architecture comparison:** [`docs/architecture-comparison.md`](docs/architecture-comparison.md) *(in progress)*
 
-> This is a monorepo consolidation of three prior projects into a single production-ready codebase.
+---
 
-## Table of Contents
+## The three paths
 
-- [Features](#features)
-- [Architecture](#architecture)
-- [Quick Start](#quick-start)
-- [Development](#development)
-- [Testing](#testing)
-- [Deployment](#deployment)
-- [Infrastructure](#infrastructure)
-- [Contributing](#contributing)
-- [License](#license)
-
-## Features
-
-- **Real-time Pricing** — Up-to-date Pokémon card prices from multiple sources
-- **Advanced Search** — Card search with auto-complete and filtering by set, variant, and edition
-- **Variant Support** — Full coverage of card variants (1st Edition, Shadowless, Unlimited, etc.)
-- **Fast DevContainer** — Pre-built Azure Container Registry image reduces environment setup to ~60 seconds
-- **Mobile Responsive** — Optimized across all devices
-
-## Architecture
-
-```mermaid
-graph TB
-    subgraph "Frontend"
-        SPA[Svelte SPA<br/>Static Web App]
-    end
-    subgraph "API Gateway"
-        APIM[Azure API Management<br/>Rate Limiting & Caching]
-    end
-    subgraph "Backend"
-        AF[Azure Functions v4<br/>Node.js 22 LTS]
-    end
-    subgraph "Data"
-        COSMOS[Cosmos DB<br/>Serverless NoSQL]
-        REDIS[Redis Cache<br/>Optional]
-    end
-    subgraph "External APIs"
-        POKEDATA[PokeData API]
-        POKEMONTCG[Pokemon TCG API]
-    end
-    SPA --> APIM
-    APIM --> AF
-    AF --> COSMOS
-    AF --> REDIS
-    AF --> POKEDATA
-    AF --> POKEMONTCG
+```
+                         pcpc.maber.io
+                       (Vercel · SvelteKit)
+                                │
+           ┌────────────────────┼────────────────────┐
+           │                    │                    │
+   ?backend=vercel        ?backend=azure        ?backend=aca
+           │                    │                    │
+   SvelteKit BFF        APIM → Functions      ACA → Functions
+   (+server.ts)          (Consumption)       (KEDA-autoscaled
+                                              container)
+           │                    │                    │
+           └────────────────────┼────────────────────┘
+                                │
+                       Cosmos DB (Scrydex schema)
+                       Redis (optional)
 ```
 
-### Technology Stack
-
-| Layer | Technology | Purpose |
+| Path | Stack | What it demonstrates |
 |---|---|---|
-| **Frontend** | Svelte 4 | Reactive UI framework |
-| **API Gateway** | Azure API Management | Rate limiting, caching, policies |
-| **Backend** | Azure Functions v4 (Node.js 22 LTS) | Serverless compute |
-| **Database** | Cosmos DB Serverless | NoSQL document storage |
-| **Caching** | IndexedDB + Redis | Multi-tier caching |
-| **Infrastructure** | Terraform | Infrastructure as Code |
-| **Dev Environment** | DevContainer + ACR | Consistent, fast setup |
+| **A — Vercel BFF** | SvelteKit 2 + Svelte 5 → SvelteKit `+server.ts` → Cosmos | Modern edge / SSR / BFF; lightweight personal-app architecture |
+| **B — APIM + Functions** | APIM Consumption → Azure Functions v4 (Node 22) → Cosmos / Redis | Enterprise IaC, API gateway, ADO pipelines, defense/regulated patterns |
+| **C — ACA Container** | Same Functions image → Azure Container Apps with KEDA | Container fluency, FedRAMP-friendly deployment, image immutability |
 
-## Quick Start
+All three paths share the same Cosmos DB account and the same TypeScript types via [`@pcpc/shared`](backend/shared).
 
-### Prerequisites
+## Skills demonstrated
 
-- Docker Desktop
-- VS Code with the Dev Containers extension
-- Git
+**Frontend / Edge** · SvelteKit 2 · Svelte 5 runes · Tailwind CSS v4 · Vercel adapter · pnpm workspaces
 
-### 1. Clone and open
+**Azure** · API Management · Functions v4 · Container Apps + KEDA · Cosmos DB · Redis · Application Insights · Key Vault · Managed Identity · ACR
+
+**IaC + Pipelines** · Terraform (9 modules) · Azure DevOps multi-stage pipelines · ACR-backed CI containers · Static Web Apps
+
+**Architecture / Practice** · ADR-driven design · Repository consolidation via `git filter-repo` · Multi-runtime type sharing · Architectural decision documentation
+
+## Live demo (planned, Phase 1+)
+
+A single URL, one frontend, three switchable backends, healthcheck-driven graceful degradation if any path is unhealthy. The toggle defaults to Path A so a recruiter who just opens the URL gets a normal app experience.
+
+## Architecture decision records
+
+Decisions live in [`docs/adr/`](docs/adr/). The existing ADRs (001–006) cover earlier infrastructure choices (package manager, runtime, caching, devcontainer, schema, API integration). The three-path portfolio story will add four more:
+
+- **ADR-007** — API architecture spectrum (why three paths exist) *(Phase 1)*
+- **ADR-008** — APIM vs SvelteKit BFF as gateway *(Phase 1)*
+- **ADR-009** — Functions Consumption vs Container Apps *(Phase 2)*
+- **ADR-010** *(optional)* — Path to AKS *(Phase 3)*
+
+## Repository layout
+
+```
+PCPC/
+├── frontend/          SvelteKit 2 + Svelte 5 app   (Path A — was maber-web/apps/pcpc)
+├── backend/
+│   ├── functions/     Azure Functions v4           (Path B; Phase 2 → Path C as container)
+│   └── shared/        @pcpc/shared types           (canonical Scrydex schema)
+├── infra/             Terraform modules            (9 modules + container-app in Phase 2)
+├── apim/              APIM as code
+├── db/                Cosmos DB schema
+├── pipelines/ado/     Azure DevOps multi-stage CI/CD
+├── docs/
+│   ├── PORTFOLIO_PLAN.md
+│   ├── architecture-comparison.md   (in progress)
+│   └── adr/
+├── tests/             Jest + Playwright + k6
+├── memory-bank/       Project memory documentation
+└── .devcontainer/     ACR-backed devcontainer (~60s setup)
+```
+
+## Quick start
+
+Requires Docker Desktop, VS Code with Dev Containers, and Git.
 
 ```bash
 git clone https://github.com/Abernaughty/PCPC.git
 cd PCPC
-code .
+code .                                            # → "Reopen in Container"
+pnpm install                                      # at the repo root
+pnpm --filter @pcpc/frontend dev                  # frontend on :5173
+pnpm --filter @pcpc/frontend build                # production build (Vercel adapter)
 ```
 
-When prompted by VS Code, click **"Reopen in Container"**. The DevContainer will be ready in ~60 seconds.
+Backend (Path B) and infrastructure are run via `pipelines/ado/` and Terraform modules in `infra/` — see [`infra/README.md`](infra/README.md) and [`pipelines/ado/README.md`](pipelines/ado/README.md).
 
-### 2. Verify the environment
+## Status by phase
 
-```bash
-node --version    # v22.x LTS
-terraform version # Latest
-az --version      # Latest Azure CLI
-```
-
-### 3. Start development
-
-```bash
-# Frontend (port 3000)
-cd app/frontend && npm run dev
-
-# Backend (port 7071)
-cd app/backend && npm run start
-```
-
-### 4. Run tests
-
-```bash
-npm test
-```
-
-## Development
-
-### Project Structure
-
-```
-PCPC/
-├── app/
-│   ├── frontend/        # Svelte application
-│   └── backend/         # Azure Functions
-├── infra/               # Terraform modules (7 modules)
-│   ├── modules/
-│   └── envs/
-├── apim/                # API Management as Code
-├── db/                  # Cosmos DB schema management
-├── tests/               # Test suite
-├── docs/                # Documentation
-├── .devcontainer/       # DevContainer configuration
-└── .ado/                # Azure DevOps CI/CD pipelines
-```
-
-### Development Workflow
-
-```bash
-cd app/frontend && npm run dev     # Frontend with hot reload
-cd app/backend && npm run start    # Azure Functions locally
-npm test                           # Run test suite
-```
-
-## Testing
-
-```bash
-npm test                  # All tests
-npm run test:frontend     # Frontend only
-npm run test:backend      # Backend only
-npm run test:coverage     # With coverage report
-```
-
-## Deployment
-
-### Infrastructure
-
-```bash
-# Initialize and plan
-make terraform-init ENVIRONMENT=dev
-make terraform-plan ENVIRONMENT=dev
-
-# Apply
-make terraform-apply ENVIRONMENT=dev
-```
-
-### Environments
-
-| Environment | Purpose | Status |
+| Phase | Goal | Status |
 |---|---|---|
-| Development | Local development | ✅ Ready |
-| Staging | Pre-production validation | 🚧 Planned |
-| Production | Live application | 🚧 Planned |
+| **0** | Consolidate maber-web/apps/pcpc into this repo, set up workspace, add portfolio surface | in progress |
+| **1** | Live two-path toggle (Vercel BFF + APIM/Functions), ADRs 0001 & 0003 | next |
+| **2** | Containerize Functions, ship ACA path, Scrydex schema migration, ADR 0002 | after Phase 1 |
+| **3** | Polish: portfolio site, LinkedIn distribution, ADR 0004 | final |
 
-## Infrastructure
-
-The infrastructure is fully managed as code using Terraform with 7 modular configurations:
-
-- **Azure Static Web Apps** — Frontend hosting
-- **Azure Functions** — Serverless backend with auto-scaling
-- **Azure API Management** — Gateway with rate limiting and caching
-- **Cosmos DB** — Serverless database
-- **Azure Container Registry** — Pre-built DevContainer images
-- **Azure Monitor** — Monitoring and alerting (planned)
-
-See [`infra/README.md`](infra/README.md) for full details.
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/your-feature`
-3. Commit your changes: `git commit -m 'Add your feature'`
-4. Push and open a Pull Request
-
-### Code Standards
-
-- TypeScript with strict type checking
-- ESLint + Prettier for formatting
-- Tests required for new features
+Full plan with risks, success metrics, and open questions: [`docs/PORTFOLIO_PLAN.md`](docs/PORTFOLIO_PLAN.md).
 
 ## License
 
-MIT — see [LICENSE](LICENSE.txt) for details.
-
----
-
-*Built for the Pokémon card collecting community and as a demonstration of Azure serverless architecture.*
+MIT — see [LICENSE.txt](LICENSE.txt).

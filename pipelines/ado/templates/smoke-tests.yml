@@ -1,0 +1,250 @@
+parameters:
+  - name: environment
+    type: string
+    values:
+      - dev
+      - staging
+      - prod
+  - name: resourceGroupName
+    type: string
+  - name: functionAppName
+    type: string
+    default: ""
+  - name: staticWebAppName
+    type: string
+    default: ""
+  - name: apimName
+    type: string
+    default: ""
+  - name: azureSubscription
+    type: string
+
+steps:
+  - checkout: self
+    displayName: "Checkout Source Code"
+
+  - task: AzureCLI@2
+    displayName: "Run Health Checks"
+    name: SmokeTests
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: "bash"
+      scriptLocation: "inlineScript"
+      inlineScript: |
+        echo "=========================================="
+        echo "Running Smoke Tests - ${{ upper(parameters.environment) }}"
+        echo "=========================================="
+        echo ""
+
+        source "pipelines/ado/scripts/lib/apim.sh"
+
+        PASSED=0
+        FAILED=0
+        WARNINGS=0
+
+        increment_passed() {
+          PASSED=$((PASSED + 1))
+        }
+
+        increment_failed() {
+          FAILED=$((FAILED + 1))
+        }
+
+        increment_warnings() {
+          WARNINGS=$((WARNINGS + 1))
+        }
+
+        # Function to run health check and track results
+        run_health_check() {
+          local component=$1
+          local script=$2
+          shift 2
+
+          echo "Testing $component..."
+          if bash "$script" "$@"; then
+            echo "✓ $component health check passed"
+            increment_passed
+          else
+            EXIT_CODE=$?
+            if [ $EXIT_CODE -eq 2 ]; then
+              echo "⚠ $component health check passed with warnings"
+              increment_warnings
+            else
+              echo "✗ $component health check failed"
+              increment_failed
+            fi
+          fi
+          echo ""
+        }
+
+        # Test Function App if provided
+        if [ -n "${{ parameters.functionAppName }}" ]; then
+          FUNCTION_APP_URL="https://${{ parameters.functionAppName }}.azurewebsites.net"
+
+          FUNCTION_KEY=$(az functionapp function keys list \
+            --name "${{ parameters.functionAppName }}" \
+            --resource-group "${{ parameters.resourceGroupName }}" \
+            --function-name "GetSetList" \
+            --query "default" -o tsv 2>/dev/null || echo "")
+
+          if [ -z "$FUNCTION_KEY" ]; then
+            FUNCTION_KEY=$(az functionapp function keys list \
+              --name "${{ parameters.functionAppName }}" \
+              --resource-group "${{ parameters.resourceGroupName }}" \
+              --function-name "GetSetList" \
+              --query "_master" -o tsv 2>/dev/null || echo "")
+          fi
+
+          if [ -z "$FUNCTION_KEY" ]; then
+            FUNCTION_KEY=$(az functionapp keys list \
+              --name "${{ parameters.functionAppName }}" \
+              --resource-group "${{ parameters.resourceGroupName }}" \
+              --query "functionKeys.default" -o tsv 2>/dev/null || echo "")
+          fi
+
+          FUNCTION_KEY=$(printf '%s' "$FUNCTION_KEY" | tr -d '\r\n')
+
+          if [ -n "$FUNCTION_KEY" ]; then
+            run_health_check "Function App" "pipelines/ado/scripts/health-check-functions.sh" "$FUNCTION_APP_URL" "$FUNCTION_KEY"
+          else
+            echo "⚠ Could not retrieve function key for GetSetList - running anonymous checks only"
+            run_health_check "Function App" "pipelines/ado/scripts/health-check-functions.sh" "$FUNCTION_APP_URL"
+          fi
+        else
+          echo "⊘ Function App not configured - skipping"
+          echo ""
+        fi
+
+        # Test Static Web App if provided
+        if [ -n "${{ parameters.staticWebAppName }}" ]; then
+          # Get Static Web App URL from Azure
+          SWA_URL=$(az staticwebapp show \
+            --name "${{ parameters.staticWebAppName }}" \
+            --resource-group "${{ parameters.resourceGroupName }}" \
+            --query "defaultHostname" -o tsv 2>/dev/null || echo "")
+
+          if [ -n "$SWA_URL" ]; then
+            run_health_check "Static Web App" "pipelines/ado/scripts/health-check-swa.sh" "https://$SWA_URL"
+          else
+            echo "⚠ Could not retrieve Static Web App URL"
+            increment_warnings
+            echo ""
+          fi
+        else
+          echo "⊘ Static Web App not configured - skipping"
+          echo ""
+        fi
+
+        # Test APIM if provided
+        if [ -n "${{ parameters.apimName }}" ]; then
+          APIM_URL=$(az apim show \
+            --name "${{ parameters.apimName }}" \
+            --resource-group "${{ parameters.resourceGroupName }}" \
+            --query "gatewayUrl" -o tsv 2>/dev/null || echo "")
+
+          if [ -n "$APIM_URL" ]; then
+            run_health_check "API Management" "pipelines/ado/scripts/health-check-apim.sh" "$APIM_URL"
+          else
+            echo "⚠ Could not retrieve APIM URL"
+            increment_warnings
+            echo ""
+          fi
+        else
+          echo "⊘ API Management not configured - skipping"
+          echo ""
+        fi
+
+        if [ -n "${{ parameters.apimName }}" ]; then
+          if ! resolve_apim_master_key "${{ parameters.apimName }}" "${{ parameters.resourceGroupName }}"; then
+            exit 1
+          fi
+        fi
+
+
+        # Display summary
+        echo "=========================================="
+        echo "Smoke Tests Summary - ${{ upper(parameters.environment) }}"
+        echo "=========================================="
+        echo "Passed:   $PASSED"
+        echo "Warnings: $WARNINGS"
+        echo "Failed:   $FAILED"
+        echo "=========================================="
+        echo ""
+
+        # Set pipeline variables for reporting
+        echo "##vso[task.setvariable variable=TestsPassed;isOutput=true]$PASSED"
+        echo "##vso[task.setvariable variable=TestsWarnings;isOutput=true]$WARNINGS"
+        echo "##vso[task.setvariable variable=TestsFailed;isOutput=true]$FAILED"
+
+        # Exit with appropriate code
+        if [ $FAILED -gt 0 ]; then
+          echo "❌ Smoke tests failed - $FAILED component(s) unhealthy"
+          exit 1
+        elif [ $WARNINGS -gt 0 ]; then
+          echo "⚠️  Smoke tests passed with warnings - $WARNINGS component(s) need attention"
+          exit 0
+        else
+          echo "✅ All smoke tests passed successfully"
+          exit 0
+        fi
+
+  - script: |
+      set -euo pipefail
+
+      RESULTS_DIR="$(System.DefaultWorkingDirectory)/test-results/${ENV_NAME}"
+      mkdir -p "$RESULTS_DIR"
+      RESULTS_FILE="$RESULTS_DIR/smoke-test-results.xml"
+
+      PASSED=${PASSED_COUNT:-0}
+      WARNINGS=${WARNING_COUNT:-0}
+      FAILED=${FAILED_COUNT:-0}
+
+      if ! [[ "$PASSED" =~ ^[0-9]+$ ]]; then PASSED=0; fi
+      if ! [[ "$WARNINGS" =~ ^[0-9]+$ ]]; then WARNINGS=0; fi
+      if ! [[ "$FAILED" =~ ^[0-9]+$ ]]; then FAILED=0; fi
+
+      FAILURES_ATTR=0
+      SKIPPED_ATTR=0
+
+      if [ "$FAILED" -gt 0 ]; then
+        FAILURES_ATTR=1
+      fi
+
+      if [ "$WARNINGS" -gt 0 ] && [ "$FAILED" -eq 0 ]; then
+        SKIPPED_ATTR=1
+      fi
+
+      {
+        echo '<?xml version="1.0" encoding="UTF-8"?>'
+        echo "<testsuite name=\"Smoke Tests - ${ENV_DISPLAY}\" tests=\"1\" failures=\"${FAILURES_ATTR}\" errors=\"0\" skipped=\"${SKIPPED_ATTR}\">"
+        echo "  <testcase classname=\"SmokeTests\" name=\"Environment: ${ENV_DISPLAY}\">"
+
+        if [ "$FAILED" -gt 0 ]; then
+          echo "    <failure message=\"${FAILED} component(s) unhealthy\">See smoke test task log for details. Passed: ${PASSED}, Warnings: ${WARNINGS}, Failed: ${FAILED}</failure>"
+        elif [ "$WARNINGS" -gt 0 ]; then
+          echo "    <skipped message=\"${WARNINGS} component(s) reported warnings\">See smoke test task log for details.</skipped>"
+        fi
+
+        echo "  </testcase>"
+        echo "</testsuite>"
+      } > "$RESULTS_FILE"
+    displayName: "Generate Smoke Test Report"
+    condition: always()
+    env:
+      PASSED_COUNT: $(SmokeTests.TestsPassed)
+      WARNING_COUNT: $(SmokeTests.TestsWarnings)
+      FAILED_COUNT: $(SmokeTests.TestsFailed)
+      ENV_NAME: ${{ parameters.environment }}
+      ENV_DISPLAY: ${{ upper(parameters.environment) }}
+
+  - task: PublishTestResults@2
+    displayName: "Publish Test Results"
+    condition: always()
+    inputs:
+      testResultsFormat: "JUnit"
+      testResultsFiles: "**/smoke-test-results.xml"
+      searchFolder: "$(System.DefaultWorkingDirectory)"
+      mergeTestResults: true
+      failTaskOnFailedTests: false
+      testRunTitle: "Smoke Tests - ${{ upper(parameters.environment) }}"
+      publishRunAttachments: true

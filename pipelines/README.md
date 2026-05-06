@@ -2,10 +2,11 @@
 
 ## ⚠️ MIGRATION NOTICE
 
-**The CI/CD architecture has been modernized and moved to the `.ado/` directory.**
+**The CI/CD architecture has been modernized and lives in the `pipelines/ado/` directory.**
 
 This directory now contains:
 
+- **`ado/`** - Active Azure DevOps pipelines (PR validation + multi-stage CD)
 - **`scripts/`** - Reusable deployment and validation scripts (still in use)
 - **`legacy/`** - Deprecated pipeline files (see [legacy/README.md](legacy/README.md))
 
@@ -23,7 +24,7 @@ The PCPC project now uses an enterprise-grade CI/CD architecture with:
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                   PR Validation Pipeline                     │
-│              (.ado/azure-pipelines-pr.yml)                   │
+│              (pipelines/ado/azure-pipelines-pr.yml)                   │
 ├─────────────────────────────────────────────────────────────┤
 │  Fast feedback on pull requests (5-10 minutes)              │
 │  ├─ Frontend validation (lint, test, build)                 │
@@ -35,7 +36,7 @@ The PCPC project now uses an enterprise-grade CI/CD architecture with:
 
 ┌─────────────────────────────────────────────────────────────┐
 │                Multi-Stage CD Pipeline                       │
-│                (.ado/azure-pipelines.yml)                    │
+│                (pipelines/ado/azure-pipelines.yml)                    │
 ├─────────────────────────────────────────────────────────────┤
 │  Build Stage                                                 │
 │  ├─ Build frontend (Svelte → dist/)                         │
@@ -70,8 +71,8 @@ The PCPC project now uses an enterprise-grade CI/CD architecture with:
 
 For complete CI/CD documentation, see:
 
-- **`.ado/README.md`** - Complete pipeline documentation (coming soon)
-- **`.ado/SETUP_GUIDE.md`** - Azure DevOps setup instructions (coming soon)
+- **`pipelines/ado/README.md`** - Complete pipeline documentation (coming soon)
+- **`pipelines/ado/SETUP_GUIDE.md`** - Azure DevOps setup instructions (coming soon)
 - **`pipelines/legacy/README.md`** - Information about deprecated files
 
 ## Current Status
@@ -130,7 +131,7 @@ See [legacy/README.md](legacy/README.md) for details on deprecated files and mig
 
 For questions about the new CI/CD architecture:
 
-- See: `.ado/README.md` for complete documentation (coming soon)
+- See: `pipelines/ado/README.md` for complete documentation (coming soon)
 - Contact: devops@maber.io
 - GitHub Issues: Tag with `cicd` label
 
