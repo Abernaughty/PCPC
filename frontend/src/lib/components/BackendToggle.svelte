@@ -17,7 +17,7 @@
   import type { BackendDefinition, BackendHealthStatus } from '$lib/backends';
 
   let isOpen = $state(false);
-  let buttonRef: HTMLButtonElement | null = $state(null);
+  let containerRef: HTMLDivElement | null = $state(null);
 
   let activeId = $derived(backendStore.activeId);
   let active = $derived(backendStore.active);
@@ -67,7 +67,11 @@
   function handleClickOutside(event: MouseEvent): void {
     if (!isOpen) return;
     const target = event.target as Node;
-    if (buttonRef && !buttonRef.contains(target)) {
+    // Treat both the badge AND the popover as "inside" — the popover is a
+    // sibling of the badge inside the same `.backend-toggle` container, so
+    // clicking an option must not close the popover before its own click
+    // handler fires.
+    if (containerRef && !containerRef.contains(target)) {
       isOpen = false;
     }
   }
@@ -87,9 +91,8 @@
   });
 </script>
 
-<div class="backend-toggle" data-status={activeStatus}>
+<div class="backend-toggle" data-status={activeStatus} bind:this={containerRef}>
   <button
-    bind:this={buttonRef}
     class="badge"
     type="button"
     aria-haspopup="menu"
