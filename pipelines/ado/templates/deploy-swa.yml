@@ -284,14 +284,33 @@ steps:
         echo "✓ Deployment token retrieved successfully"
         echo "##vso[task.setvariable variable=DEPLOYMENT_TOKEN;issecret=true]$DEPLOYMENT_TOKEN"
 
+  # Stage the SWA artifact under $(Build.SourcesDirectory) so AzureStaticWebApp@0
+  # can resolve it. The task runs inside its own Oryx Docker container which
+  # mounts the source dir as /working_dir and treats `app_location` as a path
+  # *relative* to that mount. Passing an absolute artifact path (e.g.
+  # $(Pipeline.Workspace)/drop/swa) gets re-rooted as /working_dir/__w/1/...
+  # and fails with "App Directory Location ... is invalid". Staging under
+  # the source tree and passing a relative path is the MS-recommended
+  # pattern when skip_app_build is true.
+  - script: |
+      set -euo pipefail
+      DEST="$(Build.SourcesDirectory)/_swa_artifact"
+      rm -rf "$DEST"
+      mkdir -p "$DEST"
+      cp -R "$(Pipeline.Workspace)/drop/swa/." "$DEST/"
+      echo "✓ Staged SWA artifact at $DEST"
+      ls -lh "$DEST" | head -20
+    displayName: "Stage SWA artifact under sources"
+    condition: and(succeeded(), eq(variables['ShouldDeploySWA'], 'true'))
+
   # Deploy to Azure Static Web Apps
   - task: AzureStaticWebApp@0
     displayName: "Deploy to Static Web App"
     condition: and(succeeded(), eq(variables['ShouldDeploySWA'], 'true'))
     inputs:
       azure_static_web_apps_api_token: $(DEPLOYMENT_TOKEN)
-      # Point directly to the downloaded artifact location
-      app_location: "$(Pipeline.Workspace)/drop/swa"
+      # Path is relative to $(Build.SourcesDirectory) — see staging step above
+      app_location: "_swa_artifact"
       output_location: ""
       skip_app_build: true
 
