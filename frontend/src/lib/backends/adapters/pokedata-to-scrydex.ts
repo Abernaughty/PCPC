@@ -25,7 +25,14 @@ interface PokeDataSetListPayload {
   pagination?: unknown;
 }
 
+/**
+ * Path B's GetCardsBySet returns the canonical PaginatedResponse<T> shape
+ * (`data.items[]`), while Scrydex-side responses surface cards under
+ * `data.cards[]`. Accept either so the adapter survives the Phase 2
+ * Functions migration intermediate state where the field name may flip.
+ */
 interface PokeDataCardListPayload {
+  items?: Array<Record<string, unknown>>;
   cards?: Array<Record<string, unknown>>;
   pagination?: unknown;
 }
@@ -66,10 +73,18 @@ function adaptCard(raw: Record<string, unknown>): PokemonCard {
       : typeof raw.number === 'string'
         ? raw.number
         : undefined;
+  // PokeData's PokeDataFirstCardBasic uses `cardName`; Scrydex uses `name`.
+  // Fall back through both so the adapter survives the Phase 2 transition.
+  const name =
+    typeof raw.cardName === 'string'
+      ? raw.cardName
+      : typeof raw.name === 'string'
+        ? raw.name
+        : '';
 
   return {
     id,
-    name: typeof raw.name === 'string' ? raw.name : '',
+    name,
     number,
     cardNumber: number,
     rarity: typeof raw.rarity === 'string' ? raw.rarity : undefined,
@@ -107,8 +122,9 @@ export function adaptPathBEnvelope<T>(
 
     case 'cards-by-set': {
       const payload = envelope.data as PokeDataCardListPayload;
+      const rawCards = payload.items ?? payload.cards ?? [];
       const adapted = {
-        cards: (payload.cards ?? []).map(adaptCard),
+        cards: rawCards.map(adaptCard),
         pagination: payload.pagination,
       };
       return { ...envelope, data: adapted as unknown as T };
