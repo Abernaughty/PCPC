@@ -36,7 +36,6 @@
     "test": "jest --config=jest.config.cjs",
     "test:watch": "jest --config=jest.config.cjs --watch",
     "test:coverage": "jest --config=jest.config.cjs --coverage",
-    "test:frontend": "jest --config=jest.config.cjs tests/frontend",
     "test:backend": "jest --config=jest.config.cjs tests/backend",
     "test:e2e": "playwright test --config=tests/config/playwright.config.ts",
     "test:e2e:headed": "playwright test --config=tests/config/playwright.config.ts --headed",
