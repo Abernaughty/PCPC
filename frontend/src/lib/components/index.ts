@@ -18,3 +18,4 @@ export { default as TrendSparkline } from './TrendSparkline.svelte';
 export { default as PriceCard } from './PriceCard.svelte';
 export { default as PriceDetailChart } from './PriceDetailChart.svelte';
 export { default as CompareChart } from './CompareChart.svelte';
+export { default as BackendToggle } from './BackendToggle.svelte';
