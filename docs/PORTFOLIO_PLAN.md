@@ -382,7 +382,7 @@ These are deferred and tracked here for resolution at or before the relevant pha
 2. **Whether to introduce Turbo at the PCPC repo root.** pnpm workspaces alone are sufficient for the current shape; Turbo adds task orchestration that may or may not be worth the config. Decision: defer until Phase 0 reveals whether root-level scripts feel awkward.
 3. **Portfolio site domain.** `maber.io` (root) vs `portfolio.maber.io` (subdomain)? Decision needed before Phase 3.
 4. **Custom domains for backends.** `api.pcpc.maber.io` and `aca.pcpc.maber.io` are placeholders. Final names TBD before Phase 1.
-5. **Legacy Svelte 4 SPA in PCPC.** Retire it during Phase 0 consolidation, archive it under a tag, or keep it as a historical reference frontend? Lean: archive under tag, remove from main branch during Phase 0.
+5. ~~**Legacy Svelte 4 SPA in PCPC.** Retire it during Phase 0 consolidation, archive it under a tag, or keep it as a historical reference frontend?~~ **Resolved 2026-05-06:** archived at the `phase-0/legacy-spa-archive` tag and removed from main alongside the SWA deploy stage and validate-frontend PR pipeline. The Azure Static Web App resource and its Terraform module are left intact for separate deprovisioning when convenient.
 6. **APIM custom domain SSL.** Free Azure-managed cert vs Let's Encrypt vs purchased cert? Decision needed in Phase 1.
 7. **ACA min replicas.** 0 (cold start, save $5/month) vs 1 (always warm, better demo)? Decision needed in Phase 2; current lean is 1.
 8. **`maber-web` repo fate.** After PCPC consolidation, `maber-web` becomes a 3-app monorepo (landing, blackjack, portfolio). Keep as-is, rename to reflect new scope, or eventually retire? Decision: keep as-is; revisit if/when the other apps are also reorganized.

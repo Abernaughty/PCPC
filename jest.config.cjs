@@ -1,39 +1,9 @@
 module.exports = {
   // Use projects for different test environments
   projects: [
-    // Frontend tests (jsdom environment)
-    {
-      displayName: "frontend",
-      testEnvironment: "jsdom",
-      testMatch: ["<rootDir>/tests/frontend/**/*.test.{js,ts}"],
-      setupFilesAfterEnv: ["<rootDir>/tests/config/test-setup.js"],
-      moduleFileExtensions: ["js", "ts", "svelte", "json"],
-      transform: {
-        "^.+\\.js$": "babel-jest",
-        "^.+\\.ts$": "ts-jest",
-        "^.+\\.svelte$": [
-          "svelte-jester",
-          {
-            preprocess: true,
-          },
-        ],
-      },
-      moduleNameMapper: {
-        "\\.(css|less|scss|sass)$": "identity-obj-proxy",
-        "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$":
-          "<rootDir>/tests/config/__mocks__/fileMock.js",
-        "^@/(.*)$": "<rootDir>/app/frontend/src/$1",
-        "^@tests/(.*)$": "<rootDir>/tests/$1",
-      },
-      collectCoverageFrom: [
-        "app/frontend/src/**/*.{js,ts,svelte}",
-        "!app/frontend/src/**/*.d.ts",
-        "!app/frontend/src/main.js",
-        "!**/__mocks__/**",
-        "!**/node_modules/**",
-      ],
-    },
     // Backend tests (node environment)
+    // Frontend tests removed alongside the legacy app/frontend SPA — the new
+    // SvelteKit frontend at frontend/ uses Vitest and is configured there.
     {
       displayName: "backend",
       testEnvironment: "node",
@@ -45,13 +15,13 @@ module.exports = {
         "^.+\\.ts$": "ts-jest",
       },
       moduleNameMapper: {
-        "^@backend/(.*)$": "<rootDir>/app/backend/src/$1",
+        "^@backend/(.*)$": "<rootDir>/backend/functions/src/$1",
         "^@tests/(.*)$": "<rootDir>/tests/$1",
       },
       collectCoverageFrom: [
-        "app/backend/src/**/*.{js,ts}",
-        "!app/backend/src/**/*.d.ts",
-        "!app/backend/src/index.ts",
+        "backend/functions/src/**/*.{js,ts}",
+        "!backend/functions/src/**/*.d.ts",
+        "!backend/functions/src/index.ts",
         "!**/__mocks__/**",
         "!**/node_modules/**",
       ],

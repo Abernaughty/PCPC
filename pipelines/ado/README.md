@@ -57,7 +57,6 @@ Reusable templates are located in the `templates/` directory:
 
 ### Validation Templates
 
-- **`validate-frontend.yml`** - Frontend code validation and testing
 - **`validate-backend.yml`** - Backend code validation and testing  
 - **`validate-infrastructure.yml`** - Terraform validation and security scanning
 - **`validate-apim.yml`** - API Management configuration validation
