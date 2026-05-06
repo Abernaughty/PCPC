@@ -1,8 +1,10 @@
 {
-  "name": "pcpc-testing-framework",
+  "name": "pcpc",
   "version": "1.0.0",
+  "private": true,
   "type": "module",
-  "description": "PCPC Comprehensive Testing Framework",
+  "description": "PCPC monorepo root — frontend (SvelteKit), backend/functions (Azure Functions), backend/shared (@pcpc/shared types), plus the pre-existing testing framework deps. See docs/PORTFOLIO_PLAN.md.",
+  "packageManager": "pnpm@10.32.1",
   "dependencies": {
     "@azure/cosmos": "^4.0.0"
   },

@@ -1,6 +1,6 @@
 # Legacy Pipeline Files
 
-This directory contains deprecated pipeline files that have been superseded by the new unified CI/CD architecture in the `.ado/` directory.
+This directory contains deprecated pipeline files that have been superseded by the new unified CI/CD architecture in the `pipelines/ado/` directory.
 
 ## Deprecation Date
 
@@ -29,37 +29,37 @@ The legacy pipelines had several limitations:
 
 - **`azure-pipelines.yml`** - Infrastructure-only pipeline (Terraform deployment)
 
-  - Replaced by: `.ado/azure-pipelines.yml` (unified multi-stage CD pipeline)
+  - Replaced by: `pipelines/ado/azure-pipelines.yml` (unified multi-stage CD pipeline)
   - Limitations: Only deployed infrastructure, no application deployment
 
 - **`frontend-pipeline.yml`** - Frontend-only pipeline (Static Web App deployment)
-  - Replaced by: `.ado/azure-pipelines.yml` (unified multi-stage CD pipeline)
+  - Replaced by: `pipelines/ado/azure-pipelines.yml` (unified multi-stage CD pipeline)
   - Limitations: Only deployed frontend, no backend or APIM deployment
 
 ### Templates
 
 - **`templates/frontend-build.yml`** - Frontend build template
 
-  - Replaced by: `.ado/templates/build.yml` (unified build for frontend + backend)
+  - Replaced by: `pipelines/ado/templates/build.yml` (unified build for frontend + backend)
   - Limitations: Only built frontend, separate from backend build
 
 - **`templates/frontend-deploy.yml`** - Frontend deployment template
 
-  - Replaced by: `.ado/templates/deploy-swa.yml` (multi-environment SWA deployment)
+  - Replaced by: `pipelines/ado/templates/deploy-swa.yml` (multi-environment SWA deployment)
   - Limitations: Single environment, no artifact reuse
 
 - **`templates/terraform-validate.yml`** - Terraform validation template
 
-  - Migrated to: `.ado/templates/` (reused in new pipeline)
+  - Migrated to: `pipelines/ado/templates/` (reused in new pipeline)
   - Status: Template still useful, moved to new location
 
 - **`templates/terraform-plan.yml`** - Terraform plan template
 
-  - Migrated to: `.ado/templates/` (reused in new pipeline)
+  - Migrated to: `pipelines/ado/templates/` (reused in new pipeline)
   - Status: Template still useful, moved to new location
 
 - **`templates/terraform-apply.yml`** - Terraform apply template
-  - Replaced by: `.ado/templates/deploy-infra.yml` (multi-environment infrastructure deployment)
+  - Replaced by: `pipelines/ado/templates/deploy-infra.yml` (multi-environment infrastructure deployment)
   - Limitations: Single environment, no multi-env support
 
 ### Utility Pipelines
@@ -73,12 +73,12 @@ The legacy pipelines had several limitations:
 
 - **`SETUP_GUIDE.md`** - Infrastructure pipeline setup guide
 
-  - Replaced by: `.ado/docs/CD_PIPELINE_GUIDE.md`
+  - Replaced by: `pipelines/ado/docs/CD_PIPELINE_GUIDE.md`
   - Status: Archived for reference
 
 - **`FRONTEND_SETUP_GUIDE.md`** - Frontend pipeline setup guide
 
-  - Replaced by: `.ado/docs/CD_PIPELINE_GUIDE.md`
+  - Replaced by: `pipelines/ado/docs/CD_PIPELINE_GUIDE.md`
   - Status: Archived for reference
 
 - **`TERRAFORM_INIT_FIX.md`** - Terraform initialization troubleshooting
@@ -88,9 +88,9 @@ The legacy pipelines had several limitations:
 
 For current CI/CD documentation, see:
 
-- **`.ado/README.md`** - Complete pipeline documentation
-- **`.ado/SETUP_GUIDE.md`** - Azure DevOps setup instructions
-- **`.ado/docs/CD_PIPELINE_GUIDE.md`** - Multi-stage CD pipeline guide
+- **`pipelines/ado/README.md`** - Complete pipeline documentation
+- **`pipelines/ado/SETUP_GUIDE.md`** - Azure DevOps setup instructions
+- **`pipelines/ado/docs/CD_PIPELINE_GUIDE.md`** - Multi-stage CD pipeline guide
 
 ## Migration Timeline
 
@@ -118,6 +118,6 @@ If you need to temporarily rollback to legacy pipelines:
 
 For questions about the new CI/CD architecture or migration:
 
-- See: `.ado/README.md` for complete documentation
+- See: `pipelines/ado/README.md` for complete documentation
 - Contact: devops@maber.io
 - GitHub Issues: Tag with `cicd` label

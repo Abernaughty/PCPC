@@ -19,7 +19,7 @@ Images (initial set)
 Version Pin Matrix (Stage 1 decisions)
 - Terraform: 1.13.3 (aligns with current pipelines)
 - Node: node:22-bullseye-slim (aligns with repo engines; exact digest will be used)
-- Spectral CLI: 6.11.1 (matches .ado/templates/validate-apim.yml)
+- Spectral CLI: 6.11.1 (matches pipelines/ado/templates/validate-apim.yml)
 - TFLint: pin to an exact release (to be finalized in Stage 2 after build/test)
 - Checkov: pin to an exact release (to be finalized in Stage 2 after build/test)
 
@@ -45,13 +45,13 @@ Artifacts added in Stage 2
   - .ci/images/terraform/Dockerfile
   - .ci/images/node22/Dockerfile
 - ADO templates/pipeline:
-  - .ado/templates/build-ci-images.yml
-  - .ado/azure-pipelines-ci-images.yml
+  - pipelines/ado/templates/build-ci-images.yml
+  - pipelines/ado/azure-pipelines-ci-images.yml
 - Version pins updated: .ci/versions.yaml
 
 How to use (Azure DevOps)
 - Create a service connection to ACR named: pcpc-acr-service-connection
-- Run the pipeline: .ado/azure-pipelines-ci-images.yml (manually)
+- Run the pipeline: pipelines/ado/azure-pipelines-ci-images.yml (manually)
 - After completion, download artifact "ci-image-digests"; it includes:
   - image-manifest.json (names, tags, digests, full references)
   - ci-images-variables.yml (ready-to-include variables with digest references)

@@ -1,0 +1,147 @@
+# Build and Push CI Images, then capture digests
+# Usage:
+# - template: pipelines/ado/templates/build-ci-images.yml
+#   parameters:
+#     acrRegistryServiceConnection: pcpc-acr-service-connection   # Docker Registry → ACR
+#     azureSubscription: pcpc-azure-subscription                   # Azure Resource Manager
+#     acrName: maberdevcontainerregistry
+#     imageVersion: v1.0.0
+#     pushLatest: true
+
+parameters:
+  - name: acrRegistryServiceConnection
+    type: string
+  - name: azureSubscription
+    type: string
+  - name: acrName
+    type: string
+  - name: imageVersion
+    type: string
+  - name: pushLatest
+    type: boolean
+    default: true
+
+jobs:
+  - job: BuildCIImages
+    displayName: "Build CI Images and Publish Digests"
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+      - checkout: self
+
+      # Login to ACR
+      - task: Docker@2
+        displayName: "Login to ACR"
+        inputs:
+          command: login
+          containerRegistry: ${{ parameters.acrRegistryServiceConnection }}
+
+      # Build and push Terraform + Azure CLI toolchain image
+      - task: Docker@2
+        displayName: "Build & Push pcpc-ci-terraform-azure"
+        inputs:
+          command: buildAndPush
+          containerRegistry: ${{ parameters.acrRegistryServiceConnection }}
+          repository: pcpc-ci-terraform-azure
+          Dockerfile: .ci/images/terraform/Dockerfile
+          buildContext: $(Build.SourcesDirectory)
+          tags: |
+            ${{ parameters.imageVersion }}
+            latest
+
+      # Build and push Node 22 toolchain image
+      - task: Docker@2
+        displayName: "Build & Push pcpc-ci-node22"
+        inputs:
+          command: buildAndPush
+          containerRegistry: ${{ parameters.acrRegistryServiceConnection }}
+          repository: pcpc-ci-node22
+          Dockerfile: .ci/images/node22/Dockerfile
+          buildContext: $(Build.SourcesDirectory)
+          tags: |
+            ${{ parameters.imageVersion }}
+            latest
+
+      # Build and push Node + Azure CLI combined image
+      - task: Docker@2
+        displayName: "Build & Push pcpc-ci-node-azure"
+        inputs:
+          command: buildAndPush
+          containerRegistry: ${{ parameters.acrRegistryServiceConnection }}
+          repository: pcpc-ci-node-azure
+          Dockerfile: .ci/images/node-azure/Dockerfile
+          buildContext: $(Build.SourcesDirectory)
+          tags: |
+            ${{ parameters.imageVersion }}
+            latest
+
+      # Capture digests using Docker commands (industry standard approach)
+      - task: AzureCLI@2
+        displayName: "Capture image digests from ACR"
+        inputs:
+          azureSubscription: ${{ parameters.azureSubscription }}
+          scriptType: bash
+          scriptLocation: inlineScript
+          inlineScript: |
+            set -euo pipefail
+            ACR_NAME='${{ parameters.acrName }}'
+            VERSION='${{ parameters.imageVersion }}'
+
+            # Get FQDN for image references
+            FQDN=$(az acr show -n "$ACR_NAME" --query loginServer -o tsv)
+            echo "ACR Login Server: $FQDN"
+
+            # Use Docker manifest inspect to get digests (works with existing Docker@2 login)
+            get_digest() {
+              local repo="$1"
+              echo "Fetching digest for $repo:$VERSION..."
+              docker manifest inspect "$FQDN/$repo:$VERSION" --verbose | jq -r '.Descriptor.digest'
+            }
+
+            TF_DIGEST=$(get_digest pcpc-ci-terraform-azure)
+            NODE_DIGEST=$(get_digest pcpc-ci-node22)
+            NODE_AZURE_DIGEST=$(get_digest pcpc-ci-node-azure)
+
+            echo "Terraform digest: $TF_DIGEST"
+            echo "Node22 digest: $NODE_DIGEST"
+            echo "Node-Azure digest: $NODE_AZURE_DIGEST"
+
+            mkdir -p $(Build.ArtifactStagingDirectory)
+            cat > $(Build.ArtifactStagingDirectory)/image-manifest.json << JSON
+            {
+              "registry": "$FQDN",
+              "version": "$VERSION",
+              "images": {
+                "pcpc-ci-terraform-azure": {
+                  "tag": "$VERSION",
+                  "digest": "$TF_DIGEST",
+                  "reference": "$FQDN/pcpc-ci-terraform-azure@$TF_DIGEST"
+                },
+                "pcpc-ci-node22": {
+                  "tag": "$VERSION",
+                  "digest": "$NODE_DIGEST",
+                  "reference": "$FQDN/pcpc-ci-node22@$NODE_DIGEST"
+                },
+                "pcpc-ci-node-azure": {
+                  "tag": "$VERSION",
+                  "digest": "$NODE_AZURE_DIGEST",
+                  "reference": "$FQDN/pcpc-ci-node-azure@$NODE_AZURE_DIGEST"
+                }
+              }
+            }
+            JSON
+
+            cat > $(Build.ArtifactStagingDirectory)/ci-images-variables.yml << VARYAML
+            variables:
+              CI_IMAGE_TERRAFORM: $FQDN/pcpc-ci-terraform-azure@$TF_DIGEST
+              CI_IMAGE_NODE22: $FQDN/pcpc-ci-node22@$NODE_DIGEST
+              CI_IMAGE_NODE_AZURE: $FQDN/pcpc-ci-node-azure@$NODE_AZURE_DIGEST
+              ACR_SERVICE_CONNECTION: ${{ parameters.acrRegistryServiceConnection }}
+            VARYAML
+
+      - task: PublishBuildArtifacts@1
+        displayName: "Publish image manifest and variables"
+        inputs:
+          PathtoPublish: $(Build.ArtifactStagingDirectory)
+          ArtifactName: ci-image-digests
+          publishLocation: Container

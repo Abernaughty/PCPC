@@ -18,6 +18,8 @@ Each ADR follows a standardized format:
 
 ## ADR Index
 
+### Accepted
+
 | ADR | Title | Status | Date |
 |-----|-------|--------|------|
 | [ADR-001](./ADR-001-package-manager-standardization.md) | Package Manager Standardization | Accepted | 2025-09-22 |
@@ -26,6 +28,17 @@ Each ADR follows a standardized format:
 | [ADR-004](./ADR-004-devcontainer-acr-optimization.md) | DevContainer ACR Optimization | Accepted | 2025-09-28 |
 | [ADR-005](./ADR-005-database-schema-design.md) | Database Schema Design | Accepted | 2025-09-28 |
 | [ADR-006](./ADR-006-api-integration-strategy.md) | API Integration Strategy | Accepted | 2025-09-22 |
+
+### Planned (three-path portfolio story)
+
+These ADRs document the architectural reasoning behind PCPC's three-path deployment story. Each is created as part of the phase that ships the corresponding architecture. See [`docs/PORTFOLIO_PLAN.md`](../PORTFOLIO_PLAN.md).
+
+| ADR | Title | Phase | Status |
+|-----|-------|-------|--------|
+| [ADR-007](./ADR-007-api-architecture-spectrum.md) | API Architecture Spectrum (three paths) | 1 | Planned |
+| [ADR-008](./ADR-008-apim-vs-bff-gateway.md) | APIM vs SvelteKit BFF as Gateway | 1 | Planned |
+| [ADR-009](./ADR-009-functions-vs-container-apps.md) | Functions Consumption vs Container Apps | 2 | Planned |
+| [ADR-010](./ADR-010-path-to-aks.md) | Path to AKS (speculative) | 3 (optional) | Planned |
 
 ## Decision Process
 
