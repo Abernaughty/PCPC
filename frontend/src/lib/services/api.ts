@@ -1,5 +1,14 @@
 /**
- * API Service - Frontend calls to SvelteKit API routes
+ * API Service - Frontend calls to the active backend.
+ *
+ * The active backend is owned by `backendStore` (see $lib/backends). This
+ * service builds canonical paths (e.g. `/sets?language=en`) and hands them
+ * to the active backend's fetcher. Each backend is responsible for
+ * translating the canonical path into its own URL and reshaping responses
+ * into the canonical Scrydex envelope before returning.
+ *
+ * That seam is what lets `?backend=vercel|azure` swap implementations
+ * without any other consumer noticing.
  */
 
 import type {
@@ -8,9 +17,8 @@ import type {
   PricingResult,
   ApiResponse,
 } from '$lib/types';
+import { backendStore } from '$lib/backends';
 import { logger } from './logger';
-
-const API_BASE = '/api';
 
 /**
  * Map our LanguageFilter values to Scrydex API language codes.
@@ -22,45 +30,39 @@ function mapLanguageCode(lang: string): string {
 }
 
 /**
- * Generic API fetch wrapper with error handling
+ * Generic API fetch wrapper with error handling.
+ *
+ * Routes through whichever `BackendDefinition` is currently active in
+ * `backendStore`. The path is canonical (Scrydex-shape, Scrydex query
+ * params); each backend's fetcher handles its own translation.
  */
 async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
-  const url = `${API_BASE}${path}`;
-  logger.debug(`API request: ${url}`);
+  const backend = backendStore.active;
+  logger.debug(`API request via ${backend.id}: ${path}`);
 
   try {
-    const response = await fetch(url, {
-      headers: { 'Content-Type': 'application/json' },
-      ...options,
-    });
-
-    if (!response.ok) {
-      const errorData = await response
-        .json()
-        .catch(() => ({ error: 'Unknown error' }));
-      const errorMsg = errorData.error || `HTTP ${response.status}`;
-      logger.error(`API error (${response.status}):`, errorMsg);
-      throw new Error(errorMsg);
-    }
-
-    const result: ApiResponse<T> = await response.json();
+    const result: ApiResponse<T> = await backend.fetcher.fetch<T>(path, options);
 
     if (result.error) {
       logger.error('API returned error:', result.error);
       throw new Error(result.error);
     }
 
-    logger.debug(`API response received for ${path}`);
-    return result.data as T;
+    if (result.data === undefined) {
+      throw new Error('API returned empty payload');
+    }
+
+    logger.debug(`API response received for ${path} via ${backend.id}`);
+    return result.data;
   } catch (err) {
-    logger.error(`API fetch failed for ${path}:`, err);
+    logger.error(`API fetch failed for ${path} via ${backend.id}:`, err);
     throw err;
   }
 }
 
 export const api = {
   /**
-   * Get all Pok\u00e9mon sets.
+   * Get all Pokémon sets.
    * @param forceRefresh - Bypass server cache
    * @param language - Language filter: 'en', 'jp', or 'both'
    */
@@ -108,7 +110,7 @@ export const api = {
   /**
    * Get full card data including pricing for a specific card.
    * The card detail route returns the full card with variants/pricing inline.
-   * This is now a fallback for deep-link entry and global search \u2014
+   * This is now a fallback for deep-link entry and global search —
    * the primary flow gets pricing from the card list fetch.
    */
   async getCardPricing(
