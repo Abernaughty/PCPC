@@ -36,13 +36,7 @@ resources:
       endpoint: pcpc-acr-service-connection
 
 stages:
-  # Stage 1: Frontend Validation
-  - stage: ValidateFrontend
-    displayName: "Validate Frontend"
-    jobs:
-      - template: templates/validate-frontend.yml
-
-  # Stage 2: Backend Validation
+  # Stage 1: Backend Validation
   - stage: ValidateBackend
     displayName: "Validate Backend"
     jobs:
@@ -50,7 +44,7 @@ stages:
         parameters:
           nodeVersion: $(nodeVersion)
 
-  # Stage 3: Infrastructure Validation
+  # Stage 2: Infrastructure Validation
   - stage: ValidateInfrastructure
     displayName: "Validate Infrastructure"
     jobs:
@@ -58,17 +52,16 @@ stages:
         parameters:
           terraformVersion: $(terraformVersion)
 
-  # Stage 4: APIM Validation
+  # Stage 3: APIM Validation
   - stage: ValidateAPIM
     displayName: "Validate APIM"
     jobs:
       - template: templates/validate-apim.yml
 
-  # Stage 5: Summary
+  # Stage 4: Summary
   - stage: ValidationSummary
     displayName: "Validation Summary"
     dependsOn:
-      - ValidateFrontend
       - ValidateBackend
       - ValidateInfrastructure
       - ValidateAPIM
@@ -83,10 +76,11 @@ stages:
               echo "======================================"
               echo ""
               echo "Validation Results:"
-              echo "- Frontend: $(Agent.JobStatus)"
               echo "- Backend: $(Agent.JobStatus)"
               echo "- Infrastructure: $(Agent.JobStatus)"
               echo "- APIM: $(Agent.JobStatus)"
+              echo ""
+              echo "Frontend (SvelteKit) is validated by Vercel preview builds — see Vercel checks on the PR."
               echo ""
               echo "✅ All validations passed - PR is ready for review"
             displayName: "Display Summary"
