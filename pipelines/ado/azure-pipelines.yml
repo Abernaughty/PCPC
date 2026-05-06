@@ -104,55 +104,17 @@ stages:
               functionAppName: $(FUNCTION_APP_NAME)
               resourceGroupName: $(APIM_RESOURCE_GROUP)
 
-      # Deploy Frontend Static Web App
-      - job: Deploy_Frontend
-        displayName: "Deploy Static Web App"
-        dependsOn: Deploy_Infrastructure
-        condition: succeeded()
-        pool:
-          vmImage: "ubuntu-latest"
-        container: node-azure
-        steps:
-          - template: templates/deploy-swa.yml
-            parameters:
-              environment: dev
-              azureSubscription: "az-pcpc-dev"
-              staticWebAppName: $(STATIC_WEB_APP_NAME)
-              resourceGroupName: $(APIM_RESOURCE_GROUP)
-
       # Deploy APIM APIs and Policies
       - job: Deploy_APIM
         displayName: "Deploy APIM APIs & Policies"
         dependsOn:
           - Deploy_Infrastructure
           - Deploy_Functions
-          - Deploy_Frontend
         condition: succeeded()
-        variables:
-          SwaUrl: $[ dependencies.Deploy_Frontend.outputs['GetStaticWebAppUrl.SWA_URL'] ]
         pool:
           vmImage: "ubuntu-latest"
         container: terraform
         steps:
-          - script: |
-              set -euo pipefail
-
-              BASE="${APIM_CORS_ORIGINS:-}"
-              SWA="${SWA_URL_FROM_DEPLOY:-}"
-
-              if [ -n "$SWA" ] && [[ "$BASE" != *"$SWA"* ]]; then
-                if [ -n "$BASE" ]; then
-                  BASE="${BASE},${SWA}"
-                else
-                  BASE="$SWA"
-                fi
-              fi
-
-              echo "Using APIM CORS origins: $BASE"
-              echo "##vso[task.setvariable variable=APIM_CORS_ORIGINS]$BASE"
-            displayName: "Append Static Web App origin to APIM CORS list"
-            env:
-              SWA_URL_FROM_DEPLOY: $(SwaUrl)
           - template: templates/deploy-apim.yml
             parameters:
               environment: dev
@@ -163,7 +125,6 @@ stages:
         displayName: "Run Smoke Tests"
         dependsOn:
           - Deploy_Functions
-          - Deploy_Frontend
           - Deploy_APIM
         condition: succeeded()
         pool:
@@ -176,7 +137,6 @@ stages:
               azureSubscription: "az-pcpc-dev"
               resourceGroupName: $(APIM_RESOURCE_GROUP)
               functionAppName: $(FUNCTION_APP_NAME)
-              staticWebAppName: $(STATIC_WEB_APP_NAME)
               apimName: $(APIM_NAME)
 
   # ============================================================================
@@ -224,54 +184,16 @@ stages:
               functionAppName: $(FUNCTION_APP_NAME)
               resourceGroupName: $(APIM_RESOURCE_GROUP)
 
-      # Deploy Frontend Static Web App
-      - job: Deploy_Frontend
-        displayName: "Deploy Static Web App"
-        dependsOn: Deploy_Infrastructure
-        condition: succeeded()
-        pool:
-          vmImage: "ubuntu-latest"
-        container: node-azure
-        steps:
-          - template: templates/deploy-swa.yml
-            parameters:
-              environment: staging
-              azureSubscription: "az-pcpc-staging"
-              staticWebAppName: $(STATIC_WEB_APP_NAME)
-              resourceGroupName: $(APIM_RESOURCE_GROUP)
-
       # Deploy APIM APIs and Policies
       - job: Deploy_APIM
         displayName: "Deploy APIM APIs & Policies"
         dependsOn:
           - Deploy_Functions
-          - Deploy_Frontend
         condition: succeeded()
-        variables:
-          SwaUrl: $[ dependencies.Deploy_Frontend.outputs['GetStaticWebAppUrl.SWA_URL'] ]
         pool:
           vmImage: "ubuntu-latest"
         container: terraform
         steps:
-          - script: |
-              set -euo pipefail
-
-              BASE="${APIM_CORS_ORIGINS:-}"
-              SWA="${SWA_URL_FROM_DEPLOY:-}"
-
-              if [ -n "$SWA" ] && [[ "$BASE" != *"$SWA"* ]]; then
-                if [ -n "$BASE" ]; then
-                  BASE="${BASE},${SWA}"
-                else
-                  BASE="$SWA"
-                fi
-              fi
-
-              echo "Using APIM CORS origins: $BASE"
-              echo "##vso[task.setvariable variable=APIM_CORS_ORIGINS]$BASE"
-            displayName: "Append Static Web App origin to APIM CORS list"
-            env:
-              SWA_URL_FROM_DEPLOY: $(SwaUrl)
           - template: templates/deploy-apim.yml
             parameters:
               environment: staging
@@ -282,7 +204,6 @@ stages:
         displayName: "Run Smoke Tests"
         dependsOn:
           - Deploy_Functions
-          - Deploy_Frontend
           - Deploy_APIM
         condition: succeeded()
         pool:
@@ -295,7 +216,6 @@ stages:
               azureSubscription: "az-pcpc-staging"
               resourceGroupName: $(APIM_RESOURCE_GROUP)
               functionAppName: $(FUNCTION_APP_NAME)
-              staticWebAppName: $(STATIC_WEB_APP_NAME)
               apimName: $(APIM_NAME)
 
   # ============================================================================
@@ -343,54 +263,16 @@ stages:
               functionAppName: $(FUNCTION_APP_NAME)
               resourceGroupName: $(APIM_RESOURCE_GROUP)
 
-      # Deploy Frontend Static Web App
-      - job: Deploy_Frontend
-        displayName: "Deploy Static Web App"
-        dependsOn: Deploy_Infrastructure
-        condition: succeeded()
-        pool:
-          vmImage: "ubuntu-latest"
-        container: node-azure
-        steps:
-          - template: templates/deploy-swa.yml
-            parameters:
-              environment: prod
-              azureSubscription: "az-pcpc-prod"
-              staticWebAppName: $(STATIC_WEB_APP_NAME)
-              resourceGroupName: $(APIM_RESOURCE_GROUP)
-
       # Deploy APIM APIs and Policies
       - job: Deploy_APIM
         displayName: "Deploy APIM APIs & Policies"
         dependsOn:
           - Deploy_Functions
-          - Deploy_Frontend
         condition: succeeded()
-        variables:
-          SwaUrl: $[ dependencies.Deploy_Frontend.outputs['GetStaticWebAppUrl.SWA_URL'] ]
         pool:
           vmImage: "ubuntu-latest"
         container: terraform
         steps:
-          - script: |
-              set -euo pipefail
-
-              BASE="${APIM_CORS_ORIGINS:-}"
-              SWA="${SWA_URL_FROM_DEPLOY:-}"
-
-              if [ -n "$SWA" ] && [[ "$BASE" != *"$SWA"* ]]; then
-                if [ -n "$BASE" ]; then
-                  BASE="${BASE},${SWA}"
-                else
-                  BASE="$SWA"
-                fi
-              fi
-
-              echo "Using APIM CORS origins: $BASE"
-              echo "##vso[task.setvariable variable=APIM_CORS_ORIGINS]$BASE"
-            displayName: "Append Static Web App origin to APIM CORS list"
-            env:
-              SWA_URL_FROM_DEPLOY: $(SwaUrl)
           - template: templates/deploy-apim.yml
             parameters:
               environment: prod
@@ -401,7 +283,6 @@ stages:
         displayName: "Run Smoke Tests"
         dependsOn:
           - Deploy_Functions
-          - Deploy_Frontend
           - Deploy_APIM
         condition: succeeded()
         pool:
@@ -414,7 +295,6 @@ stages:
               azureSubscription: "az-pcpc-prod"
               resourceGroupName: $(APIM_RESOURCE_GROUP)
               functionAppName: $(FUNCTION_APP_NAME)
-              staticWebAppName: $(STATIC_WEB_APP_NAME)
               apimName: $(APIM_NAME)
 
       # Final Deployment Summary
@@ -441,7 +321,6 @@ stages:
               echo "Deployed Components:"
               echo "  ✓ Infrastructure (Terraform)"
               echo "  ✓ Azure Functions Backend"
-              echo "  ✓ Static Web App Frontend"
               echo "  ✓ APIM APIs & Policies"
               echo ""
               echo "All smoke tests passed successfully."

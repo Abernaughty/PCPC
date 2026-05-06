@@ -61,7 +61,6 @@ echo "🔧 New in v1.3.0: Azure Functions Core Tools v4.x + Terraform 1.13.3"
 # Ensure .env exists
 [ -f /workspace/.devcontainer/.env ] || cp /workspace/.devcontainer/.env.example /workspace/.devcontainer/.env
 [ -f /workspace/backend/functions/local.settings.json ] || cp /workspace/backend/functions/local.settings.json.example /workspace/backend/functions/local.settings.json
-[ -f /workspace/app/frontend/.env ] || cp /workspace/app/frontend/.env.example /workspace/app/frontend/.env
 
 # Ensure custom dotfiles are in place
 echo "🔧 Setting up custom dotfiles..."

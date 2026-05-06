@@ -27,11 +27,11 @@ The PCPC project now uses an enterprise-grade CI/CD architecture with:
 │              (pipelines/ado/azure-pipelines-pr.yml)                   │
 ├─────────────────────────────────────────────────────────────┤
 │  Fast feedback on pull requests (5-10 minutes)              │
-│  ├─ Frontend validation (lint, test, build)                 │
 │  ├─ Backend validation (lint, test, compile)                │
 │  ├─ Infrastructure validation (fmt, validate, lint)         │
 │  ├─ APIM validation (OpenAPI lint, policy check)            │
 │  └─ Security scan (npm audit)                               │
+│  Frontend (SvelteKit) validated by Vercel preview builds    │
 └─────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────┐
@@ -39,7 +39,6 @@ The PCPC project now uses an enterprise-grade CI/CD architecture with:
 │                (pipelines/ado/azure-pipelines.yml)                    │
 ├─────────────────────────────────────────────────────────────┤
 │  Build Stage                                                 │
-│  ├─ Build frontend (Svelte → dist/)                         │
 │  ├─ Build backend (TypeScript → functions.zip)              │
 │  ├─ Snapshot APIM configs                                   │
 │  ├─ Generate release.json manifest                          │
@@ -47,7 +46,6 @@ The PCPC project now uses an enterprise-grade CI/CD architecture with:
 │                                                              │
 │  Deploy_Dev Stage (auto-deploy)                             │
 │  ├─ Deploy infrastructure (Terraform)                       │
-│  ├─ Deploy frontend (Static Web App)                        │
 │  ├─ Deploy backend (Azure Functions)                        │
 │  ├─ Deploy APIM (API Management)                            │
 │  └─ Run smoke tests                                         │
