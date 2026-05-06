@@ -2,9 +2,9 @@
 
 A single product (Pokémon card pricing) deployed three ways from one repo to demonstrate architectural range across modern-edge, enterprise-cloud, and managed-container patterns. **One frontend, three interchangeable backends, one shared schema.**
 
-> **Status:** Phase 0 of 3 (consolidation in progress) — see [`docs/PORTFOLIO_PLAN.md`](docs/PORTFOLIO_PLAN.md).
-> **Live demo:** `pcpc.maber.io` (wired in Phase 1)
-> **Architecture comparison:** [`docs/architecture-comparison.md`](docs/architecture-comparison.md) *(in progress)*
+> **Status:** Phase 1 in progress — see [`docs/PORTFOLIO_PLAN.md`](docs/PORTFOLIO_PLAN.md).
+> **Live demo:** [pcpc.maber.io](https://pcpc.maber.io) — toggle backends via the corner badge or `?backend=vercel|azure`
+> **Architecture comparison:** [`docs/architecture-comparison.md`](docs/architecture-comparison.md) *(Path A & B; Path C lands in Phase 2)*
 
 ---
 
@@ -46,16 +46,24 @@ All three paths share the same Cosmos DB account and the same TypeScript types v
 
 **Architecture / Practice** · ADR-driven design · Repository consolidation via `git filter-repo` · Multi-runtime type sharing · Architectural decision documentation
 
-## Live demo (planned, Phase 1+)
+## Live demo
 
-A single URL, one frontend, three switchable backends, healthcheck-driven graceful degradation if any path is unhealthy. The toggle defaults to Path A so a recruiter who just opens the URL gets a normal app experience.
+[pcpc.maber.io](https://pcpc.maber.io) — one URL, one frontend, two switchable backends today (three after Phase 2). A corner badge surfaces the active path with its latency; click to switch, or pin via `?backend=vercel|azure` in the URL. Healthcheck-driven graceful degradation hides any path whose `/health` does not respond within 2s, so partial outages never break the demo. The toggle defaults to Path A — a recruiter who never engages it gets a normal app experience.
+
+| URL | What it hits |
+|---|---|
+| `pcpc.maber.io` | Path A (default) |
+| `pcpc.maber.io/?backend=vercel` | Path A explicitly |
+| `pcpc.maber.io/?backend=azure` | Path B (APIM + Functions, dev environment) |
+
+> **Phase 1 caveat (resolved in Phase 2):** Path B's Functions still serve the legacy PokeData schema. The frontend bridges shapes via a temporary adapter; per-variant pricing renders as "no data" on Path B until the Phase 2 schema migration. Full context: [`docs/architecture-comparison.md`](docs/architecture-comparison.md).
 
 ## Architecture decision records
 
-Decisions live in [`docs/adr/`](docs/adr/). The existing ADRs (001–006) cover earlier infrastructure choices (package manager, runtime, caching, devcontainer, schema, API integration). The three-path portfolio story will add four more:
+Decisions live in [`docs/adr/`](docs/adr/). The existing ADRs (001–006) cover earlier infrastructure choices (package manager, runtime, caching, devcontainer, schema, API integration). The three-path portfolio story adds:
 
-- **ADR-007** — API architecture spectrum (why three paths exist) *(Phase 1)*
-- **ADR-008** — APIM vs SvelteKit BFF as gateway *(Phase 1)*
+- **[ADR-007](docs/adr/ADR-007-api-architecture-spectrum.md)** — API architecture spectrum (why three paths exist) *(Accepted, Phase 1)*
+- **[ADR-008](docs/adr/ADR-008-apim-vs-bff-gateway.md)** — APIM vs SvelteKit BFF as gateway *(Accepted, Phase 1)*
 - **ADR-009** — Functions Consumption vs Container Apps *(Phase 2)*
 - **ADR-010** *(optional)* — Path to AKS *(Phase 3)*
 
@@ -99,10 +107,10 @@ Backend (Path B) and infrastructure are run via `pipelines/ado/` and Terraform m
 
 | Phase | Goal | Status |
 |---|---|---|
-| **0** | Consolidate maber-web/apps/pcpc into this repo, set up workspace, add portfolio surface | in progress |
-| **1** | Live two-path toggle (Vercel BFF + APIM/Functions), ADRs 0001 & 0003 | next |
-| **2** | Containerize Functions, ship ACA path, Scrydex schema migration, ADR 0002 | after Phase 1 |
-| **3** | Polish: portfolio site, LinkedIn distribution, ADR 0004 | final |
+| **0** | Consolidate maber-web/apps/pcpc into this repo, set up workspace, add portfolio surface | done |
+| **1** | Live two-path toggle (Vercel BFF + APIM/Functions), ADR-007 & ADR-008, comparison doc | in progress |
+| **2** | Containerize Functions, ship ACA path, Scrydex schema migration, ADR-009 | after Phase 1 |
+| **3** | Polish: portfolio site, LinkedIn distribution, ADR-010 | final |
 
 Full plan with risks, success metrics, and open questions: [`docs/PORTFOLIO_PLAN.md`](docs/PORTFOLIO_PLAN.md).
 
