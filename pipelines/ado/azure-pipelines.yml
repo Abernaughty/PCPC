@@ -9,9 +9,10 @@ trigger:
   paths:
     include:
       - "app/**"
+      - "backend/**"
       - "infra/**"
       - "apim/**"
-      - ".ado/**"
+      - "pipelines/ado/**"
     exclude:
       - "**/*.md"
       - "docs/**"
