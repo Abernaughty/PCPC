@@ -130,21 +130,13 @@ export default defineConfig({
   globalSetup: path.resolve(__dirname, "./playwright-global-setup.ts"),
   globalTeardown: path.resolve(__dirname, "./playwright-global-teardown.ts"),
 
-  // Run your local dev server before starting the tests
+  // Run the local backend before starting the tests. The legacy app/frontend
+  // SPA webServer was removed alongside the SPA itself — the new SvelteKit
+  // frontend is validated via Vercel preview builds, not Playwright e2e.
   webServer: [
     {
-      command: "npm run dev",
-      cwd: path.resolve(__dirname, "../../app/frontend"),
-      port: 3000,
-      reuseExistingServer: !process.env.CI,
-      timeout: 120000,
-      env: {
-        NODE_ENV: "test",
-      },
-    },
-    {
       command: "npm start",
-      cwd: path.resolve(__dirname, "../../app/backend"),
+      cwd: path.resolve(__dirname, "../../backend/functions"),
       port: 7071,
       reuseExistingServer: !process.env.CI,
       timeout: 120000,
