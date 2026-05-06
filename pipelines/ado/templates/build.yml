@@ -1,5 +1,5 @@
 # Unified Build Template
-# Creates a single artifact containing frontend, backend, APIM config, and release metadata
+# Creates a single artifact containing backend Functions, APIM config, and release metadata
 # This artifact is promoted through Dev → Staging → Prod environments
 
 parameters:
@@ -54,184 +54,6 @@ jobs:
         workingDirectory: $(System.DefaultWorkingDirectory)
 
       # ============================================================================
-      # FRONTEND BUILD
-      # ============================================================================
-
-      - script: |
-          echo "Building frontend application..."
-          npm ci
-        displayName: "Install Frontend Dependencies"
-        workingDirectory: $(System.DefaultWorkingDirectory)/app/frontend
-
-      - task: AzureCLI@2
-        displayName: "Resolve APIM configuration for frontend build"
-        condition: and(succeeded(), ne('${{ parameters.azureSubscription }}', ''))
-        inputs:
-          azureSubscription: ${{ parameters.azureSubscription }}
-          scriptType: bash
-          scriptLocation: inlineScript
-          inlineScript: |
-            set -euo pipefail
-
-            BASE_URL='${{ parameters.apimBaseUrl }}'
-            if [ -z "$BASE_URL" ]; then
-              BASE_URL="${APIM_BASE_URL:-}"
-            fi
-            if [ -z "$BASE_URL" ]; then
-              BASE_URL=$(az apim show \
-                --name "${{ parameters.apimName }}" \
-                --resource-group "${{ parameters.apimResourceGroup }}" \
-                --query gatewayUrl -o tsv 2>/dev/null || echo "")
-            fi
-
-            DEFAULT_BASE_URL="https://${{ parameters.apimName }}.azure-api.net/${{ parameters.apimBasePath }}"
-
-            if [ -z "$BASE_URL" ]; then
-              BASE_URL="$DEFAULT_BASE_URL"
-            else
-              BASE_URL="${BASE_URL%/}"
-              if [[ "$BASE_URL" =~ ^https://[^/]+$ ]]; then
-                BASE_URL="${BASE_URL}/${{ parameters.apimBasePath }}"
-              fi
-            fi
-
-            echo "Resolved APIM base URL: $BASE_URL"
-            echo "##vso[task.setvariable variable=ResolvedApimBaseUrl]$BASE_URL"
-            echo "##vso[task.setvariable variable=ResolvedUseApiManagement]${{ parameters.useApiManagement }}"
-            KEY_VALUE="${APIM_SUBSCRIPTION_KEY:-}"
-            if [ -n "$KEY_VALUE" ]; then
-              echo "APIM subscription key supplied via pipeline (length: ${#KEY_VALUE})"
-            else
-              echo "No APIM subscription key supplied; downstream build will omit the header."
-            fi
-            echo "##vso[task.setvariable variable=ResolvedApimSubscriptionKey;issecret=true]$KEY_VALUE"
-        env:
-          APIM_BASE_URL: $(APIM_BASE_URL)
-          APIM_SUBSCRIPTION_KEY: $(APIM_SUBSCRIPTION_KEY)
-
-      - task: AzureCLI@2
-        displayName: "Resolve runtime secrets (APIM & Functions)"
-        condition: and(succeeded(), ne('${{ parameters.azureSubscription }}', ''), ne('${{ parameters.apimName }}', ''), ne('${{ parameters.apimResourceGroup }}', ''))
-        inputs:
-          azureSubscription: ${{ parameters.azureSubscription }}
-          scriptType: bash
-          scriptLocation: inlineScript
-          inlineScript: |
-            set -euo pipefail
-
-            echo "Resolving APIM subscription key..."
-            APIM_KEY=""
-            if [ -n "${{ parameters.apimName }}" ] && [ -n "${{ parameters.apimResourceGroup }}" ]; then
-              APIM_KEY=$(az apim list-secrets \
-                --name "${{ parameters.apimName }}" \
-                --resource-group "${{ parameters.apimResourceGroup }}" \
-                --query "primaryKey" \
-                -o tsv 2>/dev/null || echo "")
-            fi
-
-            if [ -z "$APIM_KEY" ] && [ -n "${APIM_SUBSCRIPTION_KEY:-}" ]; then
-              APIM_KEY="${APIM_SUBSCRIPTION_KEY}"
-            fi
-
-            if [ -n "$APIM_KEY" ]; then
-              echo "APIM subscription key resolved (length: ${#APIM_KEY})"
-              echo "##vso[task.setvariable variable=ResolvedApimSubscriptionKey;issecret=true]$APIM_KEY"
-            else
-              echo "##vso[task.logissue type=warning]Unable to resolve APIM subscription key."
-            fi
-
-            APIM_REQUIRE="${APIM_REQUIRE_SUBSCRIPTION_KEY:-}"
-            if [ -z "$APIM_REQUIRE" ]; then
-              APIM_REQUIRE="false"
-            fi
-            echo "APIM subscription enforcement: $APIM_REQUIRE"
-            echo "##vso[task.setvariable variable=ResolvedApimRequireSubscriptionKey]$APIM_REQUIRE"
-
-            echo "Resolving Function App base URL and key..."
-            FUNCTION_BASE=""
-            FUNCTION_KEY=""
-
-            if [ -n "${{ parameters.functionAppName }}" ] && [ -n "${{ parameters.functionResourceGroup }}" ]; then
-              HOSTNAME=$(az functionapp show \
-                --name "${{ parameters.functionAppName }}" \
-                --resource-group "${{ parameters.functionResourceGroup }}" \
-                --query "defaultHostName" \
-                -o tsv 2>/dev/null || echo "")
-
-              if [ -n "$HOSTNAME" ]; then
-                FUNCTION_BASE="https://${HOSTNAME}/api"
-              fi
-
-              FUNCTION_KEY=$(az functionapp keys list \
-                --name "${{ parameters.functionAppName }}" \
-                --resource-group "${{ parameters.functionResourceGroup }}" \
-                --query "functionKeys.default" \
-                -o tsv 2>/dev/null || echo "")
-            fi
-
-            if [ -z "$FUNCTION_BASE" ] && [ -n "${AZURE_FUNCTIONS_BASE_URL:-}" ]; then
-              FUNCTION_BASE="${AZURE_FUNCTIONS_BASE_URL}"
-            fi
-
-            if [ -z "$FUNCTION_KEY" ] && [ -n "${AZURE_FUNCTION_KEY:-}" ]; then
-              FUNCTION_KEY="${AZURE_FUNCTION_KEY}"
-            fi
-
-            if [ -n "$FUNCTION_BASE" ]; then
-              echo "Function base URL resolved: $FUNCTION_BASE"
-              echo "##vso[task.setvariable variable=ResolvedFunctionsBaseUrl]$FUNCTION_BASE"
-            else
-              echo "##vso[task.logissue type=warning]Unable to resolve Function App base URL."
-            fi
-
-            if [ -n "$FUNCTION_KEY" ]; then
-              echo "Function key resolved (length: ${#FUNCTION_KEY})"
-              echo "##vso[task.setvariable variable=ResolvedFunctionKey;issecret=true]$FUNCTION_KEY"
-            else
-              echo "##vso[task.logissue type=warning]Unable to resolve Function App key."
-            fi
-        env:
-          APIM_SUBSCRIPTION_KEY: $(APIM_SUBSCRIPTION_KEY)
-          AZURE_FUNCTIONS_BASE_URL: $(AZURE_FUNCTIONS_BASE_URL)
-          AZURE_FUNCTION_KEY: $(AZURE_FUNCTION_KEY)
-          APIM_REQUIRE_SUBSCRIPTION_KEY: $(APIM_REQUIRE_SUBSCRIPTION_KEY)
-
-      - script: |
-          npm run build
-        displayName: "Build Frontend (Svelte)"
-        workingDirectory: $(System.DefaultWorkingDirectory)/app/frontend
-        env:
-          NODE_ENV: production
-          ${{ if ne(parameters.apimName, '') }}:
-            APIM_SUBSCRIPTION_KEY: $(ResolvedApimSubscriptionKey)
-            APIM_BASE_URL: $(ResolvedApimBaseUrl)
-            USE_API_MANAGEMENT: $(ResolvedUseApiManagement)
-            APIM_REQUIRE_SUBSCRIPTION_KEY: $(ResolvedApimRequireSubscriptionKey)
-            AZURE_FUNCTIONS_BASE_URL: $(ResolvedFunctionsBaseUrl)
-            AZURE_FUNCTION_KEY: $(ResolvedFunctionKey)
-          ${{ else }}:
-            APIM_SUBSCRIPTION_KEY: $(APIM_SUBSCRIPTION_KEY)
-            APIM_BASE_URL: $(APIM_BASE_URL)
-            USE_API_MANAGEMENT: $(USE_API_MANAGEMENT)
-            APIM_REQUIRE_SUBSCRIPTION_KEY: $(APIM_REQUIRE_SUBSCRIPTION_KEY)
-            AZURE_FUNCTIONS_BASE_URL: $(AZURE_FUNCTIONS_BASE_URL)
-            AZURE_FUNCTION_KEY: $(AZURE_FUNCTION_KEY)
-
-      - script: |
-          if [ ! -d "dist" ]; then
-            echo "##vso[task.logissue type=error]Frontend build failed - dist/ directory not found"
-            exit 1
-          fi
-          if [ ! -f "dist/main.js" ]; then
-            echo "##vso[task.logissue type=error]Frontend build failed - main.js not found"
-            exit 1
-          fi
-          echo "Frontend build verification passed"
-          ls -lah dist/
-        displayName: "Verify Frontend Build"
-        workingDirectory: $(System.DefaultWorkingDirectory)/app/frontend
-
-      # ============================================================================
       # BACKEND BUILD
       # ============================================================================
 
@@ -264,31 +86,12 @@ jobs:
           echo "Creating unified artifact structure..."
 
           # Create artifact directory structure
-          mkdir -p $(Build.ArtifactStagingDirectory)/drop/swa
           mkdir -p $(Build.ArtifactStagingDirectory)/drop/functions
           mkdir -p $(Build.ArtifactStagingDirectory)/drop/apim
 
           echo "Artifact structure created:"
           tree -L 2 $(Build.ArtifactStagingDirectory)/drop || ls -R $(Build.ArtifactStagingDirectory)/drop
         displayName: "Create Artifact Structure"
-
-      # Copy frontend build output
-      - task: CopyFiles@2
-        displayName: "Copy Frontend Build to Artifact"
-        inputs:
-          SourceFolder: "$(System.DefaultWorkingDirectory)/app/frontend/dist"
-          Contents: "**"
-          TargetFolder: "$(Build.ArtifactStagingDirectory)/drop/swa"
-          CleanTargetFolder: false
-
-      # Copy staticwebapp.config.json to SWA artifact
-      - task: CopyFiles@2
-        displayName: "Copy Static Web App Configuration"
-        inputs:
-          SourceFolder: "$(System.DefaultWorkingDirectory)"
-          Contents: "staticwebapp.config.json"
-          TargetFolder: "$(Build.ArtifactStagingDirectory)/drop/swa"
-          CleanTargetFolder: false
 
       # Copy backend build output and package files (node_modules excluded - restored at deployment)
       - task: CopyFiles@2
@@ -330,11 +133,6 @@ jobs:
             "commitMessage": "$(Build.SourceVersionMessage)",
             "triggeredBy": "$(Build.RequestedFor)",
             "components": {
-              "frontend": {
-                "path": "swa/",
-                "technology": "Svelte",
-                "nodeVersion": "${{ parameters.nodeVersion }}"
-              },
               "backend": {
                 "path": "functions/",
                 "technology": "Azure Functions v4",
@@ -380,7 +178,6 @@ jobs:
           du -sh $(Build.ArtifactStagingDirectory)/drop
           echo ""
           echo "Component Sizes:"
-          du -sh $(Build.ArtifactStagingDirectory)/drop/swa
           du -sh $(Build.ArtifactStagingDirectory)/drop/functions
           du -sh $(Build.ArtifactStagingDirectory)/drop/apim
           echo ""

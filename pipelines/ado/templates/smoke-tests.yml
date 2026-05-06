@@ -10,9 +10,6 @@ parameters:
   - name: functionAppName
     type: string
     default: ""
-  - name: staticWebAppName
-    type: string
-    default: ""
   - name: apimName
     type: string
     default: ""
@@ -112,26 +109,6 @@ steps:
           fi
         else
           echo "⊘ Function App not configured - skipping"
-          echo ""
-        fi
-
-        # Test Static Web App if provided
-        if [ -n "${{ parameters.staticWebAppName }}" ]; then
-          # Get Static Web App URL from Azure
-          SWA_URL=$(az staticwebapp show \
-            --name "${{ parameters.staticWebAppName }}" \
-            --resource-group "${{ parameters.resourceGroupName }}" \
-            --query "defaultHostname" -o tsv 2>/dev/null || echo "")
-
-          if [ -n "$SWA_URL" ]; then
-            run_health_check "Static Web App" "pipelines/ado/scripts/health-check-swa.sh" "https://$SWA_URL"
-          else
-            echo "⚠ Could not retrieve Static Web App URL"
-            increment_warnings
-            echo ""
-          fi
-        else
-          echo "⊘ Static Web App not configured - skipping"
           echo ""
         fi
 
