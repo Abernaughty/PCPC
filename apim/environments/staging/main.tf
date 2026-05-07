@@ -34,16 +34,15 @@ provider "azurerm" {
 # -----------------------------------------------------------------------------
 
 locals {
-  # Phase 1B: the frontend is a single Vercel deployment at pcpc.maber.io.
-  # Staging APIM only accepts the production frontend hostname so toggling
-  # to ?backend=azure from pcpc.maber.io can hit the staging API for
-  # validation work, while ad-hoc origins are blocked.
-  base_cors_origins = [
-    "https://pcpc.maber.io"
+  # Phase 1B (per ADR-013): staging accepts only the production frontend
+  # hostname. No Vercel preview support — staging exists for pipeline-only
+  # validation per ADR-011, not for browser-level testing.
+  base_cors_origin_patterns = [
+    "pcpc.maber.io",
   ]
 
-  configured_cors_origins = length(var.cors_origins) > 0 ? var.cors_origins : local.base_cors_origins
-  effective_cors_origins  = distinct(concat(local.configured_cors_origins, var.additional_cors_origins))
+  configured_cors_origin_patterns = length(var.cors_origin_patterns) > 0 ? var.cors_origin_patterns : local.base_cors_origin_patterns
+  effective_cors_origin_patterns  = distinct(concat(local.configured_cors_origin_patterns, var.additional_cors_origin_patterns))
 
   effective_rate_limit_calls  = coalesce(var.rate_limit_calls, var.override_rate_limit_calls, 300)
   effective_rate_limit_period = coalesce(var.rate_limit_period, 60)
@@ -87,8 +86,8 @@ module "pcpc_apim" {
   environment         = var.environment
   function_app_key    = var.function_app_key
 
-  # CORS configuration
-  cors_origins = local.effective_cors_origins
+  # CORS configuration (regex-based; see ADR-013)
+  cors_origin_patterns = local.effective_cors_origin_patterns
 
   # Rate limiting configuration
   rate_limit_calls  = local.effective_rate_limit_calls

@@ -34,18 +34,23 @@ provider "azurerm" {
 # -----------------------------------------------------------------------------
 
 locals {
-  # Phase 1B: the frontend is a single Vercel deployment at pcpc.maber.io
-  # plus per-PR preview URLs at pcpc-git-*.vercel.app. APIM's CORS policy
-  # accepts only literal origins (no wildcards), so dev — which is where
-  # Vercel previews exercise the toggle — uses "*" to keep preview URLs
-  # working without re-applying APIM on every PR. Staging/prod are locked
-  # down to the production frontend hostname.
-  base_cors_origins = [
-    "*"
+  # Phase 1B (per ADR-013): dev allows the production frontend hostname
+  # plus glob-style patterns matching Vercel's per-PR preview URLs and
+  # commit-level URLs. The cors_origin_regex local in apim/terraform/main.tf
+  # converts these to a regex applied by the policy template.
+  #
+  # Patterns matched here (after https:// prefix is automatically added):
+  #   - pcpc.maber.io                                  — production custom domain
+  #   - pcpc-git-{branch}-abernaughtys-projects.vercel.app — Vercel per-PR previews
+  #   - pcpc-{commit-hash}-abernaughtys-projects.vercel.app — Vercel commit-level URLs
+  base_cors_origin_patterns = [
+    "pcpc.maber.io",
+    "pcpc-git-*-abernaughtys-projects.vercel.app",
+    "pcpc-*-abernaughtys-projects.vercel.app",
   ]
 
-  configured_cors_origins = length(var.cors_origins) > 0 ? var.cors_origins : local.base_cors_origins
-  effective_cors_origins  = distinct(concat(local.configured_cors_origins, var.additional_cors_origins))
+  configured_cors_origin_patterns = length(var.cors_origin_patterns) > 0 ? var.cors_origin_patterns : local.base_cors_origin_patterns
+  effective_cors_origin_patterns  = distinct(concat(local.configured_cors_origin_patterns, var.additional_cors_origin_patterns))
 
   effective_rate_limit_calls  = coalesce(var.rate_limit_calls, var.override_rate_limit_calls, 300)
   effective_rate_limit_period = coalesce(var.rate_limit_period, 60)
@@ -88,8 +93,8 @@ module "pcpc_apim" {
   environment         = var.environment
   function_app_key    = var.function_app_key
 
-  # CORS configuration for development
-  cors_origins = local.effective_cors_origins
+  # CORS configuration for development (regex-based; see ADR-013)
+  cors_origin_patterns = local.effective_cors_origin_patterns
 
   # Rate limiting configuration
   rate_limit_calls  = local.effective_rate_limit_calls

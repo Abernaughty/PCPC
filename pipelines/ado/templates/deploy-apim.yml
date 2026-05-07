@@ -135,12 +135,15 @@ steps:
         trap 'rm -f cors-origins.auto.tfvars.json' EXIT
         rm -f cors-origins.auto.tfvars.json
 
-        # Get CORS origins from pipeline variable
+        # Get CORS origin patterns from pipeline variable. Per ADR-013, this is
+        # a comma-separated list of glob-style hostname patterns (NOT URLs).
+        # The same APIM_CORS_ORIGINS variable name is reused for ADO variable
+        # group continuity; only the value semantics changed (URL → pattern).
         CORS_ORIGINS_RAW="${APIM_CORS_ORIGINS:-}"
 
         if [ -n "$CORS_ORIGINS_RAW" ]; then
-          echo "Using custom CORS origins override supplied by pipeline variable"
-          echo "DEBUG: Raw CORS value: [$CORS_ORIGINS_RAW]"
+          echo "Using custom CORS origin patterns override supplied by pipeline variable"
+          echo "DEBUG: Raw CORS patterns value: [$CORS_ORIGINS_RAW]"
 
           # Check if already JSON array format
           if [[ "$CORS_ORIGINS_RAW" =~ ^\[.*\]$ ]]; then
@@ -180,10 +183,13 @@ steps:
 
           echo "DEBUG: Generated JSON: $ORIGINS_JSON"
 
-          # Write the JSON file with proper formatting
+          # Write the JSON file with proper formatting. The JSON key matches
+          # the Terraform variable name (cors_origin_patterns) introduced by
+          # ADR-013; the file name is kept as cors-origins.auto.tfvars.json
+          # to avoid renaming pipeline-cleanup state and lock files.
           cat <<'JSONEOF' > cors-origins.auto.tfvars.json
           {
-            "cors_origins": CORS_PLACEHOLDER
+            "cors_origin_patterns": CORS_PLACEHOLDER
           }
         JSONEOF
 
@@ -204,7 +210,7 @@ steps:
           echo "✓ JSON validation passed"
           VAR_FILES+=("-var-file=cors-origins.auto.tfvars.json")
         else
-          echo "No custom CORS origins supplied; Terraform defaults will be used"
+          echo "No custom CORS origin patterns supplied; per-env Terraform defaults will be used (see ADR-013 + apim/environments/*/main.tf)"
         fi
 
         append_tf_var "api_version" "${APIM_API_VERSION:-}"
