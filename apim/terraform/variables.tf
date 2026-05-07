@@ -43,17 +43,24 @@ variable "function_app_key" {
 # -----------------------------------------------------------------------------
 
 variable "cors_origins" {
-  description = "List of allowed CORS origins"
+  description = <<-EOT
+    List of allowed CORS origins. Each entry must be either:
+      - A wildcard "*" (allow any origin — appropriate for dev/preview)
+      - An HTTP/HTTPS URL (e.g. https://pcpc.maber.io)
+
+    APIM's CORS policy does not support wildcard subdomains in origins
+    (e.g. https://*.vercel.app is invalid). For environments that need to
+    accept many ephemeral origins (Vercel preview URLs), use "*".
+  EOT
   type        = list(string)
-  default = [
-    "http://localhost:3000"
-  ]
+  default     = ["http://localhost:3000"]
 
   validation {
     condition = alltrue([
-      for origin in var.cors_origins : can(regex("^https?://", origin))
+      for origin in var.cors_origins :
+      origin == "*" || can(regex("^https?://", origin))
     ])
-    error_message = "All CORS origins must be valid HTTP or HTTPS URLs."
+    error_message = "Each CORS origin must be \"*\" or a valid HTTP/HTTPS URL."
   }
 }
 
