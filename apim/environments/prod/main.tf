@@ -77,6 +77,17 @@ locals {
 # MODULE CONFIGURATION
 # -----------------------------------------------------------------------------
 
+# -----------------------------------------------------------------------------
+# IMPORT BLOCK (Terraform 1.5+)
+# -----------------------------------------------------------------------------
+# See apim/environments/dev/main.tf for the rationale. Adopts the get-health
+# operation that the OpenAPI spec import creates in Azure during the first
+# apply that includes /health in the spec.
+import {
+  to = module.pcpc_apim.azurerm_api_management_api_operation.get_health
+  id = "/subscriptions/555b4cfa-ad2e-4c71-9433-620a59cf7616/resourceGroups/${var.resource_group_name}/providers/Microsoft.ApiManagement/service/${var.api_management_name}/apis/pcpc-api-${var.environment}/operations/get-health"
+}
+
 module "pcpc_apim" {
   source = "../../terraform"
 

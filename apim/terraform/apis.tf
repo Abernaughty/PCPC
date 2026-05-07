@@ -66,6 +66,16 @@ resource "azurerm_api_management_backend" "function_app" {
 # subscription-not-required, intentionally no operation-level policy
 # (the global API policy still applies, but rate-limit calls are
 # generous enough to handle healthcheck polling).
+#
+# IMPORTANT: the OpenAPI spec import block on azurerm_api_management_api.pcpc_api
+# (which references apim/specs/pcpc-api-v1.yaml — see the /health entry there)
+# creates this operation in Azure during the first apply that includes /health
+# in the spec. Terraform then needs to adopt the existing operation rather
+# than try to create it again. Each per-env wrapper in
+# apim/environments/{env}/main.tf has a matching `import { to = ... }` block
+# (Terraform 1.5+) that adopts the spec-imported operation into state on the
+# next apply. Import blocks must live in the root module, not here in the
+# child module.
 resource "azurerm_api_management_api_operation" "get_health" {
   operation_id        = "get-health"
   api_name            = azurerm_api_management_api.pcpc_api.name
