@@ -75,13 +75,14 @@ output "function_app_url" {
 # -----------------------------------------------------------------------------
 
 output "api_operations" {
-  description = "List of API operations"
+  description = <<-EOT
+    Map of Terraform-managed API operations. The get-health operation is
+    intentionally absent — it's managed by the OpenAPI spec import on
+    azurerm_api_management_api.pcpc_api rather than as an explicit
+    azurerm_api_management_api_operation resource (see apis.tf for
+    rationale). For its definition, see apim/specs/pcpc-api-v1.yaml.
+  EOT
   value = {
-    get_health = {
-      operation_id = azurerm_api_management_api_operation.get_health.operation_id
-      method       = azurerm_api_management_api_operation.get_health.method
-      url_template = azurerm_api_management_api_operation.get_health.url_template
-    }
     get_sets = {
       operation_id = azurerm_api_management_api_operation.get_sets.operation_id
       method       = azurerm_api_management_api_operation.get_sets.method

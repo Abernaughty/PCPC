@@ -83,21 +83,6 @@ locals {
 # MODULE CONFIGURATION
 # -----------------------------------------------------------------------------
 
-# -----------------------------------------------------------------------------
-# IMPORT BLOCK (Terraform 1.5+)
-# -----------------------------------------------------------------------------
-# Adopt the get-health operation that the OpenAPI spec import (in
-# azurerm_api_management_api.pcpc_api) created in Azure on the first apply
-# that included /health in apim/specs/pcpc-api-v1.yaml. Without this block,
-# Terraform tries to create get-health from scratch and fails with
-# "resource already exists" because Azure already has it from the spec
-# import. Import blocks must live in the root module (this file), not the
-# child module under apim/terraform/.
-import {
-  to = module.pcpc_apim.azurerm_api_management_api_operation.get_health
-  id = "/subscriptions/555b4cfa-ad2e-4c71-9433-620a59cf7616/resourceGroups/${var.resource_group_name}/providers/Microsoft.ApiManagement/service/${var.api_management_name}/apis/pcpc-api-${var.environment}/operations/get-health"
-}
-
 module "pcpc_apim" {
   source = "../../terraform"
 
