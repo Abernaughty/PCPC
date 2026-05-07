@@ -77,6 +77,11 @@ output "function_app_url" {
 output "api_operations" {
   description = "List of API operations"
   value = {
+    get_health = {
+      operation_id = azurerm_api_management_api_operation.get_health.operation_id
+      method       = azurerm_api_management_api_operation.get_health.method
+      url_template = azurerm_api_management_api_operation.get_health.url_template
+    }
     get_sets = {
       operation_id = azurerm_api_management_api_operation.get_sets.operation_id
       method       = azurerm_api_management_api_operation.get_sets.method

@@ -61,6 +61,46 @@ resource "azurerm_api_management_backend" "function_app" {
 # API OPERATIONS
 # -----------------------------------------------------------------------------
 
+# Health Check Operation — exposed through APIM so the frontend backend
+# toggle can probe Path B without bypassing the gateway. Anonymous,
+# subscription-not-required, intentionally no operation-level policy
+# (the global API policy still applies, but rate-limit calls are
+# generous enough to handle healthcheck polling).
+resource "azurerm_api_management_api_operation" "get_health" {
+  operation_id        = "get-health"
+  api_name            = azurerm_api_management_api.pcpc_api.name
+  api_management_name = var.api_management_name
+  resource_group_name = var.resource_group_name
+  display_name        = "Health Check"
+  method              = "GET"
+  url_template        = "/health"
+  description         = "System health check endpoint"
+
+  response {
+    status_code = 200
+    description = "All components healthy"
+    representation {
+      content_type = "application/json"
+    }
+  }
+
+  response {
+    status_code = 207
+    description = "At least one component degraded"
+    representation {
+      content_type = "application/json"
+    }
+  }
+
+  response {
+    status_code = 503
+    description = "Service unhealthy"
+    representation {
+      content_type = "application/json"
+    }
+  }
+}
+
 # Get Set List Operation
 resource "azurerm_api_management_api_operation" "get_sets" {
   operation_id        = "get-set-list"
