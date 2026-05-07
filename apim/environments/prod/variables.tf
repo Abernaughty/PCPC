@@ -45,8 +45,13 @@ variable "application_insights_name" {
 # OPTIONAL OVERRIDES (PIPELINE/LOCAL)
 # -----------------------------------------------------------------------------
 
-variable "cors_origins" {
-  description = "Explicit list of allowed CORS origins (overrides defaults when non-empty)"
+variable "cors_origin_patterns" {
+  description = <<-EOT
+    Explicit list of CORS origin patterns (glob-style hostname patterns)
+    that overrides the per-env defaults when non-empty. Pipeline supplies
+    this via cors-origins.auto.tfvars.json from APIM_CORS_ORIGINS variable
+    group entry. See ADR-013 for pattern syntax.
+  EOT
   type        = list(string)
   default     = []
 }
@@ -97,8 +102,8 @@ variable "api_version" {
 # ADDITIONAL CONFIGURATION
 # -----------------------------------------------------------------------------
 
-variable "additional_cors_origins" {
-  description = "Additional CORS origins specific to production environment"
+variable "additional_cors_origin_patterns" {
+  description = "Additional CORS origin patterns specific to production environment (appended to base set, deduplicated)"
   type        = list(string)
   default     = []
 }

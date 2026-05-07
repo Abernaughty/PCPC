@@ -28,7 +28,7 @@ reflect distinct operational postures:
 | Alert thresholds | 10 fails | 10 fails | 5 fails (stricter) |
 | Terraform safety | none | none | `prevent_deletion_if_contains_resources` |
 | Key Vault on destroy | purge | purge | keep (`purge_soft_delete_on_destroy = false`) |
-| APIM CORS (Phase 1B) | `*` | `https://pcpc.maber.io` | `https://pcpc.maber.io` |
+| APIM CORS (Phase 1B, [revised by ADR-013](./ADR-013-cors-regex-policy.md)) | regex allowlist of `pcpc.maber.io` + Vercel preview patterns | regex allowlist of `pcpc.maber.io` only | regex allowlist of `pcpc.maber.io` only |
 | Custom hostname (Phase 1B) | `dev-api.pcpc.maber.io` | `staging-api.pcpc.maber.io` | `api.pcpc.maber.io` |
 
 Despite all that engineering, no ADR existed explaining *why* three

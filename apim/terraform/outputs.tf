@@ -124,9 +124,14 @@ output "environment" {
   value       = var.environment
 }
 
-output "cors_origins" {
-  description = "Configured CORS origins"
-  value       = var.cors_origins
+output "cors_origin_patterns" {
+  description = "Configured CORS origin patterns (glob-style hostname patterns)"
+  value       = var.cors_origin_patterns
+}
+
+output "cors_origin_regex" {
+  description = "Assembled regex applied to the Origin header by the CORS policy (for debugging / audit)"
+  value       = local.cors_origin_regex
 }
 
 output "rate_limiting" {
