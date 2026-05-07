@@ -282,18 +282,32 @@ variable "apim_sku_name" {
 
 variable "apim_gateway_hostnames" {
   description = <<-EOT
-    Custom hostnames for the APIM gateway in this environment. Each hostname
-    requires a CNAME record in Cloudflare pointing at pcpc-apim-dev.azure-api.net
-    BEFORE `terraform apply`, otherwise Azure-managed cert provisioning will hang.
-    Default uses the dev-api.pcpc.maber.io hostname per Phase 1B.
+    Custom hostnames for the APIM gateway in this environment.
+
+    Default is empty during the Azure-managed cert creation suspension
+    (Aug 15 2025 — Jun 30 2026 per Microsoft's published breaking-change
+    notice). When the suspension lifts, restore the per-env hostname:
+
+      dev:     { host_name = "dev-api.pcpc.maber.io",     default_ssl_binding = true }
+
+    Pre-flip checklist:
+      1. Add the matching CNAME in Cloudflare (DNS-only, gray cloud)
+         pointing at pcpc-apim-dev.azure-api.net
+      2. Confirm Microsoft has resumed managed-cert creation
+      3. Set this variable's default to the hostname object above
+      4. Run `terraform apply`
+
+    Alternative path (use before Jun 30 2026): supply a Key Vault cert
+    via additional fields on the gateway_hostnames object. Out of scope
+    for Phase 1; tracked in ADR-012.
+
+    See `docs/adr/ADR-012-apim-managed-cert-suspension.md`.
   EOT
   type = list(object({
     host_name           = string
     default_ssl_binding = optional(bool, false)
   }))
-  default = [
-    { host_name = "dev-api.pcpc.maber.io", default_ssl_binding = true }
-  ]
+  default = []
 }
 
 # Log Analytics Configuration
