@@ -17,9 +17,11 @@
 <policies>
     <inbound>
         <base />
-        <!-- Resolve the request's Origin once and decide whether it matches the allowlist. -->
+        <!-- Resolve the request's Origin once and decide whether it matches the allowlist.
+             Uses APIM's @{ ... return X; } code-block expression form (rather than @( single-expression ))
+             to keep the cast/null-check/regex-match readable inside an XML attribute. -->
         <set-variable name="originHeader" value="@(context.Request.Headers.GetValueOrDefault(&quot;Origin&quot;, &quot;&quot;))" />
-        <set-variable name="isOriginAllowed" value="@(((string)context.Variables[&quot;originHeader&quot;]).Length > 0 &amp;&amp; System.Text.RegularExpressions.Regex.IsMatch((string)context.Variables[&quot;originHeader&quot;], @&quot;${cors_origin_regex}&quot;))" />
+        <set-variable name="isOriginAllowed" value="@{ var origin = (string)context.Variables[&quot;originHeader&quot;]; if (string.IsNullOrEmpty(origin)) { return false; } return System.Text.RegularExpressions.Regex.IsMatch(origin, @&quot;${cors_origin_regex}&quot;); }" />
 
         <!-- CORS preflight handler: short-circuit OPTIONS requests with the appropriate response. -->
         <choose>
