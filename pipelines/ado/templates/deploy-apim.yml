@@ -141,6 +141,22 @@ steps:
         # group continuity; only the value semantics changed (URL → pattern).
         CORS_ORIGINS_RAW="${APIM_CORS_ORIGINS:-}"
 
+        # Backward-compat guard: ADR-013 changed the value format from URLs
+        # to glob-style hostname patterns. If the variable group still holds
+        # legacy URL values (anything starting with http:// or https://),
+        # the new Terraform validator will reject them and `terraform plan`
+        # will fail. Detect this and fall back to per-env code defaults
+        # with a loud warning so the operator knows to clean up the
+        # variable group at their convenience.
+        if [ -n "$CORS_ORIGINS_RAW" ] && echo "$CORS_ORIGINS_RAW" | grep -qiE '(^|,)[[:space:]]*https?://'; then
+          echo "⚠️  WARNING: APIM_CORS_ORIGINS contains URL-format values (legacy ADR-008 format)."
+          echo "⚠️  ADR-013 changed the format to glob-style hostname patterns (e.g. 'pcpc.maber.io')."
+          echo "⚠️  Raw value: [$CORS_ORIGINS_RAW]"
+          echo "⚠️  Falling back to per-env Terraform code defaults (apim/environments/*/main.tf)."
+          echo "⚠️  To fix: clear APIM_CORS_ORIGINS in vg-pcpc-${{ parameters.environment }}-config OR replace with the new pattern format."
+          CORS_ORIGINS_RAW=""
+        fi
+
         if [ -n "$CORS_ORIGINS_RAW" ]; then
           echo "Using custom CORS origin patterns override supplied by pipeline variable"
           echo "DEBUG: Raw CORS patterns value: [$CORS_ORIGINS_RAW]"
