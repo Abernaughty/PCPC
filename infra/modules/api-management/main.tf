@@ -61,16 +61,19 @@ resource "azurerm_api_management" "this" {
     type = var.identity_type
   }
 
-  # Custom hostnames bound to the gateway with Azure-managed TLS certs.
-  # See variables.tf for the CNAME-must-exist-first precondition. The block
-  # is skipped entirely when no hostnames are configured so the resource
-  # remains idempotent for envs that haven't enabled custom domains yet.
+  # Custom hostnames bound to the gateway. Skipped entirely when no
+  # hostnames are configured (the current default during the Azure-managed
+  # cert creation suspension — see ADR-012 and variables.tf).
   #
-  # certificate_source is intentionally omitted: the azurerm provider treats
-  # it as a computed attribute and rejects explicit values. The provider
-  # derives it from what we DO provide — supplying neither `certificate`
-  # nor `key_vault_id` here yields the free Azure-managed cert (the
-  # `Managed` source), which is exactly what Phase 1B wants.
+  # When the suspension lifts and per-env defaults are restored:
+  #   - certificate_source is intentionally omitted because the azurerm
+  #     provider treats it as a computed attribute and rejects explicit
+  #     values. The provider derives it from what we DO provide —
+  #     supplying neither `certificate` nor `key_vault_id` here yields
+  #     the free Azure-managed cert (the `Managed` source).
+  #   - The CNAME pointing the custom hostname at the
+  #     pcpc-apim-<env>.azure-api.net gateway must exist in DNS BEFORE
+  #     `terraform apply` so Azure-managed cert validation can complete.
   dynamic "hostname_configuration" {
     for_each = length(var.gateway_hostnames) > 0 ? [1] : []
     content {

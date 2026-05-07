@@ -157,10 +157,20 @@ variable "gateway_hostnames" {
   description = <<-EOT
     Custom hostnames bound to the APIM gateway with Azure-managed TLS certs.
 
-    PRECONDITION: For each hostname, a CNAME record pointing at the APIM
-    service's default `*.azure-api.net` gateway hostname must exist before
-    `terraform apply`. Azure validates the cert via that DNS record. Apply
-    will hang or fail if the CNAME is not in place.
+    DEFAULT IS EMPTY during the Azure-managed cert creation suspension
+    (Aug 15 2025 — Jun 30 2026 per Microsoft's published breaking-change
+    notice). With the suspension active, configuring any hostname here
+    will cause `terraform apply` to fail with:
+        EncodedCertificateOrKeyVaultIdMustBeProvided
+    Per-env wrappers in infra/envs/{dev,staging,prod}/variables.tf set
+    this to `[]` and document the post-suspension restoration. See
+    docs/adr/ADR-012-apim-managed-cert-suspension.md.
+
+    AFTER THE SUSPENSION (or if using a Key Vault cert, which would
+    require additional fields here): for each hostname, a CNAME record
+    pointing at the APIM service's default `*.azure-api.net` gateway
+    hostname must exist before `terraform apply` so Azure can validate
+    the cert via DNS.
 
     Set `default_ssl_binding = true` on exactly one hostname per APIM if
     you want SNI clients without SNI to land on it; otherwise leave it
