@@ -76,6 +76,20 @@ locals {
 # MODULE CONFIGURATION
 # -----------------------------------------------------------------------------
 
+# -----------------------------------------------------------------------------
+# REMOVED BLOCK (Terraform 1.7+) — Codex P1 fix on PR #138
+# -----------------------------------------------------------------------------
+# See apim/environments/dev/main.tf for the full rationale. This is a no-op
+# in staging (the resource was never in state) but kept for symmetry so the
+# state migration is uniform across envs. Can be deleted in a follow-up
+# cleanup PR after every env has applied PR #138 once.
+removed {
+  from = module.pcpc_apim.azurerm_api_management_api_operation.get_health
+  lifecycle {
+    destroy = false
+  }
+}
+
 module "pcpc_apim" {
   source = "../../terraform"
 
