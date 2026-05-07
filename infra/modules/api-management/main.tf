@@ -65,6 +65,12 @@ resource "azurerm_api_management" "this" {
   # See variables.tf for the CNAME-must-exist-first precondition. The block
   # is skipped entirely when no hostnames are configured so the resource
   # remains idempotent for envs that haven't enabled custom domains yet.
+  #
+  # certificate_source is intentionally omitted: the azurerm provider treats
+  # it as a computed attribute and rejects explicit values. The provider
+  # derives it from what we DO provide — supplying neither `certificate`
+  # nor `key_vault_id` here yields the free Azure-managed cert (the
+  # `Managed` source), which is exactly what Phase 1B wants.
   dynamic "hostname_configuration" {
     for_each = length(var.gateway_hostnames) > 0 ? [1] : []
     content {
@@ -72,7 +78,6 @@ resource "azurerm_api_management" "this" {
         for_each = var.gateway_hostnames
         content {
           host_name                    = proxy.value.host_name
-          certificate_source           = "Managed"
           default_ssl_binding          = proxy.value.default_ssl_binding
           negotiate_client_certificate = false
         }
