@@ -30,6 +30,7 @@ Each ADR follows a standardized format:
 | [ADR-006](./ADR-006-api-integration-strategy.md) | API Integration Strategy | Accepted | 2025-09-22 |
 | [ADR-007](./ADR-007-api-architecture-spectrum.md) | API Architecture Spectrum (three paths) | Accepted | 2026-05-06 |
 | [ADR-008](./ADR-008-apim-vs-bff-gateway.md) | APIM vs SvelteKit BFF as Gateway | Accepted | 2026-05-06 |
+| [ADR-011](./ADR-011-deployment-topology-and-testing-model.md) | Deployment Topology and Testing Model | Accepted | 2026-05-06 |
 
 ### Planned (three-path portfolio story)
 

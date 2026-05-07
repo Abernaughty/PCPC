@@ -34,8 +34,11 @@ provider "azurerm" {
 # -----------------------------------------------------------------------------
 
 locals {
+  # Phase 1B: the frontend is a single Vercel deployment at pcpc.maber.io.
+  # Prod APIM only accepts the production frontend hostname; preview URLs
+  # are intentionally blocked here so prod data only serves the prod URL.
   base_cors_origins = [
-    "https://pcpc-prod.maber.io"
+    "https://pcpc.maber.io"
   ]
 
   configured_cors_origins = length(var.cors_origins) > 0 ? var.cors_origins : local.base_cors_origins

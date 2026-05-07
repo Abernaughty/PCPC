@@ -366,6 +366,11 @@ module "api_management" {
   publisher_email = var.apim_publisher_email
   sku_name        = var.apim_sku_name
 
+  # Phase 1B: bind dev-api.pcpc.maber.io to the gateway with an Azure-managed
+  # cert. The CNAME record (dev-api.pcpc.maber.io -> pcpc-apim-dev.azure-api.net)
+  # must exist in Cloudflare before this applies.
+  gateway_hostnames = var.apim_gateway_hostnames
+
   tags = local.common_tags
 
   depends_on = [module.resource_group]

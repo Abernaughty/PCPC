@@ -148,3 +148,41 @@ variable "triple_des_enabled" {
   type        = bool
   default     = false
 }
+
+# -----------------------------------------------------------------------------
+# CUSTOM DOMAIN CONFIGURATION
+# -----------------------------------------------------------------------------
+
+variable "gateway_hostnames" {
+  description = <<-EOT
+    Custom hostnames bound to the APIM gateway with Azure-managed TLS certs.
+
+    PRECONDITION: For each hostname, a CNAME record pointing at the APIM
+    service's default `*.azure-api.net` gateway hostname must exist before
+    `terraform apply`. Azure validates the cert via that DNS record. Apply
+    will hang or fail if the CNAME is not in place.
+
+    Set `default_ssl_binding = true` on exactly one hostname per APIM if
+    you want SNI clients without SNI to land on it; otherwise leave it
+    false on all of them.
+  EOT
+  type = list(object({
+    host_name           = string
+    default_ssl_binding = optional(bool, false)
+  }))
+  default = []
+
+  validation {
+    condition = alltrue([
+      for h in var.gateway_hostnames : can(regex("^[a-z0-9.-]+\\.[a-z]{2,}$", h.host_name))
+    ])
+    error_message = "Each gateway hostname must be a lowercase FQDN (e.g. dev-api.pcpc.maber.io)."
+  }
+
+  validation {
+    condition = length([
+      for h in var.gateway_hostnames : h if h.default_ssl_binding == true
+    ]) <= 1
+    error_message = "At most one gateway hostname may set default_ssl_binding = true."
+  }
+}
