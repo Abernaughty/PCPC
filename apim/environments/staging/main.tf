@@ -34,8 +34,12 @@ provider "azurerm" {
 # -----------------------------------------------------------------------------
 
 locals {
+  # Phase 1B: the frontend is a single Vercel deployment at pcpc.maber.io.
+  # Staging APIM only accepts the production frontend hostname so toggling
+  # to ?backend=azure from pcpc.maber.io can hit the staging API for
+  # validation work, while ad-hoc origins are blocked.
   base_cors_origins = [
-    "https://pcpc-staging.maber.io"
+    "https://pcpc.maber.io"
   ]
 
   configured_cors_origins = length(var.cors_origins) > 0 ? var.cors_origins : local.base_cors_origins

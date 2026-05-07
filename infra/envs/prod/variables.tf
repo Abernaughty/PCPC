@@ -275,6 +275,22 @@ variable "apim_sku_name" {
   default     = "Consumption_0" # Can upgrade to Standard/Premium for production needs
 }
 
+variable "apim_gateway_hostnames" {
+  description = <<-EOT
+    Custom hostnames for the APIM gateway in this environment. Each hostname
+    requires a CNAME record in Cloudflare pointing at pcpc-apim-prod.azure-api.net
+    BEFORE `terraform apply`, otherwise Azure-managed cert provisioning will hang.
+    Default uses the api.pcpc.maber.io hostname per Phase 1B.
+  EOT
+  type = list(object({
+    host_name           = string
+    default_ssl_binding = optional(bool, false)
+  }))
+  default = [
+    { host_name = "api.pcpc.maber.io", default_ssl_binding = true }
+  ]
+}
+
 # Log Analytics Configuration
 variable "log_analytics_sku" {
   description = "The SKU of the Log Analytics workspace"
