@@ -84,18 +84,33 @@ locals {
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
-# IMPORT BLOCK (Terraform 1.5+)
+# REMOVED BLOCK (Terraform 1.7+) — Codex P1 fix on PR #138
 # -----------------------------------------------------------------------------
-# Adopt the get-health operation that the OpenAPI spec import (in
-# azurerm_api_management_api.pcpc_api) created in Azure on the first apply
-# that included /health in apim/specs/pcpc-api-v1.yaml. Without this block,
-# Terraform tries to create get-health from scratch and fails with
-# "resource already exists" because Azure already has it from the spec
-# import. Import blocks must live in the root module (this file), not the
-# child module under apim/terraform/.
-import {
-  to = module.pcpc_apim.azurerm_api_management_api_operation.get_health
-  id = "/subscriptions/555b4cfa-ad2e-4c71-9433-620a59cf7616/resourceGroups/${var.resource_group_name}/providers/Microsoft.ApiManagement/service/${var.api_management_name}/apis/pcpc-api-${var.environment}/operations/get-health"
+# PR #137 added an explicit `azurerm_api_management_api_operation.get_health`
+# resource and an import block that adopted the spec-imported operation into
+# state. PR #138 removes both because the OpenAPI spec import on
+# azurerm_api_management_api.pcpc_api owns the operation directly (see
+# apim/terraform/apis.tf comment).
+#
+# Without this `removed` block, Terraform would see the resource in state
+# (from PR #137's successful import), see no resource declaration in
+# config, and plan a DESTROY — deleting the live /health operation from
+# Azure. The spec import wouldn't re-create it on the same apply unless the
+# spec file's content hash changed, so /health would disappear from the
+# gateway until some later spec change re-imported the API.
+#
+# `lifecycle { destroy = false }` tells Terraform: remove from state ONLY,
+# do not call DELETE on the Azure resource. The spec import keeps owning it.
+#
+# This block is a no-op for envs where the resource was never in state
+# (staging, prod — they never reached this code path before PR #138). After
+# every env has applied PR #138 once successfully, this block can be deleted
+# in a follow-up cleanup PR.
+removed {
+  from = module.pcpc_apim.azurerm_api_management_api_operation.get_health
+  lifecycle {
+    destroy = false
+  }
 }
 
 module "pcpc_apim" {

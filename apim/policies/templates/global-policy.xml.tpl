@@ -19,9 +19,13 @@
         <base />
         <!-- Resolve the request's Origin once and decide whether it matches the allowlist.
              Uses APIM's @{ ... return X; } code-block expression form (rather than @( single-expression ))
-             to keep the cast/null-check/regex-match readable inside an XML attribute. -->
+             to keep the cast/null-check/regex-match readable inside an XML attribute.
+             `Regex` is referenced unqualified — the APIM policy sandbox has
+             System.Text.RegularExpressions pre-imported (per the docs example), and
+             the fully-qualified name `System.Text.RegularExpressions.Regex` is rejected
+             by APIM's policy validator with a generic "ValidationError" 400. -->
         <set-variable name="originHeader" value="@(context.Request.Headers.GetValueOrDefault(&quot;Origin&quot;, &quot;&quot;))" />
-        <set-variable name="isOriginAllowed" value="@{ var origin = (string)context.Variables[&quot;originHeader&quot;]; if (string.IsNullOrEmpty(origin)) { return false; } return System.Text.RegularExpressions.Regex.IsMatch(origin, @&quot;${cors_origin_regex}&quot;); }" />
+        <set-variable name="isOriginAllowed" value="@{ var origin = (string)context.Variables[&quot;originHeader&quot;]; if (string.IsNullOrEmpty(origin)) { return false; } return Regex.IsMatch(origin, @&quot;${cors_origin_regex}&quot;); }" />
 
         <!-- CORS preflight handler: short-circuit OPTIONS requests with the appropriate response. -->
         <choose>

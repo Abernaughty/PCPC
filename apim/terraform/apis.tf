@@ -61,55 +61,23 @@ resource "azurerm_api_management_backend" "function_app" {
 # API OPERATIONS
 # -----------------------------------------------------------------------------
 
-# Health Check Operation — exposed through APIM so the frontend backend
-# toggle can probe Path B without bypassing the gateway. Anonymous,
-# subscription-not-required, intentionally no operation-level policy
-# (the global API policy still applies, but rate-limit calls are
-# generous enough to handle healthcheck polling).
+# Health Check Operation
 #
-# IMPORTANT: the OpenAPI spec import block on azurerm_api_management_api.pcpc_api
+# Intentionally NOT declared as an explicit `azurerm_api_management_api_operation`
+# resource. The OpenAPI spec import on azurerm_api_management_api.pcpc_api
 # (which references apim/specs/pcpc-api-v1.yaml — see the /health entry there)
-# creates this operation in Azure during the first apply that includes /health
-# in the spec. Terraform then needs to adopt the existing operation rather
-# than try to create it again. Each per-env wrapper in
-# apim/environments/{env}/main.tf has a matching `import { to = ... }` block
-# (Terraform 1.5+) that adopts the spec-imported operation into state on the
-# next apply. Import blocks must live in the root module, not here in the
-# child module.
-resource "azurerm_api_management_api_operation" "get_health" {
-  operation_id        = "get-health"
-  api_name            = azurerm_api_management_api.pcpc_api.name
-  api_management_name = var.api_management_name
-  resource_group_name = var.resource_group_name
-  display_name        = "Health Check"
-  method              = "GET"
-  url_template        = "/health"
-  description         = "System health check endpoint"
-
-  response {
-    status_code = 200
-    description = "All components healthy"
-    representation {
-      content_type = "application/json"
-    }
-  }
-
-  response {
-    status_code = 207
-    description = "At least one component degraded"
-    representation {
-      content_type = "application/json"
-    }
-  }
-
-  response {
-    status_code = 503
-    description = "Service unhealthy"
-    representation {
-      content_type = "application/json"
-    }
-  }
-}
+# creates and re-asserts this operation on every apply, so an explicit Terraform
+# resource would race with the spec-imported one ("resource already exists" on
+# first apply) and require import-block bootstrapping that fails on fresh
+# environments where /health doesn't yet exist (Codex P2 finding on PR #137).
+#
+# The other 3 operations (get_sets, get_cards_by_set, get_card_info) ARE
+# explicit because they're referenced by `azurerm_api_management_api_operation_policy`
+# resources for caching/backend policies; get_health has no operation-level
+# policy, so the spec-managed instance is sufficient.
+#
+# Effect: GET /health appears in APIM exactly once per apply, managed by the
+# OpenAPI spec rather than Terraform's resource graph.
 
 # Get Set List Operation
 resource "azurerm_api_management_api_operation" "get_sets" {

@@ -77,14 +77,17 @@ locals {
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
-# IMPORT BLOCK (Terraform 1.5+)
+# REMOVED BLOCK (Terraform 1.7+) — Codex P1 fix on PR #138
 # -----------------------------------------------------------------------------
-# See apim/environments/dev/main.tf for the rationale. Adopts the get-health
-# operation that the OpenAPI spec import creates in Azure during the first
-# apply that includes /health in the spec.
-import {
-  to = module.pcpc_apim.azurerm_api_management_api_operation.get_health
-  id = "/subscriptions/555b4cfa-ad2e-4c71-9433-620a59cf7616/resourceGroups/${var.resource_group_name}/providers/Microsoft.ApiManagement/service/${var.api_management_name}/apis/pcpc-api-${var.environment}/operations/get-health"
+# See apim/environments/dev/main.tf for the full rationale. This is a no-op
+# in staging (the resource was never in state) but kept for symmetry so the
+# state migration is uniform across envs. Can be deleted in a follow-up
+# cleanup PR after every env has applied PR #138 once.
+removed {
+  from = module.pcpc_apim.azurerm_api_management_api_operation.get_health
+  lifecycle {
+    destroy = false
+  }
 }
 
 module "pcpc_apim" {
