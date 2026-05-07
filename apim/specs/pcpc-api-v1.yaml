@@ -123,6 +123,38 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /health:
+    get:
+      summary: Health Check
+      description: |
+        System health check endpoint.
+
+        Returns 200 when all backend components are healthy, 207 when one
+        or more non-critical components are degraded, 503 when any
+        critical component is unhealthy.
+      operationId: get-health
+      tags:
+        - System
+      responses:
+        "200":
+          description: All components healthy
+          content:
+            application/json:
+              schema:
+                type: object
+        "207":
+          description: At least one component degraded
+          content:
+            application/json:
+              schema:
+                type: object
+        "503":
+          description: Service unhealthy
+          content:
+            application/json:
+              schema:
+                type: object
+
   "/sets/{setCode}/cards":
     get:
       summary: Get Cards By Set
