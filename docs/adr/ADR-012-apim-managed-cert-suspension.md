@@ -216,10 +216,13 @@ for status):
    CNAME from step 1.
 5. **Manually approve the staging and prod CD stages** in ADO once dev
    is green.
-6. **Set `PUBLIC_AZURE_API_BASE_URL`** in Vercel project settings:
-   - Production scope → `https://api.pcpc.maber.io`
-   - Preview scope → `https://dev-api.pcpc.maber.io`
-   - Development scope → `https://dev-api.pcpc.maber.io`
+6. **Set `PUBLIC_AZURE_API_BASE_URL`** in Vercel project settings. The
+   value must include the APIM API path (`/pcpc-api/v1`) because the
+   frontend's `path-b-azure.ts` treats this env var as the full base
+   URL and appends canonical paths like `/sets`:
+   - Production scope → `https://api.pcpc.maber.io/pcpc-api/v1`
+   - Preview scope → `https://dev-api.pcpc.maber.io/pcpc-api/v1`
+   - Development scope → `https://dev-api.pcpc.maber.io/pcpc-api/v1`
 7. **Trigger a Vercel redeploy** so the new env vars get baked into the
    frontend bundle.
 8. **Verify** the BackendToggle's Path B option resolves to the new

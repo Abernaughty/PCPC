@@ -78,9 +78,11 @@ backend environments:
 
 | Vercel scope | Where it applies | `PUBLIC_AZURE_API_BASE_URL` |
 |---|---|---|
-| Production | `pcpc.maber.io` (live demo) | `https://api.pcpc.maber.io` |
-| Preview | every PR's `*.vercel.app` URL | `https://dev-api.pcpc.maber.io` |
-| Development | `vercel dev` locally | `https://dev-api.pcpc.maber.io` |
+| Production | `pcpc.maber.io` (live demo) | `https://api.pcpc.maber.io/pcpc-api/v1` |
+| Preview | every PR's `*.vercel.app` URL | `https://dev-api.pcpc.maber.io/pcpc-api/v1` |
+| Development | `vercel dev` locally | `https://dev-api.pcpc.maber.io/pcpc-api/v1` |
+
+The `/pcpc-api/v1` suffix is the APIM API path (set in `apim/terraform/apis.tf` as `path = "pcpc-api/${var.api_version}"`). The frontend's `path-b-azure.ts` treats `PUBLIC_AZURE_API_BASE_URL` as the full base and appends canonical paths like `/sets`, so the env var must include the API path or requests will land at the gateway root and 404.
 
 PR previews exercise the dev backend; the production deploy exercises the
 prod backend. **Staging APIM is intentionally not mapped to any Vercel
