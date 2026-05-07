@@ -34,8 +34,14 @@ provider "azurerm" {
 # -----------------------------------------------------------------------------
 
 locals {
+  # Phase 1B: the frontend is a single Vercel deployment at pcpc.maber.io
+  # plus per-PR preview URLs at pcpc-git-*.vercel.app. APIM's CORS policy
+  # accepts only literal origins (no wildcards), so dev — which is where
+  # Vercel previews exercise the toggle — uses "*" to keep preview URLs
+  # working without re-applying APIM on every PR. Staging/prod are locked
+  # down to the production frontend hostname.
   base_cors_origins = [
-    "https://pcpc-dev.maber.io"
+    "*"
   ]
 
   configured_cors_origins = length(var.cors_origins) > 0 ? var.cors_origins : local.base_cors_origins
