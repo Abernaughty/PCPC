@@ -42,25 +42,39 @@ variable "function_app_key" {
 # CORS CONFIGURATION
 # -----------------------------------------------------------------------------
 
-variable "cors_origins" {
+variable "cors_origin_patterns" {
   description = <<-EOT
-    List of allowed CORS origins. Each entry must be either:
-      - A wildcard "*" (allow any origin — appropriate for dev/preview)
-      - An HTTP/HTTPS URL (e.g. https://pcpc.maber.io)
+    Glob-style hostname patterns allowed by the CORS policy. Each pattern
+    matches against the host portion of the Origin header. The policy
+    automatically prepends `https://` when constructing the regex, so
+    only secure origins are matched.
 
-    APIM's CORS policy does not support wildcard subdomains in origins
-    (e.g. https://*.vercel.app is invalid). For environments that need to
-    accept many ephemeral origins (Vercel preview URLs), use "*".
+    Use `*` as a wildcard inside a pattern to match one or more
+    hostname-safe characters (lowercase alphanumerics and hyphens).
+    Standalone `*` is intentionally rejected — see ADR-013.
+
+    Examples:
+      "pcpc.maber.io"
+        → matches https://pcpc.maber.io exactly
+      "pcpc-git-*-abernaughtys-projects.vercel.app"
+        → matches Vercel per-PR preview URLs
+      "pcpc-*-abernaughtys-projects.vercel.app"
+        → matches Vercel commit-level URLs
+
+    See ADR-013 (CORS Regex Policy) for the design rationale: APIM's
+    built-in <cors> element doesn't support wildcard subdomains, so this
+    list is assembled into a regex used by a custom policy that echoes
+    the matched Origin back as Access-Control-Allow-Origin.
   EOT
   type        = list(string)
-  default     = ["http://localhost:3000"]
+  default     = ["pcpc.maber.io"]
 
   validation {
     condition = alltrue([
-      for origin in var.cors_origins :
-      origin == "*" || can(regex("^https?://", origin))
+      for p in var.cors_origin_patterns :
+      p != "*" && can(regex("^[a-z0-9.*-]+$", p))
     ])
-    error_message = "Each CORS origin must be \"*\" or a valid HTTP/HTTPS URL."
+    error_message = "Each pattern must be a hostname-style glob (lowercase alphanumerics, '.', '-', '*'). Standalone '*' is not supported; allow-any-origin is rejected by ADR-013."
   }
 }
 

@@ -32,6 +32,7 @@ Each ADR follows a standardized format:
 | [ADR-008](./ADR-008-apim-vs-bff-gateway.md) | APIM vs SvelteKit BFF as Gateway | Accepted | 2026-05-06 |
 | [ADR-011](./ADR-011-deployment-topology-and-testing-model.md) | Deployment Topology and Testing Model | Accepted | 2026-05-06 |
 | [ADR-012](./ADR-012-apim-managed-cert-suspension.md) | APIM Managed Cert Suspension — Defer Custom Hostnames | Accepted | 2026-05-07 |
+| [ADR-013](./ADR-013-cors-regex-policy.md) | CORS Regex-Based Origin Allowlist Policy | Accepted | 2026-05-07 |
 
 ### Planned (three-path portfolio story)
 
