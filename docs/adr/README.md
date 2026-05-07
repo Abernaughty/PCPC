@@ -28,6 +28,7 @@ Each ADR follows a standardized format:
 | [ADR-004](./ADR-004-devcontainer-acr-optimization.md) | DevContainer ACR Optimization | Accepted | 2025-09-28 |
 | [ADR-005](./ADR-005-database-schema-design.md) | Database Schema Design | Accepted | 2025-09-28 |
 | [ADR-006](./ADR-006-api-integration-strategy.md) | API Integration Strategy | Accepted | 2025-09-22 |
+| [ADR-011](./ADR-011-deployment-topology-and-testing-model.md) | Deployment Topology and Testing Model | Accepted | 2026-05-06 |
 
 ### Planned (three-path portfolio story)
 
