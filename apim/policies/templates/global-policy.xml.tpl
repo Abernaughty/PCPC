@@ -20,10 +20,21 @@
         <!-- Resolve the request's Origin once and decide whether it matches the allowlist.
              Uses APIM's @{ ... return X; } code-block expression form (rather than @( single-expression ))
              to keep the cast/null-check/regex-match readable inside an XML attribute.
-             `Regex` is referenced unqualified — the APIM policy sandbox has
-             System.Text.RegularExpressions pre-imported (per the docs example), and
-             the fully-qualified name `System.Text.RegularExpressions.Regex` is rejected
-             by APIM's policy validator with a generic "ValidationError" 400. -->
+
+             Two APIM-policy-parser quirks shaped this expression:
+
+             1. The fully-qualified `System.Text.RegularExpressions.Regex` is
+                NOT accepted; use unqualified `Regex` (the sandbox pre-imports
+                System.Text.RegularExpressions).
+
+             2. APIM's policy expression parser does not respect C# verbatim
+                string boundaries, so any `(` inside a `@"..."` regex literal
+                is naively counted as a code-level open paren. The assembled
+                `cors_origin_regex` (in apim/terraform/main.tf locals) therefore
+                anchors each alternative individually with `^https://...$|...`
+                rather than grouping under shared `^https://(...)$` anchors —
+                that produces a regex with zero parens and avoids tripping the
+                parser's paren-counting logic. -->
         <set-variable name="originHeader" value="@(context.Request.Headers.GetValueOrDefault(&quot;Origin&quot;, &quot;&quot;))" />
         <set-variable name="isOriginAllowed" value="@{ var origin = (string)context.Variables[&quot;originHeader&quot;]; if (string.IsNullOrEmpty(origin)) { return false; } return Regex.IsMatch(origin, @&quot;${cors_origin_regex}&quot;); }" />
 

@@ -67,13 +67,23 @@ Terraform per-env wrappers set `base_cors_origin_patterns`:
 The `apim/terraform/main.tf` `locals` block converts patterns to regex by:
 1. Escaping literal `.` (so regex sees `\.`)
 2. Replacing glob `*` with `[a-z0-9-]+` (one or more hostname-safe chars)
-3. Joining with `|` and anchoring with `^https://(...)$`
+3. Anchoring each alternative INDIVIDUALLY with `^https://...$` and joining
+   with `|`
 
 Example dev regex (assembled at `terraform plan` time):
 
 ```
-^https://(pcpc\.maber\.io|pcpc-git-[a-z0-9-]+-abernaughtys-projects\.vercel\.app|pcpc-[a-z0-9-]+-abernaughtys-projects\.vercel\.app)$
+^https://pcpc\.maber\.io$|^https://pcpc-git-[a-z0-9-]+-abernaughtys-projects\.vercel\.app$|^https://pcpc-[a-z0-9-]+-abernaughtys-projects\.vercel\.app$
 ```
+
+> **Why per-alternative anchoring instead of a single grouped `(...)`?**
+> APIM's policy expression parser does not respect C# verbatim string
+> boundaries — it naively counts `(` and `)` inside a `@"..."` regex
+> literal as code parens. A regex like `^https://(a|b|c)$` therefore
+> orphans the `IsMatch(` call in the surrounding C# code, producing a
+> `ValidationError: An opening "(" is missing the corresponding closing ")"`
+> 400 at deploy time. Anchoring each alternative individually produces an
+> equivalent regex with zero parens, sidestepping the parser quirk.
 
 The regex is interpolated into `apim/policies/templates/global-policy.xml.tpl`,
 which uses APIM's policy expressions to:

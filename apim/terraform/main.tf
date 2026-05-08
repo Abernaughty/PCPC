@@ -68,10 +68,18 @@ locals {
   # Pipeline:
   #   1. Escape literal `.` so regex sees an escaped dot
   #   2. Convert glob `*` into [a-z0-9-]+ (one-or-more hostname-safe chars)
-  #   3. Join with `|` and anchor with ^https://(...)$
+  #   3. Anchor each alternative individually with ^https://...$ and join
+  #      with `|`. Per-alternative anchoring (instead of shared anchors
+  #      around a parenthesized group) is intentional: APIM's policy
+  #      expression parser doesn't respect C# verbatim string boundaries
+  #      and naively counts parens inside @"..." as code parens. A regex
+  #      with `(...)` inside a Regex.IsMatch call therefore confuses
+  #      APIM's parser into orphaning the IsMatch( open paren, producing
+  #      a "missing closing )" ValidationError 400 at deploy time. This
+  #      pattern produces an equivalent regex with zero parens.
   #
   # Example: ["pcpc.maber.io", "pcpc-git-*-abernaughtys-projects.vercel.app"]
-  # becomes "^https://(pcpc\.maber\.io|pcpc-git-[a-z0-9-]+-abernaughtys-projects\.vercel\.app)$"
+  # becomes "^https://pcpc\.maber\.io$|^https://pcpc-git-[a-z0-9-]+-abernaughtys-projects\.vercel\.app$"
   cors_patterns_dot_escaped = [
     for p in var.cors_origin_patterns :
     replace(p, ".", "\\.")
@@ -80,7 +88,11 @@ locals {
     for p in local.cors_patterns_dot_escaped :
     replace(p, "*", "[a-z0-9-]+")
   ]
-  cors_origin_regex = "^https://(${join("|", local.cors_patterns_with_classes)})$"
+  cors_patterns_anchored = [
+    for p in local.cors_patterns_with_classes :
+    "^https://${p}$"
+  ]
+  cors_origin_regex = join("|", local.cors_patterns_anchored)
 
   # Policy template variables
   policy_vars = {
