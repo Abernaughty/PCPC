@@ -196,3 +196,9 @@ tools/scripts/*.log
 .azure-cli/
 .devcontainer/azure-config/
 !.devcontainer/azure-config/.gitkeep
+
+# APIM rendered policies — Terraform's templatefile() renders these
+# in-memory on every apply; checked-in copies inevitably go stale
+# (apim/docs/README.md documents the dir as auto-generated; `make clean`
+# already deletes it).
+apim/policies/generated/
