@@ -24,14 +24,14 @@
              System.Text.RegularExpressions pre-imported (per the docs example), and
              the fully-qualified name `System.Text.RegularExpressions.Regex` is rejected
              by APIM's policy validator with a generic "ValidationError" 400. -->
-        <set-variable name="originHeader" value="@(context.Request.Headers.GetValueOrDefault(&quot;Origin&quot;, &quot;&quot;))" />
-        <set-variable name="isOriginAllowed" value="@{ var origin = (string)context.Variables[&quot;originHeader&quot;]; if (string.IsNullOrEmpty(origin)) { return false; } return Regex.IsMatch(origin, @&quot;${cors_origin_regex}&quot;); }" />
+        <set-variable name="originHeader" value="@(context.Request.Headers.GetValueOrDefault("Origin", ""))" />
+        <set-variable name="isOriginAllowed" value="@{ var origin = (string)context.Variables["originHeader"]; if (string.IsNullOrEmpty(origin)) { return false; } return Regex.IsMatch(origin, @"${cors_origin_regex}"); }" />
 
         <!-- CORS preflight handler: short-circuit OPTIONS requests with the appropriate response. -->
         <choose>
-            <when condition="@(context.Request.Method == &quot;OPTIONS&quot;)">
+            <when condition="@(context.Request.Method == "OPTIONS")">
                 <choose>
-                    <when condition="@((bool)context.Variables[&quot;isOriginAllowed&quot;])">
+                    <when condition="@((bool)context.Variables["isOriginAllowed"])">
                         <return-response>
                             <set-status code="204" reason="No Content" />
                             <set-header name="Access-Control-Allow-Origin" exists-action="override">
@@ -73,7 +73,7 @@
         <base />
         <!-- For non-preflight requests with an allowed Origin, add CORS response headers. -->
         <choose>
-            <when condition="@((bool)context.Variables[&quot;isOriginAllowed&quot;])">
+            <when condition="@((bool)context.Variables["isOriginAllowed"])">
                 <set-header name="Access-Control-Allow-Origin" exists-action="override">
                     <value>@((string)context.Variables["originHeader"])</value>
                 </set-header>
