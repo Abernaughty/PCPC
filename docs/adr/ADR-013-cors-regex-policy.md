@@ -261,6 +261,45 @@ curl -i https://pcpc-apim-dev.azure-api.net/pcpc-api/v1/sets \
 # → 200 with Access-Control-Allow-Origin: https://pcpc.maber.io
 ```
 
+### Manual Portal validation
+
+The deployed XML can be sanity-checked in the Azure Portal's policy editor
+without redeploying. Two things to know first:
+
+**Which Portal scope to use.** The Terraform resource
+`azurerm_api_management_api_policy.pcpc_api_global` deploys at **API scope**,
+not tenant/Global scope. The word "global" in the resource name means
+"across all operations of this API", not "tenant-wide". In the Portal this
+corresponds to:
+
+> APIs → **PCPC API** → **All operations** → Inbound policy editor (`</>` icon)
+
+The **All APIs** entry at the top of the APIs blade is a different scope
+(tenant/Global) and is NOT where Terraform writes — pasting this policy
+there will fail with scope-specific validation errors.
+
+**How to validate.** Paste the rendered XML from
+`apim/policies/generated/global-policy-dev-RENDERED-FOR-DEBUG.xml` into the
+editor at the scope above and click Save. Save should succeed (HTTP 200).
+
+**Expected non-blocking warning.** APIM's Portal validator emits this
+warning on save:
+
+> Some of the policy expressions may not have the correct parentheses or
+> braces format. Please ensure that all policy expressions are in the
+> correct format @() or @{}, in order to avoid any issues.
+
+This is a false positive: the Portal's heuristic check miscounts the
+`@"..."` verbatim-string boundaries and the nested `{...}` block inside
+`@{...}` when assembling the warning. Save proceeds; runtime behavior is
+unaffected. Both `apim-validation` CI and APIM's runtime parser accept the
+policy.
+
+**Hard `ValidationError` responses (HTTP 400) are NOT expected.** If a Save
+attempt fails with a 400, investigate — do not paper over by ad-hoc
+rewriting in the Portal, since Terraform will overwrite manual edits on
+the next `apply`.
+
 ## Related Decisions
 
 - [ADR-007: API Architecture Spectrum](./ADR-007-api-architecture-spectrum.md)
