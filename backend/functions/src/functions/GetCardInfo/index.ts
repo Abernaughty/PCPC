@@ -168,10 +168,15 @@ export async function getCardInfo(
     }
     monitoringService.trackMetric("cosmosdb.query.duration", dbTime);
 
-    // Fetch from Scrydex if we don't have a card OR it lacks pricing.
+    // Fetch from Scrydex if we don't have a card, the caller asked for a
+    // forced refresh, or the existing card lacks pricing.
     const needsPricing = !cardHasPricing(card);
-    if (!card || needsPricing) {
-      const reason = !card ? "missing card" : "missing pricing";
+    if (!card || forceRefresh || needsPricing) {
+      const reason = !card
+        ? "missing card"
+        : forceRefresh
+        ? "forceRefresh"
+        : "missing pricing";
       context.log(
         `${correlationId} Fetching card from Scrydex API (${reason})`
       );

@@ -3,7 +3,7 @@ import {
   HttpResponseInit,
   InvocationContext,
 } from "@azure/functions";
-import type { ApiResponse, Card, PaginatedResponse } from "@pcpc/shared";
+import type { ApiResponse, Card } from "@pcpc/shared";
 import {
   cosmosDbService,
   monitoringService,
@@ -288,17 +288,22 @@ export async function getCardsBySet(
     const totalTime = Date.now() - startTime;
     const pricingIncluded = cards.some((c) => cardHasPricing(c));
 
-    const paginatedResponse: PaginatedResponse<Card> = {
-      items: paginatedCards,
-      totalCount,
-      pageSize,
-      pageNumber: page,
-      totalPages,
-    };
-
-    const response: ApiResponse<PaginatedResponse<Card>> = {
+    // Response shape must match the Path A SvelteKit BFF
+    // (frontend/src/lib/services/api.ts:103-107 reads `result.cards`).
+    const response: ApiResponse<{
+      cards: Card[];
+      pagination: {
+        page: number;
+        pageSize: number;
+        totalCount: number;
+        totalPages: number;
+      };
+    }> = {
       status: 200,
-      data: paginatedResponse,
+      data: {
+        cards: paginatedCards,
+        pagination: { page, pageSize, totalCount, totalPages },
+      },
       timestamp: new Date().toISOString(),
       cached: cacheHit,
       cacheAge: cacheHit ? cacheAge : undefined,
