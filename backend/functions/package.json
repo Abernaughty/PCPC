@@ -11,11 +11,6 @@
     "watch": "tsc -w",
     "prestart": "npm run build",
     "start": "func start",
-    "test": "node test-api.js",
-    "test:unit": "node --require ts-node/register --test test/**/*.test.ts",
-    "test:azure": "node test-azure.js",
-    "test:cosmos": "node test-cosmos.js",
-    "import": "npx ts-node import-data.ts",
     "deploy": "deploy.bat",
     "deploy:staging": "func azure functionapp publish pokedata-func --slot staging"
   },
@@ -40,8 +35,8 @@
     "@azure/storage-blob": "^12.27.0",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/instrumentation": "^0.205.0",
+    "@pcpc/shared": "workspace:*",
     "@typespec/ts-http-runtime": "^0.2.2",
-    "axios": "^1.9.0",
     "cookie": "^0.6.0",
     "dotenv": "^16.5.0",
     "redis": "^4.7.0"

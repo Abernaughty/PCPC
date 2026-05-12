@@ -3,13 +3,13 @@ import {
   HttpResponseInit,
   InvocationContext,
 } from "@azure/functions";
+import type { ApiResponse, Card, PaginatedResponse } from "@pcpc/shared";
 import {
   cosmosDbService,
   monitoringService,
-  pokeDataApiService,
   redisCacheService,
+  scrydexApiService,
 } from "../../index";
-import { ApiResponse, PaginatedResponse } from "../../models/ApiResponse";
 import {
   formatCacheEntry,
   getCacheAge,
@@ -21,50 +21,25 @@ import {
   createNotFoundError,
   handleError,
 } from "../../utils/errorUtils";
+import {
+  cardHasPricing,
+  mapScrydexCardToCard,
+} from "../../utils/scrydexToCosmos";
 
-// PokeData-first card structure (without images - loaded on-demand)
-interface PokeDataFirstCardBasic {
-  id: string; // Clean numeric ID (e.g., "73092")
-  source: "pokedata";
-  pokeDataId: number;
-  setId: number;
-  setName: string;
-  setCode: string;
-  cardName: string;
-  cardNumber: string;
-  secret: boolean;
-  language: string;
-  releaseDate: string;
-  pricing: {
-    psa?: { [grade: string]: number };
-    cgc?: { [grade: string]: number };
-    tcgPlayer?: number;
-    ebayRaw?: number;
-    pokeDataRaw?: number;
-  };
-  // Note: images and enhancement are loaded on-demand in GetCardInfo
-  lastUpdated: string;
+function cardsHavePricingData(cards: Card[]): boolean {
+  if (cards.length === 0) return false;
+  const withPricing = cards.filter(cardHasPricing).length;
+  return withPricing > cards.length * 0.1;
 }
 
-/**
- * PokeData-First GetCardsBySet Function
- *
- * This function implements the on-demand image loading strategy:
- * 1. Returns cards with comprehensive pricing data immediately
- * 2. Images are loaded on-demand when individual cards are requested
- * 3. Fast response times (no Pokemon TCG API calls during set browsing)
- * 4. Efficient API usage (only enhance cards that users actually view)
- */
 export async function getCardsBySet(
   request: HttpRequest,
   context: InvocationContext
 ): Promise<HttpResponseInit> {
-  const timestamp = Date.now();
   const setIdParam = request.params.setId;
   const correlationId = monitoringService.createCorrelationId();
   const startTime = Date.now();
 
-  // Track function invocation
   monitoringService.trackEvent("function.invoked", {
     functionName: "GetCardsBySet",
     setId: setIdParam || "unknown",
@@ -72,341 +47,234 @@ export async function getCardsBySet(
   });
 
   try {
-    // Get set ID from route parameters
-
     if (!setIdParam) {
       context.log(`${correlationId} ERROR: Missing set ID in request`);
       const errorResponse = createBadRequestError(
         "Set ID is required",
         "GetCardsBySet"
       );
-      return {
-        jsonBody: errorResponse,
-        status: errorResponse.status,
-      };
+      return { jsonBody: errorResponse, status: errorResponse.status };
     }
 
-    // Parse set ID as integer
-    const setId = parseInt(setIdParam);
-    if (isNaN(setId)) {
-      context.log(
-        `${correlationId} ERROR: Invalid set ID format: ${setIdParam}`
-      );
+    const setId = setIdParam.trim();
+    if (setId.length === 0) {
       const errorResponse = createBadRequestError(
-        "Set ID must be a valid number",
+        "Set ID is required",
         "GetCardsBySet"
       );
-      return {
-        jsonBody: errorResponse,
-        status: errorResponse.status,
-      };
+      return { jsonBody: errorResponse, status: errorResponse.status };
     }
 
-    context.log(
-      `${correlationId} Processing PokeData-first request for set ID: ${setId}`
-    );
+    context.log(`${correlationId} Processing Scrydex request for setId: ${setId}`);
 
-    // Parse query parameters
     const forceRefresh = request.query.get("forceRefresh") === "true";
     const page = parseInt(request.query.get("page") || "1");
-    const pageSize = parseInt(request.query.get("pageSize") || "500");
-    const cardsTtl = parseInt(process.env.CACHE_TTL_CARDS || "86400"); // 24 hours default
+    const pageSize = Math.min(
+      parseInt(request.query.get("pageSize") || "500"),
+      500
+    );
+    const cardsTtl = parseInt(process.env.CACHE_TTL_CARDS || "86400");
 
-    // Validate pagination parameters
-    if (page < 1 || pageSize < 1 || pageSize > 500) {
-      context.log(`${correlationId} ERROR: Invalid pagination parameters`);
+    if (page < 1 || pageSize < 1) {
       const errorResponse = createBadRequestError(
-        "Invalid pagination parameters. Page must be >= 1 and pageSize must be between 1 and 500.",
+        "Invalid pagination parameters. Page and pageSize must be >= 1.",
         "GetCardsBySet"
       );
-      return {
-        jsonBody: errorResponse,
-        status: errorResponse.status,
-      };
+      return { jsonBody: errorResponse, status: errorResponse.status };
     }
 
     context.log(
-      `${correlationId} Request parameters - setId: ${setId}, page: ${page}, pageSize: ${pageSize}, forceRefresh: ${forceRefresh}`
+      `${correlationId} Parameters - setId: ${setId}, page: ${page}, pageSize: ${pageSize}, forceRefresh: ${forceRefresh}`
     );
 
-    // Track request parameters
     monitoringService.trackEvent("request.parameters", {
-      setId: String(setId),
+      setId,
       page,
       pageSize,
       forceRefresh,
       correlationId,
     });
 
-    // Check cache first (if enabled and not forcing refresh)
-    const cacheKey = getCardsForSetCacheKey(`pokedata-${setId}`);
-    let cards: PokeDataFirstCardBasic[] | null = null;
+    const cacheKey = `${getCardsForSetCacheKey(`scrydex-${setId}`)}-page-${page}-size-${pageSize}`;
+    let cards: Card[] | null = null;
     let cacheHit = false;
     let cacheAge = 0;
-    let cacheStartTime = Date.now();
 
     if (!forceRefresh && process.env.ENABLE_REDIS_CACHE === "true") {
       context.log(`${correlationId} Checking Redis cache for key: ${cacheKey}`);
+      const cacheStartTime = Date.now();
       const cachedEntry = await redisCacheService.get<{
-        data: PokeDataFirstCardBasic[];
+        data: Card[];
         timestamp: number;
         ttl: number;
       }>(cacheKey);
-      cards = parseCacheEntry<PokeDataFirstCardBasic[]>(cachedEntry);
-
+      cards = parseCacheEntry<Card[]>(cachedEntry);
       const cacheTime = Date.now() - cacheStartTime;
 
       if (cards) {
         context.log(
-          `${correlationId} Cache HIT for set: ${setId} (${cacheTime}ms) - ${cards.length} cards`
+          `${correlationId} Cache HIT for set ${setId} (${cacheTime}ms) - ${cards.length} cards`
         );
         cacheHit = true;
         cacheAge = cachedEntry ? getCacheAge(cachedEntry.timestamp) : 0;
-
-        // Track cache hit
         monitoringService.trackEvent("cache.hit", {
-          setId: String(setId),
+          setId,
           cardCount: cards.length,
           correlationId,
         });
-        monitoringService.trackMetric("cache.check.duration", cacheTime);
       } else {
         context.log(
-          `${correlationId} Cache MISS for set: ${setId} (${cacheTime}ms)`
+          `${correlationId} Cache MISS for set ${setId} (${cacheTime}ms)`
         );
-
-        // Track cache miss
-        monitoringService.trackEvent("cache.miss", {
-          setId: String(setId),
-          correlationId,
-        });
-        monitoringService.trackMetric("cache.check.duration", cacheTime);
+        monitoringService.trackEvent("cache.miss", { setId, correlationId });
       }
-    } else {
-      context.log(
-        `${correlationId} Skipping cache - forceRefresh: ${forceRefresh}, Redis enabled: ${process.env.ENABLE_REDIS_CACHE}`
-      );
+      monitoringService.trackMetric("cache.check.duration", cacheTime);
     }
 
-    // If not in cache, check Cosmos DB
-    let dbStartTime = Date.now();
+    // Cosmos lookup. Optionally fetch expected total from Scrydex to detect stale partial data.
+    let expectedTotal = 0;
+    if (!cards) {
+      try {
+        const expansion = await scrydexApiService.getExpansion(setId);
+        if (expansion) {
+          expectedTotal = expansion.total || 0;
+          context.log(
+            `${correlationId} Set ${setId} expected total: ${expectedTotal}`
+          );
+        }
+      } catch (err: any) {
+        context.log(
+          `${correlationId} Could not fetch set metadata for ${setId}: ${err.message} (non-fatal)`
+        );
+      }
+    }
+
     if (!cards) {
       context.log(`${correlationId} Checking Cosmos DB for set: ${setId}`);
-
-      // Query for cards by set ID (stored as number in database)
-      const dbCards = await cosmosDbService.getCardsBySetId(String(setId));
-
+      const dbStartTime = Date.now();
+      const dbCards = await cosmosDbService.getCardsBySetId(setId);
       const dbTime = Date.now() - dbStartTime;
 
       if (dbCards && dbCards.length > 0) {
-        // Track database hit
-        monitoringService.trackEvent("database.hit", {
-          setId: String(setId),
-          cardCount: dbCards.length,
-          correlationId,
-        });
-        monitoringService.trackMetric("cosmosdb.query.duration", dbTime);
-        monitoringService.trackDependency(
-          "Cosmos DB",
-          "Query",
-          `getCardsBySetId(${setId})`,
-          dbTime,
-          true
-        );
-
-        // Convert from stored format to PokeDataFirstCardBasic format if needed
-        cards = dbCards.map((card) => {
-          const cardAny = card as any; // Type assertion to access all properties
-          return {
-            id: card.id,
-            source: "pokedata" as const,
-            pokeDataId:
-              card.pokeDataId ||
-              (card.id.startsWith("pokedata-")
-                ? parseInt(card.id.replace("pokedata-", ""))
-                : parseInt(card.id)),
-            setId: card.setId,
-            setName: card.setName,
-            setCode: card.setCode,
-            cardName: card.cardName,
-            cardNumber: card.cardNumber,
-            secret: cardAny.secret || false,
-            language: cardAny.language || "ENGLISH",
-            releaseDate: cardAny.releaseDate || "",
-            pricing: card.pricing || {},
-            lastUpdated: card.lastUpdated || new Date().toISOString(),
-          };
-        });
-
-        context.log(
-          `${correlationId} Database HIT for set: ${setId} (${dbTime}ms) - ${cards.length} cards`
-        );
+        // Staleness check: count mismatch
+        if (expectedTotal > 0 && dbCards.length < expectedTotal) {
+          context.log(
+            `${correlationId} Cosmos DB has stale data: ${dbCards.length} cards vs ${expectedTotal} expected. Falling through to Scrydex.`
+          );
+          monitoringService.trackEvent("cosmos.stale", {
+            setId,
+            cosmosCount: dbCards.length,
+            expectedTotal,
+            reason: "count_mismatch",
+            correlationId,
+          });
+        }
+        // Staleness check: pricing absent
+        else if (!cardsHavePricingData(dbCards)) {
+          const withPricing = dbCards.filter(cardHasPricing).length;
+          context.log(
+            `${correlationId} Cosmos DB cards lack pricing: ${withPricing}/${dbCards.length} have pricing. Falling through to Scrydex.`
+          );
+          monitoringService.trackEvent("cosmos.stale", {
+            setId,
+            cosmosCount: dbCards.length,
+            cardsWithPricing: withPricing,
+            reason: "no_pricing",
+            correlationId,
+          });
+        } else {
+          cards = dbCards;
+          monitoringService.trackEvent("database.hit", {
+            setId,
+            cardCount: dbCards.length,
+            correlationId,
+          });
+          context.log(
+            `${correlationId} Database HIT for set ${setId} (${dbTime}ms) - ${cards.length} cards`
+          );
+        }
       } else {
-        context.log(
-          `${correlationId} Database MISS for set: ${setId} (${dbTime}ms)`
-        );
-
-        // Track database miss
-        monitoringService.trackEvent("database.miss", {
-          setId: String(setId),
-          correlationId,
-        });
-        monitoringService.trackMetric("cosmosdb.query.duration", dbTime);
-        monitoringService.trackDependency(
-          "Cosmos DB",
-          "Query",
-          `getCardsBySetId(${setId})`,
-          dbTime,
-          false
-        );
+        monitoringService.trackEvent("database.miss", { setId, correlationId });
+        context.log(`${correlationId} Database MISS for set ${setId} (${dbTime}ms)`);
       }
+      monitoringService.trackMetric("cosmosdb.query.duration", dbTime);
     }
 
-    // If not found anywhere, fetch from PokeData API
+    // Fetch from Scrydex
     if (!cards || cards.length === 0) {
       context.log(
-        `${correlationId} Fetching fresh data from PokeData API for set: ${setId}`
+        `${correlationId} Fetching cards from Scrydex API for set: ${setId}`
       );
+      const apiStartTime = Date.now();
 
       try {
-        // Step 1: Get all cards from PokeData for this set (basic card info only)
-        const apiStartTime = Date.now();
-        const pokeDataCards = await pokeDataApiService.getCardsInSet(setId);
+        const scrydexCards = await scrydexApiService.getAllCardsInExpansion(setId);
         const apiTime = Date.now() - apiStartTime;
 
-        if (!pokeDataCards || pokeDataCards.length === 0) {
+        if (!scrydexCards || scrydexCards.length === 0) {
           context.log(
-            `${correlationId} ERROR: No cards found in PokeData for set: ${setId} (${apiTime}ms)`
+            `${correlationId} No cards found in Scrydex for set ${setId} (${apiTime}ms)`
           );
           const errorResponse = createNotFoundError(
             "Cards for set",
-            String(setId),
+            setId,
             "GetCardsBySet"
           );
-          return {
-            jsonBody: errorResponse,
-            status: errorResponse.status,
-          };
+          return { jsonBody: errorResponse, status: errorResponse.status };
         }
 
         context.log(
-          `${correlationId} PokeData API returned ${pokeDataCards.length} cards for set ${setId} (${apiTime}ms)`
+          `${correlationId} Scrydex returned ${scrydexCards.length} cards (${apiTime}ms)`
         );
 
-        // Track API success
         monitoringService.trackEvent("api.fetch.success", {
-          setId: String(setId),
-          cardCount: pokeDataCards.length,
+          setId,
+          cardCount: scrydexCards.length,
           correlationId,
         });
-        monitoringService.trackMetric("api.pokedata.duration", apiTime);
+        monitoringService.trackMetric("api.scrydex.duration", apiTime);
         monitoringService.trackDependency(
-          "PokeData API",
+          "Scrydex API",
           "HTTP",
-          `getCardsInSet(${setId})`,
+          `getAllCardsInExpansion(${setId})`,
           apiTime,
           true
         );
 
-        // Step 2: Transform to basic card format (NO INDIVIDUAL PRICING CALLS)
-        const transformStartTime = Date.now();
+        const now = new Date().toISOString();
+        cards = scrydexCards.map((card) => mapScrydexCardToCard(card, now));
 
-        // Create basic card structure without pricing (on-demand strategy)
-        cards = pokeDataCards.map((pokeDataCard) => ({
-          id: String(pokeDataCard.id),
-          source: "pokedata" as const,
-          pokeDataId: pokeDataCard.id,
-          setId: pokeDataCard.set_id,
-          setName: pokeDataCard.set_name,
-          setCode: pokeDataCard.set_code || "",
-          cardName: pokeDataCard.name,
-          cardNumber: pokeDataCard.num,
-          secret: pokeDataCard.secret || false,
-          language: pokeDataCard.language || "ENGLISH",
-          releaseDate: pokeDataCard.release_date || "",
-          pricing: {}, // Empty pricing - will be fetched on-demand in GetCardInfo
-          lastUpdated: new Date().toISOString(),
-        }));
-
-        const transformTime = Date.now() - transformStartTime;
-        context.log(
-          `${correlationId} Transformed ${cards.length} cards to basic PokeData format (${transformTime}ms)`
-        );
-        context.log(
-          `${correlationId} ✅ ON-DEMAND STRATEGY: Pricing will be fetched when users request individual cards`
-        );
-        context.log(
-          `${correlationId} ✅ TOKEN EFFICIENCY: 1 API call instead of ${pokeDataCards.length} calls (${pokeDataCards.length}x reduction)`
-        );
-
-        // Track transformation metrics
-        monitoringService.trackMetric("transform.duration", transformTime);
-        monitoringService.trackMetric("transform.card_count", cards.length);
-
-        // Step 3: Save to database and cache using batch operations
         const saveStartTime = Date.now();
-
-        // Use batch save for much better performance
-        await cosmosDbService.saveCards(cards as any[]); // Type assertion for compatibility
-
+        await cosmosDbService.saveCards(cards);
         const saveTime = Date.now() - saveStartTime;
         context.log(
-          `${correlationId} Batch saved ${cards.length} cards to Cosmos DB (${saveTime}ms)`
+          `${correlationId} Batch saved ${cards.length} cards to Cosmos (${saveTime}ms)`
         );
-
-        // Track batch save
-        monitoringService.trackEvent("batch.save.complete", {
-          setId: String(setId),
-          cardCount: cards.length,
-          correlationId,
-        });
         monitoringService.trackMetric("batch.save.duration", saveTime);
-        monitoringService.trackDependency(
-          "Cosmos DB",
-          "Batch Save",
-          `saveCards(${cards.length})`,
-          saveTime,
-          true
-        );
 
-        // Save to cache if enabled
         if (process.env.ENABLE_REDIS_CACHE === "true") {
-          const cacheWriteStartTime = Date.now();
           await redisCacheService.set(
             cacheKey,
             formatCacheEntry(cards, cardsTtl),
             cardsTtl
           );
-          const cacheWriteTime = Date.now() - cacheWriteStartTime;
           context.log(
-            `${correlationId} Cached ${cards.length} cards to Redis (${cacheWriteTime}ms)`
+            `${correlationId} Cached ${cards.length} cards to Redis`
           );
         }
       } catch (error: any) {
-        context.log(
-          `${correlationId} ERROR: PokeData API failed: ${error.message}`
-        );
-
-        // Track API error
+        context.log(`${correlationId} ERROR: Scrydex API failed: ${error.message}`);
         monitoringService.trackException(error, {
           functionName: "GetCardsBySet",
-          operation: "PokeData API",
-          setId: String(setId),
+          operation: "Scrydex API",
+          setId,
           correlationId,
         });
-
-        const errorResponse = handleError(
-          error,
-          "GetCardsBySet - PokeData API"
-        );
-        return {
-          jsonBody: errorResponse,
-          status: errorResponse.status,
-        };
+        const errorResponse = handleError(error, "GetCardsBySet - Scrydex API");
+        return { jsonBody: errorResponse, status: errorResponse.status };
       }
     }
 
-    // Apply pagination
     const totalCount = cards.length;
     const totalPages = Math.ceil(totalCount / pageSize);
     const startIndex = (page - 1) * pageSize;
@@ -414,57 +282,13 @@ export async function getCardsBySet(
     const paginatedCards = cards.slice(startIndex, endIndex);
 
     context.log(
-      `${correlationId} Applying pagination - Total: ${totalCount}, Page: ${page}/${totalPages}, Showing: ${paginatedCards.length} cards`
+      `${correlationId} Pagination - Total: ${totalCount}, Page: ${page}/${totalPages}, Returning: ${paginatedCards.length}`
     );
 
-    // Track pagination metrics
-    monitoringService.trackMetric("pagination.total_cards", totalCount);
-    monitoringService.trackMetric("pagination.total_pages", totalPages);
-    monitoringService.trackMetric("pagination.current_page", page);
-    monitoringService.trackMetric("pagination.page_size", pageSize);
-    monitoringService.trackMetric(
-      "pagination.returned_cards",
-      paginatedCards.length
-    );
-
-    // Validate pagination boundaries
-    const lastPageSize = totalCount % pageSize || pageSize;
-    monitoringService.trackMetric("pagination.last_page_size", lastPageSize);
-
-    // Check for pagination boundary issues
-    if (
-      page === totalPages &&
-      paginatedCards.length === pageSize &&
-      totalCount > pageSize
-    ) {
-      monitoringService.trackEvent("pagination.boundary_warning", {
-        message: "Last page is full - may indicate more data available",
-        setId: String(setId),
-        totalCards: totalCount,
-        pageSize,
-        correlationId,
-      });
-      context.log(
-        `${correlationId} ⚠️ PAGINATION WARNING: Last page is full (${paginatedCards.length} cards)`
-      );
-    }
-
-    // Verify data completeness
-    monitoringService.trackEvent("data.completeness.verified", {
-      setId: String(setId),
-      totalCards: totalCount,
-      pagesAvailable: totalPages,
-      correlationId,
-    });
-
-    // Calculate total operation time
     const totalTime = Date.now() - startTime;
-    context.log(
-      `${correlationId} PokeData-first GetCardsBySet complete - Total time: ${totalTime}ms`
-    );
+    const pricingIncluded = cards.some((c) => cardHasPricing(c));
 
-    // Create paginated response
-    const paginatedResponse: PaginatedResponse<PokeDataFirstCardBasic> = {
+    const paginatedResponse: PaginatedResponse<Card> = {
       items: paginatedCards,
       totalCount,
       pageSize,
@@ -472,8 +296,7 @@ export async function getCardsBySet(
       totalPages,
     };
 
-    // Return the cards data
-    const response: ApiResponse<PaginatedResponse<PokeDataFirstCardBasic>> = {
+    const response: ApiResponse<PaginatedResponse<Card>> = {
       status: 200,
       data: paginatedResponse,
       timestamp: new Date().toISOString(),
@@ -481,16 +304,12 @@ export async function getCardsBySet(
       cacheAge: cacheHit ? cacheAge : undefined,
     };
 
-    context.log(
-      `${correlationId} Returning PokeData-first response - cached: ${cacheHit}, total cards: ${totalCount}, page: ${page}, pricing guaranteed: true, images: on-demand`
-    );
-
-    // Track successful completion
     monitoringService.trackEvent("function.success", {
       functionName: "GetCardsBySet",
-      setId: String(setId),
+      setId,
       totalCards: totalCount,
       cached: cacheHit,
+      pricingIncluded,
       duration: totalTime,
       correlationId,
     });
@@ -499,17 +318,13 @@ export async function getCardsBySet(
     return {
       jsonBody: response,
       status: response.status,
-      headers: {
-        "Cache-Control": `public, max-age=${cardsTtl}`,
-      },
+      headers: { "Cache-Control": `public, max-age=${cardsTtl}` },
     };
   } catch (error: any) {
     const totalTime = Date.now() - startTime;
     context.log(
       `${correlationId} ERROR after ${totalTime}ms: ${error.message}`
     );
-
-    // Track error
     monitoringService.trackException(error, {
       functionName: "GetCardsBySet",
       setId: setIdParam || "unknown",
@@ -524,10 +339,7 @@ export async function getCardsBySet(
     });
     monitoringService.trackMetric("function.duration", totalTime);
 
-    const errorResponse = handleError(error, "GetCardsBySet - PokeData-First");
-    return {
-      jsonBody: errorResponse,
-      status: errorResponse.status,
-    };
+    const errorResponse = handleError(error, "GetCardsBySet");
+    return { jsonBody: errorResponse, status: errorResponse.status };
   }
 }

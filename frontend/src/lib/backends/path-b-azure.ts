@@ -1,22 +1,19 @@
 /**
- * Path B — Azure API Management → Functions v4 (Consumption).
+ * Path B — Azure API Management → Azure Functions v4 (Consumption).
  *
- * The Functions code currently serves PokeData-shaped responses; the
- * pokedata→scrydex adapter reshapes them so the frontend can consume both
- * paths interchangeably. The adapter is removed in Phase 2 along with the
- * Functions schema migration.
+ * As of Phase 2 the Functions backend serves canonical Scrydex-shaped
+ * envelopes directly from @pcpc/shared, so no client-side reshape is
+ * needed. The previous PokeData→Scrydex adapter was removed.
  *
  * Base URL is configurable via the public env var
- * `PUBLIC_AZURE_API_BASE_URL`. Until the `api.pcpc.maber.io` custom domain
- * is provisioned in Phase 1B, the default points at the dev APIM hostname.
+ * `PUBLIC_AZURE_API_BASE_URL`. Until the `api.pcpc.maber.io` custom
+ * domain is provisioned (deferred per ADR-012), the default points at
+ * the dev APIM hostname.
  */
 
 import { env } from '$env/dynamic/public';
 import type { ApiResponse } from '$lib/types';
 import { probeHealth } from './health';
-import {
-  adaptPathBEnvelope,
-} from './adapters/pokedata-to-scrydex';
 import type { BackendDefinition, BackendFetcher, BackendHealth } from './types';
 
 /**
@@ -24,8 +21,8 @@ import type { BackendDefinition, BackendFetcher, BackendHealth } from './types';
  *
  * Falls back to the dev APIM hostname so the toggle works out-of-the-box
  * for local dev without env-var setup. Each Vercel deployment should set
- * PUBLIC_AZURE_API_BASE_URL to the matching custom domain once Phase 1B
- * provisions them:
+ * PUBLIC_AZURE_API_BASE_URL to the matching custom domain when those are
+ * re-enabled post-ADR-012:
  *   dev      → https://dev-api.pcpc.maber.io
  *   staging  → https://staging-api.pcpc.maber.io
  *   prod     → https://api.pcpc.maber.io
@@ -36,54 +33,29 @@ const PATH_B_BASE = (() => {
   return 'https://pcpc-apim-dev.azure-api.net/pcpc-api/v1';
 })();
 
-type EndpointHint = Parameters<typeof adaptPathBEnvelope>[1];
-
 /**
- * Translate the canonical path the frontend produces into a Path B URL +
- * an endpoint hint for the response adapter. `canonicalPath` always
- * starts with `/`.
+ * Translate the canonical path the frontend produces into a Path B URL.
+ * The Scrydex shape is now native on both sides, so this is a near-
+ * passthrough — no language code translation, no field reshape.
  *
- *   Frontend canonical               Path B target                       hint
- *   /sets?language=en&all=true   →   /sets?language=ENGLISH&all=true     sets
- *   /sets/sv8/cards              →   /sets/sv8/cards                     cards-by-set
- *   /sets/sv8/cards/12345        →   /sets/sv8/cards/12345               card-info
- *   /health                      →   /health                             health
+ *   Frontend canonical               Path B target
+ *   /sets?language=en&all=true   →   /sets?language=en&all=true
+ *   /sets/sv8/cards              →   /sets/sv8/cards
+ *   /sets/sv8/cards/12345        →   /sets/sv8/cards/12345
+ *   /health                      →   /health
  */
-function translateCanonicalPath(
-  canonicalPath: string
-): { url: string; hint: EndpointHint } {
-  const [pathPart, queryPart = ''] = canonicalPath.split('?');
-  const params = new URLSearchParams(queryPart);
-
-  // Translate language codes Scrydex → PokeData.
-  const language = params.get('language');
-  if (language) {
-    if (language === 'en') params.set('language', 'ENGLISH');
-    else if (language === 'ja' || language === 'jp') params.set('language', 'JAPANESE');
-  }
-
-  let hint: EndpointHint = 'passthrough';
-  if (pathPart === '/sets') hint = 'sets';
-  else if (/^\/sets\/[^/]+\/cards\/[^/]+$/.test(pathPart)) hint = 'card-info';
-  else if (/^\/sets\/[^/]+\/cards$/.test(pathPart)) hint = 'cards-by-set';
-  else if (pathPart === '/health') hint = 'health';
-
-  const query = params.toString();
-  const url = `${PATH_B_BASE}${pathPart}${query ? `?${query}` : ''}`;
-  return { url, hint };
+function translateCanonicalPath(canonicalPath: string): string {
+  return `${PATH_B_BASE}${canonicalPath}`;
 }
 
 const fetcher: BackendFetcher = {
   async fetch<T>(canonicalPath: string, init?: RequestInit): Promise<ApiResponse<T>> {
-    const { url, hint } = translateCanonicalPath(canonicalPath);
-
+    const url = translateCanonicalPath(canonicalPath);
     const response = await fetch(url, {
       headers: { 'Content-Type': 'application/json' },
       ...init,
     });
-
-    const envelope = (await response.json()) as ApiResponse<unknown>;
-    return adaptPathBEnvelope<T>(envelope, hint);
+    return (await response.json()) as ApiResponse<T>;
   },
 };
 

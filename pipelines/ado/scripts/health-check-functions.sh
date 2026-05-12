@@ -146,16 +146,9 @@ echo ""
 
 # Test 2: GetSetList endpoint
 #
-# NON-BLOCKING during the Phase 1B -> Phase 2 transition. The deployed
-# Functions still call the PokeData API, which may return empty results
-# for the ENGLISH language filter or be unavailable entirely.
-# PORTFOLIO_PLAN Phase 2 rewrites this endpoint against Scrydex
-# /expansions and deletes PokeDataApiService.ts -- see
-# docs/PORTFOLIO_PLAN.md and the (closed-as-superseded) migration epic
-# #118. Until Phase 2 lands, /api/sets failures surface as warnings via
-# add_warning, not errors via add_error. Test 1 (health check) above
-# remains blocking via add_error.
-echo "Test 2: GetSetList Endpoint (non-blocking pending Scrydex migration)"
+# Blocking. Phase 2 migrated this endpoint to Scrydex; the previous
+# non-blocking transition window is closed.
+echo "Test 2: GetSetList Endpoint"
 echo "----------------------------"
 
 if [ -z "$FUNCTION_KEY" ]; then
@@ -188,28 +181,28 @@ else
           if echo "$FIRST_SET" | jq -e '.id and .language and .name' > /dev/null 2>&1; then
             echo "✓ Set data structure is valid"
           else
-            echo "⚠ Set data structure may be incomplete"
-            add_warning
+            echo "✗ Set data structure may be incomplete"
+            add_error
           fi
         else
-          echo "⚠ No sets returned"
-          add_warning
+          echo "✗ No sets returned"
+          add_error
         fi
       else
-        echo "⚠ Response is not a valid JSON array (non-blocking, Phase 2 transition)"
-        add_warning
+        echo "✗ Response is not a valid JSON array"
+        add_error
       fi
     else
-      echo "⚠ Response is not valid JSON (non-blocking, Phase 2 transition)"
-      add_warning
+      echo "✗ Response is not valid JSON"
+      add_error
     fi
   elif [ "$HTTP_CODE" == "401" ]; then
-    echo "⚠ GetSetList endpoint returned 401 Unauthorized (non-blocking, Phase 2 transition)"
+    echo "✗ GetSetList endpoint returned 401 Unauthorized"
     echo "  This likely means the function key is invalid or expired"
-    add_warning
+    add_error
   else
-    echo "⚠ GetSetList endpoint returned $HTTP_CODE (expected 200) (non-blocking, Phase 2 transition)"
-    add_warning
+    echo "✗ GetSetList endpoint returned $HTTP_CODE (expected 200)"
+    add_error
   fi
 fi
 echo ""

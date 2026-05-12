@@ -34,9 +34,8 @@ export interface BackendHealth {
 /**
  * A `BackendFetcher` accepts the same path strings the existing api.ts
  * service produces (e.g. `/sets?language=en&all=true`) and returns the
- * canonical Scrydex-shaped envelope. Path A is a thin pass-through;
- * Path B translates query params and reshapes responses via the
- * pokedata→scrydex adapter (removed in Phase 2).
+ * canonical Scrydex-shaped envelope. As of Phase 2 both paths serve
+ * Scrydex shape natively, so the fetchers are thin pass-throughs.
  */
 export interface BackendFetcher {
   fetch<T>(canonicalPath: string, init?: RequestInit): Promise<ApiResponse<T>>;

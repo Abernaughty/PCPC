@@ -329,16 +329,9 @@ steps:
 
           # Test 2: GetSetList Endpoint (with function key)
           #
-          # NON-BLOCKING during the Phase 1B → Phase 2 transition. The deployed
-          # Functions still call the PokeData API, which may return empty
-          # results for the ENGLISH language filter or be unavailable
-          # entirely. PORTFOLIO_PLAN Phase 2 rewrites this endpoint against
-          # Scrydex /expansions and deletes PokeDataApiService.ts — see
-          # docs/PORTFOLIO_PLAN.md and the (closed-as-superseded) migration
-          # epic #118. Until Phase 2 lands, /api/sets failures surface as a
-          # warning rather than a deploy blocker. Test 1 (health check)
-          # remains blocking.
-          echo "Test 2: GetSetList Endpoint (non-blocking pending Scrydex migration)"
+          # Blocking. Phase 2 migrated this endpoint to Scrydex; the
+          # previous non-blocking transition window is closed.
+          echo "Test 2: GetSetList Endpoint"
           echo "GET $(functionAppUrl)/api/sets?code=***"
 
           SETS_RESPONSE=$(curl -s -w "\n%{http_code}" "$(functionAppUrl)/api/sets?code=$(functionKey)")
@@ -348,19 +341,22 @@ steps:
           if [ "$SETS_STATUS" = "200" ]; then
             echo "✓ GetSetList endpoint passed (HTTP $SETS_STATUS)"
 
-            # Verify response contains data (array returned directly, not wrapped in .data)
-            SET_COUNT=$(echo "$SETS_BODY" | jq -r 'length' 2>/dev/null || echo "0")
+            # Response shape: { data: { sets: [...], pagination: {...} } }
+            SET_COUNT=$(echo "$SETS_BODY" | jq -r '.data.sets | length' 2>/dev/null || echo "0")
             echo "Sets returned: $SET_COUNT"
 
             if [ "$SET_COUNT" -gt "0" ]; then
               echo "✓ Response contains set data"
             else
-              echo "##vso[task.logissue type=warning]Response contains no set data"
+              echo "✗ Response contains no set data"
+              echo "##vso[task.logissue type=error]GetSetList returned 200 but no sets in response body"
+              exit 1
             fi
           else
-            echo "✗ GetSetList endpoint failed (HTTP $SETS_STATUS) — non-blocking, PokeData/Phase 2 transition"
+            echo "✗ GetSetList endpoint failed (HTTP $SETS_STATUS)"
             echo "Response: $SETS_BODY"
-            echo "##vso[task.logissue type=warning]GetSetList endpoint returned HTTP $SETS_STATUS (non-blocking pending Scrydex migration; see PORTFOLIO_PLAN Phase 2)"
+            echo "##vso[task.logissue type=error]GetSetList endpoint returned HTTP $SETS_STATUS"
+            exit 1
           fi
 
           echo ""

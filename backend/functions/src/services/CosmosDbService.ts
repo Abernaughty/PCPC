@@ -1,21 +1,19 @@
 import { Container, CosmosClient, Database } from "@azure/cosmos";
-import { Card } from "../models/Card";
-import { Set } from "../models/Set";
+import type { Card, PokemonSet } from "@pcpc/shared";
 
 export interface ICosmosDbService {
   // Card operations
-  getCard(cardId: string, setId: number): Promise<Card | null>;
-  getCardsBySet(setCode: string): Promise<Card[]>;
+  getCard(cardId: string, setId: string): Promise<Card | null>;
   getCardsBySetId(setId: string): Promise<Card[]>;
   saveCard(card: Card): Promise<void>;
-  saveCards(cards: Card[]): Promise<void>; // Batch operation for performance
+  saveCards(cards: Card[]): Promise<void>;
   updateCard(card: Card): Promise<void>;
 
   // Set operations
-  getAllSets(): Promise<Set[]>;
-  getSet(setCode: string): Promise<Set | null>;
-  saveSets(sets: Set[]): Promise<void>;
-  getCurrentSets(): Promise<Set[]>;
+  getAllSets(): Promise<PokemonSet[]>;
+  getSet(setCode: string): Promise<PokemonSet | null>;
+  saveSets(sets: PokemonSet[]): Promise<void>;
+  getCurrentSets(): Promise<PokemonSet[]>;
 }
 
 export class CosmosDbService implements ICosmosDbService {
@@ -24,7 +22,6 @@ export class CosmosDbService implements ICosmosDbService {
   private cardContainer: Container;
   private setContainer: Container;
 
-  // Constants for database and container names - read from environment variables
   private readonly DATABASE_NAME =
     process.env.COSMOS_DB_DATABASE_NAME || "PokemonCards";
   private readonly CARDS_CONTAINER_NAME =
@@ -35,15 +32,10 @@ export class CosmosDbService implements ICosmosDbService {
   constructor(connectionString: string) {
     console.log("Initializing CosmosDbService...");
     console.log(`[CosmosDbService] Database: ${this.DATABASE_NAME}`);
-    console.log(
-      `[CosmosDbService] Cards Container: ${this.CARDS_CONTAINER_NAME}`
-    );
-    console.log(
-      `[CosmosDbService] Sets Container: ${this.SETS_CONTAINER_NAME}`
-    );
+    console.log(`[CosmosDbService] Cards Container: ${this.CARDS_CONTAINER_NAME}`);
+    console.log(`[CosmosDbService] Sets Container: ${this.SETS_CONTAINER_NAME}`);
 
-    // Add SSL bypass for local development with Cosmos DB emulator
-    // Set NODE_TLS_REJECT_UNAUTHORIZED=0 for local development only
+    // SSL bypass for Cosmos emulator in local development only.
     if (process.env.NODE_ENV === "development") {
       process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
       console.log(
@@ -52,8 +44,6 @@ export class CosmosDbService implements ICosmosDbService {
     }
 
     this.client = new CosmosClient(connectionString);
-
-    // Get database and containers directly
     this.database = this.client.database(this.DATABASE_NAME);
     this.cardContainer = this.database.container(this.CARDS_CONTAINER_NAME);
     this.setContainer = this.database.container(this.SETS_CONTAINER_NAME);
@@ -61,29 +51,15 @@ export class CosmosDbService implements ICosmosDbService {
     console.log("CosmosDbService initialized");
   }
 
-  async getCard(cardId: string, setId: number): Promise<Card | null> {
+  async getCard(cardId: string, setId: string): Promise<Card | null> {
     try {
-      // Remove any "pokedata-" prefix to get clean numeric ID
-      const cleanCardId = cardId.replace(/^pokedata-/, "");
-
-      console.log(
-        `[CosmosDbService] Querying card ${cleanCardId} in set ${setId}`
-      );
-
-      // Use efficient single-partition query with known setId
-      const { resource } = await this.cardContainer
-        .item(cleanCardId, setId)
-        .read();
-
-      console.log(
-        `[CosmosDbService] Successfully retrieved card ${cleanCardId}`
-      );
+      console.log(`[CosmosDbService] Querying card ${cardId} in set ${setId}`);
+      const { resource } = await this.cardContainer.item(cardId, setId).read();
+      if (!resource) return null;
       return resource as Card;
     } catch (error: any) {
       if (error.code === 404) {
-        console.log(
-          `[CosmosDbService] Card ${cardId} not found in set ${setId}`
-        );
+        console.log(`[CosmosDbService] Card ${cardId} not found in set ${setId}`);
         return null;
       }
       console.error(
@@ -94,97 +70,29 @@ export class CosmosDbService implements ICosmosDbService {
     }
   }
 
-  async getCardsBySet(setCode: string): Promise<Card[]> {
-    try {
-      // Find the setId that corresponds to the setCode
-      const setQuerySpec = {
-        query: "SELECT * FROM c WHERE c.code = @setCode",
-        parameters: [{ name: "@setCode", value: setCode }],
-      };
-
-      const { resources: sets } = await this.setContainer.items
-        .query(setQuerySpec)
-        .fetchAll();
-
-      if (sets.length === 0) {
-        console.log(`Set with code ${setCode} not found`);
-        return [];
-      }
-
-      const set = sets[0] as Set;
-
-      // Query cards by setId
-      const cardsQuerySpec = {
-        query: "SELECT * FROM c WHERE c.setId = @setId",
-        parameters: [{ name: "@setId", value: set.id }],
-      };
-
-      const { resources } = await this.cardContainer.items
-        .query(cardsQuerySpec)
-        .fetchAll();
-      return resources as Card[];
-    } catch (error) {
-      console.error(`Error getting cards for set ${setCode}:`, error);
-      return [];
-    }
-  }
-
   async getCardsBySetId(setId: string): Promise<Card[]> {
     try {
       const normalizedSetId = (setId || "").trim();
-      const setIdNumber = parseInt(normalizedSetId, 10);
-      const hasNumericSetId = !isNaN(setIdNumber);
-      const queryParts: string[] = [];
-      const parameters: { name: string; value: string | number }[] = [];
-
-      if (hasNumericSetId) {
-        queryParts.push("c.setId = @setIdNumber");
-        parameters.push({ name: "@setIdNumber", value: setIdNumber });
-      }
-
-      if (normalizedSetId.length > 0) {
-        queryParts.push("c.setId = @setIdString");
-        parameters.push({ name: "@setIdString", value: normalizedSetId });
-
-        const prefixedSetId = normalizedSetId.startsWith("pokedata-")
-          ? null
-          : `pokedata-${normalizedSetId}`;
-
-        if (prefixedSetId) {
-          queryParts.push("c.setId = @prefixedSetId");
-          parameters.push({ name: "@prefixedSetId", value: prefixedSetId });
-        }
-      }
-
-      if (queryParts.length === 0) {
-        console.warn(
-          `[CosmosDbService] No valid setId filters provided for value "${setId}"`
-        );
+      if (normalizedSetId.length === 0) {
+        console.warn(`[CosmosDbService] Empty setId provided`);
         return [];
       }
 
-      const queryText = `SELECT * FROM c WHERE ${queryParts.join(" OR ")}`;
+      const querySpec = {
+        query: "SELECT * FROM c WHERE c.setId = @setId",
+        parameters: [{ name: "@setId", value: normalizedSetId }],
+      };
 
       console.log(
-        `[CosmosDbService] Querying cards for setId variants - raw: "${setId}", numeric: ${
-          hasNumericSetId ? setIdNumber : "N/A"
-        }, string: "${
-          normalizedSetId || "N/A"
-        }", prefixed included: ${
-          queryParts.some((part) => part.includes("@prefixedSetId")) ? "yes" : "no"
-        }`
+        `[CosmosDbService] Querying cards for setId "${normalizedSetId}"`
       );
 
       const { resources } = await this.cardContainer.items
-        .query({
-          query: queryText,
-          parameters,
-        })
+        .query(querySpec)
         .fetchAll();
 
       console.log(
-        `[CosmosDbService] Found ${resources.length} cards for setId "${normalizedSetId ||
-          setId}" (numeric match ${hasNumericSetId ? "enabled" : "disabled"})`
+        `[CosmosDbService] Found ${resources.length} cards for setId "${normalizedSetId}"`
       );
 
       const warningThreshold = parseInt(
@@ -198,8 +106,7 @@ export class CosmosDbService implements ICosmosDbService {
         resources.length < warningThreshold
       ) {
         console.warn(
-          `[CosmosDbService] ⚠️ Low card count (${resources.length}) returned for setId "${normalizedSetId ||
-            setId}". This may indicate legacy data that needs refresh.`
+          `[CosmosDbService] ⚠️ Low card count (${resources.length}) for setId "${normalizedSetId}". May indicate stale data — consider refresh.`
         );
       }
 
@@ -213,37 +120,21 @@ export class CosmosDbService implements ICosmosDbService {
   async saveCard(card: Card): Promise<void> {
     try {
       console.log(
-        `[CosmosDbService] Attempting to save card: ${card.id} for setId: ${card.setId}`
+        `[CosmosDbService] Saving card ${card.id} for setId ${card.setId}`
       );
-      console.log(
-        `[CosmosDbService] Card data preview: ${JSON.stringify({
-          id: card.id,
-          setId: card.setId,
-          cardName: card.cardName,
-          cardNumber: card.cardNumber,
-          source: (card as any).source,
-        })}`
-      );
-
       const result = await this.cardContainer.items.upsert(card);
       console.log(
-        `[CosmosDbService] Successfully saved card ${card.id} - Status: ${result.statusCode}, RU: ${result.requestCharge}`
+        `[CosmosDbService] Saved card ${card.id} — status ${result.statusCode}, RU ${result.requestCharge}`
       );
     } catch (error) {
       console.error(`[CosmosDbService] ERROR saving card ${card.id}:`, error);
-      console.error(
-        `[CosmosDbService] Card data that failed:`,
-        JSON.stringify(card, null, 2)
-      );
       throw error;
     }
   }
 
   async saveCards(cards: Card[]): Promise<void> {
     try {
-      console.log(
-        `[CosmosDbService] Starting batch save of ${cards.length} cards`
-      );
+      console.log(`[CosmosDbService] Batch saving ${cards.length} cards`);
       const startTime = Date.now();
 
       if (cards.length === 0) {
@@ -251,10 +142,8 @@ export class CosmosDbService implements ICosmosDbService {
         return;
       }
 
-      // Process cards in batches to avoid overwhelming Cosmos DB
-      const BATCH_SIZE = 100; // Cosmos DB recommended batch size
-      const batches = [];
-
+      const BATCH_SIZE = 100;
+      const batches: Card[][] = [];
       for (let i = 0; i < cards.length; i += BATCH_SIZE) {
         batches.push(cards.slice(i, i + BATCH_SIZE));
       }
@@ -265,118 +154,72 @@ export class CosmosDbService implements ICosmosDbService {
 
       let totalSaved = 0;
       let totalRU = 0;
-
-      // Process batches in parallel with controlled concurrency
-      const CONCURRENT_BATCHES = 3; // Limit concurrent batches to avoid rate limiting
+      const CONCURRENT_BATCHES = 3;
 
       for (let i = 0; i < batches.length; i += CONCURRENT_BATCHES) {
         const concurrentBatches = batches.slice(i, i + CONCURRENT_BATCHES);
 
-        const batchPromises = concurrentBatches.map(
-          async (batch, batchIndex) => {
-            const actualBatchIndex = i + batchIndex;
-            console.log(
-              `[CosmosDbService] Processing batch ${actualBatchIndex + 1}/${
-                batches.length
-              } with ${batch.length} cards`
-            );
+        const batchPromises = concurrentBatches.map(async (batch, batchIndex) => {
+          const actualBatchIndex = i + batchIndex;
+          const batchStartTime = Date.now();
+          let batchRU = 0;
+          let batchSaved = 0;
 
-            const batchStartTime = Date.now();
-            let batchRU = 0;
-            let batchSaved = 0;
-
-            // Process each card in the batch
-            const cardPromises = batch.map(async (card) => {
-              try {
-                const result = await this.cardContainer.items.upsert(card);
-                batchRU += result.requestCharge || 0;
-                batchSaved++;
-                return {
-                  success: true,
-                  cardId: card.id,
-                  ru: result.requestCharge || 0,
-                };
-              } catch (error) {
-                console.error(
-                  `[CosmosDbService] Failed to save card ${card.id}:`,
-                  error
-                );
-                return { success: false, cardId: card.id, error: error };
-              }
-            });
-
-            const results = await Promise.all(cardPromises);
-            const batchTime = Date.now() - batchStartTime;
-
-            const failures = results.filter((r) => !r.success);
-            if (failures.length > 0) {
-              console.warn(
-                `[CosmosDbService] Batch ${actualBatchIndex + 1} had ${
-                  failures.length
-                } failures out of ${batch.length} cards`
+          const cardPromises = batch.map(async (card) => {
+            try {
+              const result = await this.cardContainer.items.upsert(card);
+              batchRU += result.requestCharge || 0;
+              batchSaved++;
+              return { success: true, cardId: card.id };
+            } catch (error) {
+              console.error(
+                `[CosmosDbService] Failed to save card ${card.id}:`,
+                error
               );
-              failures.forEach((failure) => {
-                console.warn(
-                  `[CosmosDbService] Failed card: ${failure.cardId}`
-                );
-              });
+              return { success: false, cardId: card.id, error };
             }
+          });
 
-            console.log(
-              `[CosmosDbService] Batch ${
-                actualBatchIndex + 1
-              } completed: ${batchSaved}/${
-                batch.length
-              } cards saved in ${batchTime}ms, RU: ${batchRU.toFixed(2)}`
+          const results = await Promise.all(cardPromises);
+          const batchTime = Date.now() - batchStartTime;
+
+          const failures = results.filter((r) => !r.success);
+          if (failures.length > 0) {
+            console.warn(
+              `[CosmosDbService] Batch ${actualBatchIndex + 1} had ${failures.length} failures out of ${batch.length}`
             );
-
-            return {
-              saved: batchSaved,
-              ru: batchRU,
-              failures: failures.length,
-            };
           }
-        );
 
-        // Wait for all concurrent batches to complete
+          console.log(
+            `[CosmosDbService] Batch ${actualBatchIndex + 1}: ${batchSaved}/${batch.length} cards saved in ${batchTime}ms, RU ${batchRU.toFixed(2)}`
+          );
+
+          return { saved: batchSaved, ru: batchRU, failures: failures.length };
+        });
+
         const batchResults = await Promise.all(batchPromises);
-
-        // Aggregate results
         batchResults.forEach((result) => {
           totalSaved += result.saved;
           totalRU += result.ru;
         });
 
-        // Add small delay between concurrent batch groups to be gentle on Cosmos DB
         if (i + CONCURRENT_BATCHES < batches.length) {
           await new Promise((resolve) => setTimeout(resolve, 100));
         }
       }
 
       const totalTime = Date.now() - startTime;
-      const avgTimePerCard = totalTime / cards.length;
-      const avgRUPerCard = totalRU / cards.length;
-
       console.log(
-        `[CosmosDbService] Batch save completed: ${totalSaved}/${cards.length} cards saved`
-      );
-      console.log(
-        `[CosmosDbService] Performance: ${totalTime}ms total (${avgTimePerCard.toFixed(
-          1
-        )}ms/card), ${totalRU.toFixed(2)} RU total (${avgRUPerCard.toFixed(
-          2
-        )} RU/card)`
+        `[CosmosDbService] Batch save complete: ${totalSaved}/${cards.length} cards in ${totalTime}ms, ${totalRU.toFixed(2)} RU total`
       );
 
       if (totalSaved < cards.length) {
-        const failedCount = cards.length - totalSaved;
         console.warn(
-          `[CosmosDbService] WARNING: ${failedCount} cards failed to save`
+          `[CosmosDbService] ⚠️ ${cards.length - totalSaved} cards failed to save`
         );
-        // Don't throw error for partial failures - log and continue
       }
     } catch (error) {
-      console.error(`[CosmosDbService] ERROR in batch save operation:`, error);
+      console.error(`[CosmosDbService] ERROR in batch save:`, error);
       throw error;
     }
   }
@@ -390,47 +233,20 @@ export class CosmosDbService implements ICosmosDbService {
     }
   }
 
-  async getAllSets(): Promise<Set[]> {
+  async getAllSets(): Promise<PokemonSet[]> {
     try {
-      console.log("[CosmosDbService] Getting all sets from Cosmos DB");
-
-      // Use readAll to get all sets
+      console.log("[CosmosDbService] Getting all sets");
       const { resources } = await this.setContainer.items.readAll().fetchAll();
-      console.log(
-        `[CosmosDbService] Found ${resources.length} sets in Cosmos DB`
-      );
-
-      // Log the first few sets for debugging
-      if (resources.length > 0) {
-        console.log("Sample sets from Cosmos DB:");
-        resources
-          .slice(0, Math.min(3, resources.length))
-          .forEach((set: any) => {
-            console.log(
-              `- ${set.name} (${set.code}): ${set.cardCount} cards, Series: ${set.series}, isCurrent: ${set.isCurrent}`
-            );
-          });
-      }
-
-      return resources as Set[];
+      console.log(`[CosmosDbService] Found ${resources.length} sets`);
+      return resources as PokemonSet[];
     } catch (error) {
       console.error(`Error getting all sets:`, error);
-
-      // Try using a query as a fallback
       try {
-        console.log("Falling back to query approach...");
-        const querySpec = {
-          query: "SELECT * FROM c",
-        };
-
+        const querySpec = { query: "SELECT * FROM c" };
         const { resources } = await this.setContainer.items
           .query(querySpec)
           .fetchAll();
-        console.log(
-          `[CosmosDbService] Found ${resources.length} sets using query()`
-        );
-
-        return resources as Set[];
+        return resources as PokemonSet[];
       } catch (queryError) {
         console.error(`Error querying sets:`, queryError);
         return [];
@@ -438,99 +254,58 @@ export class CosmosDbService implements ICosmosDbService {
     }
   }
 
-  async getSet(setCode: string): Promise<Set | null> {
+  async getSet(setCode: string): Promise<PokemonSet | null> {
     try {
       const querySpec = {
         query: "SELECT * FROM c WHERE c.code = @setCode",
         parameters: [{ name: "@setCode", value: setCode }],
       };
-
       const { resources } = await this.setContainer.items
         .query(querySpec)
         .fetchAll();
-      return resources.length > 0 ? (resources[0] as Set) : null;
+      return resources.length > 0 ? (resources[0] as PokemonSet) : null;
     } catch (error) {
       console.error(`Error getting set ${setCode}:`, error);
       return null;
     }
   }
 
-  async saveSets(sets: Set[]): Promise<void> {
+  async saveSets(sets: PokemonSet[]): Promise<void> {
     try {
       console.log(`[CosmosDbService] Saving ${sets.length} sets`);
-
-      // Add lastUpdated timestamp to each set
+      const now = new Date().toISOString();
       const setsWithTimestamp = sets.map((set) => ({
         ...set,
-        lastUpdated: new Date().toISOString(),
+        lastUpdated: set.lastUpdated ?? now,
       }));
 
-      // Log the first few sets for debugging
-      if (setsWithTimestamp.length > 0) {
-        console.log("Sample sets being saved:");
-        setsWithTimestamp
-          .slice(0, Math.min(3, setsWithTimestamp.length))
-          .forEach((set) => {
-            console.log(
-              `- ${set.name} (${set.code}): ${set.cardCount} cards, Series: ${set.series}, isCurrent: ${set.isCurrent}`
-            );
-          });
-      }
-
-      // Use individual upsert operations instead of bulk
       for (const set of setsWithTimestamp) {
         await this.setContainer.items.upsert(set);
       }
 
-      console.log(`[CosmosDbService] Successfully saved ${sets.length} sets`);
+      console.log(`[CosmosDbService] Saved ${sets.length} sets`);
     } catch (error) {
       console.error(`Error saving sets:`, error);
       throw error;
     }
   }
 
-  async getCurrentSets(): Promise<Set[]> {
+  async getCurrentSets(): Promise<PokemonSet[]> {
     try {
-      console.log("[CosmosDbService] Getting current sets from Cosmos DB");
-
-      // Get all sets first
       const allSets = await this.getAllSets();
-
-      // Filter for current sets
       const currentSets = allSets.filter((set) => set.isCurrent === true);
       console.log(
-        `[CosmosDbService] Found ${currentSets.length} current sets out of ${allSets.length} total sets`
+        `[CosmosDbService] Found ${currentSets.length} current sets out of ${allSets.length} total`
       );
-
-      // Log the current sets for debugging
-      if (currentSets.length > 0) {
-        console.log("Current sets:");
-        currentSets.forEach((set) => {
-          console.log(
-            `- ${set.name} (${set.code}): isCurrent=${set.isCurrent}, Series: ${set.series}`
-          );
-        });
-      }
-
       return currentSets;
     } catch (error) {
       console.error(`Error getting current sets:`, error);
-
-      // Try using a query as a fallback
       try {
-        console.log("Falling back to query approach for current sets...");
-        const querySpec = {
-          query: "SELECT * FROM c WHERE c.isCurrent = true",
-        };
-
+        const querySpec = { query: "SELECT * FROM c WHERE c.isCurrent = true" };
         const { resources } = await this.setContainer.items
           .query(querySpec)
           .fetchAll();
-        console.log(
-          `[CosmosDbService] Found ${resources.length} current sets using query()`
-        );
-
-        return resources as Set[];
+        return resources as PokemonSet[];
       } catch (queryError) {
         console.error(`Error querying current sets:`, queryError);
         return [];

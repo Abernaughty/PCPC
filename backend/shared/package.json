@@ -1,14 +1,11 @@
 {
   "name": "@pcpc/shared",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
-  "description": "Canonical types and schemas shared between PCPC frontend, backend/functions, and (Phase 2) the ACA-containerized Functions image.",
-  "type": "module",
-  "main": "./src/index.ts",
+  "description": "Canonical types shared between PCPC frontend, backend/functions, and (Phase 2.2+) the ACA-containerized Functions image.",
   "types": "./src/index.ts",
   "exports": {
     ".": {
-      "import": "./src/index.ts",
       "types": "./src/index.ts"
     }
   }

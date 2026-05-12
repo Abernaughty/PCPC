@@ -6,15 +6,13 @@ import {
 import { monitoring } from "../../services/MonitoringService";
 
 /**
- * HealthCheck Function - System health monitoring endpoint
+ * HealthCheck — System health monitoring endpoint.
  *
- * Provides comprehensive health status for all system components:
- * - Function runtime status
- * - Cosmos DB connectivity
- * - External API availability (PokeData API)
- * - Redis cache status (if enabled)
- *
- * Returns JSON response with detailed health information for monitoring systems.
+ * Reports status for:
+ * - Function runtime
+ * - Cosmos DB connectivity (if configured)
+ * - Scrydex API availability (if configured)
+ * - Redis cache (if enabled)
  *
  * Endpoint: GET /api/health
  */
@@ -25,7 +23,7 @@ interface HealthCheckResult {
   checks: {
     runtime: ComponentHealth;
     cosmosdb?: ComponentHealth;
-    pokedataApi?: ComponentHealth;
+    scrydexApi?: ComponentHealth;
     redis?: ComponentHealth;
   };
   version: string;
@@ -40,32 +38,29 @@ interface ComponentHealth {
 }
 
 export async function healthCheck(
-  request: HttpRequest,
+  _request: HttpRequest,
   context: InvocationContext
 ): Promise<HttpResponseInit> {
   const startTime = Date.now();
   const correlationId = monitoring.createCorrelationId();
 
   context.log(
-    `[HealthCheck] Starting health check - Correlation ID: ${correlationId}`
+    `[HealthCheck] Starting — Correlation ID: ${correlationId}`
   );
 
   try {
     const checks: HealthCheckResult["checks"] = {
-      runtime: await checkRuntime(),
+      runtime: checkRuntime(),
     };
 
-    // Check Cosmos DB if connection string is configured
     if (process.env.COSMOS_DB_CONNECTION_STRING) {
       checks.cosmosdb = await checkCosmosDb();
     }
 
-    // Check PokeData API if API key is configured
-    if (process.env.POKEDATA_API_KEY) {
-      checks.pokedataApi = await checkPokeDataApi();
+    if (process.env.SCRYDEX_API_KEY) {
+      checks.scrydexApi = await checkScrydexApi();
     }
 
-    // Check Redis if enabled
     if (process.env.ENABLE_REDIS_CACHE === "true") {
       checks.redis = await checkRedis();
     } else {
@@ -75,7 +70,6 @@ export async function healthCheck(
       };
     }
 
-    // Determine overall health status
     const overallStatus = determineOverallStatus(checks);
 
     const result: HealthCheckResult = {
@@ -88,12 +82,10 @@ export async function healthCheck(
 
     const duration = Date.now() - startTime;
 
-    // Track health check metrics
     monitoring.trackMetric("healthcheck.duration", duration, {
       correlationId,
       status: overallStatus,
     });
-
     monitoring.trackEvent("healthcheck.completed", {
       correlationId,
       status: overallStatus,
@@ -102,10 +94,9 @@ export async function healthCheck(
     });
 
     context.log(
-      `[HealthCheck] Completed in ${duration}ms - Status: ${overallStatus}`
+      `[HealthCheck] Completed in ${duration}ms — Status: ${overallStatus}`
     );
 
-    // Return appropriate HTTP status code based on health
     const statusCode =
       overallStatus === "healthy"
         ? 200
@@ -123,20 +114,16 @@ export async function healthCheck(
     };
   } catch (error) {
     const duration = Date.now() - startTime;
-
     monitoring.trackException(error as Error, {
       correlationId,
       functionName: "HealthCheck",
       duration,
     });
-
-    context.error(`[HealthCheck] Error during health check:`, error);
+    context.error(`[HealthCheck] Error:`, error);
 
     return {
       status: 503,
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(
         {
           status: "unhealthy",
@@ -152,85 +139,58 @@ export async function healthCheck(
   }
 }
 
-/**
- * Check Azure Functions runtime health
- */
-async function checkRuntime(): Promise<ComponentHealth> {
-  const startTime = Date.now();
-
-  try {
-    // Runtime is healthy if we can execute this code
-    const responseTime = Date.now() - startTime;
-
-    return {
-      status: "healthy",
-      responseTime,
-      message: "Function runtime operational",
-      lastChecked: new Date().toISOString(),
-    };
-  } catch (error) {
-    return {
-      status: "unhealthy",
-      message: `Runtime check failed: ${(error as Error).message}`,
-      lastChecked: new Date().toISOString(),
-    };
-  }
+function checkRuntime(): ComponentHealth {
+  return {
+    status: "healthy",
+    responseTime: 0,
+    message: "Function runtime operational",
+    lastChecked: new Date().toISOString(),
+  };
 }
 
-/**
- * Check Cosmos DB connectivity
- */
 async function checkCosmosDb(): Promise<ComponentHealth> {
   const startTime = Date.now();
-
   try {
-    // Import CosmosDbService dynamically to avoid initialization issues
     const { CosmosDbService } = await import("../../services/CosmosDbService");
-    const connectionString = process.env.COSMOS_DB_CONNECTION_STRING || "";
-    const cosmosService = new CosmosDbService(connectionString);
-
-    // Attempt a simple query to verify connectivity
-    // This will throw if connection fails
+    const cosmosService = new CosmosDbService(
+      process.env.COSMOS_DB_CONNECTION_STRING || ""
+    );
+    // Lightweight probe — single-key read by an arbitrary code. 404 is fine.
     await cosmosService.getSet("base1");
-
-    const responseTime = Date.now() - startTime;
-
     return {
       status: "healthy",
-      responseTime,
+      responseTime: Date.now() - startTime,
       message: "Cosmos DB connection successful",
       lastChecked: new Date().toISOString(),
     };
   } catch (error) {
-    const responseTime = Date.now() - startTime;
-
     return {
       status: "unhealthy",
-      responseTime,
+      responseTime: Date.now() - startTime,
       message: `Cosmos DB check failed: ${(error as Error).message}`,
       lastChecked: new Date().toISOString(),
     };
   }
 }
 
-/**
- * Check PokeData API availability
- */
-async function checkPokeDataApi(): Promise<ComponentHealth> {
+async function checkScrydexApi(): Promise<ComponentHealth> {
   const startTime = Date.now();
-
   try {
-    const apiKey = process.env.POKEDATA_API_KEY;
+    const apiKey = process.env.SCRYDEX_API_KEY;
+    const teamId = process.env.SCRYDEX_TEAM_ID || "";
     const baseUrl =
-      process.env.POKEDATA_API_BASE_URL || "https://www.pokedata.io/v0";
+      process.env.SCRYDEX_API_BASE_URL || "https://api.scrydex.com/pokemon/v1";
 
-    // Make a simple API call to check availability
-    const response = await fetch(`${baseUrl}/sets?limit=1`, {
-      headers: {
-        Authorization: `Bearer ${apiKey ?? ""}`,
-        "Content-Type": "application/json",
-      },
-    });
+    const response = await fetch(
+      `${baseUrl}/en/expansions?page_size=1&select=id`,
+      {
+        headers: {
+          "X-Api-Key": apiKey ?? "",
+          "X-Team-ID": teamId,
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
     const responseTime = Date.now() - startTime;
 
@@ -238,87 +198,61 @@ async function checkPokeDataApi(): Promise<ComponentHealth> {
       return {
         status: "healthy",
         responseTime,
-        message: "PokeData API accessible",
-        lastChecked: new Date().toISOString(),
-      };
-    } else {
-      return {
-        status: "degraded",
-        responseTime,
-        message: `PokeData API returned status ${response.status}`,
+        message: "Scrydex API accessible",
         lastChecked: new Date().toISOString(),
       };
     }
+    return {
+      status: "degraded",
+      responseTime,
+      message: `Scrydex API returned status ${response.status}`,
+      lastChecked: new Date().toISOString(),
+    };
   } catch (error) {
-    const responseTime = Date.now() - startTime;
-
     return {
       status: "unhealthy",
-      responseTime,
-      message: `PokeData API check failed: ${(error as Error).message}`,
+      responseTime: Date.now() - startTime,
+      message: `Scrydex API check failed: ${(error as Error).message}`,
       lastChecked: new Date().toISOString(),
     };
   }
 }
 
-/**
- * Check Redis cache connectivity
- */
 async function checkRedis(): Promise<ComponentHealth> {
   const startTime = Date.now();
-
   try {
-    // Import RedisCacheService dynamically
     const { RedisCacheService } = await import(
       "../../services/RedisCacheService"
     );
     const redisConnectionString =
       process.env.REDIS_CONNECTION_STRING || "redis://localhost:6379";
     const redisService = new RedisCacheService(redisConnectionString, true);
-
-    // Attempt to get a test key
     await redisService.get("health-check-test");
-
-    const responseTime = Date.now() - startTime;
-
     return {
       status: "healthy",
-      responseTime,
+      responseTime: Date.now() - startTime,
       message: "Redis cache connection successful",
       lastChecked: new Date().toISOString(),
     };
   } catch (error) {
-    const responseTime = Date.now() - startTime;
-
     return {
       status: "degraded",
-      responseTime,
+      responseTime: Date.now() - startTime,
       message: `Redis check failed: ${(error as Error).message}`,
       lastChecked: new Date().toISOString(),
     };
   }
 }
 
-/**
- * Determine overall system health status based on component checks
- */
 function determineOverallStatus(
   checks: HealthCheckResult["checks"]
 ): "healthy" | "degraded" | "unhealthy" {
   const statuses = Object.values(checks)
+    .filter((check): check is ComponentHealth => !!check)
     .filter((check) => check.status !== "disabled")
     .map((check) => check.status);
 
-  // If any component is unhealthy, system is unhealthy
-  if (statuses.includes("unhealthy")) {
-    return "unhealthy";
-  }
-
-  // If any component is degraded, system is degraded
-  if (statuses.includes("degraded")) {
-    return "degraded";
-  }
-
-  // All components are healthy
+  if (statuses.includes("unhealthy")) return "unhealthy";
+  if (statuses.includes("degraded")) return "degraded";
   return "healthy";
 }
