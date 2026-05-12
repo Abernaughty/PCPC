@@ -363,9 +363,9 @@ variable "alert_email_address" {
 # -----------------------------------------------------------------------------
 
 variable "shared_acr_name" {
-  description = "Name of the shared Azure Container Registry that hosts the PCPC Functions image. Reused across PCPC environments rather than provisioning per-env (per ADR-009)."
+  description = "Name of the shared Azure Container Registry that hosts the PCPC Functions image. Reused across PCPC environments rather than provisioning per-env (per ADR-009). NOTE: the ACR's *name* is alphanumeric-only — `maberdevcontainerregistry`. Its login server FQDN is `maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io` (the `-ccedhvhwfndwetdp` suffix is Azure's dedicated data endpoint mechanism, NOT part of the registry name)."
   type        = string
-  default     = "maberdevcontainerregistry-ccedhvhwfndwetdp"
+  default     = "maberdevcontainerregistry"
 }
 
 variable "shared_acr_resource_group" {
