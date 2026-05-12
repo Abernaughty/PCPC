@@ -1,0 +1,241 @@
+# Deploy the PCPC Functions image to Azure Container Apps (Path C)
+#
+# Phase 2.2. Roles the new image onto the Container App and runs blocking
+# smoke tests against the ingress FQDN.
+#
+# Expected pipeline variables (set by the preceding build-and-push-image.yml
+# template in the same job):
+#   ContainerImageReference  — full registry/repo:tag of the image to deploy
+#
+# Usage:
+#   - template: pipelines/ado/templates/deploy-aca.yml
+#     parameters:
+#       environment: dev
+#       azureSubscription: az-pcpc-dev
+#       containerAppName: pcpc-aca-dev
+#       resourceGroupName: pcpc-rg-dev
+#       runSmokeTests: true
+
+parameters:
+  - name: environment
+    type: string
+  - name: azureSubscription
+    type: string
+  - name: containerAppName
+    type: string
+  - name: resourceGroupName
+    type: string
+  - name: runSmokeTests
+    type: boolean
+    default: true
+
+steps:
+  - checkout: self
+
+  # ---------------------------------------------------------------------------
+  # Skip-redeploy check: compare incoming image reference to the currently
+  # active revision's image. Mirrors deploy-functions.yml's content-hash skip
+  # pattern (which keys off DEPLOY_PACKAGE_HASH); here we key off the
+  # registry/repo:tag tuple instead.
+  # ---------------------------------------------------------------------------
+  - task: AzureCLI@2
+    displayName: "Evaluate ACA Deployment"
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        set -euo pipefail
+
+        TARGET_REF='$(ContainerImageReference)'
+        APP_NAME='${{ parameters.containerAppName }}'
+        RG='${{ parameters.resourceGroupName }}'
+
+        if [ -z "$TARGET_REF" ]; then
+          echo "##vso[task.logissue type=error]ContainerImageReference pipeline variable is empty — the build-and-push-image template must run before this template"
+          exit 1
+        fi
+
+        echo "Target image: $TARGET_REF"
+        echo "Container App: $APP_NAME (rg=$RG)"
+
+        set +e
+        CURRENT_REF=$(az containerapp show \
+          --name "$APP_NAME" \
+          --resource-group "$RG" \
+          --query 'properties.template.containers[0].image' \
+          -o tsv 2>/dev/null)
+        CLI_EXIT=$?
+        set -e
+
+        if [ $CLI_EXIT -ne 0 ]; then
+          echo "Could not read current Container App image (CLI exit $CLI_EXIT). Defaulting to deploy."
+          SHOULD_DEPLOY=true
+          CURRENT_REF=""
+        elif [ -z "$CURRENT_REF" ]; then
+          echo "Container App has no current image set. Will deploy."
+          SHOULD_DEPLOY=true
+        elif [ "$CURRENT_REF" = "$TARGET_REF" ]; then
+          echo "Current image matches target. Skipping ACA revision update."
+          SHOULD_DEPLOY=false
+        else
+          echo "Current image differs from target. Will deploy."
+          SHOULD_DEPLOY=true
+        fi
+
+        echo "Current image: ${CURRENT_REF:-<none>}"
+        echo "##vso[task.setvariable variable=ShouldDeployACA]$SHOULD_DEPLOY"
+
+  - script: |
+      echo "ACA image unchanged from last deployment. Skipping revision update."
+    displayName: "Skip ACA Deployment"
+    condition: and(succeeded(), eq(variables['ShouldDeployACA'], 'false'))
+
+  # ---------------------------------------------------------------------------
+  # Roll the new image onto the Container App. revision_mode = "Single"
+  # (set by the Terraform module) means this replaces the active revision
+  # atomically.
+  # ---------------------------------------------------------------------------
+  - task: AzureCLI@2
+    displayName: "Update Container App Image"
+    condition: and(succeeded(), eq(variables['ShouldDeployACA'], 'true'))
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        set -euo pipefail
+
+        echo "Rolling new revision: $(ContainerImageReference)"
+        az containerapp update \
+          --name '${{ parameters.containerAppName }}' \
+          --resource-group '${{ parameters.resourceGroupName }}' \
+          --image "$(ContainerImageReference)" \
+          --output none
+
+        echo "✓ Container App revision update accepted"
+
+  # ---------------------------------------------------------------------------
+  # Wait for the new revision to reach Running/Healthy state. Mirrors the
+  # 30-second sleep + healthcheck pattern in deploy-functions.yml, but with
+  # an explicit poll because ACA's revision provisioning is more visible
+  # than the Function App ZIP deploy.
+  # ---------------------------------------------------------------------------
+  - task: AzureCLI@2
+    displayName: "Wait for New Revision Active"
+    condition: and(succeeded(), eq(variables['ShouldDeployACA'], 'true'))
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        set -euo pipefail
+
+        APP_NAME='${{ parameters.containerAppName }}'
+        RG='${{ parameters.resourceGroupName }}'
+        MAX_WAIT_SECONDS=300
+        POLL_INTERVAL=10
+        elapsed=0
+
+        echo "Waiting up to ${MAX_WAIT_SECONDS}s for new revision to become active..."
+
+        while [ $elapsed -lt $MAX_WAIT_SECONDS ]; do
+          LATEST_REV=$(az containerapp revision list \
+            --name "$APP_NAME" \
+            --resource-group "$RG" \
+            --query '[?properties.active==`true`] | [0]' \
+            -o json 2>/dev/null || echo '{}')
+
+          STATE=$(echo "$LATEST_REV" | jq -r '.properties.runningState // "Unknown"')
+          REV_NAME=$(echo "$LATEST_REV" | jq -r '.name // "unknown"')
+
+          echo "  [${elapsed}s] Revision $REV_NAME state=$STATE"
+
+          if [ "$STATE" = "Running" ] || [ "$STATE" = "RunningAtMaxScale" ]; then
+            echo "✓ Revision is Running"
+            exit 0
+          fi
+
+          if [ "$STATE" = "Failed" ]; then
+            echo "##vso[task.logissue type=error]Revision $REV_NAME entered Failed state"
+            exit 1
+          fi
+
+          sleep $POLL_INTERVAL
+          elapsed=$((elapsed + POLL_INTERVAL))
+        done
+
+        echo "##vso[task.logissue type=error]Revision did not reach Running state within ${MAX_WAIT_SECONDS}s"
+        exit 1
+
+  # ---------------------------------------------------------------------------
+  # Capture ingress FQDN for the smoke test stage and the deployment summary.
+  # ---------------------------------------------------------------------------
+  - task: AzureCLI@2
+    displayName: "Get Container App Ingress FQDN"
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        set -euo pipefail
+
+        FQDN=$(az containerapp show \
+          --name '${{ parameters.containerAppName }}' \
+          --resource-group '${{ parameters.resourceGroupName }}' \
+          --query 'properties.configuration.ingress.fqdn' \
+          -o tsv)
+
+        if [ -z "$FQDN" ]; then
+          echo "##vso[task.logissue type=error]Failed to read Container App ingress FQDN"
+          exit 1
+        fi
+
+        ACA_URL="https://${FQDN}"
+        echo "ACA ingress URL: $ACA_URL"
+        echo "##vso[task.setvariable variable=acaIngressUrl]$ACA_URL"
+
+  # ---------------------------------------------------------------------------
+  # Blocking smoke tests. Reuses the existing health-check-functions.sh
+  # script — it's URL-agnostic and accepts an optional function key (ACA
+  # ingress is anonymous so we don't pass one).
+  # ---------------------------------------------------------------------------
+  - ${{ if eq(parameters.runSmokeTests, true) }}:
+      - script: |
+          set -euo pipefail
+
+          chmod +x pipelines/ado/scripts/health-check-functions.sh
+
+          echo "=========================================="
+          echo "ACA SMOKE TESTS"
+          echo "=========================================="
+          echo "URL: $(acaIngressUrl)"
+          echo "Environment: ${{ parameters.environment }}"
+          echo ""
+
+          bash pipelines/ado/scripts/health-check-functions.sh "$(acaIngressUrl)"
+        displayName: "Run ACA Smoke Tests (blocking)"
+        continueOnError: false
+
+  # ---------------------------------------------------------------------------
+  # Deployment summary
+  # ---------------------------------------------------------------------------
+  - script: |
+      echo "=========================================="
+      echo "ACA DEPLOYMENT SUMMARY"
+      echo "=========================================="
+      echo ""
+      echo "Environment: ${{ parameters.environment }}"
+      echo "Container App: ${{ parameters.containerAppName }}"
+      echo "Resource Group: ${{ parameters.resourceGroupName }}"
+      echo "Image deployed: $(ContainerImageReference)"
+      echo "Ingress URL: $(acaIngressUrl)"
+      echo ""
+      echo "Available endpoints:"
+      echo "  - Health: $(acaIngressUrl)/api/health"
+      echo "  - Sets:   $(acaIngressUrl)/api/sets"
+      echo "  - Cards:  $(acaIngressUrl)/api/sets/{setId}/cards"
+      echo "  - Card:   $(acaIngressUrl)/api/cards/{cardId}"
+      echo ""
+      echo "=========================================="
+    displayName: "Display ACA Deployment Summary"
