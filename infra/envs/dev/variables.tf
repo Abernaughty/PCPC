@@ -357,3 +357,67 @@ variable "alert_email_address" {
   type        = string
   default     = "devops@maber.io"
 }
+
+# -----------------------------------------------------------------------------
+# Phase 2.2 — Path C (ACA Container) variables
+# -----------------------------------------------------------------------------
+
+variable "shared_acr_name" {
+  description = "Name of the shared Azure Container Registry that hosts the PCPC Functions image. Reused across PCPC environments rather than provisioning per-env (per ADR-009)."
+  type        = string
+  default     = "maberdevcontainerregistry-ccedhvhwfndwetdp"
+}
+
+variable "shared_acr_resource_group" {
+  description = "Resource group that contains the shared ACR. The registry is in the same Azure subscription as PCPC dev."
+  type        = string
+  default     = "dev-rg"
+}
+
+variable "container_app_image_repository" {
+  description = "Repository path within the shared ACR for the Functions image (e.g. `pcpc/functions`). Distinct from the `pcpc-ci/*` CI tooling image repos."
+  type        = string
+  default     = "pcpc/functions"
+}
+
+variable "container_app_image_tag" {
+  description = "Initial image tag at terraform-apply time. Subsequent CD runs use `az containerapp update --image <new_sha>` to roll new revisions; the container-app module ignores image changes via lifecycle.ignore_changes."
+  type        = string
+  default     = "latest"
+}
+
+variable "container_app_min_replicas" {
+  description = "Minimum ACA replicas. Default 1 keeps the frontend's 2-second probeHealth timeout from falsely degrading Path C after idle periods (resolved as PORTFOLIO_PLAN.md open question #7)."
+  type        = number
+  default     = 1
+}
+
+variable "container_app_max_replicas" {
+  description = "Maximum ACA replicas the HTTP scale rule can scale out to."
+  type        = number
+  default     = 3
+}
+
+variable "container_app_cpu" {
+  description = "vCPU per replica."
+  type        = number
+  default     = 0.5
+}
+
+variable "container_app_memory" {
+  description = "Memory per replica (e.g. 1Gi, 2Gi)."
+  type        = string
+  default     = "1Gi"
+}
+
+variable "container_app_http_concurrency" {
+  description = "Concurrent HTTP requests per replica before the HTTP scale rule scales out."
+  type        = number
+  default     = 10
+}
+
+variable "container_app_cors_allowed_origins" {
+  description = "Origins allowed by the ACA ingress CORS rule. Path C bypasses APIM, so this is the only allowlist gate. Keep in sync with the APIM regex policy (ADR-013) — both should be driven from the same canonical source. ACA CORS does not support regex; pass literal origins. Vercel preview origins can be added explicitly here when needed."
+  type        = list(string)
+  default     = ["https://pcpc.maber.io"]
+}

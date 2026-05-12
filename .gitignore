@@ -125,9 +125,13 @@ temp/
 *.tmp
 *.temp
 
-# Docker
+# Docker — broadly ignore developer-local .dockerignore + Dockerfile.local
+# (these are scratch / per-developer overrides). The Phase 2.2 ACA image
+# build has an intentional, source-controlled dockerignore at
+# backend/.dockerignore — unignored below.
 .dockerignore
 Dockerfile.local
+!backend/.dockerignore
 
 # Secrets and sensitive files
 *.pem
