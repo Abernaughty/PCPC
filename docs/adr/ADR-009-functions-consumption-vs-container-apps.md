@@ -212,6 +212,32 @@ pushes to the shared `maberdevcontainerregistry` ACR under the
 managed identity, not the ADO service connection (different identities
 for different purposes).
 
+### CORS handling (gateway-layer parity with Path B)
+
+Path B's CORS allowlist lives entirely in the APIM regex policy
+([ADR-013](./ADR-013-cors-regex-policy.md)); the Functions code under
+[`backend/functions/src/`](../../backend/functions/src/) emits no
+`Access-Control-Allow-*` headers and the APIM policy is the only
+allowlist gate. Path C cannot inherit that gate because it deliberately
+bypasses APIM (direct ACA ingress is the architectural point of the
+path — see [ADR-007](./ADR-007-api-architecture-spectrum.md)).
+
+The decision is to **keep CORS at the gateway layer for Path C too**,
+configured on the ACA ingress (`cors` block on
+`azurerm_container_app.ingress`) with the same allowlist the APIM regex
+policy uses. Both paths source the allowlist from the same
+`APIM_CORS_ORIGINS` ADO variable group entry, so adding or removing a
+domain updates both gateways atomically.
+
+The alternative — emit CORS headers from Functions code — was rejected
+because it would (a) require the same code to behave differently depending
+on whether it's running behind APIM or behind ACA ingress (APIM strips
+and re-adds CORS, which would conflict with app-emitted headers), and
+(b) move policy concerns out of the gateway, weakening the
+"gateway is the allowlist" model. Keeping CORS gateway-layer in both
+envelopes preserves the comparison doc's claim that Path B and Path C
+ship byte-identical application code.
+
 ### Container Registry sharing
 
 PCPC reuses the existing `maberdevcontainerregistry-ccedhvhwfndwetdp`

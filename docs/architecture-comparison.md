@@ -146,7 +146,7 @@ the full runtime tradeoff.
 | Authn/authz | App-level (none required for read endpoints) | APIM subscription model available; currently `subscription_required = false` for the demo | Anonymous public ingress; app-level (none required for read endpoints) |
 | Secret access | Vercel env vars at build/runtime | Key Vault references in app-settings; Functions read at runtime | ACA `secret` blocks resolved via managed identity at revision-start time |
 | Rate limiting | None (Vercel edge limits only) | Available via APIM policy; not currently configured | Available via ACA ingress rules; not currently configured |
-| CORS | SvelteKit handles same-origin natively | Configured at APIM via the regex policy (see [ADR-013](./adr/ADR-013-cors-regex-policy.md)) | Handled at the Functions layer (same code as Path B) — `pcpc.maber.io` allowed by the same allowlist |
+| CORS | SvelteKit handles same-origin natively | Configured at APIM via the regex policy (see [ADR-013](./adr/ADR-013-cors-regex-policy.md)) — Functions code emits no CORS headers; APIM is the only allowlist gate | Configured at the ACA ingress `cors` block; same allowlist as APIM (mirrors [ADR-013](./adr/ADR-013-cors-regex-policy.md) at a different gateway). Keeps Functions code envelope-agnostic — Path B and Path C ship byte-identical code; only the gateway differs. |
 | Audit | Vercel deployment log | App Insights request log + APIM Analytics | App Insights request log + ACA revision/replica logs; image SHA pinned per revision for supply-chain attestation |
 | Image / runtime provenance | N/A | ZIP deploy; runtime opacity inside the Functions host | Digest-pinned image (`pcpc/functions@sha256:…`) scanned for HIGH+ CVEs (Trivy) in CI before push; revision-pinned in Terraform |
 
@@ -229,9 +229,18 @@ in-progress work more than it rewards hiding it.
 - **APIM-in-front-of-ACA is intentionally *not* used.** Path C is designed
   to demonstrate "skip the gateway, see what the runtime alone gives you"
   — routing Path C through APIM would blur the architectural comparison.
-  CORS, observability, and rate-limiting parity with Path B are
-  implemented in the Functions code itself (same code runs in both
-  envelopes).
+  Path C therefore needs its own gateway-layer configuration for
+  cross-cutting concerns that APIM provides on Path B:
+  - **CORS** — implemented as an ACA ingress `cors` rule with the same
+    allowlist as the APIM regex policy ([ADR-013](./adr/ADR-013-cors-regex-policy.md)),
+    sourced from the same `APIM_CORS_ORIGINS` variable group entry. The
+    Functions code itself emits no CORS headers in either envelope; the
+    gateway is the single allowlist gate (APIM on Path B, ACA ingress on
+    Path C). This keeps the application code byte-identical across the
+    two paths — only the runtime envelope differs.
+  - **Rate limiting and observability** — same App Insights connection
+    string covers both paths' telemetry; rate limiting is not configured
+    on either path today.
 
 The toggle's healthcheck-driven graceful degradation guarantees the user
 experience never regresses below "Path A works." A reader who never
