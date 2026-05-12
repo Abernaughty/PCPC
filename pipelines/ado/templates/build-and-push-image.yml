@@ -16,7 +16,7 @@
 #     parameters:
 #       acrRegistryServiceConnection: pcpc-acr-service-connection
 #       azureSubscription: az-pcpc-dev
-#       acrName: maberdevcontainerregistry-ccedhvhwfndwetdp
+#       acrName: maberdevcontainerregistry
 #       imageRepository: pcpc/functions
 #       trivySeverity: HIGH,CRITICAL
 #       trivyVersion: "0.59.1"
@@ -29,7 +29,11 @@ parameters:
     type: string
   - name: acrName
     type: string
-    default: maberdevcontainerregistry-ccedhvhwfndwetdp
+    # ACR *name* is alphanumeric-only; the `-ccedhvhwfndwetdp` portion
+    # is part of the login server FQDN, not the registry name itself.
+    # `az acr show -n "$ACR_NAME" --query loginServer -o tsv` returns
+    # the FQDN at runtime, including the dedicated-data-endpoint suffix.
+    default: maberdevcontainerregistry
   - name: imageRepository
     type: string
     default: pcpc/functions
