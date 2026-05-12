@@ -13,10 +13,10 @@ parameters:
   - name: secretSpecs
     type: object
     default:
-      - secretName: "POKEDATA-API-KEY"
-        variableName: "POKEDATA_API_KEY"
-      - secretName: "POKEMON-TCG-API-KEY"
-        variableName: "POKEMON_TCG_API_KEY"
+      - secretName: "SCRYDEX-API-KEY"
+        variableName: "SCRYDEX_API_KEY"
+      - secretName: "SCRYDEX-TEAM-ID"
+        variableName: "SCRYDEX_TEAM_ID"
       - secretName: "ARM-CLIENT-ID"
         variableName: "ARM_CLIENT_ID"
       - secretName: "ARM-CLIENT-SECRET"
