@@ -3,8 +3,8 @@ import {
   HttpResponseInit,
   InvocationContext,
 } from "@azure/functions";
-import { pokeDataApiService, redisCacheService } from "../../index";
-import { ApiResponse } from "../../models/ApiResponse";
+import type { ApiResponse, PokemonSet } from "@pcpc/shared";
+import { redisCacheService, scrydexApiService } from "../../index";
 import { monitoring } from "../../services/MonitoringService";
 import {
   formatCacheEntry,
@@ -13,19 +13,9 @@ import {
   parseCacheEntry,
 } from "../../utils/cacheUtils";
 import { handleError } from "../../utils/errorUtils";
+import { mapScrydexExpansionToSet } from "../../utils/scrydexToCosmos";
 
-// PokeData Set interface (from PokeDataApiService)
-interface PokeDataSet {
-  code: string | null;
-  id: number;
-  language: "ENGLISH" | "JAPANESE";
-  name: string;
-  release_date: string;
-}
-
-// Enhanced set interface with additional metadata
-interface EnhancedPokeDataSet extends PokeDataSet {
-  cardCount?: number;
+interface EnhancedSet extends PokemonSet {
   releaseYear?: number;
   isRecent?: boolean;
 }
@@ -37,60 +27,50 @@ export async function getSetList(
   const startTime = Date.now();
   const correlationId = monitoring.createCorrelationId();
 
-  // Track function invocation
   monitoring.trackEvent("function.invoked", {
     functionName: "GetSetList",
     correlationId,
   });
 
   try {
-    context.log(
-      `${correlationId} Processing PokeData-first request for set list`
-    );
+    context.log(`${correlationId} Processing Scrydex request for set list`);
 
-    // Parse query parameters
-    const language = request.query.get("language") || "ENGLISH";
-    const includeCardCounts = request.query.get("includeCardCounts") === "true";
+    const language = (request.query.get("language") || "en").toLowerCase();
     const forceRefresh = request.query.get("forceRefresh") === "true";
     const returnAll = request.query.get("all") === "true";
     const page = parseInt(request.query.get("page") || "1");
     const pageSize = parseInt(request.query.get("pageSize") || "100");
 
-    // Long TTL for sets since they don't change frequently
-    const setsTtl = parseInt(process.env.CACHE_TTL_SETS || "604800"); // 7 days default
+    const setsTtl = parseInt(process.env.CACHE_TTL_SETS || "604800"); // 7 days
 
     context.log(
-      `${correlationId} Parameters: language=${language}, includeCardCounts=${includeCardCounts}, returnAll=${returnAll}, page=${page}, pageSize=${pageSize}`
+      `${correlationId} Parameters: language=${language}, returnAll=${returnAll}, page=${page}, pageSize=${pageSize}, forceRefresh=${forceRefresh}`
     );
 
-    // Check Redis cache first (if enabled and not forcing refresh)
-    const cacheKey = `${getSetListCacheKey()}-pokedata-${language}`;
-    let sets: PokeDataSet[] | null = null;
+    const cacheKey = `${getSetListCacheKey()}-scrydex-${language}`;
+    let sets: PokemonSet[] | null = null;
     let cacheHit = false;
     let cacheAge = 0;
 
     if (!forceRefresh && process.env.ENABLE_REDIS_CACHE === "true") {
-      context.log(
-        `${correlationId} Checking Redis cache with key: ${cacheKey}`
-      );
+      context.log(`${correlationId} Checking Redis cache with key: ${cacheKey}`);
       const cacheCheckStart = Date.now();
       const cachedEntry = await redisCacheService.get<{
-        data: PokeDataSet[];
+        data: PokemonSet[];
         timestamp: number;
         ttl: number;
       }>(cacheKey);
       const cacheCheckDuration = Date.now() - cacheCheckStart;
 
-      sets = parseCacheEntry<PokeDataSet[]>(cachedEntry);
+      sets = parseCacheEntry<PokemonSet[]>(cachedEntry);
 
       if (sets) {
         context.log(
-          `${correlationId} Cache hit for PokeData set list (${sets.length} sets)`
+          `${correlationId} Cache hit for Scrydex set list (${sets.length} sets)`
         );
         cacheHit = true;
         cacheAge = cachedEntry ? getCacheAge(cachedEntry.timestamp) : 0;
 
-        // Track cache hit
         monitoring.trackEvent("cache.hit", {
           functionName: "GetSetList",
           correlationId,
@@ -103,9 +83,7 @@ export async function getSetList(
           result: "hit",
         });
       } else {
-        context.log(`${correlationId} Cache miss for PokeData set list`);
-
-        // Track cache miss
+        context.log(`${correlationId} Cache miss for Scrydex set list`);
         monitoring.trackEvent("cache.miss", {
           functionName: "GetSetList",
           correlationId,
@@ -118,52 +96,40 @@ export async function getSetList(
       }
     }
 
-    // If not in cache, fetch from PokeData API
     if (!sets) {
-      context.log(`${correlationId} Fetching sets from PokeData API`);
+      context.log(`${correlationId} Fetching expansions from Scrydex API`);
       const apiStartTime = Date.now();
 
       try {
-        const allSets = await pokeDataApiService.getAllSets();
+        const expansions = await scrydexApiService.getAllExpansions(language);
         const apiDuration = Date.now() - apiStartTime;
 
-        // Track API dependency
         monitoring.trackDependency(
-          "PokeDataAPI",
+          "Scrydex API",
           "HTTP",
-          "GET /sets",
+          "GET /expansions",
           apiDuration,
           true,
           {
             functionName: "GetSetList",
             correlationId,
-            resultCount: allSets.length,
+            resultCount: expansions.length,
           }
         );
 
-        // Filter by language if specified
-        sets = allSets.filter(
-          (set) => language === "ALL" || set.language === language
-        );
+        sets = expansions.map((expansion) => mapScrydexExpansionToSet(expansion));
 
         context.log(
-          `${correlationId} PokeData API returned ${allSets.length} total sets, ${sets.length} for language ${language} (${apiDuration}ms)`
+          `${correlationId} Scrydex API returned ${expansions.length} expansions for language ${language} (${apiDuration}ms)`
         );
 
-        // Track metric for API call
-        monitoring.trackMetric("api.pokedata.duration", apiDuration, {
+        monitoring.trackMetric("api.scrydex.duration", apiDuration, {
           functionName: "GetSetList",
           language,
-          totalSets: allSets.length,
-          filteredSets: sets.length,
+          totalSets: expansions.length,
         });
 
-        // Save to cache if found
-        if (
-          sets &&
-          sets.length > 0 &&
-          process.env.ENABLE_REDIS_CACHE === "true"
-        ) {
+        if (sets.length > 0 && process.env.ENABLE_REDIS_CACHE === "true") {
           context.log(
             `${correlationId} Saving ${sets.length} sets to Redis cache`
           );
@@ -175,14 +141,12 @@ export async function getSetList(
         }
       } catch (error: any) {
         context.log(
-          `${correlationId} Error fetching from PokeData API: ${error.message}`
+          `${correlationId} Error fetching from Scrydex API: ${error.message}`
         );
-
-        // Track API failure
         monitoring.trackDependency(
-          "PokeDataAPI",
+          "Scrydex API",
           "HTTP",
-          "GET /sets",
+          "GET /expansions",
           Date.now() - apiStartTime,
           false,
           {
@@ -191,7 +155,6 @@ export async function getSetList(
             error: error.message,
           }
         );
-
         throw error;
       }
     }
@@ -203,43 +166,33 @@ export async function getSetList(
         error: `No sets found for language: ${language}`,
         timestamp: new Date().toISOString(),
       };
-
-      return {
-        jsonBody: errorResponse,
-        status: 404,
-      };
+      return { jsonBody: errorResponse, status: 404 };
     }
 
-    // Enhance sets with additional metadata
-    const enhancedSets: EnhancedPokeDataSet[] = sets.map((set) => {
-      const enhanced: EnhancedPokeDataSet = { ...set };
+    const enhancedSets: EnhancedSet[] = sets.map((set) => {
+      const enhanced: EnhancedSet = { ...set };
 
-      // Add release year
-      if (set.release_date) {
-        enhanced.releaseYear = new Date(set.release_date).getFullYear();
-      }
-
-      // Mark recent sets (released in last 2 years)
-      if (set.release_date) {
-        const releaseDate = new Date(set.release_date);
-        const twoYearsAgo = new Date();
-        twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
-        enhanced.isRecent = releaseDate > twoYearsAgo;
+      if (set.releaseDate) {
+        const releaseDate = new Date(set.releaseDate);
+        if (!Number.isNaN(releaseDate.getTime())) {
+          enhanced.releaseYear = releaseDate.getFullYear();
+          const twoYearsAgo = new Date();
+          twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+          enhanced.isRecent = releaseDate > twoYearsAgo;
+        }
       }
 
       return enhanced;
     });
 
-    // Sort sets by release date (newest first)
     enhancedSets.sort((a, b) => {
-      if (!a.release_date || !b.release_date) return 0;
+      if (!a.releaseDate || !b.releaseDate) return 0;
       return (
-        new Date(b.release_date).getTime() - new Date(a.release_date).getTime()
+        new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime()
       );
     });
 
-    // Apply pagination or return all sets
-    let finalSets: EnhancedPokeDataSet[];
+    let finalSets: EnhancedSet[];
     let paginationInfo: {
       page: number;
       pageSize: number;
@@ -248,7 +201,6 @@ export async function getSetList(
     };
 
     if (returnAll) {
-      // Return all sets without pagination
       finalSets = enhancedSets;
       paginationInfo = {
         page: 1,
@@ -260,68 +212,37 @@ export async function getSetList(
         `${correlationId} Returning ALL ${enhancedSets.length} sets (all=true parameter)`
       );
     } else {
-      // Apply standard pagination
       const totalCount = enhancedSets.length;
       const totalPages = Math.ceil(totalCount / pageSize);
       const startIndex = (page - 1) * pageSize;
       const endIndex = Math.min(startIndex + pageSize, totalCount);
       finalSets = enhancedSets.slice(startIndex, endIndex);
 
-      paginationInfo = {
-        page,
-        pageSize,
-        totalCount,
-        totalPages,
-      };
+      paginationInfo = { page, pageSize, totalCount, totalPages };
 
       context.log(
-        `${correlationId} Returning page ${page}/${totalPages} with ${
-          finalSets.length
-        } sets (${startIndex + 1}-${
-          startIndex + finalSets.length
-        } of ${totalCount})`
+        `${correlationId} Returning page ${page}/${totalPages} with ${finalSets.length} sets`
       );
     }
 
-    // If card counts are requested, we could fetch them here
-    // For now, we'll skip this to maintain fast response times
-    // This could be added as a separate endpoint or background process
-    if (includeCardCounts) {
-      context.log(
-        `${correlationId} Card counts requested but not implemented yet for performance reasons`
-      );
-    }
-
-    // Return the set list with pagination metadata
     const response: ApiResponse<{
-      sets: EnhancedPokeDataSet[];
-      pagination: {
-        page: number;
-        pageSize: number;
-        totalCount: number;
-        totalPages: number;
-      };
+      sets: EnhancedSet[];
+      pagination: typeof paginationInfo;
     }> = {
       status: 200,
-      data: {
-        sets: finalSets,
-        pagination: paginationInfo,
-      },
+      data: { sets: finalSets, pagination: paginationInfo },
       timestamp: new Date().toISOString(),
       cached: cacheHit,
       cacheAge: cacheHit ? cacheAge : undefined,
     };
 
     const duration = Date.now() - startTime;
-
-    // Track success metrics
     monitoring.trackMetric("function.duration", duration, {
       functionName: "GetSetList",
       correlationId,
       cached: cacheHit,
       resultCount: finalSets.length,
     });
-
     monitoring.trackEvent("function.success", {
       functionName: "GetSetList",
       correlationId,
@@ -333,25 +254,19 @@ export async function getSetList(
     });
 
     context.log(
-      `${correlationId} Successfully returning ${finalSets.length} PokeData sets (${duration}ms)`
+      `${correlationId} Successfully returning ${finalSets.length} Scrydex sets (${duration}ms)`
     );
 
-    return {
-      jsonBody: response,
-      status: response.status,
-    };
+    return { jsonBody: response, status: response.status };
   } catch (error: any) {
     const duration = Date.now() - startTime;
-
     context.log(`${correlationId} Error in getSetList: ${error.message}`);
 
-    // Track exception
     monitoring.trackException(error, {
       functionName: "GetSetList",
       correlationId,
       duration,
     });
-
     monitoring.trackEvent("function.error", {
       functionName: "GetSetList",
       correlationId,
@@ -360,9 +275,6 @@ export async function getSetList(
     });
 
     const errorResponse = handleError(error, "GetSetList");
-    return {
-      jsonBody: errorResponse,
-      status: errorResponse.status,
-    };
+    return { jsonBody: errorResponse, status: errorResponse.status };
   }
 }

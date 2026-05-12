@@ -1,105 +1,23 @@
-// Card interfaces
-export interface Card {
-  id: string;
-  setCode: string;
-  setId: string;
-  setName: string;
-  cardId: string;
-  cardName: string;
-  cardNumber: string;
-  printedNumber?: string;
-  rarity: string;
-  rarityCode?: string;
-  artist?: string;
-  images?: CardImage[];
-  variants?: CardVariant[];
-  lastUpdated?: string;
-  pricingLastUpdated?: string;
-  language?: string;
-  languageCode?: string;
-}
+// Canonical persistence/transport types — re-exported from @pcpc/shared
+// so they are identical across the SvelteKit BFF, Azure Functions, and
+// (Phase 2.2+) the ACA-containerized Functions image.
+export type {
+  Card,
+  CardImage,
+  CardVariant,
+  VariantPrice,
+  PriceTrends,
+  TrendData,
+  PokemonSet,
+  ApiResponse,
+  PaginatedResponse,
+  ErrorResponse,
+} from "@pcpc/shared";
 
-export interface CardImage {
-  type: string;
-  small: string;
-  medium: string;
-  large: string;
-}
-
-export interface CardVariant {
-  name: string;
-  images?: CardImage[];
-  prices: VariantPrice[];
-}
-
-export interface VariantPrice {
-  condition: string;
-  type: 'raw' | 'graded';
-  company?: string;
-  grade?: string;
-  isPerfect: boolean;
-  isError: boolean;
-  isSigned: boolean;
-  low: number;
-  mid?: number;
-  high?: number;
-  market: number;
-  currency: string;
-  trends?: PriceTrends;
-}
-
-export interface PriceTrends {
-  days1?: TrendData;
-  days7?: TrendData;
-  days14?: TrendData;
-  days30?: TrendData;
-  days90?: TrendData;
-  days180?: TrendData;
-}
-
-export interface TrendData {
-  priceChange: number;
-  percentChange: number;
-}
-
-// Set interfaces
-export interface PokemonSet {
-  id: string;
-  code: string;
-  name: string;
-  series: string;
-  releaseDate?: string;
-  total?: number;
-  printedTotal?: number;
-  language?: string;
-  languageCode?: string;
-  isOnlineOnly?: boolean;
-  logo?: string;
-  symbol?: string;
-  cardCount?: number;
-  isCurrent?: boolean;
-  lastUpdated?: string;
-}
-
-// API Response interfaces
-export interface ApiResponse<T> {
-  status: number;
-  data?: T;
-  error?: string;
-  timestamp: string;
-  cached?: boolean;
-  cacheAge?: number;
-}
-
-export interface PaginatedResponse<T> {
-  items: T[];
-  totalCount: number;
-  pageSize: number;
-  pageNumber: number;
-  totalPages: number;
-}
-
-// Health check
+// Health-check envelopes are intentionally NOT re-exported from
+// @pcpc/shared. Path A (this BFF) and Path B (Azure Functions) ship
+// different shapes today (Path A: `components`/`latency`, Path B:
+// `checks`/`responseTime`); unifying them is out of scope for Phase 2.1.
 export interface HealthCheckResult {
   status: 'healthy' | 'degraded' | 'unhealthy';
   timestamp: string;
@@ -112,7 +30,7 @@ export interface ComponentHealth {
   latency?: number;
 }
 
-// Config
+// Config remains frontend-local — sourced from SvelteKit env at runtime.
 export interface AppConfig {
   cosmosDbConnectionString: string;
   cosmosDbDatabaseName: string;

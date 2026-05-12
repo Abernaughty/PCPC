@@ -1,4 +1,4 @@
-import { ErrorResponse } from '../models/ApiResponse';
+import type { ErrorResponse } from '@pcpc/shared';
 
 /**
  * Create a standardized error response
