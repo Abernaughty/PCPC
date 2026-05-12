@@ -152,8 +152,8 @@ variable "function_app_config" {
     "AZURE_STORAGE_CONTAINER_NAME" = "images"
 
     # Feature Flags
-    "ENABLE_CACHING"            = "true"
-    "ENABLE_REDIS_CACHE"        = "false"
+    "ENABLE_CACHING"     = "true"
+    "ENABLE_REDIS_CACHE" = "false"
 
     # Cache TTL Settings (in seconds)
     "CACHE_TTL_SETS"  = "604800" # 7 days
