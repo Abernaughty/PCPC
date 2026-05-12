@@ -92,21 +92,21 @@ if [ "$HTTP_CODE" == "200" ]; then
         add_warning
       fi
       
-      # PokeData API check
-      POKEDATA_JSON=$(echo "$BODY" | jq -c '.checks.pokedataApi // empty')
-      if [ -n "$POKEDATA_JSON" ]; then
-        POKEDATA_STATUS=$(echo "$POKEDATA_JSON" | jq -r 'if type == "object" then (.status // "unknown") else . end')
-        POKEDATA_MESSAGE=$(echo "$POKEDATA_JSON" | jq -r 'if type == "object" then (.message // empty) else empty end')
+      # Scrydex API check
+      SCRYDEX_JSON=$(echo "$BODY" | jq -c '.checks.scrydexApi // empty')
+      if [ -n "$SCRYDEX_JSON" ]; then
+        SCRYDEX_STATUS=$(echo "$SCRYDEX_JSON" | jq -r 'if type == "object" then (.status // "unknown") else . end')
+        SCRYDEX_MESSAGE=$(echo "$SCRYDEX_JSON" | jq -r 'if type == "object" then (.message // empty) else empty end')
       else
-        POKEDATA_STATUS="not configured"
-        POKEDATA_MESSAGE=""
+        SCRYDEX_STATUS="not configured"
+        SCRYDEX_MESSAGE=""
       fi
-      echo "    - PokeData API: $POKEDATA_STATUS"
-      if [ -n "$POKEDATA_MESSAGE" ]; then
-        echo "      $POKEDATA_MESSAGE"
+      echo "    - Scrydex API: $SCRYDEX_STATUS"
+      if [ -n "$SCRYDEX_MESSAGE" ]; then
+        echo "      $SCRYDEX_MESSAGE"
       fi
-      if [ "$POKEDATA_STATUS" != "healthy" ] && [ "$POKEDATA_STATUS" != "not configured" ] && [ "$POKEDATA_STATUS" != "unknown" ]; then
-        echo "      ⚠ PokeData API is not healthy"
+      if [ "$SCRYDEX_STATUS" != "healthy" ] && [ "$SCRYDEX_STATUS" != "not configured" ] && [ "$SCRYDEX_STATUS" != "unknown" ]; then
+        echo "      ⚠ Scrydex API is not healthy"
         add_warning
       fi
       
