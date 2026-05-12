@@ -11,7 +11,7 @@
 - **Phase 1A:** ✅ done via PR #131. BackendToggle UI, abstraction layer (`frontend/src/lib/backends/`), pokedata→scrydex adapter, ADR-007 (API Architecture Spectrum), ADR-008 (APIM vs BFF), `docs/architecture-comparison.md`, README live-demo section.
 - **Phase 1B:** ✅ done via PRs #132–#138 (+ #139/#141/#142/#143/#144 closing out the apply-time fix path). Custom domains deferred per ADR-012; CORS regex policy live per ADR-013.
 - **Phase 2.1:** ✅ done via PRs #145, #146 (2026-05-12). Backend cut over from PokeData to Scrydex. `@pcpc/shared` canonical types, `ScrydexApiService.ts`, smoke tests re-promoted to blocking. Tags: `phase-2/pre-scrydex-cutover`, `phase-2/post-scrydex-cutover`.
-- **Phase 2.2:** in progress. Containerize Functions + ACA path. PR-1 (this work): ADR-009 + 3-column comparison doc. PR-2: Dockerfile + container-app Terraform module + ADO pipeline stage (dev only). PR-3: frontend toggle + Vercel env var.
+- **Phase 2.2:** ✅ done. Path C live on dev. Three PRs landed in order: ADR-009 + 3-column comparison doc (#148); Dockerfile + container-app Terraform module + ADO pipeline stage, dev only (#150); frontend toggle wiring + Vercel `PUBLIC_ACA_API_BASE_URL` env var (this PR). Staging/prod promotion tracked as a follow-up. Tags: `phase-2.2/pre-aca`, `phase-2.2/post-aca-infra`, `phase-2.2/complete`.
 - **Phase 3:** not started.
 
 ## ADRs accepted across Phases 1 and 2
