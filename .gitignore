@@ -96,8 +96,10 @@ secrets.auto.tfvars
 .terraform/
 .terraform.lock.hcl
 *.tfplan
+tfplan*
 terraform.tfplan
 terraform.tfplan.json
+plan-output.txt
 
 # Azure DevOps
 .azuredevops/
@@ -109,6 +111,10 @@ terraform.tfplan.json
 test-results/
 playwright-report/
 playwright/.cache/
+
+# Test reports (generated on every test run; not source of truth)
+tests/reports/*.xml
+tests/reports/*.json
 
 # Jest
 coverage/
@@ -202,3 +208,9 @@ tools/scripts/*.log
 # (apim/docs/README.md documents the dir as auto-generated; `make clean`
 # already deletes it).
 apim/policies/generated/
+
+# Claude Code local session state
+.claude/
+
+# Local research / scratch work not part of the PCPC product
+pcpc_scraper/
