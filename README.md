@@ -2,9 +2,9 @@
 
 A single product (Pokémon card pricing) deployed three ways from one repo to demonstrate architectural range across modern-edge, enterprise-cloud, and managed-container patterns. **One frontend, three interchangeable backends, one shared schema.**
 
-> **Status:** Phase 2.2 in progress (containerize Functions + ACA path) — see [`docs/PORTFOLIO_PLAN.md`](docs/PORTFOLIO_PLAN.md).
-> **Live demo:** [pcpc.maber.io](https://pcpc.maber.io) — toggle backends via the corner badge or `?backend=vercel|azure` (Path C `?backend=aca` ships with Phase 2.2 PR-3)
-> **Architecture comparison:** [`docs/architecture-comparison.md`](docs/architecture-comparison.md) — all three paths described; Path C deploys via Phase 2.2.
+> **Status:** Phase 2.2 done — three live paths from one repo. See [`docs/PORTFOLIO_PLAN.md`](docs/PORTFOLIO_PLAN.md).
+> **Live demo:** [pcpc.maber.io](https://pcpc.maber.io) — toggle all three backends via the corner badge or `?backend=vercel|azure|aca`.
+> **Architecture comparison:** [`docs/architecture-comparison.md`](docs/architecture-comparison.md).
 
 ---
 
@@ -48,14 +48,14 @@ All three paths share the same Cosmos DB account and the same TypeScript types v
 
 ## Live demo
 
-[pcpc.maber.io](https://pcpc.maber.io) — one URL, one frontend, two switchable backends today (three once Phase 2.2 PR-3 ships the ACA toggle). A corner badge surfaces the active path with its latency; click to switch, or pin via `?backend=vercel|azure|aca` in the URL. Healthcheck-driven graceful degradation hides any path whose `/health` does not respond within 2s, so partial outages never break the demo. The toggle defaults to Path A — a recruiter who never engages it gets a normal app experience.
+[pcpc.maber.io](https://pcpc.maber.io) — one URL, one frontend, three switchable backends. A corner badge surfaces the active path with its latency; click to switch, or pin via `?backend=vercel|azure|aca` in the URL. Healthcheck-driven graceful degradation hides any path whose `/health` does not respond within 2s, so partial outages never break the demo. The toggle defaults to Path A — a recruiter who never engages it gets a normal app experience.
 
 | URL | What it hits |
 |---|---|
 | `pcpc.maber.io` | Path A (default) |
-| `pcpc.maber.io/?backend=vercel` | Path A explicitly |
-| `pcpc.maber.io/?backend=azure` | Path B (APIM + Functions, dev environment — Scrydex-native post-Phase-2.1) |
-| `pcpc.maber.io/?backend=aca` | Path C (ACA-containerized Functions) — wires up in Phase 2.2 PR-3 |
+| `pcpc.maber.io/?backend=vercel` | Path A explicitly — SvelteKit BFF on Vercel |
+| `pcpc.maber.io/?backend=azure` | Path B — APIM + Functions Consumption (Scrydex-native post-Phase-2.1) |
+| `pcpc.maber.io/?backend=aca` | Path C — containerized Functions on Azure Container Apps (KEDA-ready) |
 
 ## Architecture decision records
 
@@ -109,8 +109,8 @@ Backend (Path B) and infrastructure are run via `pipelines/ado/` and Terraform m
 | **0** | Consolidate maber-web/apps/pcpc into this repo, set up workspace, add portfolio surface | done |
 | **1** | Live two-path toggle (Vercel BFF + APIM/Functions), ADR-007 & ADR-008, comparison doc | done |
 | **2.1** | Cut backend over from PokeData to Scrydex; `@pcpc/shared` canonical types; smoke tests re-promoted to blocking | done (PRs #145, #146) |
-| **2.2** | Containerize Functions, ship ACA path, ADR-009 | in progress |
-| **3** | Polish: portfolio site, LinkedIn distribution, ADR-010 | after Phase 2.2 |
+| **2.2** | Containerize Functions, ship ACA path, ADR-009 | done — dev only; staging/prod promotion tracked in `PORTFOLIO_PLAN.md` |
+| **3** | Polish: portfolio site, LinkedIn distribution, ADR-010 | next |
 
 Full plan with risks, success metrics, and open questions: [`docs/PORTFOLIO_PLAN.md`](docs/PORTFOLIO_PLAN.md).
 
