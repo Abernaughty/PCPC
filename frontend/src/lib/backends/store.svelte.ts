@@ -16,6 +16,7 @@ import { browser } from '$app/environment';
 import { createContextLogger } from '$lib/services/logger';
 import { pathA } from './path-a-vercel';
 import { pathB } from './path-b-azure';
+import { pathC } from './path-c-aca';
 import type {
   BackendDefinition,
   BackendHealth,
@@ -31,14 +32,15 @@ const HEALTH_REFRESH_MS = 60_000;
 const REGISTRY: Record<BackendId, BackendDefinition> = {
   vercel: pathA,
   azure: pathB,
+  aca: pathC,
 };
 
-const ALL: BackendDefinition[] = [pathA, pathB];
+const ALL: BackendDefinition[] = [pathA, pathB, pathC];
 
 const DEFAULT_ID: BackendId = 'vercel';
 
 function isBackendId(value: string | null): value is BackendId {
-  return value === 'vercel' || value === 'azure';
+  return value === 'vercel' || value === 'azure' || value === 'aca';
 }
 
 function readUrlBackendId(): BackendId | null {
@@ -87,6 +89,7 @@ function createBackendStore() {
   const healthMap: Record<BackendId, BackendHealth> = $state({
     vercel: { status: 'unknown' },
     azure: { status: 'unknown' },
+    aca: { status: 'unknown' },
   });
 
   let pollHandle: ReturnType<typeof setInterval> | null = null;

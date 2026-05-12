@@ -2,15 +2,17 @@
  * Backend abstraction types
  *
  * The frontend talks to a single `BackendDefinition` at a time. Switching
- * paths (?backend=vercel|azure) swaps the active definition; everything
+ * paths (?backend=vercel|azure|aca) swaps the active definition; everything
  * downstream — routes, stores, services — stays unchanged.
  *
- * See docs/PORTFOLIO_PLAN.md (Phase 1) and docs/adr/ADR-008 for context.
+ * See docs/PORTFOLIO_PLAN.md (Phases 1 and 2), docs/adr/ADR-008 (Path A vs
+ * Path B gateway tradeoff), and docs/adr/ADR-009 (Path B vs Path C runtime
+ * tradeoff) for context.
  */
 
 import type { ApiResponse } from '$lib/types';
 
-export type BackendId = 'vercel' | 'azure';
+export type BackendId = 'vercel' | 'azure' | 'aca';
 
 /**
  * Health states map directly onto the existing /api/health response codes:
