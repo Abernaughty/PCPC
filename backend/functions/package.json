@@ -24,6 +24,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@pcpc/shared": "file:../shared",
     "@types/node": "^22.15.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
@@ -35,7 +36,6 @@
     "@azure/storage-blob": "^12.27.0",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/instrumentation": "^0.205.0",
-    "@pcpc/shared": "workspace:*",
     "@typespec/ts-http-runtime": "^0.2.2",
     "cookie": "^0.6.0",
     "dotenv": "^16.5.0",

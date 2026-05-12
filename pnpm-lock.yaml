@@ -96,9 +96,6 @@ importers:
       '@opentelemetry/instrumentation':
         specifier: ^0.205.0
         version: 0.205.0(@opentelemetry/api@1.9.1)
-      '@pcpc/shared':
-        specifier: workspace:*
-        version: link:../shared
       '@typespec/ts-http-runtime':
         specifier: ^0.2.2
         version: 0.2.3
@@ -112,6 +109,9 @@ importers:
         specifier: ^4.7.0
         version: 4.7.1
     devDependencies:
+      '@pcpc/shared':
+        specifier: file:../shared
+        version: link:../shared
       '@types/node':
         specifier: ^22.15.3
         version: 22.19.17
