@@ -60,8 +60,8 @@ vault_name="pcpc-kv-${environment}"
 tfvars_path="${target_dir}/secrets.auto.tfvars"
 
 declare -A secrets=(
-  ["POKEDATA_API_KEY"]="POKEDATA-API-KEY"
-  ["POKEMON_TCG_API_KEY"]="POKEMON-TCG-API-KEY"
+  ["SCRYDEX_API_KEY"]="SCRYDEX-API-KEY"
+  ["SCRYDEX_TEAM_ID"]="SCRYDEX-TEAM-ID"
   ["ARM_CLIENT_ID"]="ARM-CLIENT-ID"
   ["ARM_CLIENT_SECRET"]="ARM-CLIENT-SECRET"
   ["PORKBUN_API_KEY"]="PORKBUN-API-KEY"
@@ -103,12 +103,12 @@ porkbun_api_key    = "${values["PORKBUN_API_KEY"]}"
 porkbun_secret_key = "${values["PORKBUN_SECRET_KEY"]}"
 
 function_app_secrets = {
-  "POKEDATA_API_KEY"    = "${values["POKEDATA_API_KEY"]}"
-  "POKEMON_TCG_API_KEY" = "${values["POKEMON_TCG_API_KEY"]}"
-  "ARM_CLIENT_ID"       = "${values["ARM_CLIENT_ID"]}"
-  "ARM_CLIENT_SECRET"   = "${values["ARM_CLIENT_SECRET"]}"
-  "PORKBUN_API_KEY"     = "${values["PORKBUN_API_KEY"]}"
-  "PORKBUN_SECRET_KEY"  = "${values["PORKBUN_SECRET_KEY"]}"
+  "SCRYDEX_API_KEY"    = "${values["SCRYDEX_API_KEY"]}"
+  "SCRYDEX_TEAM_ID"    = "${values["SCRYDEX_TEAM_ID"]}"
+  "ARM_CLIENT_ID"      = "${values["ARM_CLIENT_ID"]}"
+  "ARM_CLIENT_SECRET"  = "${values["ARM_CLIENT_SECRET"]}"
+  "PORKBUN_API_KEY"    = "${values["PORKBUN_API_KEY"]}"
+  "PORKBUN_SECRET_KEY" = "${values["PORKBUN_SECRET_KEY"]}"
 }
 EOF
 

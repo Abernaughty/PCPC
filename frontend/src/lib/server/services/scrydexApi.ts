@@ -1,107 +1,32 @@
-import type { CardImage, CardVariant, VariantPrice, PriceTrends, TrendData } from '../models/types';
+import type {
+  CardImage,
+  CardVariant,
+  VariantPrice,
+  PriceTrends,
+  TrendData,
+  ScrydexCard,
+  ScrydexExpansion,
+  ScrydexListing,
+  ScrydexPaginatedResponse,
+  ScrydexPrice,
+  ScrydexRawPaginatedResponse,
+  ScrydexUsage,
+  ScrydexVariant,
+} from '@pcpc/shared';
 import { getConfig } from '../config';
 
-// ─── Scrydex API response types ─────────────────────────────────────────────────────────────
-
-export interface ScrydexExpansion {
-  id: string;
-  code: string;
-  name: string;
-  series: string;
-  release_date: string;
-  total: number;
-  printed_total: number;
-  language: string;
-  language_code: string;
-  is_online_only: boolean;
-  logo?: string;
-  symbol?: string;
-  /** English translations for JP sets (work in progress on Scrydex side) */
-  translation?: {
-    en?: {
-      name?: string;
-    };
-  };
-}
-
-export interface ScrydexCard {
-  id: string;
-  name: string;
-  number: string;
-  printed_number?: string;
-  rarity?: string;
-  rarity_code?: string;
-  artist?: string;
-  language?: string;
-  language_code?: string;
-  expansion: {
-    id: string;
-    code: string;
-    name: string;
-    series?: string;
-  };
-  images?: ScrydexImage[];
-  variants?: ScrydexVariant[];
-}
-
-export interface ScrydexImage {
-  type: string;
-  small: string;
-  medium: string;
-  large: string;
-}
-
-export interface ScrydexVariant {
-  name: string;
-  images?: ScrydexImage[];
-  prices?: ScrydexPrice[];
-}
-
-export interface ScrydexPrice {
-  condition: string;
-  type: 'raw' | 'graded';
-  company?: string;
-  grade?: string;
-  is_perfect: boolean;
-  is_error: boolean;
-  is_signed: boolean;
-  low: number;
-  mid?: number;
-  high?: number;
-  market: number;
-  currency: string;
-  trends?: {
-    days_1?: { price_change: number; percent_change: number };
-    days_7?: { price_change: number; percent_change: number };
-    days_14?: { price_change: number; percent_change: number };
-    days_30?: { price_change: number; percent_change: number };
-    days_90?: { price_change: number; percent_change: number };
-    days_180?: { price_change: number; percent_change: number };
-  };
-}
-
-/**
- * Raw paginated response shape from the Scrydex API (snake_case).
- *
- * NOTE: Some query params (e.g. ?select=) strip pagination metadata
- * from the response. All pagination loops must be resilient to missing
- * metadata — they use `data.length < fetchPageSize` as the stop condition.
- */
-interface ScrydexRawPaginatedResponse<T> {
-  data: T[];
-  page?: number;
-  page_size?: number;
-  count?: number;
-  total_count?: number;
-}
-
-export interface ScrydexPaginatedResponse<T> {
-  data: T[];
-  page: number;
-  pageSize: number;
-  count: number;
-  totalCount: number;
-}
+// Re-export the canonical types here so existing call sites that
+// import them from this module continue to work.
+export type {
+  ScrydexCard,
+  ScrydexExpansion,
+  ScrydexImage,
+  ScrydexListing,
+  ScrydexPaginatedResponse,
+  ScrydexPrice,
+  ScrydexUsage,
+  ScrydexVariant,
+} from '@pcpc/shared';
 
 function mapPaginatedResponse<T>(raw: ScrydexRawPaginatedResponse<T>): ScrydexPaginatedResponse<T> {
   return {
@@ -111,22 +36,6 @@ function mapPaginatedResponse<T>(raw: ScrydexRawPaginatedResponse<T>): ScrydexPa
     count: raw.count ?? (raw.data?.length ?? 0),
     totalCount: raw.total_count ?? 0,
   };
-}
-
-export interface ScrydexUsage {
-  totalCredits: number;
-  remainingCredits: number;
-  usedCredits: number;
-  overageCreditRate: number;
-}
-
-export interface ScrydexListing {
-  id: string;
-  seller?: string;
-  price?: number;
-  currency?: string;
-  condition?: string;
-  url?: string;
 }
 
 export interface SearchOptions {
