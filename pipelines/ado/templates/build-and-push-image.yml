@@ -1,0 +1,174 @@
+# Build and Push PCPC Functions ACA Image
+#
+# Phase 2.2. Builds the Functions container from backend/functions/Dockerfile,
+# scans for HIGH+ CVEs with Trivy (blocking), and pushes to the shared ACR
+# under the pcpc/functions repository path.
+#
+# Output variables (consumed by the deploy-aca.yml template that follows
+# in the same job):
+#   ContainerImageReference  — full registry/repo:tag of the canonical
+#                              (git-SHA-tagged) image to deploy
+#   ContainerImageDigest     — sha256:... digest of the pushed image, for
+#                              optional pin verification
+#
+# Usage:
+#   - template: pipelines/ado/templates/build-and-push-image.yml
+#     parameters:
+#       acrRegistryServiceConnection: pcpc-acr-service-connection
+#       azureSubscription: az-pcpc-dev
+#       acrName: maberdevcontainerregistry-ccedhvhwfndwetdp
+#       imageRepository: pcpc/functions
+#       trivySeverity: HIGH,CRITICAL
+#       trivyVersion: "0.59.1"
+
+parameters:
+  - name: acrRegistryServiceConnection
+    type: string
+    default: pcpc-acr-service-connection
+  - name: azureSubscription
+    type: string
+  - name: acrName
+    type: string
+    default: maberdevcontainerregistry-ccedhvhwfndwetdp
+  - name: imageRepository
+    type: string
+    default: pcpc/functions
+  - name: trivySeverity
+    type: string
+    default: "HIGH,CRITICAL"
+  - name: trivyVersion
+    type: string
+    default: "0.59.1"
+
+steps:
+  - checkout: self
+
+  # ---------------------------------------------------------------------------
+  # Resolve ACR login server and compute image tags
+  # ---------------------------------------------------------------------------
+  - task: AzureCLI@2
+    displayName: "Resolve ACR + Compute Image Tags"
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        set -euo pipefail
+
+        ACR_NAME='${{ parameters.acrName }}'
+        REPO='${{ parameters.imageRepository }}'
+
+        FQDN=$(az acr show -n "$ACR_NAME" --query loginServer -o tsv)
+        SHORT_SHA="$(echo '$(Build.SourceVersion)' | cut -c1-7)"
+        BUILD_TAG="$(Build.BuildId)"
+        SHA_TAG="git-${SHORT_SHA}"
+
+        FULL_REF_SHA="${FQDN}/${REPO}:${SHA_TAG}"
+        FULL_REF_BUILD="${FQDN}/${REPO}:${BUILD_TAG}"
+        FULL_REF_LATEST="${FQDN}/${REPO}:latest"
+
+        echo "ACR login server: $FQDN"
+        echo "Image SHA tag: $SHA_TAG"
+        echo "Image build tag: $BUILD_TAG"
+        echo "Canonical reference (for deploy): $FULL_REF_SHA"
+
+        echo "##vso[task.setvariable variable=AcrLoginServer]$FQDN"
+        echo "##vso[task.setvariable variable=ContainerImageReference]$FULL_REF_SHA"
+        echo "##vso[task.setvariable variable=ContainerImageBuildRef]$FULL_REF_BUILD"
+        echo "##vso[task.setvariable variable=ContainerImageLatestRef]$FULL_REF_LATEST"
+
+  # ---------------------------------------------------------------------------
+  # Build the image locally (no push yet — we scan before push)
+  #
+  # Build context is backend/ so the file:../shared reference in
+  # backend/functions/package.json resolves. Dockerfile path is relative to
+  # that context.
+  # ---------------------------------------------------------------------------
+  - script: |
+      set -euo pipefail
+
+      echo "Building Functions container image..."
+      docker build \
+        -f backend/functions/Dockerfile \
+        -t "$(ContainerImageReference)" \
+        -t "$(ContainerImageBuildRef)" \
+        -t "$(ContainerImageLatestRef)" \
+        backend/
+
+      echo "Built tags:"
+      docker images "$(AcrLoginServer)/${{ parameters.imageRepository }}" --format "  {{.Repository}}:{{.Tag}}"
+    displayName: "docker build pcpc/functions"
+
+  # ---------------------------------------------------------------------------
+  # Install Trivy (pinned), scan the locally built image, block on HIGH+ CVE
+  # ---------------------------------------------------------------------------
+  - script: |
+      set -euo pipefail
+
+      TRIVY_VERSION='${{ parameters.trivyVersion }}'
+      echo "Installing Trivy ${TRIVY_VERSION}..."
+      curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+        | sh -s -- -b /tmp v${TRIVY_VERSION}
+      /tmp/trivy --version
+    displayName: "Install Trivy ${{ parameters.trivyVersion }}"
+
+  - script: |
+      set -euo pipefail
+
+      echo "=========================================="
+      echo "TRIVY CVE SCAN"
+      echo "=========================================="
+      echo "Image:    $(ContainerImageReference)"
+      echo "Severity: ${{ parameters.trivySeverity }} (blocking)"
+      echo ""
+
+      /tmp/trivy image \
+        --severity '${{ parameters.trivySeverity }}' \
+        --exit-code 1 \
+        --no-progress \
+        --ignore-unfixed \
+        --scanners vuln \
+        "$(ContainerImageReference)"
+
+      echo ""
+      echo "✓ Trivy scan passed — no ${{ parameters.trivySeverity }} CVEs with available fixes"
+    displayName: "Trivy CVE scan (blocking)"
+    continueOnError: false
+
+  # ---------------------------------------------------------------------------
+  # Login to ACR and push all three tags
+  # ---------------------------------------------------------------------------
+  - task: Docker@2
+    displayName: "Login to ACR"
+    inputs:
+      command: login
+      containerRegistry: ${{ parameters.acrRegistryServiceConnection }}
+
+  - script: |
+      set -euo pipefail
+
+      echo "Pushing image tags..."
+      docker push "$(ContainerImageReference)"
+      docker push "$(ContainerImageBuildRef)"
+      docker push "$(ContainerImageLatestRef)"
+      echo "✓ All tags pushed"
+    displayName: "docker push (all tags)"
+
+  # ---------------------------------------------------------------------------
+  # Capture the pushed digest for downstream use
+  # ---------------------------------------------------------------------------
+  - script: |
+      set -euo pipefail
+
+      DIGEST=$(docker manifest inspect "$(ContainerImageReference)" --verbose 2>/dev/null \
+        | jq -r 'if type == "array" then .[0].Descriptor.digest else .Descriptor.digest end')
+
+      if [ -z "$DIGEST" ] || [ "$DIGEST" = "null" ]; then
+        echo "##vso[task.logissue type=warning]Could not capture image digest; deploy will use tag-based reference"
+        exit 0
+      fi
+
+      echo "Image digest: $DIGEST"
+      echo "##vso[task.setvariable variable=ContainerImageDigest]$DIGEST"
+    displayName: "Capture image digest"
+    continueOnError: true

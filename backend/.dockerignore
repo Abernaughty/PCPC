@@ -1,0 +1,50 @@
+# -----------------------------------------------------------------------------
+# Docker ignore for the PCPC Functions ACA image build.
+#
+# Build context is `backend/` (set in the ADO pipeline and in any local
+# `docker build -f backend/functions/Dockerfile backend/` invocation), so
+# this file applies to everything under backend/ for image builds.
+#
+# Why context = backend/: the @pcpc/shared workspace is at backend/shared/
+# and is referenced as `file:../shared` from backend/functions/package.json.
+# Anything outside backend/ is invisible to the build, so we don't need to
+# ignore frontend/, infra/, pipelines/, docs/, etc. — they're not in scope.
+# -----------------------------------------------------------------------------
+
+# Build / dev artifacts that should never reach a container image
+**/node_modules
+**/dist
+**/.tsbuildinfo
+**/*.tsbuildinfo
+
+# Local-only / developer-machine artifacts
+**/local.settings.json
+**/.env
+**/.env.*
+
+# Test output and developer scripts inside backend/functions/
+functions/test
+functions/scripts
+functions/test-endpoints.sh
+functions/*.bat
+functions/deploy.zip
+functions/deployment.zip
+
+# Editor / VCS noise
+**/.vscode
+**/.idea
+**/.git
+**/.gitignore
+
+# Documentation that shouldn't bloat the build context
+**/*.md
+
+# IMPORTANT exceptions: keep the lockfiles and the shared package's source
+# (Dockerfile copies them explicitly). Without these unignores, `**/*.md`
+# would already have skipped package.json's adjacent README — but the COPY
+# instructions are explicit about what enters the image, so the unignores
+# below are defense in depth rather than load-bearing.
+!functions/package-lock.json
+!functions/package.json
+!shared/package.json
+!shared/src/**
