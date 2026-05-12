@@ -30,6 +30,7 @@ Each ADR follows a standardized format:
 | [ADR-006](./ADR-006-api-integration-strategy.md) | API Integration Strategy | Accepted | 2025-09-22 |
 | [ADR-007](./ADR-007-api-architecture-spectrum.md) | API Architecture Spectrum (three paths) | Accepted | 2026-05-06 |
 | [ADR-008](./ADR-008-apim-vs-bff-gateway.md) | APIM vs SvelteKit BFF as Gateway | Accepted | 2026-05-06 |
+| [ADR-009](./ADR-009-functions-consumption-vs-container-apps.md) | Functions Consumption vs Container Apps | Accepted | 2026-05-12 |
 | [ADR-011](./ADR-011-deployment-topology-and-testing-model.md) | Deployment Topology and Testing Model | Accepted | 2026-05-06 |
 | [ADR-012](./ADR-012-apim-managed-cert-suspension.md) | APIM Managed Cert Suspension — Defer Custom Hostnames | Accepted | 2026-05-07 |
 | [ADR-013](./ADR-013-cors-regex-policy.md) | CORS Regex-Based Origin Allowlist Policy | Accepted | 2026-05-07 |
@@ -40,7 +41,6 @@ These ADRs document the architectural reasoning behind PCPC's three-path deploym
 
 | ADR | Title | Phase | Status |
 |-----|-------|-------|--------|
-| [ADR-009](./ADR-009-functions-vs-container-apps.md) | Functions Consumption vs Container Apps | 2 | Planned |
 | [ADR-010](./ADR-010-path-to-aks.md) | Path to AKS (speculative) | 3 (optional) | Planned |
 
 ## Decision Process

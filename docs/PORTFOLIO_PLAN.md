@@ -9,14 +9,16 @@
 
 - **Phase 0:** ✅ done. Consolidation merged. Tags: `phase-0/pre-consolidation`, `phase-0/legacy-spa-archive`.
 - **Phase 1A:** ✅ done via PR #131. BackendToggle UI, abstraction layer (`frontend/src/lib/backends/`), pokedata→scrydex adapter, ADR-007 (API Architecture Spectrum), ADR-008 (APIM vs BFF), `docs/architecture-comparison.md`, README live-demo section.
-- **Phase 1B:** mostly done via PRs #132, #133, #134, #135, #136, #137, #138. Custom domain scaffolding deferred per ADR-012 (Azure cert suspension). CORS regex policy from ADR-013 has one outstanding apply-time fix (PR #139, DRAFT — see issue #140). Once #139 merges and dev CD applies cleanly, Phase 1B is done.
-- **Phase 2:** not started. Containerize Functions, Scrydex schema migration, ACA path, ADR-009.
+- **Phase 1B:** ✅ done via PRs #132–#138 (+ #139/#141/#142/#143/#144 closing out the apply-time fix path). Custom domains deferred per ADR-012; CORS regex policy live per ADR-013.
+- **Phase 2.1:** ✅ done via PRs #145, #146 (2026-05-12). Backend cut over from PokeData to Scrydex. `@pcpc/shared` canonical types, `ScrydexApiService.ts`, smoke tests re-promoted to blocking. Tags: `phase-2/pre-scrydex-cutover`, `phase-2/post-scrydex-cutover`.
+- **Phase 2.2:** in progress. Containerize Functions + ACA path. PR-1 (this work): ADR-009 + 3-column comparison doc. PR-2: Dockerfile + container-app Terraform module + ADO pipeline stage (dev only). PR-3: frontend toggle + Vercel env var.
 - **Phase 3:** not started.
 
-## ADRs accepted across Phase 1
+## ADRs accepted across Phases 1 and 2
 
 - [ADR-007](./adr/ADR-007-api-architecture-spectrum.md) — API Architecture Spectrum
 - [ADR-008](./adr/ADR-008-apim-vs-bff-gateway.md) — APIM vs SvelteKit BFF as Gateway
+- [ADR-009](./adr/ADR-009-functions-consumption-vs-container-apps.md) — Functions Consumption vs Container Apps
 - [ADR-011](./adr/ADR-011-deployment-topology-and-testing-model.md) — Deployment Topology and Testing Model
 - [ADR-012](./adr/ADR-012-apim-managed-cert-suspension.md) — APIM Managed Cert Suspension (defer custom domains)
 - [ADR-013](./adr/ADR-013-cors-regex-policy.md) — CORS Regex-Based Origin Allowlist Policy
@@ -400,7 +402,7 @@ These are deferred and tracked here for resolution at or before the relevant pha
 4. ~~**Custom domains for backends.** `api.pcpc.maber.io` and `aca.pcpc.maber.io` are placeholders. Final names TBD before Phase 1.~~ **Resolved 2026-05-06:** per-env scheme `dev-api.pcpc.maber.io`, `staging-api.pcpc.maber.io`, `api.pcpc.maber.io`. **Currently DEFERRED** per ADR-012 (Azure-managed cert creation suspended Aug 15 2025 → Jun 30 2026); IaC scaffolding in place, restoration runbook in ADR-012.
 5. ~~**Legacy Svelte 4 SPA in PCPC.** Retire it during Phase 0 consolidation, archive it under a tag, or keep it as a historical reference frontend?~~ **Resolved 2026-05-06:** archived at the `phase-0/legacy-spa-archive` tag and removed from main alongside the SWA deploy stage and validate-frontend PR pipeline. The Azure Static Web App resource and its Terraform module are left intact for separate deprovisioning when convenient.
 6. ~~**APIM custom domain SSL.** Free Azure-managed cert vs Let's Encrypt vs purchased cert? Decision needed in Phase 1.~~ **Resolved 2026-05-06:** Azure-managed cert. **Currently DEFERRED** per ADR-012 — Microsoft suspended new managed cert creation through at least June 2026. See ADR-012 for the deferral rationale and the restoration runbook.
-7. **ACA min replicas.** 0 (cold start, save $5/month) vs 1 (always warm, better demo)? Decision needed in Phase 2; current lean is 1.
+7. ~~**ACA min replicas.** 0 (cold start, save $5/month) vs 1 (always warm, better demo)?~~ **Resolved 2026-05-12 (Phase 2.2 PR-1):** min_replicas = 1 in dev. Rationale: the frontend's 2-second `probeHealth` timeout at [`frontend/src/lib/backends/health.ts`](../frontend/src/lib/backends/health.ts) is shorter than ACA's 1–3s cold-start at min=0, so min=0 would falsely degrade Path C after every idle period and hide it from the toggle. Cost envelope ~$5–15/mo per env documented in [ADR-009](./adr/ADR-009-functions-consumption-vs-container-apps.md).
 8. **`maber-web` repo fate.** After PCPC consolidation, `maber-web` becomes a 3-app monorepo (landing, blackjack, portfolio). Keep as-is, rename to reflect new scope, or eventually retire? Decision: keep as-is; revisit if/when the other apps are also reorganized.
 9. **GitHub Actions revisit in Phase 3.** Whether adding a frontend GitHub Actions workflow strengthens the comparison narrative enough to justify the duplication with Vercel's PR builds. Decision deferred to Phase 3 evaluation.
 
