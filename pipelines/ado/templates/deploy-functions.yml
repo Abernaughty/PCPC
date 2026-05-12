@@ -220,18 +220,6 @@ steps:
     displayName: "Wait for Function App Startup"
     condition: and(succeeded(), eq(variables['ShouldDeployFunctions'], 'true'))
 
-  # Trigger initial SetMapping synchronization
-  - task: AzureCLI@2
-    displayName: "Trigger Initial SetMapping Synchronization"
-    condition: and(succeeded(), eq(variables['ShouldDeployFunctions'], 'true'))
-    inputs:
-      azureSubscription: "${{ parameters.azureSubscription }}"
-      scriptType: "bash"
-      scriptLocation: "scriptPath"
-      scriptPath: "$(System.DefaultWorkingDirectory)/pipelines/scripts/trigger-set-mapping-sync.sh"
-      arguments: "${{ parameters.functionAppName }} ${{ parameters.resourceGroupName }} ${{ parameters.environment }}"
-    continueOnError: true
-
   # Persist newly deployed hash to app settings for future runs
   - task: AzureCLI@2
     displayName: "Persist Functions Deployment Hash"

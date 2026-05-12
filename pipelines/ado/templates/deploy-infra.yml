@@ -101,16 +101,16 @@ steps:
         echo "-----------------------------------------------"
 
         # Check each secret variable (mapped via env: parameter)
-        if [ -z "${POKEDATA_API_KEY}" ]; then
-          echo "  ❌ POKEDATA_API_KEY is NOT SET or EMPTY"
+        if [ -z "${SCRYDEX_API_KEY}" ]; then
+          echo "  ❌ SCRYDEX_API_KEY is NOT SET or EMPTY"
         else
-          echo "  ✅ POKEDATA_API_KEY is set (length: ${#POKEDATA_API_KEY})"
+          echo "  ✅ SCRYDEX_API_KEY is set (length: ${#SCRYDEX_API_KEY})"
         fi
 
-        if [ -z "${POKEMON_TCG_API_KEY}" ]; then
-          echo "  ❌ POKEMON_TCG_API_KEY is NOT SET or EMPTY"
+        if [ -z "${SCRYDEX_TEAM_ID}" ]; then
+          echo "  ❌ SCRYDEX_TEAM_ID is NOT SET or EMPTY"
         else
-          echo "  ✅ POKEMON_TCG_API_KEY is set (length: ${#POKEMON_TCG_API_KEY})"
+          echo "  ✅ SCRYDEX_TEAM_ID is set (length: ${#SCRYDEX_TEAM_ID})"
         fi
 
         if [ -z "${ARM_CLIENT_ID}" ]; then
@@ -154,8 +154,8 @@ steps:
 
         function_app_secrets = {
           # API Keys from variable group (with underscores)
-          "POKEDATA_API_KEY"     = "$POKEDATA_API_KEY"
-          "POKEMON_TCG_API_KEY"  = "$POKEMON_TCG_API_KEY"
+          "SCRYDEX_API_KEY"      = "$SCRYDEX_API_KEY"
+          "SCRYDEX_TEAM_ID"      = "$SCRYDEX_TEAM_ID"
           "PORKBUN_API_KEY"      = "$PORKBUN_API_KEY"
           "PORKBUN_SECRET_KEY"   = "$PORKBUN_SECRET_KEY"
 
@@ -222,8 +222,8 @@ steps:
         echo "=========================================="
         echo ""
     env:
-      POKEDATA_API_KEY: $(POKEDATA-API-KEY)
-      POKEMON_TCG_API_KEY: $(POKEMON-TCG-API-KEY)
+      SCRYDEX_API_KEY: $(SCRYDEX-API-KEY)
+      SCRYDEX_TEAM_ID: $(SCRYDEX-TEAM-ID)
       ARM_CLIENT_ID: $(ARM-CLIENT-ID)
       ARM_CLIENT_SECRET: $(ARM-CLIENT-SECRET)
       PORKBUN_API_KEY: $(PORKBUN-API-KEY)
