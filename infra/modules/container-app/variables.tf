@@ -28,7 +28,7 @@ variable "log_analytics_workspace_id" {
 }
 
 variable "acr_id" {
-  description = "Resource ID of the Azure Container Registry the Container App pulls its image from. The module's user-assigned managed identity is granted the AcrPull role on this ACR. Path C reuses the shared `maberdevcontainerregistry-ccedhvhwfndwetdp` ACR rather than provisioning a per-env registry (see ADR-009)."
+  description = "Resource ID of the Azure Container Registry the Container App pulls its image from. The module's user-assigned managed identity is granted the AcrPull role on this ACR. Path C reuses the shared `maberdevcontainerregistry` ACR (login server `maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io`) rather than provisioning a per-env registry (see ADR-009)."
   type        = string
 }
 

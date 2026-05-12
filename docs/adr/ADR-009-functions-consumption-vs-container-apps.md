@@ -240,13 +240,16 @@ ship byte-identical application code.
 
 ### Container Registry sharing
 
-PCPC reuses the existing `maberdevcontainerregistry-ccedhvhwfndwetdp`
-ACR rather than provisioning a per-environment registry. The CI-tooling
-images (`pcpc-ci-terraform-azure`, `pcpc-ci-node22`, `pcpc-ci-node-azure`)
-already live in this ACR; Path C adds the `pcpc/functions` repository
-path for the application image. No new ACR module is added; the
-container-app module accepts the ACR resource ID and login server as
-inputs so it remains agnostic to where the registry is provisioned.
+PCPC reuses the existing `maberdevcontainerregistry` ACR (login server
+`maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io` — the suffix on
+the FQDN is Azure's dedicated-data-endpoint mechanism, not part of the
+registry's name) rather than provisioning a per-environment registry.
+The CI-tooling images (`pcpc-ci-terraform-azure`, `pcpc-ci-node22`,
+`pcpc-ci-node-azure`) already live in this ACR; Path C adds the
+`pcpc/functions` repository path for the application image. No new ACR
+module is added; the container-app module accepts the ACR resource ID
+and login server as inputs so it remains agnostic to where the
+registry is provisioned.
 
 ### Frontend integration
 

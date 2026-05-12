@@ -22,8 +22,11 @@ See [`variables.tf`](./variables.tf) for the canonical descriptions; the
 non-obvious ones:
 
 - **`acr_id` / `acr_login_server`** — passed in, not provisioned. PCPC reuses
-  the shared `maberdevcontainerregistry-ccedhvhwfndwetdp` registry for both
-  CI tooling images and the application image. Per-env ACRs were not added.
+  the shared `maberdevcontainerregistry` registry (login server
+  `maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io`) for both CI
+  tooling images and the application image. Per-env ACRs were not added.
+  The hyphenated suffix is Azure's dedicated-data-endpoint convention on
+  the FQDN, not part of the registry's `name` property.
 - **`log_analytics_workspace_id`** — pass `module.log_analytics.id` from
   the dev env so Path B (App Insights → this workspace) and Path C share
   the workspace.
