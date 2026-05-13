@@ -36,7 +36,14 @@ export async function getSetList(
     context.log(`${correlationId} Processing Scrydex request for set list`);
 
     const language = (request.query.get("language") || "en").toLowerCase();
-    const forceRefresh = request.query.get("forceRefresh") === "true";
+    // SECURITY: the `forceRefresh` query param is intentionally ignored on
+    // this anonymous-auth public endpoint. Honoring it from untrusted
+    // callers would bypass Redis + Cosmos and hit Scrydex on every
+    // request, burning paid API credits with no upper bound. The
+    // RefreshData timer trigger keeps caches current on a 12h cadence;
+    // manual refresh is an admin path via that trigger, not the public
+    // surface. Addresses Codex P1 review on PR #159.
+    const forceRefresh = false;
     const returnAll = request.query.get("all") === "true";
     const page = parseInt(request.query.get("page") || "1");
     const pageSize = parseInt(request.query.get("pageSize") || "100");

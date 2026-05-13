@@ -85,7 +85,15 @@ export async function getCardInfo(
       `${correlationId} Processing request for card ${cardId} in set ${setId}`
     );
 
-    const forceRefresh = request.query.get("forceRefresh") === "true";
+    // SECURITY: see GetSetList for the rationale. `forceRefresh` is
+    // intentionally ignored on anonymous-auth public endpoints to
+    // prevent unbounded Scrydex API credit burn (this endpoint can also
+    // re-fetch pricing on demand, which is a separate Scrydex cost vector).
+    // Card data still re-fetches from Scrydex on legitimate cache misses
+    // (bounded by card cardinality) and on stale-pricing detection via
+    // `needsPricing` — only the forceRefresh override is removed.
+    // Addresses Codex P1 review on PR #159.
+    const forceRefresh = false;
     const cardsTtl = parseInt(process.env.CACHE_TTL_CARDS || "3600");
 
     monitoringService.trackEvent("request.parameters", {
