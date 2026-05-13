@@ -18,6 +18,7 @@
 
   let isOpen = $state(false);
   let buttonRef: HTMLButtonElement | null = $state(null);
+  let toggleRef: HTMLDivElement | null = $state(null);
 
   let activeId = $derived(backendStore.activeId);
   let active = $derived(backendStore.active);
@@ -67,7 +68,10 @@
   function handleClickOutside(event: MouseEvent): void {
     if (!isOpen) return;
     const target = event.target as Node;
-    if (buttonRef && !buttonRef.contains(target)) {
+    // Check the whole toggle container, not just the badge — otherwise a
+    // mousedown on an option button (a sibling of the badge inside the
+    // wrapper) closes the popover before the option's click fires.
+    if (toggleRef && !toggleRef.contains(target)) {
       isOpen = false;
     }
   }
@@ -87,7 +91,7 @@
   });
 </script>
 
-<div class="backend-toggle" data-status={activeStatus}>
+<div class="backend-toggle" bind:this={toggleRef} data-status={activeStatus}>
   <button
     bind:this={buttonRef}
     class="badge"
