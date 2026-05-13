@@ -25,6 +25,10 @@ import {
   cardHasPricing,
   mapScrydexCardToCard,
 } from "../../utils/scrydexToCosmos";
+import {
+  cardToApiResponse,
+  type ApiResponseCard,
+} from "../../utils/cardToApiResponse";
 
 /**
  * GetCardInfo — Scrydex-powered card detail with cached pricing.
@@ -125,10 +129,12 @@ export async function getCardInfo(
         cacheAge = cachedEntry ? getCacheAge(cachedEntry.timestamp) : 0;
         monitoringService.trackEvent("cache.hit", { cardId, correlationId });
 
-        // Cache hit short-circuits to return immediately.
-        const response: ApiResponse<Card> = {
+        // Cache hit short-circuits to return immediately. Apply the
+        // same cardName→name rename as the cold-fetch path below — the
+        // initial fix missed this branch (Codex P2 review on PR #164).
+        const response: ApiResponse<ApiResponseCard> = {
           status: 200,
-          data: card,
+          data: cardToApiResponse(card),
           timestamp: new Date().toISOString(),
           cached: true,
           cacheAge,
@@ -262,9 +268,11 @@ export async function getCardInfo(
       context.log(`${correlationId} Card cached (${cacheWriteTime}ms)`);
     }
 
-    const response: ApiResponse<Card> = {
+    // Apply the same cardName→name rename as GetCardsBySet (and Path A's
+    // SvelteKit BFF) so the on-wire shape matches the OpenAPI spec.
+    const response: ApiResponse<ApiResponseCard> = {
       status: 200,
-      data: card,
+      data: cardToApiResponse(card),
       timestamp: new Date().toISOString(),
       cached: false,
     };
