@@ -67,7 +67,11 @@ export async function getCardsBySet(
 
     context.log(`${correlationId} Processing Scrydex request for setId: ${setId}`);
 
-    const forceRefresh = request.query.get("forceRefresh") === "true";
+    // SECURITY: see GetSetList for the rationale. `forceRefresh` is
+    // intentionally ignored on anonymous-auth public endpoints to
+    // prevent unbounded Scrydex API credit burn. Addresses Codex P1
+    // review on PR #159.
+    const forceRefresh = false;
     const page = parseInt(request.query.get("page") || "1");
     const pageSize = Math.min(
       parseInt(request.query.get("pageSize") || "500"),
