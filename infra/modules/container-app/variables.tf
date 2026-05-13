@@ -28,12 +28,12 @@ variable "log_analytics_workspace_id" {
 }
 
 variable "acr_id" {
-  description = "Resource ID of the Azure Container Registry the Container App pulls its image from. The module's user-assigned managed identity is granted the AcrPull role on this ACR. Path C reuses the shared `maberdevcontainerregistry` ACR (login server `maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io`) rather than provisioning a per-env registry (see ADR-009)."
+  description = "Resource ID of the Azure Container Registry the Container App pulls its image from. The module's user-assigned managed identity is granted the AcrPull role on this ACR. PCPC provisions its own ACR via the sibling `container-registry` module rather than consuming a shared one — see ADR-009's 'ACR ownership' subsection."
   type        = string
 }
 
 variable "acr_login_server" {
-  description = "Login server hostname for the ACR (e.g. `maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io`). Used in the `registry.server` field on the Container App."
+  description = "Login server hostname for the ACR (e.g. `pcpcacrdev<suffix>.azurecr.io`). Used in the `registry.server` field on the Container App."
   type        = string
 }
 

@@ -238,18 +238,41 @@ and re-adds CORS, which would conflict with app-emitted headers), and
 envelopes preserves the comparison doc's claim that Path B and Path C
 ship byte-identical application code.
 
-### Container Registry sharing
+### ACR ownership
 
-PCPC reuses the existing `maberdevcontainerregistry` ACR (login server
-`maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io` — the suffix on
-the FQDN is Azure's dedicated-data-endpoint mechanism, not part of the
-registry's name) rather than provisioning a per-environment registry.
-The CI-tooling images (`pcpc-ci-terraform-azure`, `pcpc-ci-node22`,
-`pcpc-ci-node-azure`) already live in this ACR; Path C adds the
-`pcpc/functions` repository path for the application image. No new ACR
-module is added; the container-app module accepts the ACR resource ID
-and login server as inputs so it remains agnostic to where the
-registry is provisioned.
+The initial Phase 2.2 design consumed the shared `maberdevcontainerregistry`
+ACR via `data` source. That registry lives in `dev-rg`, a different RG
+than PCPC's own `pcpc-rg-dev`. The first dev CD apply failed with 403
+on `azurerm_role_assignment.acr_pull` because the ADO service principal
+had Contributor on `pcpc-rg-dev` but no `Microsoft.Authorization/roleAssignments/write`
+on `dev-rg`. The first instinct — granting the SP "User Access Administrator"
+scoped to the shared ACR — works but encodes the wrong ownership boundary:
+an application stack with role-write rights on platform infrastructure it
+doesn't own.
+
+**The decision (polish PR after the initial 2.2 landing):** PCPC owns its
+own ACR. A new `container-registry` Terraform module provisions one ACR
+in `pcpc-rg-dev`, named `pcpcacr${env}${random_suffix}` (alphanumeric
+required by Azure; random suffix for global uniqueness, matching the
+storage-account convention). The container-app module is unchanged — it
+accepts `acr_id` and `acr_login_server` as inputs and is agnostic to who
+provisions the registry. The cross-RG RBAC problem disappears because
+every role assignment against the new ACR is in the SP's existing scope.
+The narrative becomes "PCPC owns its whole stack" rather than "PCPC
+consumes shared infra with special grants."
+
+Single shared ACR across dev/staging/prod. Dev's state owns the
+registry; staging and prod consume it via `data "azurerm_container_registry"`
+against PCPC's own naming. One Basic-SKU registry costs ~$5/mo
+(vs ~$15/mo for per-env), and image tags carry the env discriminator,
+so isolation is by tag rather than by registry.
+
+`maberdevcontainerregistry` continues to serve CI tooling images
+(`pcpc-ci-terraform-azure`, `pcpc-ci-node22`, `pcpc-ci-node-azure`) for
+now — those are pinned by digest in `pipelines/ado/variables/ci-images.yml`
+and rebuilding them is a separable follow-up. The polish PR documents
+that migration as out-of-scope, to be revisited once Phase 3 polish work
+is underway.
 
 ### Frontend integration
 

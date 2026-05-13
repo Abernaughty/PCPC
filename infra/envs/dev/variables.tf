@@ -362,16 +362,15 @@ variable "alert_email_address" {
 # Phase 2.2 — Path C (ACA Container) variables
 # -----------------------------------------------------------------------------
 
-variable "shared_acr_name" {
-  description = "Name of the shared Azure Container Registry that hosts the PCPC Functions image. Reused across PCPC environments rather than provisioning per-env (per ADR-009). NOTE: the ACR's *name* is alphanumeric-only — `maberdevcontainerregistry`. Its login server FQDN is `maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io` (the `-ccedhvhwfndwetdp` suffix is Azure's dedicated data endpoint mechanism, NOT part of the registry name)."
+variable "container_registry_sku" {
+  description = "SKU for the PCPC-owned Container Registry. Defaults to `Basic` (~$5/mo, 10 GiB storage). Bump to `Premium` only when private endpoints / geo-replication / content trust are needed."
   type        = string
-  default     = "maberdevcontainerregistry"
-}
+  default     = "Basic"
 
-variable "shared_acr_resource_group" {
-  description = "Resource group that contains the shared ACR. The registry is in the same Azure subscription as PCPC dev."
-  type        = string
-  default     = "dev-rg"
+  validation {
+    condition     = contains(["Basic", "Standard", "Premium"], var.container_registry_sku)
+    error_message = "container_registry_sku must be Basic, Standard, or Premium."
+  }
 }
 
 variable "container_app_image_repository" {
