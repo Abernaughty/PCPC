@@ -122,10 +122,13 @@ stages:
 
       # Phase 2.2 — Deploy Path C (ACA Container).
       #
-      # Parallel to Deploy_Functions (Path B). Builds the Functions image,
-      # scans for HIGH+ CVEs (Trivy, blocking), pushes to ACR, and rolls a
-      # new revision on the Container App. No container: directive — the
-      # job needs the host Docker daemon for the image build.
+      # Parallel to Deploy_Functions (Path B). Discovers the PCPC-owned ACR
+      # provisioned by Deploy_Infrastructure, builds the Functions image,
+      # scans for HIGH+ CVEs (Trivy, blocking), pushes via `az acr login`
+      # (no Docker registry service connection — SP has AcrPush from the
+      # role assignment in dev's Terraform), and rolls a new revision on
+      # the Container App. No container: directive — the job needs the
+      # host Docker daemon for the image build.
       - job: Deploy_ACA
         displayName: "Deploy Path C (ACA Container)"
         dependsOn: Deploy_Infrastructure
@@ -135,8 +138,8 @@ stages:
         steps:
           - template: templates/build-and-push-image.yml
             parameters:
-              acrRegistryServiceConnection: pcpc-acr-service-connection
               azureSubscription: "az-pcpc-dev"
+              acrResourceGroup: $(APIM_RESOURCE_GROUP)
           - template: templates/deploy-aca.yml
             parameters:
               environment: dev
