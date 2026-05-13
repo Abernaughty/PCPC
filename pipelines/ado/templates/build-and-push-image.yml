@@ -1,8 +1,16 @@
 # Build and Push PCPC Functions ACA Image
 #
-# Phase 2.2. Builds the Functions container from backend/functions/Dockerfile,
-# scans for HIGH+ CVEs with Trivy (blocking), and pushes to the shared ACR
-# under the pcpc/functions repository path.
+# Phase 2.2 + polish PR. Builds the Functions container from
+# backend/functions/Dockerfile, scans for HIGH+ CVEs with Trivy (blocking),
+# and pushes to the PCPC-owned ACR under the pcpc/functions repository path.
+#
+# The ACR name is discovered at runtime by listing registries in the
+# workload RG and matching the `pcpcacr*` naming convention — Terraform
+# names the registry with a random suffix to satisfy global uniqueness,
+# so the bare name isn't known at pipeline-config time. The RG is stable.
+# Authentication uses `az acr login` (managed identity flow) rather than
+# a Docker registry service connection — the ADO SP has AcrPush on the
+# new ACR via a role assignment in the same Terraform state.
 #
 # Output variables (consumed by the deploy-aca.yml template that follows
 # in the same job):
@@ -14,26 +22,25 @@
 # Usage:
 #   - template: pipelines/ado/templates/build-and-push-image.yml
 #     parameters:
-#       acrRegistryServiceConnection: pcpc-acr-service-connection
 #       azureSubscription: az-pcpc-dev
-#       acrName: maberdevcontainerregistry
+#       acrResourceGroup: pcpc-rg-dev
 #       imageRepository: pcpc/functions
 #       trivySeverity: HIGH,CRITICAL
 #       trivyVersion: "0.59.1"
 
 parameters:
-  - name: acrRegistryServiceConnection
-    type: string
-    default: pcpc-acr-service-connection
   - name: azureSubscription
     type: string
-  - name: acrName
+  - name: acrResourceGroup
     type: string
-    # ACR *name* is alphanumeric-only; the `-ccedhvhwfndwetdp` portion
-    # is part of the login server FQDN, not the registry name itself.
-    # `az acr show -n "$ACR_NAME" --query loginServer -o tsv` returns
-    # the FQDN at runtime, including the dedicated-data-endpoint suffix.
-    default: maberdevcontainerregistry
+    # Workload RG that owns the PCPC ACR. The registry name itself is
+    # derived from a randomized suffix at Terraform-apply time, so we
+    # discover it at runtime via `az acr list` against this RG.
+  - name: acrNamePrefix
+    type: string
+    default: pcpcacr
+    # Filter so the discovery degrades gracefully if other ACRs ever
+    # end up co-located in the same RG.
   - name: imageRepository
     type: string
     default: pcpc/functions
@@ -48,10 +55,12 @@ steps:
   - checkout: self
 
   # ---------------------------------------------------------------------------
-  # Resolve ACR login server and compute image tags
+  # Discover the PCPC ACR in the workload RG, resolve login server, and
+  # compute image tags. The ACR name carries a random suffix from
+  # Terraform's random_string, so we filter by the stable `pcpcacr*` prefix.
   # ---------------------------------------------------------------------------
   - task: AzureCLI@2
-    displayName: "Resolve ACR + Compute Image Tags"
+    displayName: "Discover ACR + Compute Image Tags"
     inputs:
       azureSubscription: ${{ parameters.azureSubscription }}
       scriptType: bash
@@ -59,8 +68,17 @@ steps:
       inlineScript: |
         set -euo pipefail
 
-        ACR_NAME='${{ parameters.acrName }}'
+        RG='${{ parameters.acrResourceGroup }}'
+        PREFIX='${{ parameters.acrNamePrefix }}'
         REPO='${{ parameters.imageRepository }}'
+
+        echo "Discovering ACR in RG '$RG' with name prefix '$PREFIX'..."
+        ACR_NAME=$(az acr list -g "$RG" --query "[?starts_with(name, '$PREFIX')].name | [0]" -o tsv)
+
+        if [ -z "$ACR_NAME" ] || [ "$ACR_NAME" = "null" ]; then
+          echo "##vso[task.logissue type=error]No ACR found in RG '$RG' with name prefix '$PREFIX'. Has the infra stage run?"
+          exit 1
+        fi
 
         FQDN=$(az acr show -n "$ACR_NAME" --query loginServer -o tsv)
         SHORT_SHA="$(echo '$(Build.SourceVersion)' | cut -c1-7)"
@@ -71,11 +89,13 @@ steps:
         FULL_REF_BUILD="${FQDN}/${REPO}:${BUILD_TAG}"
         FULL_REF_LATEST="${FQDN}/${REPO}:latest"
 
+        echo "ACR discovered: $ACR_NAME"
         echo "ACR login server: $FQDN"
         echo "Image SHA tag: $SHA_TAG"
         echo "Image build tag: $BUILD_TAG"
         echo "Canonical reference (for deploy): $FULL_REF_SHA"
 
+        echo "##vso[task.setvariable variable=AcrName]$ACR_NAME"
         echo "##vso[task.setvariable variable=AcrLoginServer]$FQDN"
         echo "##vso[task.setvariable variable=ContainerImageReference]$FULL_REF_SHA"
         echo "##vso[task.setvariable variable=ContainerImageBuildRef]$FULL_REF_BUILD"
@@ -140,23 +160,28 @@ steps:
     continueOnError: false
 
   # ---------------------------------------------------------------------------
-  # Login to ACR and push all three tags
+  # Login to ACR via the Azure CLI (SP token / managed-identity flow) and
+  # push all three tags. The ADO SP has AcrPush via the role assignment
+  # provisioned in the dev env's Terraform — no Docker registry service
+  # connection needed.
   # ---------------------------------------------------------------------------
-  - task: Docker@2
-    displayName: "Login to ACR"
+  - task: AzureCLI@2
+    displayName: "az acr login + push (all tags)"
     inputs:
-      command: login
-      containerRegistry: ${{ parameters.acrRegistryServiceConnection }}
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        set -euo pipefail
 
-  - script: |
-      set -euo pipefail
+        echo "Logging into ACR '$(AcrName)' via az CLI..."
+        az acr login --name "$(AcrName)"
 
-      echo "Pushing image tags..."
-      docker push "$(ContainerImageReference)"
-      docker push "$(ContainerImageBuildRef)"
-      docker push "$(ContainerImageLatestRef)"
-      echo "✓ All tags pushed"
-    displayName: "docker push (all tags)"
+        echo "Pushing image tags..."
+        docker push "$(ContainerImageReference)"
+        docker push "$(ContainerImageBuildRef)"
+        docker push "$(ContainerImageLatestRef)"
+        echo "✓ All tags pushed"
 
   # ---------------------------------------------------------------------------
   # Capture the pushed digest for downstream use

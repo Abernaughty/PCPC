@@ -21,12 +21,14 @@ Path C (Functions in container on ACA).
 See [`variables.tf`](./variables.tf) for the canonical descriptions; the
 non-obvious ones:
 
-- **`acr_id` / `acr_login_server`** — passed in, not provisioned. PCPC reuses
-  the shared `maberdevcontainerregistry` registry (login server
-  `maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io`) for both CI
-  tooling images and the application image. Per-env ACRs were not added.
-  The hyphenated suffix is Azure's dedicated-data-endpoint convention on
-  the FQDN, not part of the registry's `name` property.
+- **`acr_id` / `acr_login_server`** — passed in, not provisioned. PCPC
+  provisions its own ACR via the sibling `container-registry` module
+  (single ACR shared across dev/staging/prod, owned by dev's state).
+  Earlier Phase 2.2 designs consumed the shared `maberdevcontainerregistry`
+  in `dev-rg` via data source, which forced cross-RG RBAC grants on the
+  ADO SP; the polish PR replaced that with a PCPC-owned ACR so the SP's
+  AcrPull / AcrPush role assignments stay inside its existing scope.
+  See ADR-009's "ACR ownership" subsection.
 - **`log_analytics_workspace_id`** — pass `module.log_analytics.id` from
   the dev env so Path B (App Insights → this workspace) and Path C share
   the workspace.
