@@ -122,6 +122,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+    options:
+      summary: CORS preflight
+      description: |
+        Route hook for the API-level CORS policy (see ADR-013). The custom
+        regex-based preflight handler in the inbound policy returns 204
+        with Access-Control-Allow-* headers when the Origin matches the
+        configured allowlist, 403 otherwise. APIM requires an OPTIONS
+        operation in the spec so unmatched requests don't 404 before
+        policies run (per learn.microsoft.com/azure/api-management/cors-policy).
+      operationId: options-sets
+      tags:
+        - System
+      security: []
+      responses:
+        "204":
+          description: Preflight accepted; CORS headers returned
+        "403":
+          description: Origin not in allowlist
 
   /health:
     get:
@@ -154,6 +172,19 @@ paths:
             application/json:
               schema:
                 type: object
+    options:
+      summary: CORS preflight
+      description: |
+        Route hook for the API-level CORS policy. See /sets options for details.
+      operationId: options-health
+      tags:
+        - System
+      security: []
+      responses:
+        "204":
+          description: Preflight accepted; CORS headers returned
+        "403":
+          description: Origin not in allowlist
 
   "/sets/{setCode}/cards":
     get:
@@ -219,6 +250,28 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+    options:
+      summary: CORS preflight
+      description: |
+        Route hook for the API-level CORS policy. See /sets options for details.
+      operationId: options-cards-by-set
+      tags:
+        - System
+      security: []
+      parameters:
+        - name: setCode
+          in: path
+          required: true
+          description: The set code (e.g., 'sv8', 'base1')
+          schema:
+            type: string
+            pattern: "^[a-zA-Z0-9-_]+$"
+            example: "sv8"
+      responses:
+        "204":
+          description: Preflight accepted; CORS headers returned
+        "403":
+          description: Origin not in allowlist
 
   "/sets/{setId}/cards/{cardId}":
     get:
@@ -277,6 +330,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+    options:
+      summary: CORS preflight
+      description: |
+        Route hook for the API-level CORS policy. See /sets options for details.
+      operationId: options-card-info
+      tags:
+        - System
+      security: []
+      parameters:
+        - name: setId
+          in: path
+          required: true
+          description: The set identifier
+          schema:
+            type: string
+            pattern: "^[a-zA-Z0-9-_]+$"
+            example: "sv8"
+        - name: cardId
+          in: path
+          required: true
+          description: The card identifier within the set
+          schema:
+            type: string
+            pattern: "^[a-zA-Z0-9-_]+$"
+            example: "001"
+      responses:
+        "204":
+          description: Preflight accepted; CORS headers returned
+        "403":
+          description: Origin not in allowlist
 
 components:
   securitySchemes:
@@ -601,3 +684,5 @@ tags:
     description: Pokemon card set operations
   - name: Cards
     description: Pokemon card operations
+  - name: System
+    description: System operations (health, CORS preflight)
