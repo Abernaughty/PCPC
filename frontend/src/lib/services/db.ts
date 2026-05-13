@@ -18,7 +18,11 @@ import { createContextLogger } from './logger';
 const log = createContextLogger('db');
 
 const DB_NAME = 'poke-data-db';
-const DB_VERSION = 3;
+// Bump this whenever any store's schema changes (keyPath, autoIncrement,
+// indexes). The upgrade handler drops and recreates all stores on every
+// bump — this DB is purely a cache, so a one-time rebuild on the next
+// visit is the correct tradeoff.
+const DB_VERSION = 4;
 
 // Store names
 const STORE_NAMES = {
@@ -63,11 +67,20 @@ function openDatabase(): Promise<IDBDatabase> {
       const db = (event.target as IDBOpenDBRequest).result;
       log.debug(`Upgrading database from version ${event.oldVersion} to ${DB_VERSION}`);
 
+      // Drop any existing stores first. A legacy frontend at this same
+      // origin (pre-Phase-0 Svelte 4 SPA) created stores under the same
+      // DB_NAME with a different keyPath, so additive-only upgrades left
+      // saveCardsForSet failing with "key path did not yield a value".
+      // Treating the cache as ephemeral and rebuilding on every version
+      // bump avoids any future schema-drift surprises.
+      const existingStores = Array.from(db.objectStoreNames);
+      for (const store of existingStores) {
+        db.deleteObjectStore(store);
+      }
+
       const storeNames = Object.values(STORE_NAMES);
       for (const store of storeNames) {
-        if (!db.objectStoreNames.contains(store)) {
-          db.createObjectStore(store, { keyPath: 'id', autoIncrement: true });
-        }
+        db.createObjectStore(store, { keyPath: 'id', autoIncrement: true });
       }
     };
   });
