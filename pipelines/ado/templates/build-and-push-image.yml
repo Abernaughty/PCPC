@@ -52,7 +52,12 @@ parameters:
     default: "0.59.1"
 
 steps:
-  - checkout: self
+  # No explicit `- checkout: self` — the parent job's implicit checkout
+  # handles it. Including `- checkout: self` here (and in deploy-aca.yml,
+  # which also gets inlined into the same job) triggers ADO's "multiple
+  # repositories" layout, where source lands at
+  # `$(Build.SourcesDirectory)/<repo>/` instead of `$(Build.SourcesDirectory)/`,
+  # breaking absolute paths that anchor on `$(Build.SourcesDirectory)`.
 
   # ---------------------------------------------------------------------------
   # Discover the PCPC ACR in the workload RG, resolve login server, and

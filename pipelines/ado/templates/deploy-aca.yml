@@ -30,7 +30,10 @@ parameters:
     default: true
 
 steps:
-  - checkout: self
+  # No explicit `- checkout: self` — the parent job's implicit checkout
+  # handles it. See the note in build-and-push-image.yml: having multiple
+  # explicit checkouts in one job changes ADO's source-layout convention
+  # and breaks `$(Build.SourcesDirectory)`-anchored paths.
 
   # ---------------------------------------------------------------------------
   # Skip-redeploy check: compare incoming image reference to the currently
