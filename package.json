@@ -48,5 +48,12 @@
   },
   "jest": {
     "preset": "./jest.config.cjs"
+  },
+  "pnpm": {
+    "overrides": {
+      "@opentelemetry/exporter-prometheus": "^0.217.0",
+      "@opentelemetry/sdk-node": "^0.217.0",
+      "protobufjs": "^8.0.2"
+    }
   }
 }
