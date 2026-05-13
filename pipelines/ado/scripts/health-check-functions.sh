@@ -152,9 +152,18 @@ echo "Test 2: GetSetList Endpoint"
 echo "----------------------------"
 
 if [ -z "$FUNCTION_KEY" ]; then
-  echo "⚠ Skipping GetSetList test - no function key provided"
-  echo "  (This endpoint requires authentication)"
-  add_warning
+  # For ACA's anonymous public ingress (Path C), there is no function-key
+  # concept — by design (see ADR-009). Set EXPECT_FUNCTION_KEY=false so the
+  # skip doesn't generate a warning (which would otherwise trip the blocking
+  # smoke test step). The script still skips the auth-required test; it just
+  # treats the skip as expected rather than as a misconfiguration signal.
+  if [ "${EXPECT_FUNCTION_KEY:-true}" = "false" ]; then
+    echo "ℹ Skipping GetSetList test - anonymous ingress (no function key applicable)"
+  else
+    echo "⚠ Skipping GetSetList test - no function key provided"
+    echo "  (This endpoint requires authentication)"
+    add_warning
+  fi
 else
   SETLIST_URL="${FUNCTION_APP_URL}/api/sets?all=true&code=${FUNCTION_KEY}"
   echo "Testing: ${FUNCTION_APP_URL}/api/sets?all=true&code=***"
