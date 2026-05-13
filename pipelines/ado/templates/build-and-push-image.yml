@@ -107,21 +107,27 @@ steps:
   # Build context is backend/ so the file:../shared reference in
   # backend/functions/package.json resolves. Dockerfile path is relative to
   # that context.
+  #
+  # Use absolute paths anchored at $(Build.SourcesDirectory) so cwd quirks
+  # in the inlined-template step context don't break the build (the
+  # default `script:` cwd resolved to `_temp/` in practice, not the source
+  # directory).
   # ---------------------------------------------------------------------------
   - script: |
       set -euo pipefail
 
       echo "Building Functions container image..."
       docker build \
-        -f backend/functions/Dockerfile \
+        -f "$(Build.SourcesDirectory)/backend/functions/Dockerfile" \
         -t "$(ContainerImageReference)" \
         -t "$(ContainerImageBuildRef)" \
         -t "$(ContainerImageLatestRef)" \
-        backend/
+        "$(Build.SourcesDirectory)/backend"
 
       echo "Built tags:"
       docker images "$(AcrLoginServer)/${{ parameters.imageRepository }}" --format "  {{.Repository}}:{{.Tag}}"
     displayName: "docker build pcpc/functions"
+    workingDirectory: $(Build.SourcesDirectory)
 
   # ---------------------------------------------------------------------------
   # Install Trivy (pinned), scan the locally built image, block on HIGH+ CVE
