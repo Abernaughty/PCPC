@@ -129,10 +129,12 @@ export async function getCardInfo(
         cacheAge = cachedEntry ? getCacheAge(cachedEntry.timestamp) : 0;
         monitoringService.trackEvent("cache.hit", { cardId, correlationId });
 
-        // Cache hit short-circuits to return immediately.
-        const response: ApiResponse<Card> = {
+        // Cache hit short-circuits to return immediately. Apply the
+        // same cardName→name rename as the cold-fetch path below — the
+        // initial fix missed this branch (Codex P2 review on PR #164).
+        const response: ApiResponse<ApiResponseCard> = {
           status: 200,
-          data: card,
+          data: cardToApiResponse(card),
           timestamp: new Date().toISOString(),
           cached: true,
           cacheAge,
