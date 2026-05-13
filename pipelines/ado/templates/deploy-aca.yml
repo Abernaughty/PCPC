@@ -200,8 +200,13 @@ steps:
 
   # ---------------------------------------------------------------------------
   # Blocking smoke tests. Reuses the existing health-check-functions.sh
-  # script — it's URL-agnostic and accepts an optional function key (ACA
-  # ingress is anonymous so we don't pass one).
+  # script — it's URL-agnostic and accepts an optional function key.
+  #
+  # We pass `EXPECT_FUNCTION_KEY=false` because ACA's public ingress is
+  # anonymous by design (see ADR-009). Without this flag the script
+  # would emit a warning for the skipped auth-required test, exit 2,
+  # and trip the blocking step — even though the health endpoint and
+  # all dependency checks pass cleanly.
   # ---------------------------------------------------------------------------
   - ${{ if eq(parameters.runSmokeTests, true) }}:
       - script: |
@@ -216,7 +221,8 @@ steps:
           echo "Environment: ${{ parameters.environment }}"
           echo ""
 
-          bash pipelines/ado/scripts/health-check-functions.sh "$(acaIngressUrl)"
+          EXPECT_FUNCTION_KEY=false \
+            bash pipelines/ado/scripts/health-check-functions.sh "$(acaIngressUrl)"
         displayName: "Run ACA Smoke Tests (blocking)"
         continueOnError: false
 
