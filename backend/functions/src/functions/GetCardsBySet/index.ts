@@ -25,6 +25,10 @@ import {
   cardHasPricing,
   mapScrydexCardToCard,
 } from "../../utils/scrydexToCosmos";
+import {
+  cardToApiResponse,
+  type ApiResponseCard,
+} from "../../utils/cardToApiResponse";
 
 function cardsHavePricingData(cards: Card[]): boolean {
   if (cards.length === 0) return false;
@@ -294,8 +298,12 @@ export async function getCardsBySet(
 
     // Response shape must match the Path A SvelteKit BFF
     // (frontend/src/lib/services/api.ts:103-107 reads `result.cards`).
+    // `cardToApiResponse` renames the canonical `cardName` field to the
+    // OpenAPI-spec'd `name` (see apim/specs/pcpc-api-v1.yaml + Path A's
+    // cardToFrontend transform). Without this, browser cards display
+    // with blank names on Paths B/C.
     const response: ApiResponse<{
-      cards: Card[];
+      cards: ApiResponseCard[];
       pagination: {
         page: number;
         pageSize: number;
@@ -305,7 +313,7 @@ export async function getCardsBySet(
     }> = {
       status: 200,
       data: {
-        cards: paginatedCards,
+        cards: paginatedCards.map(cardToApiResponse),
         pagination: { page, pageSize, totalCount, totalPages },
       },
       timestamp: new Date().toISOString(),
