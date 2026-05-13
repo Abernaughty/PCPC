@@ -135,18 +135,21 @@ steps:
     workingDirectory: $(Build.SourcesDirectory)
 
   # ---------------------------------------------------------------------------
-  # Install Trivy (pinned), scan the locally built image, block on HIGH+ CVE
+  # Scan the locally built image with Trivy (pinned), block on HIGH+ CVE.
+  #
+  # Uses the official `aquasec/trivy` Docker image instead of the install.sh
+  # script: install.sh has had repeated issues with asset-naming changes
+  # across Trivy releases (it failed silently after "found version" on
+  # v0.59.1 in the first attempt). The container approach also lets us
+  # scan the locally-built image by mounting the Docker socket — at this
+  # point in the pipeline the image exists only in the host daemon (not
+  # yet pushed to ACR), so a registry-based scan wouldn't work.
+  #
+  # Mounting `/root/.cache/trivy` as a working-directory cache keeps the
+  # vulnerability database between runs (within a single agent VM); on
+  # Microsoft-hosted agents each job is a fresh VM so the cache is empty
+  # — that's fine, it just means the first download per job.
   # ---------------------------------------------------------------------------
-  - script: |
-      set -euo pipefail
-
-      TRIVY_VERSION='${{ parameters.trivyVersion }}'
-      echo "Installing Trivy ${TRIVY_VERSION}..."
-      curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
-        | sh -s -- -b /tmp v${TRIVY_VERSION}
-      /tmp/trivy --version
-    displayName: "Install Trivy ${{ parameters.trivyVersion }}"
-
   - script: |
       set -euo pipefail
 
@@ -155,15 +158,20 @@ steps:
       echo "=========================================="
       echo "Image:    $(ContainerImageReference)"
       echo "Severity: ${{ parameters.trivySeverity }} (blocking)"
+      echo "Trivy:    aquasec/trivy:${{ parameters.trivyVersion }}"
       echo ""
 
-      /tmp/trivy image \
-        --severity '${{ parameters.trivySeverity }}' \
-        --exit-code 1 \
-        --no-progress \
-        --ignore-unfixed \
-        --scanners vuln \
-        "$(ContainerImageReference)"
+      docker run --rm \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        -v "$(Pipeline.Workspace)/.trivy-cache:/root/.cache/trivy" \
+        aquasec/trivy:${{ parameters.trivyVersion }} \
+        image \
+          --severity '${{ parameters.trivySeverity }}' \
+          --exit-code 1 \
+          --no-progress \
+          --ignore-unfixed \
+          --scanners vuln \
+          "$(ContainerImageReference)"
 
       echo ""
       echo "✓ Trivy scan passed — no ${{ parameters.trivySeverity }} CVEs with available fixes"
