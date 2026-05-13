@@ -1,8 +1,8 @@
 # PCPC Portfolio Plan: Tale of Three Architectures
 
 **Owner:** Michael Abernathy
-**Status:** Phase 0 done · Phase 1A done · Phase 1B mostly done (1 fix outstanding on PR #139, see issue #140) · Phase 2 not started
-**Last Updated:** 2026-05-07
+**Status:** Phases 0 / 1A / 1B / 2.1 / 2.2 all done · Phase 3 not started
+**Last Updated:** 2026-05-13
 **Target Completion:** ~1 week (2 weeks conservative)
 
 ## Phase progress (live, supersedes the per-phase status tables below)
@@ -11,7 +11,7 @@
 - **Phase 1A:** ✅ done via PR #131. BackendToggle UI, abstraction layer (`frontend/src/lib/backends/`), pokedata→scrydex adapter, ADR-007 (API Architecture Spectrum), ADR-008 (APIM vs BFF), `docs/architecture-comparison.md`, README live-demo section.
 - **Phase 1B:** ✅ done via PRs #132–#138 (+ #139/#141/#142/#143/#144 closing out the apply-time fix path). Custom domains deferred per ADR-012; CORS regex policy live per ADR-013.
 - **Phase 2.1:** ✅ done via PRs #145, #146 (2026-05-12). Backend cut over from PokeData to Scrydex. `@pcpc/shared` canonical types, `ScrydexApiService.ts`, smoke tests re-promoted to blocking. Tags: `phase-2/pre-scrydex-cutover`, `phase-2/post-scrydex-cutover`.
-- **Phase 2.2:** ✅ done. Path C live on dev. PR sequence: ADR-009 + 3-column comparison doc (#148); Dockerfile + container-app Terraform module + ADO pipeline stage, dev only (#150); ACR-name fix (#151); frontend toggle wiring + Vercel `PUBLIC_ACA_API_BASE_URL` env var (#152); polish PR provisioning a PCPC-owned ACR so the SP's AcrPull/AcrPush role assignments stay inside `pcpc-rg-dev` (this PR — replaces the earlier `data.azurerm_container_registry.shared` consumption pattern; ADR-009 updated with the "ACR ownership" rationale). Staging/prod promotion + CI tooling image migration both tracked as follow-ups. Tags: `phase-2.2/pre-aca`, `phase-2.2/post-aca-infra`, `phase-2.2/complete`.
+- **Phase 2.2:** ✅ done end-to-end on dev (2026-05-13). All three paths (Vercel BFF / Azure APIM / ACA) respond to live requests from `pcpc.maber.io` and toggle correctly. PR sequence: ADR-009 + 3-column comparison doc (#148); Dockerfile + container-app Terraform module + ADO pipeline stage (#150); ACR-name fix (#151); frontend toggle wiring + Vercel `PUBLIC_ACA_API_BASE_URL` (#152); PCPC-owned ACR so AcrPull/AcrPush role assignments stay inside `pcpc-rg-dev` (#153); pipeline polish #154–#158 (absolute build paths, dropping duplicate `checkout: self`, Trivy via Docker image, OTel/protobufjs CVE clearance, smoke-test tolerance of anonymous ACA ingress); gateway-layer auth model (#159, `authLevel: anonymous` on read endpoints + `forceRefresh` hardcoded false to close the Scrydex-credit-burn vector Codex caught); BackendToggle popover click-outside fix (#160, fixed the latent option-click swallowing that hid behind Vercel-as-default); APIM CORS preflight fix (#161, added `options:` operations to the OpenAPI spec so APIM routes preflight into the existing inbound handler — per Microsoft's documented "custom preflight via OPTIONS operation" pattern, since `<cors>` policy's `<allowed-origins>` still can't do wildcard subdomains for Vercel previews). Staging/prod promotion + CI tooling image migration tracked as follow-ups. Tags: `phase-2.2/pre-aca`, `phase-2.2/post-aca-infra`, `phase-2.2/complete`.
 - **Phase 3:** not started.
 
 ## ADRs accepted across Phases 1 and 2
