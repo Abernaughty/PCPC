@@ -238,21 +238,6 @@ if [ -n "$FUNC_JSON" ]; then
     done <<< "$FUNC_JSON"
 fi
 
-# Static Web Apps
-SWA_JSON=$(echo "$RESOURCES" | jq -c '.[] | select(.type=="Microsoft.Web/staticSites")')
-if [ -n "$SWA_JSON" ]; then
-    print_section_header "Static Web App"
-    while IFS= read -r row; do
-        [ -z "$row" ] && continue
-        swa_id=$(echo "$row" | jq -r '.id')
-        if resource_in_state "module.static_web_app.azurerm_static_web_app.this"; then
-            echo -e "  ${GREEN}✓ Static Web App already in state${NC}"
-        else
-            print_import_line "module.static_web_app.azurerm_static_web_app.this" "$swa_id"
-        fi
-    done <<< "$SWA_JSON"
-fi
-
 # Log Analytics Workspace
 LOG_JSON=$(echo "$RESOURCES" | jq -c '.[] | select(.type=="Microsoft.OperationalInsights/workspaces")')
 if [ -n "$LOG_JSON" ]; then

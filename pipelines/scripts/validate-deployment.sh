@@ -14,7 +14,6 @@ echo "=========================================="
 # Resource naming convention
 RESOURCE_GROUP="pcpc-rg-$ENVIRONMENT"
 FUNCTION_APP="pcpc-func-$ENVIRONMENT"
-STATIC_WEB_APP="pcpc-swa-$ENVIRONMENT"
 COSMOS_DB="pcpc-cosmos-$ENVIRONMENT"
 LOG_ANALYTICS="pcpc-log-$ENVIRONMENT"
 APP_INSIGHTS="pcpc-appi-$ENVIRONMENT"
@@ -97,23 +96,6 @@ if az functionapp show \
   fi
 else
   echo "⚠ Warning: Function App not found: $FUNCTION_APP"
-fi
-
-echo ""
-echo "Validating Static Web App..."
-if az staticwebapp show \
-  --resource-group "$RESOURCE_GROUP" \
-  --name "$STATIC_WEB_APP" &>/dev/null; then
-  echo "✓ Static Web App exists: $STATIC_WEB_APP"
-  
-  # Get default hostname
-  HOSTNAME=$(az staticwebapp show \
-    --resource-group "$RESOURCE_GROUP" \
-    --name "$STATIC_WEB_APP" \
-    --query "defaultHostname" -o tsv)
-  echo "  Default hostname: https://$HOSTNAME"
-else
-  echo "⚠ Warning: Static Web App not found: $STATIC_WEB_APP"
 fi
 
 echo ""

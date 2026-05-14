@@ -161,75 +161,9 @@ variable "function_app_config" {
   }
 }
 
-# Static Web App Configuration
-variable "static_web_app_location" {
-  description = "The location for the Static Web App"
-  type        = string
-  default     = "Central US"
-}
-
-variable "static_web_app_sku_tier" {
-  description = "The SKU tier for the Static Web App"
-  type        = string
-  default     = "Standard" # Standard tier for staging
-}
-
-variable "static_web_app_sku_size" {
-  description = "The SKU size for the Static Web App"
-  type        = string
-  default     = "Standard"
-}
-
-variable "static_web_app_settings" {
-  description = "App settings for the Static Web App"
-  type        = map(string)
-  default = {
-    "ENVIRONMENT" = "staging"
-    "DEBUG_MODE"  = "false"
-  }
-}
-
-variable "enable_custom_domain" {
-  description = "Enable custom domain configuration for the Static Web App"
-  type        = bool
-  default     = true
-}
-
-variable "custom_domain_name" {
-  description = "Custom domain to associate with the Static Web App"
-  type        = string
-  default     = "pcpc-staging.maber.io"
-}
-
-variable "custom_domain_dns_zone" {
-  description = "Authoritative DNS zone for the custom domain"
-  type        = string
-  default     = "maber.io"
-}
-
-variable "custom_domain_validation_type" {
-  description = "Validation method for the custom domain (cname-delegation or dns-txt-token)"
-  type        = string
-  default     = "cname-delegation"
-}
-
-variable "custom_domain_dns_propagation_delay" {
-  description = "Duration terraform should wait after creating the Porkbun DNS record before attempting Azure custom domain validation (e.g. 30s, 1m)"
-  type        = string
-  default     = "45s"
-}
-
-variable "porkbun_dns_record_ttl" {
-  description = "TTL for Porkbun DNS records (seconds)"
-  type        = number
-  default     = 600
-
-  validation {
-    condition     = var.porkbun_dns_record_ttl >= 600
-    error_message = "Porkbun requires TTL to be at least 600 seconds."
-  }
-}
-
+# Porkbun provider credentials. Kept until the destroy applies — the
+# porkbun_dns_record resource pending destroy still references them. Remove in
+# the follow-up cleanup PR.
 variable "porkbun_api_key" {
   description = "Porkbun API key used by the Terraform provider"
   type        = string
