@@ -58,6 +58,15 @@ RUN npm run build
 # -----------------------------------------------------------------------------
 FROM mcr.microsoft.com/azure-functions/node:4-node22
 
+# Pull Debian-patched OS packages. The upstream Functions base image rebuilds
+# lag CVE patches by days-to-weeks; without this layer the Trivy CVE scan in
+# build-and-push-image.yml blocks on any HIGH CVE patched in Debian since the
+# base was last rebuilt (e.g. CVE-2026-27135 in libnghttp2-14).
+RUN apt-get update && \
+    apt-get upgrade -y --no-install-recommends && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
+
 ENV AzureWebJobsScriptRoot=/home/site/wwwroot \
     AzureFunctionsJobHost__Logging__Console__IsEnabled=true \
     FUNCTIONS_WORKER_RUNTIME=node
