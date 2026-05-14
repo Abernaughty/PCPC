@@ -161,6 +161,21 @@ variable "function_app_config" {
   }
 }
 
+# Porkbun provider credentials. Kept until the destroy applies — the
+# porkbun_dns_record resource pending destroy still references them. Remove in
+# the follow-up cleanup PR.
+variable "porkbun_api_key" {
+  description = "Porkbun API key used by the Terraform provider"
+  type        = string
+  sensitive   = true
+}
+
+variable "porkbun_secret_key" {
+  description = "Porkbun secret API key used by the Terraform provider"
+  type        = string
+  sensitive   = true
+}
+
 # API Management Configuration
 variable "enable_api_management" {
   description = "Whether to enable API Management"

@@ -10,6 +10,17 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.5"
     }
+    # Kept while pending-destroy SWA + porkbun_dns_record + time_sleep are still
+    # in state. Remove in the follow-up cleanup PR once `terraform apply` has
+    # destroyed those resources in all three envs.
+    porkbun = {
+      source  = "marcfrederick/porkbun"
+      version = ">= 1.3.1"
+    }
+    time = {
+      source  = "hashicorp/time"
+      version = ">= 0.9.1"
+    }
   }
 
   # Remote backend for state management
@@ -37,6 +48,16 @@ provider "azurerm" {
 }
 
 provider "random" {}
+
+# Kept until the destroy applies — porkbun_dns_record + time_sleep resources
+# still exist in state and need their providers configured. Remove in the
+# follow-up cleanup PR.
+provider "porkbun" {
+  api_key        = var.porkbun_api_key
+  secret_api_key = var.porkbun_secret_key
+}
+
+provider "time" {}
 
 data "azurerm_client_config" "current" {}
 
