@@ -35,7 +35,6 @@ setup-dev: ## Set up development environment
 	@command -v az >/dev/null 2>&1 || { echo "Azure CLI is required but not installed. Aborting." >&2; exit 1; }
 	@echo "Installing global tools..."
 	@npm install -g @azure/functions-core-tools@4
-	@npm install -g @azure/static-web-apps-cli
 	@echo "Development environment setup complete!"
 
 # Cleaning

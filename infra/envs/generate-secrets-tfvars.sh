@@ -64,6 +64,8 @@ declare -A secrets=(
   ["SCRYDEX_TEAM_ID"]="SCRYDEX-TEAM-ID"
   ["ARM_CLIENT_ID"]="ARM-CLIENT-ID"
   ["ARM_CLIENT_SECRET"]="ARM-CLIENT-SECRET"
+  # Porkbun creds kept until the SWA decommission destroy applies in all three
+  # envs. Remove in the follow-up cleanup PR.
   ["PORKBUN_API_KEY"]="PORKBUN-API-KEY"
   ["PORKBUN_SECRET_KEY"]="PORKBUN-SECRET-KEY"
 )
@@ -99,16 +101,16 @@ cat >"${tfvars_path}" <<EOF
 # Generated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
 # Environment: ${environment}
 
+# Porkbun creds kept until the SWA decommission destroy applies; follow-up
+# cleanup PR will remove these once all envs have applied.
 porkbun_api_key    = "${values["PORKBUN_API_KEY"]}"
 porkbun_secret_key = "${values["PORKBUN_SECRET_KEY"]}"
 
 function_app_secrets = {
-  "SCRYDEX_API_KEY"    = "${values["SCRYDEX_API_KEY"]}"
-  "SCRYDEX_TEAM_ID"    = "${values["SCRYDEX_TEAM_ID"]}"
-  "ARM_CLIENT_ID"      = "${values["ARM_CLIENT_ID"]}"
-  "ARM_CLIENT_SECRET"  = "${values["ARM_CLIENT_SECRET"]}"
-  "PORKBUN_API_KEY"    = "${values["PORKBUN_API_KEY"]}"
-  "PORKBUN_SECRET_KEY" = "${values["PORKBUN_SECRET_KEY"]}"
+  "SCRYDEX_API_KEY"   = "${values["SCRYDEX_API_KEY"]}"
+  "SCRYDEX_TEAM_ID"   = "${values["SCRYDEX_TEAM_ID"]}"
+  "ARM_CLIENT_ID"     = "${values["ARM_CLIENT_ID"]}"
+  "ARM_CLIENT_SECRET" = "${values["ARM_CLIENT_SECRET"]}"
 }
 EOF
 

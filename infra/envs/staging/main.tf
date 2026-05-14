@@ -6,13 +6,16 @@ terraform {
       source  = "hashicorp/azurerm"
       version = ">= 4.47.0, < 5.0.0"
     }
-    porkbun = {
-      source  = "marcfrederick/porkbun"
-      version = ">= 1.3.1"
-    }
     random = {
       source  = "hashicorp/random"
       version = "~> 3.5"
+    }
+    # Kept while pending-destroy SWA + porkbun_dns_record + time_sleep are still
+    # in state. Remove in the follow-up cleanup PR once `terraform apply` has
+    # destroyed those resources in all three envs.
+    porkbun = {
+      source  = "marcfrederick/porkbun"
+      version = ">= 1.3.1"
     }
     time = {
       source  = "hashicorp/time"
@@ -46,6 +49,9 @@ provider "azurerm" {
 
 provider "random" {}
 
+# Kept until the destroy applies — porkbun_dns_record + time_sleep resources
+# still exist in state and need their providers configured. Remove in the
+# follow-up cleanup PR.
 provider "porkbun" {
   api_key        = var.porkbun_api_key
   secret_api_key = var.porkbun_secret_key
@@ -72,14 +78,6 @@ locals {
     # CreatedDate = formatdate("YYYY-MM-DD", timestamp())
     Repository = "PCPC"
   }
-
-  custom_domain_enabled = var.enable_custom_domain && var.custom_domain_name != "" && var.custom_domain_dns_zone != ""
-
-  custom_domain_label = local.custom_domain_enabled ? (
-    var.custom_domain_name == var.custom_domain_dns_zone ?
-    "@" :
-    replace(var.custom_domain_name, ".${var.custom_domain_dns_zone}", "")
-  ) : ""
 
   function_app_secret_exclusions = [
     "ARM_CLIENT_ID",
@@ -212,57 +210,6 @@ module "function_app" {
   tags = local.common_tags
 
   depends_on = [module.resource_group, module.storage_account, module.cosmos_db, module.application_insights]
-}
-
-# Static Web App
-module "static_web_app" {
-  source = "../../modules/static-web-app"
-
-  name                = "pcpc-swa-${local.environment}"
-  resource_group_name = module.resource_group.name
-  location            = var.static_web_app_location
-  environment         = var.environment
-
-  sku_tier = var.static_web_app_sku_tier
-  sku_size = var.static_web_app_sku_size
-
-  # Runtime configuration injected via Azure Static Web App Application Settings
-  # These values are exposed to the frontend via window.__ENV__ at runtime
-  app_settings = {
-    API_URL = "https://pcpc-apim-staging.azure-api.net/pcpc-api/v1"
-    DEBUG   = "true"
-  }
-
-  tags = local.common_tags
-
-  depends_on = [module.resource_group, module.function_app]
-}
-
-resource "porkbun_dns_record" "static_web_app_custom_domain" {
-  count = local.custom_domain_enabled ? 1 : 0
-
-  domain    = var.custom_domain_dns_zone
-  subdomain = local.custom_domain_label
-  type      = "CNAME"
-  content   = module.static_web_app.default_host_name
-  ttl       = var.porkbun_dns_record_ttl
-}
-
-resource "time_sleep" "wait_for_custom_domain_dns" {
-  count           = local.custom_domain_enabled ? 1 : 0
-  create_duration = var.custom_domain_dns_propagation_delay
-
-  depends_on = [porkbun_dns_record.static_web_app_custom_domain]
-}
-
-resource "azurerm_static_web_app_custom_domain" "static_web_app" {
-  count = local.custom_domain_enabled ? 1 : 0
-
-  static_web_app_id = module.static_web_app.id
-  domain_name       = var.custom_domain_name
-  validation_type   = var.custom_domain_validation_type
-
-  depends_on = [time_sleep.wait_for_custom_domain_dns]
 }
 
 # Log Analytics Workspace
