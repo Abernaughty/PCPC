@@ -12,9 +12,10 @@ The infrastructure is organized into reusable modules and environment-specific c
 infra/
 ├── modules/                    # Reusable Terraform modules
 │   ├── api-management/        # Azure API Management
+│   ├── container-app/         # Azure Container Apps (Path C)
+│   ├── container-registry/    # Azure Container Registry
 │   ├── cosmos-db/             # Cosmos DB (serverless NoSQL)
-│   ├── function-app/          # Azure Functions
-│   ├── static-web-app/        # Azure Static Web Apps (frontend)
+│   ├── function-app/          # Azure Functions (Path B)
 │   └── storage-account/       # Azure Blob Storage
 └── envs/                      # Environment-specific configurations
     ├── dev/                   # Development environment
@@ -26,11 +27,13 @@ infra/
 
 | Resource | Purpose |
 |---|---|
-| Azure Static Web Apps | Frontend hosting |
-| Azure Functions (Node.js 22) | Serverless backend API |
+| Azure Functions (Node.js 22) | Serverless backend API (Path B) |
+| Azure Container Apps + Container Registry | Containerized backend API (Path C) |
 | Azure API Management | API gateway, rate limiting, caching |
 | Cosmos DB (Serverless) | NoSQL document storage for card/price data |
-| Azure Blob Storage | Card image caching, state storage |
+| Azure Blob Storage | Function App content, state storage |
+
+> Frontend is hosted on Vercel (see `frontend/`); the prior Azure Static Web Apps + Porkbun DNS provisioning was removed on 2026-05-14.
 
 ## Usage
 

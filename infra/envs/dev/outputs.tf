@@ -106,44 +106,6 @@ output "function_app_identity_principal_id" {
   value       = module.function_app.identity_principal_id
 }
 
-# Static Web App Outputs
-output "static_web_app_name" {
-  description = "Name of the Static Web App"
-  value       = module.static_web_app.name
-}
-
-output "static_web_app_id" {
-  description = "ID of the Static Web App"
-  value       = module.static_web_app.id
-}
-
-output "static_web_app_default_hostname" {
-  description = "Default hostname of the Static Web App"
-  value       = module.static_web_app.default_host_name
-}
-
-output "static_web_app_url" {
-  description = "URL of the Static Web App"
-  value       = module.static_web_app.url
-}
-
-output "static_web_app_api_key" {
-  description = "API key for the Static Web App"
-  value       = module.static_web_app.api_key
-  sensitive   = true
-}
-
-output "static_web_app_custom_domain" {
-  description = "Custom domain associated with the Static Web App"
-  value       = local.custom_domain_enabled ? var.custom_domain_name : null
-}
-
-output "static_web_app_custom_domain_record" {
-  description = "Porkbun DNS record ID for the Static Web App custom domain"
-  value       = local.custom_domain_enabled ? try(porkbun_dns_record.static_web_app_custom_domain[0].id, null) : null
-  sensitive   = true
-}
-
 # Log Analytics Outputs
 output "log_analytics_workspace_id" {
   description = "ID of the Log Analytics workspace"
@@ -259,7 +221,6 @@ output "deployment_summary" {
     resource_group       = module.resource_group.name
     location             = var.location
     function_app         = module.function_app.name
-    static_web_app       = module.static_web_app.name
     cosmos_db            = module.cosmos_db.name
     storage_account      = module.storage_account.storage_account_name
     log_analytics        = module.log_analytics.name

@@ -1,5 +1,7 @@
 # PCPC Deployment Guide
 
+> **Note (2026-05-14):** The frontend has moved to Vercel (see `frontend/` and [docs/architecture-comparison.md](architecture-comparison.md)); the Azure Static Web App + Porkbun DNS provisioning described below has been removed from the Terraform configuration. SWA / Static Web App / Porkbun sections in this document are retained for historical reference but no longer describe the active deployment path.
+
 ## Table of Contents
 
 - [Overview](#overview)

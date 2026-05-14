@@ -124,18 +124,6 @@ steps:
         else
           echo "  ✅ ARM_CLIENT_SECRET is set (length: ${#ARM_CLIENT_SECRET})"
         fi
-
-        if [ -z "${PORKBUN_API_KEY}" ]; then
-          echo "  ❌ PORKBUN_API_KEY is NOT SET or EMPTY"
-        else
-          echo "  ✅ PORKBUN_API_KEY is set (length: ${#PORKBUN_API_KEY})"
-        fi
-
-        if [ -z "${PORKBUN_SECRET_KEY}" ]; then
-          echo "  ❌ PORKBUN_SECRET_KEY is NOT SET or EMPTY"
-        else
-          echo "  ✅ PORKBUN_SECRET_KEY is set (length: ${#PORKBUN_SECRET_KEY})"
-        fi
         echo ""
 
         # Create secrets.auto.tfvars file using bash environment variables
@@ -149,15 +137,10 @@ steps:
         # and contains secrets from variable group (mapped via env: parameter).
         # It is automatically cleaned up after the pipeline completes.
 
-        porkbun_api_key    = "$PORKBUN_API_KEY"
-        porkbun_secret_key = "$PORKBUN_SECRET_KEY"
-
         function_app_secrets = {
           # API Keys from variable group (with underscores)
-          "SCRYDEX_API_KEY"      = "$SCRYDEX_API_KEY"
-          "SCRYDEX_TEAM_ID"      = "$SCRYDEX_TEAM_ID"
-          "PORKBUN_API_KEY"      = "$PORKBUN_API_KEY"
-          "PORKBUN_SECRET_KEY"   = "$PORKBUN_SECRET_KEY"
+          "SCRYDEX_API_KEY" = "$SCRYDEX_API_KEY"
+          "SCRYDEX_TEAM_ID" = "$SCRYDEX_TEAM_ID"
 
           # Note: ARM_CLIENT_ID and ARM_CLIENT_SECRET removed
           # These Service Principal credentials are only needed for Terraform/APIM deployment,
@@ -226,8 +209,6 @@ steps:
       SCRYDEX_TEAM_ID: $(SCRYDEX-TEAM-ID)
       ARM_CLIENT_ID: $(ARM-CLIENT-ID)
       ARM_CLIENT_SECRET: $(ARM-CLIENT-SECRET)
-      PORKBUN_API_KEY: $(PORKBUN-API-KEY)
-      PORKBUN_SECRET_KEY: $(PORKBUN-SECRET-KEY)
 
   - task: AzureCLI@2
     name: TerraformPlan
@@ -322,21 +303,18 @@ steps:
         # Extract key outputs and set as pipeline variables
         RESOURCE_GROUP=$(terraform output -raw resource_group_name 2>/dev/null || echo "")
         FUNCTION_APP=$(terraform output -raw function_app_name 2>/dev/null || echo "")
-        STATIC_WEB_APP=$(terraform output -raw static_web_app_name 2>/dev/null || echo "")
         COSMOS_ENDPOINT=$(terraform output -raw cosmos_db_endpoint 2>/dev/null || echo "")
         STORAGE_ACCOUNT=$(terraform output -raw storage_account_name 2>/dev/null || echo "")
 
         # Set pipeline variables for downstream jobs
         echo "##vso[task.setvariable variable=ResourceGroupName;isOutput=true]$RESOURCE_GROUP"
         echo "##vso[task.setvariable variable=FunctionAppName;isOutput=true]$FUNCTION_APP"
-        echo "##vso[task.setvariable variable=StaticWebAppName;isOutput=true]$STATIC_WEB_APP"
         echo "##vso[task.setvariable variable=CosmosEndpoint;isOutput=true]$COSMOS_ENDPOINT"
         echo "##vso[task.setvariable variable=StorageAccountName;isOutput=true]$STORAGE_ACCOUNT"
 
         echo "Terraform outputs captured:"
         echo "  Resource Group: $RESOURCE_GROUP"
         echo "  Function App: $FUNCTION_APP"
-        echo "  Static Web App: $STATIC_WEB_APP"
         echo "  Cosmos DB: $COSMOS_ENDPOINT"
         echo "  Storage Account: $STORAGE_ACCOUNT"
 
@@ -374,15 +352,6 @@ steps:
           fi
         fi
 
-        STATIC_WEB_APP=$(terraform output -raw static_web_app_name 2>/dev/null || echo "")
-        if [ -n "$STATIC_WEB_APP" ]; then
-          if az staticwebapp show --name "$STATIC_WEB_APP" --resource-group "$RESOURCE_GROUP" &>/dev/null; then
-            echo "✓ Static Web App exists: $STATIC_WEB_APP"
-          else
-            echo "⚠ Static Web App not found: $STATIC_WEB_APP"
-          fi
-        fi
-
         COSMOS_ACCOUNT=$(terraform output -raw cosmos_db_account_name 2>/dev/null || echo "")
         if [ -n "$COSMOS_ACCOUNT" ]; then
           if az cosmosdb show --name "$COSMOS_ACCOUNT" --resource-group "$RESOURCE_GROUP" &>/dev/null; then
@@ -416,7 +385,6 @@ steps:
         echo "Environment: ${{ upper(parameters.environment) }}"
         echo "Resource Group: $(terraform output -raw resource_group_name)"
         echo "Function App: $(terraform output -raw function_app_name 2>/dev/null || echo 'N/A')"
-        echo "Static Web App: $(terraform output -raw static_web_app_name 2>/dev/null || echo 'N/A')"
         echo "Cosmos DB: $(terraform output -raw cosmos_db_account_name 2>/dev/null || echo 'N/A')"
         echo "Storage Account: $(terraform output -raw storage_account_name 2>/dev/null || echo 'N/A')"
         echo "=========================================="
