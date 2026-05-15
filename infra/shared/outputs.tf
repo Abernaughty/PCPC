@@ -7,13 +7,13 @@
 # -----------------------------------------------------------------------------
 
 output "resource_group_name" {
-  description = "Name of the shared resource group hosting the ACR."
-  value       = module.resource_group.name
+  description = "Name of the shared resource group hosting the ACR. (The RG itself is operator-managed — not in this state — but exposed here for env TFs that need the name without re-reading it.)"
+  value       = data.azurerm_resource_group.shared.name
 }
 
 output "resource_group_id" {
   description = "Resource ID of the shared resource group."
-  value       = module.resource_group.id
+  value       = data.azurerm_resource_group.shared.id
 }
 
 output "acr_name" {

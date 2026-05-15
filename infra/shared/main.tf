@@ -85,15 +85,21 @@ locals {
 
 # -----------------------------------------------------------------------------
 # Shared Resource Group
+#
+# Read via data source rather than managed by this module. The RG must be
+# created manually by an operator BEFORE this TF runs because RG-scoped
+# RBAC grants (Contributor + RBAC Administrator) on the SP are themselves
+# the prerequisite for `terraform apply` to succeed — if Terraform tried
+# to create the RG itself, the SP would need broader (subscription-scoped)
+# Contributor, which we want to avoid. Operator workflow:
+#   1. `az group create -n pcpc-rg-shared -l <location> --tags ...`
+#   2. Grant SP `Contributor` + `RBAC Administrator` (ABAC: AcrPull/AcrPush)
+#      on the RG.
+#   3. `terraform init && terraform apply` (this module) — data-sources
+#      the existing RG and creates the ACR + role assignment inside it.
 # -----------------------------------------------------------------------------
-module "resource_group" {
-  source = "../modules/resource-group"
-
-  name         = "pcpc-rg-shared"
-  location     = var.location
-  environment  = "shared"
-  project_name = var.project_name
-  tags         = local.common_tags
+data "azurerm_resource_group" "shared" {
+  name = "pcpc-rg-shared"
 }
 
 # -----------------------------------------------------------------------------
@@ -107,16 +113,14 @@ module "container_registry" {
   source = "../modules/container-registry"
 
   name                = "pcpcacr${random_string.suffix.result}"
-  resource_group_name = module.resource_group.name
-  location            = var.location
+  resource_group_name = data.azurerm_resource_group.shared.name
+  location            = data.azurerm_resource_group.shared.location
   environment         = "shared"
 
   sku           = var.container_registry_sku
   admin_enabled = false
 
   tags = local.common_tags
-
-  depends_on = [module.resource_group]
 }
 
 # Grant the ADO service principal AcrPush on the shared ACR so the pipeline's

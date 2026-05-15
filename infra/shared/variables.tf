@@ -1,9 +1,3 @@
-variable "location" {
-  description = "Azure region for the shared resource group and its resources. Should match the region of the env workloads that pull from this ACR — cross-region pulls work but add latency."
-  type        = string
-  default     = "centralus"
-}
-
 variable "project_name" {
   description = "Project name used in tags."
   type        = string
