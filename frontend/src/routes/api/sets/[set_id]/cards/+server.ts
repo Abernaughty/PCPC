@@ -65,7 +65,6 @@ export const GET: RequestHandler = async ({ params, url }) => {
   const correlationId = monitoring.createCorrelationId();
 
   const setId = params.set_id;
-  const forceRefresh = url.searchParams.get('forceRefresh') === 'true';
   const page = parseInt(url.searchParams.get('page') || '1');
   const pageSize = Math.min(parseInt(url.searchParams.get('pageSize') || '500'), 500);
 
@@ -86,8 +85,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
     let cacheHit = false;
     let cacheAge = 0;
 
-    // Check Redis cache
-    if (!forceRefresh && config.enableRedisCache) {
+    // Check Redis cache (keyed on setId + pagination)
+    if (config.enableRedisCache) {
       console.log(`[GetCardsBySet] Checking Redis cache with key: ${cacheKey}`);
       const redisService = getRedisCacheService();
       const cachedEntry = await redisService.get<CacheEntry<Card[]>>(cacheKey);

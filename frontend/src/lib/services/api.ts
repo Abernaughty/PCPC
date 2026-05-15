@@ -63,12 +63,10 @@ async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
 export const api = {
   /**
    * Get all Pokémon sets.
-   * @param forceRefresh - Bypass server cache
    * @param language - Language filter: 'en', 'jp', or 'both'
    */
-  async getSets(forceRefresh = false, language = 'en'): Promise<PokemonSet[]> {
+  async getSets(language = 'en'): Promise<PokemonSet[]> {
     const params = new URLSearchParams();
-    if (forceRefresh) params.set('forceRefresh', 'true');
     params.set('all', 'true');
 
     if (language === 'both') {

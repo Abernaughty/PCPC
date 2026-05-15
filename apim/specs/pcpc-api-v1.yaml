@@ -63,12 +63,6 @@ paths:
           schema:
             type: boolean
             default: false
-        - name: forceRefresh
-          in: query
-          description: Force refresh of cached data
-          schema:
-            type: boolean
-            default: true
         - name: groupByExpansion
           in: query
           description: Group sets by expansion (legacy parameter)
@@ -219,12 +213,6 @@ paths:
             minimum: 1
             maximum: 100
             default: 50
-        - name: forceRefresh
-          in: query
-          description: Force refresh of cached data
-          schema:
-            type: boolean
-            default: true
       responses:
         "200":
           description: Successful response with cards for the set
@@ -299,12 +287,6 @@ paths:
             type: string
             pattern: "^[a-zA-Z0-9-_]+$"
             example: "001"
-        - name: forceRefresh
-          in: query
-          description: Force refresh of cached pricing data
-          schema:
-            type: boolean
-            default: true
       responses:
         "200":
           description: Successful response with detailed card information

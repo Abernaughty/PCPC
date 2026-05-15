@@ -37,7 +37,7 @@ import {
  * 1. Validate route params (setId, cardId)
  * 2. Check Redis (cache hit returns immediately)
  * 3. Check Cosmos
- * 4. If missing OR no pricing OR forceRefresh: fetch from Scrydex with prices
+ * 4. If missing OR no pricing: fetch from Scrydex with prices
  * 5. Persist + cache; return canonical Card shape
  */
 export async function getCardInfo(
@@ -89,21 +89,16 @@ export async function getCardInfo(
       `${correlationId} Processing request for card ${cardId} in set ${setId}`
     );
 
-    // SECURITY: see GetSetList for the rationale. `forceRefresh` is
-    // intentionally ignored on anonymous-auth public endpoints to
-    // prevent unbounded Scrydex API credit burn (this endpoint can also
-    // re-fetch pricing on demand, which is a separate Scrydex cost vector).
-    // Card data still re-fetches from Scrydex on legitimate cache misses
-    // (bounded by card cardinality) and on stale-pricing detection via
-    // `needsPricing` — only the forceRefresh override is removed.
-    // Addresses Codex P1 review on PR #159.
-    const forceRefresh = false;
+    // No client-controllable cache bypass — see GetSetList. Card data
+    // still re-fetches from Scrydex on legitimate cache misses (bounded
+    // by card cardinality) and on stale-pricing detection via
+    // `needsPricing` below (Codex P1 on PR #159, formalized by removing
+    // the param entirely in this PR).
     const cardsTtl = parseInt(process.env.CACHE_TTL_CARDS || "3600");
 
     monitoringService.trackEvent("request.parameters", {
       cardId,
       setId,
-      forceRefresh,
       correlationId,
     });
 
@@ -112,7 +107,7 @@ export async function getCardInfo(
     let cacheHit = false;
     let cacheAge = 0;
 
-    if (!forceRefresh && process.env.ENABLE_REDIS_CACHE === "true") {
+    if (process.env.ENABLE_REDIS_CACHE === "true") {
       const cacheStartTime = Date.now();
       context.log(`${correlationId} Checking Redis cache: ${cacheKey}`);
       const cachedEntry = await redisCacheService.get<{
@@ -182,15 +177,11 @@ export async function getCardInfo(
     }
     monitoringService.trackMetric("cosmosdb.query.duration", dbTime);
 
-    // Fetch from Scrydex if we don't have a card, the caller asked for a
-    // forced refresh, or the existing card lacks pricing.
+    // Fetch from Scrydex if we don't have a card or the existing card
+    // lacks pricing.
     const needsPricing = !cardHasPricing(card);
-    if (!card || forceRefresh || needsPricing) {
-      const reason = !card
-        ? "missing card"
-        : forceRefresh
-        ? "forceRefresh"
-        : "missing pricing";
+    if (!card || needsPricing) {
+      const reason = !card ? "missing card" : "missing pricing";
       context.log(
         `${correlationId} Fetching card from Scrydex API (${reason})`
       );

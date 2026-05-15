@@ -71,11 +71,9 @@ export async function getCardsBySet(
 
     context.log(`${correlationId} Processing Scrydex request for setId: ${setId}`);
 
-    // SECURITY: see GetSetList for the rationale. `forceRefresh` is
-    // intentionally ignored on anonymous-auth public endpoints to
-    // prevent unbounded Scrydex API credit burn. Addresses Codex P1
-    // review on PR #159.
-    const forceRefresh = false;
+    // No client-controllable cache bypass — see GetSetList for the
+    // Scrydex-credit-burn rationale (Codex P1 on PR #159, formalized by
+    // removing the param entirely in this PR).
     const page = parseInt(request.query.get("page") || "1");
     const pageSize = Math.min(
       parseInt(request.query.get("pageSize") || "500"),
@@ -92,14 +90,13 @@ export async function getCardsBySet(
     }
 
     context.log(
-      `${correlationId} Parameters - setId: ${setId}, page: ${page}, pageSize: ${pageSize}, forceRefresh: ${forceRefresh}`
+      `${correlationId} Parameters - setId: ${setId}, page: ${page}, pageSize: ${pageSize}`
     );
 
     monitoringService.trackEvent("request.parameters", {
       setId,
       page,
       pageSize,
-      forceRefresh,
       correlationId,
     });
 
@@ -108,7 +105,7 @@ export async function getCardsBySet(
     let cacheHit = false;
     let cacheAge = 0;
 
-    if (!forceRefresh && process.env.ENABLE_REDIS_CACHE === "true") {
+    if (process.env.ENABLE_REDIS_CACHE === "true") {
       context.log(`${correlationId} Checking Redis cache for key: ${cacheKey}`);
       const cacheStartTime = Date.now();
       const cachedEntry = await redisCacheService.get<{

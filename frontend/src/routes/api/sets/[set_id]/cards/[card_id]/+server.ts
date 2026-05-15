@@ -49,7 +49,6 @@ export const GET: RequestHandler = async ({ params, url }) => {
 
   const setId = params.set_id;
   const cardId = params.card_id;
-  const forceRefresh = url.searchParams.get('forceRefresh') === 'true';
 
   monitoring.trackEvent('function.invoked', {
     functionName: 'GetCardInfo',
@@ -67,8 +66,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
     let cacheHit = false;
     let cacheAge = 0;
 
-    // Check Redis cache
-    if (!forceRefresh && config.enableRedisCache) {
+    // Check Redis cache (keyed on cardId + setId)
+    if (config.enableRedisCache) {
       console.log(`[GetCardInfo] Checking Redis cache with key: ${cacheKey}`);
       const redisService = getRedisCacheService();
       const cachedEntry = await redisService.get<CacheEntry<Card>>(cacheKey);
@@ -113,7 +112,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
     // Fetch from Scrydex API (single call includes pricing via ?include=prices)
     // Also fetch if the card exists but has no pricing data (e.g. saved from list endpoint)
     const needsPricing = !cardHasPricing(card);
-    if (!card || forceRefresh || needsPricing) {
+    if (!card || needsPricing) {
       if (card && needsPricing) {
         console.log(
           `[GetCardInfo] Card ${cardId} exists but has no pricing data, fetching from Scrydex API`
