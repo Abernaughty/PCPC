@@ -57,7 +57,7 @@ interface SetsStore {
   isLoadingSets: boolean;
   language: LanguageFilter;
   showOnlineOnly: boolean;
-  loadSets(forceRefresh?: boolean): Promise<void>;
+  loadSets(bypassClientCache?: boolean): Promise<void>;
   selectSet(set: PokemonSet): void;
   clearSet(): void;
   setLanguage(lang: LanguageFilter): Promise<void>;
@@ -95,9 +95,14 @@ function createSetsStore(): SetsStore {
   }
 
   /**
-   * Load sets from API or cache
+   * Load sets from API or cache.
+   *
+   * `bypassClientCache` skips the IndexedDB read, used on language switch
+   * because the IDB store is language-agnostic (holds whatever was last
+   * fetched). Server-side caches are keyed on language already, so the API
+   * call below produces fresh data without any server-side cache-bust hint.
    */
-  async function loadSets(forceRefresh = false): Promise<void> {
+  async function loadSets(bypassClientCache = false): Promise<void> {
     if (isLoadingSets) return;
 
     isLoadingSets = true;
@@ -106,19 +111,16 @@ function createSetsStore(): SetsStore {
     try {
       let sets: PokemonSet[] | null = null;
 
-      // Try cache first if not forcing refresh
-      // Note: cache is language-agnostic (stores whatever was last fetched).
-      // When language changes, we force a fresh fetch.
-      if (!forceRefresh && browser) {
+      if (!bypassClientCache && browser) {
         sets = await db.getSetList();
         if (sets) {
           log.info(`Retrieved ${sets.length} sets from cache`);
         }
       }
 
-      // Fetch from API if not in cache or forced refresh
+      // Fetch from API if not in cache or IDB was bypassed
       if (!sets) {
-        sets = await api.getSets(forceRefresh, language);
+        sets = await api.getSets(language);
         log.info(`Retrieved ${sets.length} sets from API (language: ${language})`);
 
         // Cache the sets
@@ -186,7 +188,8 @@ function createSetsStore(): SetsStore {
       // cardsStore may not be loaded yet
     }
 
-    // Force refresh from API with new language
+    // Bypass IDB cache (language-agnostic; holds the old language) and
+    // re-fetch from the server, which is language-keyed.
     await loadSets(true);
   }
 

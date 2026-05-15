@@ -194,7 +194,6 @@ Retrieve Pokemon card sets with pagination and filtering.
 - `page` (optional): Page number (default: 1)
 - `pageSize` (optional): Items per page, 1-100 (default: 100)
 - `all` (optional): Return all sets without pagination (default: false)
-- `forceRefresh` (optional): Force refresh of cached data (default: false)
 
 **Example:**
 
@@ -212,7 +211,6 @@ Retrieve cards for a specific Pokemon card set.
 - `setCode` (required): Set code (e.g., 'sv8', 'base1')
 - `page` (optional): Page number (default: 1)
 - `pageSize` (optional): Cards per page, 1-100 (default: 50)
-- `forceRefresh` (optional): Force refresh of cached data (default: false)
 
 **Example:**
 
@@ -229,7 +227,6 @@ Retrieve detailed information for a specific Pokemon card.
 
 - `setId` (required): Set identifier
 - `cardId` (required): Card identifier within the set
-- `forceRefresh` (optional): Force refresh of cached pricing data (default: false)
 
 **Example:**
 

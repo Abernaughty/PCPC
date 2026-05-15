@@ -123,14 +123,6 @@ resource "azurerm_api_management_api_operation" "get_sets" {
       default_value = "true"
       required      = false
     }
-
-    query_parameter {
-      name          = "forceRefresh"
-      type          = "boolean"
-      description   = "Force refresh of cached data"
-      default_value = "true"
-      required      = false
-    }
   }
 
   response {
@@ -192,14 +184,6 @@ resource "azurerm_api_management_api_operation" "get_cards_by_set" {
       default_value = "50"
       required      = false
     }
-
-    query_parameter {
-      name          = "forceRefresh"
-      type          = "boolean"
-      description   = "Force refresh of cached data"
-      default_value = "true"
-      required      = false
-    }
   }
 
   response {
@@ -250,16 +234,6 @@ resource "azurerm_api_management_api_operation" "get_card_info" {
     type        = "string"
     description = "The card identifier within the set"
     required    = true
-  }
-
-  request {
-    query_parameter {
-      name          = "forceRefresh"
-      type          = "boolean"
-      description   = "Force refresh of cached pricing data"
-      default_value = "true"
-      required      = false
-    }
   }
 
   response {

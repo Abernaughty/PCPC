@@ -23,7 +23,6 @@ export const GET: RequestHandler = async ({ url }) => {
 
   try {
     const language = url.searchParams.get('language') || 'en';
-    const forceRefresh = url.searchParams.get('forceRefresh') === 'true';
     const returnAll = url.searchParams.get('all') === 'true';
     const page = parseInt(url.searchParams.get('page') || '1');
     const pageSize = parseInt(url.searchParams.get('pageSize') || '100');
@@ -40,8 +39,9 @@ export const GET: RequestHandler = async ({ url }) => {
     let cacheHit = false;
     let cacheAge = 0;
 
-    // Check Redis cache
-    if (!forceRefresh && config.enableRedisCache) {
+    // Check Redis cache (keyed on language; freshness on language switch
+    // comes from the cache-key miss, no client-supplied bust needed)
+    if (config.enableRedisCache) {
       console.log(`[GetSets] Checking Redis cache with key: ${cacheKey}`);
       const cacheCheckStart = Date.now();
       const redisService = getRedisCacheService();
