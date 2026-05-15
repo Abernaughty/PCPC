@@ -326,39 +326,23 @@ module "api_management" {
 # -----------------------------------------------------------------------------
 # Phase 2.2 — Path C (ACA Container)
 #
-# Polish PR: PCPC owns its own ACR. The previous design consumed the shared
-# `maberdevcontainerregistry` in `dev-rg` via data source, which forced
-# cross-RG RBAC grants on the ADO SP. Now the ACR lives in pcpc-rg-dev and
-# every role assignment against it works inside the SP's existing scope.
-# See ADR-009's "ACR ownership" subsection.
+# The ACR consumed by this Container App lives in `pcpc-rg-shared` (PR 2.5),
+# not in `pcpc-rg-dev`. Each env's TF reads the shared ACR via
+# `data.terraform_remote_state.shared` and scopes its own UAMI's AcrPull
+# role assignment to that ACR. Dev/staging/prod all consume symmetrically.
+# See ADR-009's "ACR ownership" subsection for the rationale.
 # -----------------------------------------------------------------------------
 
-module "container_registry" {
-  source = "../../modules/container-registry"
-
-  name                = "pcpcacr${local.environment}${random_string.suffix.result}"
-  resource_group_name = module.resource_group.name
-  location            = var.location
-  environment         = var.environment
-
-  sku           = var.container_registry_sku
-  admin_enabled = false
-
-  tags = local.common_tags
-
-  depends_on = [module.resource_group]
-}
-
-# Grant the ADO service principal AcrPush on the new ACR. Without this, the
-# pipeline cannot push application images via `az acr login` + `docker push`.
-# `data.azurerm_client_config.current.object_id` is the SP that's applying
-# this Terraform — i.e., the same identity the pipeline runs as.
-resource "azurerm_role_assignment" "ado_sp_acr_push" {
-  scope                = module.container_registry.id
-  role_definition_name = "AcrPush"
-  principal_id         = data.azurerm_client_config.current.object_id
-
-  depends_on = [module.container_registry]
+data "terraform_remote_state" "shared" {
+  backend = "azurerm"
+  config = {
+    resource_group_name  = "pcpc-terraform-state-rg"
+    storage_account_name = "pcpctfstatedacc29c2"
+    container_name       = "tfstate"
+    key                  = "shared.terraform.tfstate"
+    tenant_id            = "5f445a68-ec75-42cf-a50f-6ec158ee675c"
+    subscription_id      = "555b4cfa-ad2e-4c71-9433-620a59cf7616"
+  }
 }
 
 module "container_app" {
@@ -371,8 +355,8 @@ module "container_app" {
 
   log_analytics_workspace_id = module.log_analytics.id
 
-  acr_id           = module.container_registry.id
-  acr_login_server = module.container_registry.login_server
+  acr_id           = data.terraform_remote_state.shared.outputs.acr_id
+  acr_login_server = data.terraform_remote_state.shared.outputs.acr_login_server
   image_repository = var.container_app_image_repository
   image_tag        = var.container_app_image_tag
 
@@ -420,6 +404,5 @@ module "container_app" {
     module.cosmos_db,
     module.application_insights,
     module.log_analytics,
-    module.container_registry,
   ]
 }

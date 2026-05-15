@@ -27,13 +27,13 @@ variable "location" {
 # -----------------------------------------------------------------------------
 
 variable "environment" {
-  description = "Environment name (dev, staging, prod). Used in default tagging."
+  description = "Environment name (dev, staging, prod, shared). Used in default tagging. `shared` is the platform-infra value used by the `infra/shared/` TF root that hosts the single PCPC ACR consumed by all envs."
   type        = string
   default     = "dev"
 
   validation {
-    condition     = contains(["dev", "staging", "prod"], var.environment)
-    error_message = "Environment must be dev, staging, or prod."
+    condition     = contains(["dev", "staging", "prod", "shared"], var.environment)
+    error_message = "Environment must be dev, staging, prod, or shared."
   }
 }
 

@@ -249,21 +249,3 @@ output "container_app_resource_group" {
   value       = module.resource_group.name
 }
 
-# -----------------------------------------------------------------------------
-# PCPC-owned Container Registry (polish PR — Phase 2.2)
-# -----------------------------------------------------------------------------
-
-output "container_registry_name" {
-  description = "Name of the PCPC-owned ACR that hosts application container images. The ADO pipeline reads this via `terraform output` for `az acr login --name <name>` invocations."
-  value       = module.container_registry.name
-}
-
-output "container_registry_login_server" {
-  description = "Login server hostname of the PCPC-owned ACR (e.g. `pcpcacrdev<suffix>.azurecr.io`). Prefix for image references — `<login_server>/pcpc/functions:<tag>`."
-  value       = module.container_registry.login_server
-}
-
-output "container_registry_id" {
-  description = "Resource ID of the PCPC-owned ACR. Exposed for staging/prod envs to consume via `data.azurerm_container_registry` against this state."
-  value       = module.container_registry.id
-}
