@@ -63,18 +63,18 @@ stages:
           functionAppName: $(FUNCTION_APP_NAME)
           functionResourceGroup: $(APIM_RESOURCE_GROUP)
 
-      # Build the Path C (ACA) container image and push to PCPC's ACR. Runs
-      # in parallel with the unified-artifact build above — they're
-      # independent. Moved out of Deploy_Dev (where it used to live inside
-      # Deploy_ACA) so the image exists in ACR *before* any Deploy_* stage
-      # runs Terraform; this unblocks adding ACA jobs to staging/prod (the
-      # Container App resource needs an image to exist on first apply).
+      # Build the Path C (ACA) container image and push to PCPC's shared ACR.
+      # Runs in parallel with the unified-artifact build above — they're
+      # independent. Moved out of Deploy_Dev (PR #167) so the image exists in
+      # ACR *before* any Deploy_* stage runs Terraform; that unblocks adding
+      # ACA jobs to staging/prod (the Container App resource needs an image
+      # to exist on first apply).
       #
-      # The image is built once and pushed to the dev-owned ACR; downstream
-      # ACA deploy jobs (Deploy_Dev/Staging/Prod) consume the canonical
-      # SHA-tagged reference via the stageDependencies output below. How
-      # staging/prod's own ACRs get the bits (cross-env AcrPull RBAC vs
-      # `az acr import`) is a PR 3 concern — out of scope here.
+      # The image is built once and pushed to the shared ACR
+      # (`pcpc-rg-shared`); dev/staging/prod ACA jobs consume the canonical
+      # SHA-tagged reference via the stageDependencies output below. The
+      # shared-RG ACR (PR 2.5) means all three envs pull symmetrically — no
+      # cross-env RBAC pointing at any single env's RG.
       #
       # No `container:` directive — the job needs host Docker daemon access
       # for `docker build` and the Trivy container-scan flow.
@@ -86,7 +86,7 @@ stages:
           - template: templates/build-and-push-image.yml
             parameters:
               azureSubscription: "az-pcpc-dev"
-              acrResourceGroup: "pcpc-rg-dev"
+              acrResourceGroup: "pcpc-rg-shared"
 
   # ============================================================================
   # STAGE 2: DEPLOY TO DEV
