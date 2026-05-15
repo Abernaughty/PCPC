@@ -236,6 +236,17 @@ resource "azurerm_api_management_api_operation" "get_card_info" {
     required    = true
   }
 
+  # APIM's operation-update API rejects an operation with no `request` shape
+  # at all (returns generic "ValidationError: One or more fields contain
+  # incorrect values"). PR #169 removed the only query_parameter
+  # (`forceRefresh`), leaving this resource with no `request` block and
+  # triggering that failure on staging+prod CD. An empty `request` block
+  # is the minimal payload APIM accepts. The other operations (get_sets,
+  # get_cards_by_set) still have query_parameter children and update
+  # cleanly. See PR #169 → staging/prod CD failures for the trail.
+  request {
+  }
+
   response {
     status_code = 200
     description = "Successful response with detailed card information"
