@@ -294,18 +294,11 @@ variable "alert_email_address" {
 
 # -----------------------------------------------------------------------------
 # Phase 2.2 — Path C (ACA Container) variables
+#
+# Note: container_registry_sku moved to infra/shared/variables.tf in PR 2.5.
+# The shared ACR is provisioned once in `infra/shared/` and consumed here via
+# terraform_remote_state. Env TFs only own the Container App itself.
 # -----------------------------------------------------------------------------
-
-variable "container_registry_sku" {
-  description = "SKU for the PCPC-owned Container Registry. Defaults to `Basic` (~$5/mo, 10 GiB storage). Bump to `Premium` only when private endpoints / geo-replication / content trust are needed."
-  type        = string
-  default     = "Basic"
-
-  validation {
-    condition     = contains(["Basic", "Standard", "Premium"], var.container_registry_sku)
-    error_message = "container_registry_sku must be Basic, Standard, or Premium."
-  }
-}
 
 variable "container_app_image_repository" {
   description = "Repository path within the shared ACR for the Functions image (e.g. `pcpc/functions`). Distinct from the `pcpc-ci/*` CI tooling image repos."
