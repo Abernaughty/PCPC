@@ -1,11 +1,12 @@
 # Deploy the PCPC Functions image to Azure Container Apps (Path C)
 #
-# Phase 2.2. Roles the new image onto the Container App and runs blocking
-# smoke tests against the ingress FQDN.
+# Phase 2.2 + image-build-bootstrap polish PR. Rolls the new image onto the
+# Container App and runs blocking smoke tests against the ingress FQDN.
 #
-# Expected pipeline variables (set by the preceding build-and-push-image.yml
-# template in the same job):
-#   ContainerImageReference  — full registry/repo:tag of the image to deploy
+# The image reference is now passed explicitly as a parameter so the
+# template no longer assumes the build-and-push-image.yml steps ran in the
+# same job. The caller (azure-pipelines.yml) wires the cross-stage output
+# from the Build stage's image-build job into `containerImageReference`.
 #
 # Usage:
 #   - template: pipelines/ado/templates/deploy-aca.yml
@@ -14,6 +15,7 @@
 #       azureSubscription: az-pcpc-dev
 #       containerAppName: pcpc-aca-dev
 #       resourceGroupName: pcpc-rg-dev
+#       containerImageReference: $(containerImageReference)  # mapped from stageDependencies
 #       runSmokeTests: true
 
 parameters:
@@ -25,6 +27,11 @@ parameters:
     type: string
   - name: resourceGroupName
     type: string
+  - name: containerImageReference
+    type: string
+    # Full registry/repo:tag reference to deploy. Typically wired from the
+    # Build stage's `Build_Container_Image` job output:
+    # $[ stageDependencies.Build.Build_Container_Image.outputs['discover_image.ContainerImageReference'] ]
   - name: runSmokeTests
     type: boolean
     default: true
@@ -50,12 +57,12 @@ steps:
       inlineScript: |
         set -euo pipefail
 
-        TARGET_REF='$(ContainerImageReference)'
+        TARGET_REF='${{ parameters.containerImageReference }}'
         APP_NAME='${{ parameters.containerAppName }}'
         RG='${{ parameters.resourceGroupName }}'
 
         if [ -z "$TARGET_REF" ]; then
-          echo "##vso[task.logissue type=error]ContainerImageReference pipeline variable is empty — the build-and-push-image template must run before this template"
+          echo "##vso[task.logissue type=error]containerImageReference parameter is empty — the Build stage's image-build job must have set the stageDependencies output that the caller maps into this parameter"
           exit 1
         fi
 
@@ -109,11 +116,11 @@ steps:
       inlineScript: |
         set -euo pipefail
 
-        echo "Rolling new revision: $(ContainerImageReference)"
+        echo "Rolling new revision: ${{ parameters.containerImageReference }}"
         az containerapp update \
           --name '${{ parameters.containerAppName }}' \
           --resource-group '${{ parameters.resourceGroupName }}' \
-          --image "$(ContainerImageReference)" \
+          --image "${{ parameters.containerImageReference }}" \
           --output none
 
         echo "✓ Container App revision update accepted"
@@ -237,7 +244,7 @@ steps:
       echo "Environment: ${{ parameters.environment }}"
       echo "Container App: ${{ parameters.containerAppName }}"
       echo "Resource Group: ${{ parameters.resourceGroupName }}"
-      echo "Image deployed: $(ContainerImageReference)"
+      echo "Image deployed: ${{ parameters.containerImageReference }}"
       echo "Ingress URL: $(acaIngressUrl)"
       echo ""
       echo "Available endpoints:"

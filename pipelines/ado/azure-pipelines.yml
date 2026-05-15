@@ -45,7 +45,7 @@ resources:
 stages:
   # ============================================================================
   # STAGE 1: BUILD
-  # Create unified artifact with all components
+  # Create unified artifact with all components + container image
   # ============================================================================
   - stage: Build
     displayName: "Build Unified Artifact"
@@ -62,6 +62,31 @@ stages:
           useApiManagement: "true"
           functionAppName: $(FUNCTION_APP_NAME)
           functionResourceGroup: $(APIM_RESOURCE_GROUP)
+
+      # Build the Path C (ACA) container image and push to PCPC's ACR. Runs
+      # in parallel with the unified-artifact build above — they're
+      # independent. Moved out of Deploy_Dev (where it used to live inside
+      # Deploy_ACA) so the image exists in ACR *before* any Deploy_* stage
+      # runs Terraform; this unblocks adding ACA jobs to staging/prod (the
+      # Container App resource needs an image to exist on first apply).
+      #
+      # The image is built once and pushed to the dev-owned ACR; downstream
+      # ACA deploy jobs (Deploy_Dev/Staging/Prod) consume the canonical
+      # SHA-tagged reference via the stageDependencies output below. How
+      # staging/prod's own ACRs get the bits (cross-env AcrPull RBAC vs
+      # `az acr import`) is a PR 3 concern — out of scope here.
+      #
+      # No `container:` directive — the job needs host Docker daemon access
+      # for `docker build` and the Trivy container-scan flow.
+      - job: Build_Container_Image
+        displayName: "Build + Push ACA Image"
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - template: templates/build-and-push-image.yml
+            parameters:
+              azureSubscription: "az-pcpc-dev"
+              acrResourceGroup: "pcpc-rg-dev"
 
   # ============================================================================
   # STAGE 2: DEPLOY TO DEV
@@ -122,30 +147,35 @@ stages:
 
       # Phase 2.2 — Deploy Path C (ACA Container).
       #
-      # Parallel to Deploy_Functions (Path B). Discovers the PCPC-owned ACR
-      # provisioned by Deploy_Infrastructure, builds the Functions image,
-      # scans for HIGH+ CVEs (Trivy, blocking), pushes via `az acr login`
-      # (no Docker registry service connection — SP has AcrPush from the
-      # role assignment in dev's Terraform), and rolls a new revision on
-      # the Container App. No container: directive — the job needs the
-      # host Docker daemon for the image build.
+      # Parallel to Deploy_Functions (Path B). Consumes the canonical
+      # SHA-tagged image reference from the Build stage's
+      # `Build_Container_Image` job (cross-stage `stageDependencies` output)
+      # and rolls a new revision on the Container App. The image-build
+      # itself lives in the Build stage so that future Deploy_Staging /
+      # Deploy_Prod ACA jobs can consume the same artifact.
+      #
+      # `dependsOn: Deploy_Infrastructure` so Terraform has provisioned
+      # the Container App before we try to roll it. (Build stage already
+      # completed by the time Deploy_Dev runs — that's the stage-level
+      # dependsOn at the parent.)
       - job: Deploy_ACA
         displayName: "Deploy Path C (ACA Container)"
         dependsOn: Deploy_Infrastructure
         condition: succeeded()
         pool:
           vmImage: "ubuntu-latest"
+        variables:
+          # Map the Build stage's image-build job output to a job-scoped
+          # variable so we can pass it as a runtime parameter below.
+          containerImageReference: $[ stageDependencies.Build.Build_Container_Image.outputs['discover_image.ContainerImageReference'] ]
         steps:
-          - template: templates/build-and-push-image.yml
-            parameters:
-              azureSubscription: "az-pcpc-dev"
-              acrResourceGroup: $(APIM_RESOURCE_GROUP)
           - template: templates/deploy-aca.yml
             parameters:
               environment: dev
               azureSubscription: "az-pcpc-dev"
               containerAppName: "pcpc-aca-dev"
               resourceGroupName: $(APIM_RESOURCE_GROUP)
+              containerImageReference: $(containerImageReference)
 
       # Run Smoke Tests
       - job: Smoke_Tests
