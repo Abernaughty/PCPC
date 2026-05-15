@@ -108,7 +108,6 @@ locals {
         "page",
         "pageSize",
         "all",
-        "forceRefresh",
         "groupByExpansion"
       ] : []
     }
@@ -117,16 +116,13 @@ locals {
       cache_duration = var.cache_duration_cards
       vary_by_query_parameters = var.enable_caching ? [
         "page",
-        "pageSize",
-        "forceRefresh"
+        "pageSize"
       ] : []
     }
     get_card_info = {
-      cache_enabled  = var.enable_caching
-      cache_duration = var.cache_duration_card_info
-      vary_by_query_parameters = var.enable_caching ? [
-        "forceRefresh"
-      ] : []
+      cache_enabled            = var.enable_caching
+      cache_duration           = var.cache_duration_card_info
+      vary_by_query_parameters = []
     }
   }
 

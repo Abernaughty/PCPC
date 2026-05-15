@@ -36,14 +36,12 @@ export async function getSetList(
     context.log(`${correlationId} Processing Scrydex request for set list`);
 
     const language = (request.query.get("language") || "en").toLowerCase();
-    // SECURITY: the `forceRefresh` query param is intentionally ignored on
-    // this anonymous-auth public endpoint. Honoring it from untrusted
-    // callers would bypass Redis + Cosmos and hit Scrydex on every
-    // request, burning paid API credits with no upper bound. The
-    // RefreshData timer trigger keeps caches current on a 12h cadence;
-    // manual refresh is an admin path via that trigger, not the public
-    // surface. Addresses Codex P1 review on PR #159.
-    const forceRefresh = false;
+    // Cache freshness is driven by (1) language-keyed cache keys so
+    // language switches naturally miss, (2) the RefreshData timer trigger
+    // on a 12h cadence, (3) Redis TTL. There is no client-controllable
+    // cache-bypass — accepting one from anonymous public traffic would
+    // bypass Redis + Cosmos and burn paid Scrydex credits with no upper
+    // bound (Codex P1 on PR #159, formalized by removal in this PR).
     const returnAll = request.query.get("all") === "true";
     const page = parseInt(request.query.get("page") || "1");
     const pageSize = parseInt(request.query.get("pageSize") || "100");
@@ -51,7 +49,7 @@ export async function getSetList(
     const setsTtl = parseInt(process.env.CACHE_TTL_SETS || "604800"); // 7 days
 
     context.log(
-      `${correlationId} Parameters: language=${language}, returnAll=${returnAll}, page=${page}, pageSize=${pageSize}, forceRefresh=${forceRefresh}`
+      `${correlationId} Parameters: language=${language}, returnAll=${returnAll}, page=${page}, pageSize=${pageSize}`
     );
 
     const cacheKey = `${getSetListCacheKey()}-scrydex-${language}`;
@@ -59,7 +57,7 @@ export async function getSetList(
     let cacheHit = false;
     let cacheAge = 0;
 
-    if (!forceRefresh && process.env.ENABLE_REDIS_CACHE === "true") {
+    if (process.env.ENABLE_REDIS_CACHE === "true") {
       context.log(`${correlationId} Checking Redis cache with key: ${cacheKey}`);
       const cacheCheckStart = Date.now();
       const cachedEntry = await redisCacheService.get<{
