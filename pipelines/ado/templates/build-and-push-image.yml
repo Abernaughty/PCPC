@@ -1,7 +1,7 @@
 # Build and Push PCPC Functions ACA Image
 #
-# Phase 2.2 + polish PR. Builds the Functions container from
-# backend/functions/Dockerfile, scans for HIGH+ CVEs with Trivy (blocking),
+# Phase 2.2 + image-build-bootstrap polish PR. Builds the Functions container
+# from backend/functions/Dockerfile, scans for HIGH+ CVEs with Trivy (blocking),
 # and pushes to the PCPC-owned ACR under the pcpc/functions repository path.
 #
 # The ACR name is discovered at runtime by listing registries in the
@@ -12,11 +12,23 @@
 # a Docker registry service connection — the ADO SP has AcrPush on the
 # new ACR via a role assignment in the same Terraform state.
 #
-# Output variables (consumed by the deploy-aca.yml template that follows
-# in the same job):
+# Skip-if-exists: the discovery task checks whether the canonical git-SHA
+# tag is already present in ACR (`az acr repository show-tags`). If so,
+# build/scan/push are skipped and the existing image is reused. Mirrors
+# the content-hash skip-redeploy pattern in deploy-functions.yml.
+#
+# Output variables (job-scoped via isOutput=true; addressable from other
+# stages as `stageDependencies.<stage>.<job>.outputs['discover_image.<name>']`):
+#   AcrName                  — the discovered ACR (alphanumeric name)
+#   AcrLoginServer           — ACR login server FQDN
 #   ContainerImageReference  — full registry/repo:tag of the canonical
 #                              (git-SHA-tagged) image to deploy
-#   ContainerImageDigest     — sha256:... digest of the pushed image, for
+#   ContainerImageBuildRef   — Build ID-tagged reference (parallel tag)
+#   ContainerImageLatestRef  — latest-tagged reference (parallel tag)
+#   ShouldBuildImage         — "true" if image must be built+pushed,
+#                              "false" if the SHA tag is already in ACR
+#   ContainerImageDigest     — sha256:... digest of the pushed image
+#                              (or existing image when skipped); for
 #                              optional pin verification
 #
 # Usage:
@@ -60,12 +72,20 @@ steps:
   # breaking absolute paths that anchor on `$(Build.SourcesDirectory)`.
 
   # ---------------------------------------------------------------------------
-  # Discover the PCPC ACR in the workload RG, resolve login server, and
-  # compute image tags. The ACR name carries a random suffix from
-  # Terraform's random_string, so we filter by the stable `pcpcacr*` prefix.
+  # Discover the PCPC ACR in the workload RG, resolve login server, compute
+  # image tags, and decide whether a build is needed. The ACR name carries a
+  # random suffix from Terraform's random_string, so we filter by the stable
+  # `pcpcacr*` prefix.
+  #
+  # `name: discover_image` makes the variables addressable cross-stage as
+  # `stageDependencies.<stage>.<job>.outputs['discover_image.<varName>']`.
+  # All `task.setvariable` commands here use `isOutput=true` so they're
+  # exposed at job-output scope for consumption by downstream stages
+  # (Deploy_ACA in Deploy_Dev/Staging/Prod).
   # ---------------------------------------------------------------------------
   - task: AzureCLI@2
-    displayName: "Discover ACR + Compute Image Tags"
+    name: discover_image
+    displayName: "Discover ACR + Compute Image Tags + Check Existing"
     inputs:
       azureSubscription: ${{ parameters.azureSubscription }}
       scriptType: bash
@@ -100,11 +120,48 @@ steps:
         echo "Image build tag: $BUILD_TAG"
         echo "Canonical reference (for deploy): $FULL_REF_SHA"
 
+        # Check whether the canonical SHA tag already exists in ACR. If it
+        # does, the build/scan/push steps are skipped and downstream stages
+        # consume the existing image. Re-running the same pipeline against
+        # an unchanged commit becomes a no-op for image work.
+        echo ""
+        echo "Checking whether tag '$SHA_TAG' already exists in $ACR_NAME/$REPO..."
+        EXISTING_TAG=$(az acr repository show-tags \
+          --name "$ACR_NAME" \
+          --repository "$REPO" \
+          --query "[?@=='$SHA_TAG'] | [0]" \
+          -o tsv 2>/dev/null || true)
+
+        if [ -n "$EXISTING_TAG" ] && [ "$EXISTING_TAG" != "null" ]; then
+          echo "✓ Tag '$SHA_TAG' already in ACR. Build/scan/push will be skipped."
+          SHOULD_BUILD=false
+        else
+          echo "Tag '$SHA_TAG' not in ACR. Build/scan/push will run."
+          SHOULD_BUILD=true
+        fi
+
+        echo "##vso[task.setvariable variable=AcrName;isOutput=true]$ACR_NAME"
+        echo "##vso[task.setvariable variable=AcrLoginServer;isOutput=true]$FQDN"
+        echo "##vso[task.setvariable variable=ContainerImageReference;isOutput=true]$FULL_REF_SHA"
+        echo "##vso[task.setvariable variable=ContainerImageBuildRef;isOutput=true]$FULL_REF_BUILD"
+        echo "##vso[task.setvariable variable=ContainerImageLatestRef;isOutput=true]$FULL_REF_LATEST"
+        echo "##vso[task.setvariable variable=ShouldBuildImage;isOutput=true]$SHOULD_BUILD"
+
+        # Mirror as plain (non-output) job-scoped variables so the steps
+        # below in this same job can reference them with $(VarName) syntax.
+        # Without these mirrors, isOutput=true variables aren't available
+        # to subsequent same-job tasks via the simple $(...) macro.
         echo "##vso[task.setvariable variable=AcrName]$ACR_NAME"
         echo "##vso[task.setvariable variable=AcrLoginServer]$FQDN"
         echo "##vso[task.setvariable variable=ContainerImageReference]$FULL_REF_SHA"
         echo "##vso[task.setvariable variable=ContainerImageBuildRef]$FULL_REF_BUILD"
         echo "##vso[task.setvariable variable=ContainerImageLatestRef]$FULL_REF_LATEST"
+        echo "##vso[task.setvariable variable=ShouldBuildImage]$SHOULD_BUILD"
+
+  - script: |
+      echo "Image tag $(ContainerImageReference) already exists in ACR. Skipping build/scan/push."
+    displayName: "Skip Image Build (tag exists)"
+    condition: and(succeeded(), eq(variables['ShouldBuildImage'], 'false'))
 
   # ---------------------------------------------------------------------------
   # Build the image locally (no push yet — we scan before push)
@@ -133,6 +190,7 @@ steps:
       docker images "$(AcrLoginServer)/${{ parameters.imageRepository }}" --format "  {{.Repository}}:{{.Tag}}"
     displayName: "docker build pcpc/functions"
     workingDirectory: $(Build.SourcesDirectory)
+    condition: and(succeeded(), eq(variables['ShouldBuildImage'], 'true'))
 
   # ---------------------------------------------------------------------------
   # Scan the locally built image with Trivy (pinned), block on HIGH+ CVE.
@@ -177,6 +235,7 @@ steps:
       echo "✓ Trivy scan passed — no ${{ parameters.trivySeverity }} CVEs with available fixes"
     displayName: "Trivy CVE scan (blocking)"
     continueOnError: false
+    condition: and(succeeded(), eq(variables['ShouldBuildImage'], 'true'))
 
   # ---------------------------------------------------------------------------
   # Login to ACR via the Azure CLI (SP token / managed-identity flow) and
@@ -186,6 +245,7 @@ steps:
   # ---------------------------------------------------------------------------
   - task: AzureCLI@2
     displayName: "az acr login + push (all tags)"
+    condition: and(succeeded(), eq(variables['ShouldBuildImage'], 'true'))
     inputs:
       azureSubscription: ${{ parameters.azureSubscription }}
       scriptType: bash
@@ -203,20 +263,37 @@ steps:
         echo "✓ All tags pushed"
 
   # ---------------------------------------------------------------------------
-  # Capture the pushed digest for downstream use
+  # Capture the canonical image digest for downstream use. When the build was
+  # skipped (tag already present), fetch the existing digest from ACR via
+  # `az acr repository show`. When the build ran, prefer `docker manifest
+  # inspect` (the image is in the host daemon and ACR). Sets
+  # ContainerImageDigest as a job-output variable for cross-stage consumers.
   # ---------------------------------------------------------------------------
-  - script: |
-      set -euo pipefail
-
-      DIGEST=$(docker manifest inspect "$(ContainerImageReference)" --verbose 2>/dev/null \
-        | jq -r 'if type == "array" then .[0].Descriptor.digest else .Descriptor.digest end')
-
-      if [ -z "$DIGEST" ] || [ "$DIGEST" = "null" ]; then
-        echo "##vso[task.logissue type=warning]Could not capture image digest; deploy will use tag-based reference"
-        exit 0
-      fi
-
-      echo "Image digest: $DIGEST"
-      echo "##vso[task.setvariable variable=ContainerImageDigest]$DIGEST"
+  - task: AzureCLI@2
+    name: capture_digest
     displayName: "Capture image digest"
     continueOnError: true
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        set -euo pipefail
+
+        REPO='${{ parameters.imageRepository }}'
+        SHORT_SHA="$(echo '$(Build.SourceVersion)' | cut -c1-7)"
+        SHA_TAG="git-${SHORT_SHA}"
+
+        DIGEST=$(az acr repository show \
+          --name "$(AcrName)" \
+          --image "$REPO:$SHA_TAG" \
+          --query digest -o tsv 2>/dev/null || true)
+
+        if [ -z "$DIGEST" ] || [ "$DIGEST" = "null" ]; then
+          echo "##vso[task.logissue type=warning]Could not capture image digest from ACR; deploy will use tag-based reference"
+          echo "##vso[task.setvariable variable=ContainerImageDigest;isOutput=true]"
+          exit 0
+        fi
+
+        echo "Image digest: $DIGEST"
+        echo "##vso[task.setvariable variable=ContainerImageDigest;isOutput=true]$DIGEST"
