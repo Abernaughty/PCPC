@@ -256,6 +256,31 @@ stages:
               environment: staging
               azureSubscription: "az-pcpc-staging"
 
+      # Phase 2.2 — Deploy Path C (ACA Container) to staging.
+      #
+      # Mirror of Deploy_Dev's Deploy_ACA job. Consumes the same canonical
+      # SHA-tagged image reference from the Build stage's Build_Container_Image
+      # job — one image build per pipeline run, all envs roll the same artifact.
+      # The infra stage above runs as `deployment:` against the `pcpc-staging`
+      # environment for the approval gate, which gates this job too via
+      # dependsOn.
+      - job: Deploy_ACA
+        displayName: "Deploy Path C (ACA Container)"
+        dependsOn: Deploy_Infrastructure
+        condition: succeeded()
+        pool:
+          vmImage: "ubuntu-latest"
+        variables:
+          containerImageReference: $[ stageDependencies.Build.Build_Container_Image.outputs['discover_image.ContainerImageReference'] ]
+        steps:
+          - template: templates/deploy-aca.yml
+            parameters:
+              environment: staging
+              azureSubscription: "az-pcpc-staging"
+              containerAppName: "pcpc-aca-staging"
+              resourceGroupName: $(APIM_RESOURCE_GROUP)
+              containerImageReference: $(containerImageReference)
+
       # Run Smoke Tests
       - job: Smoke_Tests
         displayName: "Run Smoke Tests"
@@ -335,6 +360,29 @@ stages:
               environment: prod
               azureSubscription: "az-pcpc-prod"
 
+      # Phase 2.2 — Deploy Path C (ACA Container) to prod.
+      #
+      # Mirror of Deploy_Dev / Deploy_Staging's Deploy_ACA job. Same SHA-tagged
+      # image reference from the Build stage as the other two envs. The infra
+      # stage above runs as `deployment:` against the `pcpc-prod` environment
+      # for the production approval gate, which gates this job too.
+      - job: Deploy_ACA
+        displayName: "Deploy Path C (ACA Container)"
+        dependsOn: Deploy_Infrastructure
+        condition: succeeded()
+        pool:
+          vmImage: "ubuntu-latest"
+        variables:
+          containerImageReference: $[ stageDependencies.Build.Build_Container_Image.outputs['discover_image.ContainerImageReference'] ]
+        steps:
+          - template: templates/deploy-aca.yml
+            parameters:
+              environment: prod
+              azureSubscription: "az-pcpc-prod"
+              containerAppName: "pcpc-aca-prod"
+              resourceGroupName: $(APIM_RESOURCE_GROUP)
+              containerImageReference: $(containerImageReference)
+
       # Run Smoke Tests
       - job: Smoke_Tests
         displayName: "Run Smoke Tests"
@@ -377,8 +425,8 @@ stages:
               echo ""
               echo "Deployed Components:"
               echo "  ✓ Infrastructure (Terraform)"
-              echo "  ✓ Azure Functions Backend"
-              echo "  ✓ APIM APIs & Policies"
+              echo "  ✓ Path B: Azure Functions Backend + APIM"
+              echo "  ✓ Path C: Container App (ACA)"
               echo ""
               echo "All smoke tests passed successfully."
               echo "=========================================="
