@@ -1,0 +1,58 @@
+# To get started with Dependabot version updates, you'll need to specify which
+# package ecosystems to update and where the package manifests are located.
+# Please see the documentation for all configuration options:
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+
+updates:
+  # Frontend (Vercel-deployed SvelteKit) — most active dep surface
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: America/Chicago
+    open-pull-requests-limit: 5
+    groups:
+      # Roll all minor/patch into one PR per week to cut noise
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  # Backend Functions — Azure Functions v4 + Scrydex
+  - package-ecosystem: npm
+    directory: /backend/functions
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  # Root workspace (Jest backend tests + Playwright E2E)
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  # Dockerfile base image (Azure Functions Node 22 image gets CVE patches)
+  - package-ecosystem: docker
+    directory: /backend/functions
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 2
+
+  # @pcpc/shared — types-only package, low churn but worth tracking
+  - package-ecosystem: npm
+    directory: /backend/shared
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
