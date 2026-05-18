@@ -21,7 +21,7 @@
 		"eslint": "^9.22.0",
 		"eslint-plugin-svelte": "^3.5.0",
 		"globals": "^16.0.0",
-		"svelte": "^5.0.0",
+		"svelte": "^5.55.7",
 		"svelte-check": "^4.1.0",
 		"tailwindcss": "^4.1.0",
 		"typescript": "^5.8.0",
