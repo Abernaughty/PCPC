@@ -21,7 +21,7 @@
     "jest-watch-typeahead": "^2.2.0",
     "supertest": "^6.3.0",
     "ts-jest": "^29.1.0",
-    "typescript": "^5.2.0"
+    "typescript": "^6.0.3"
   },
   "scripts": {
     "seed-cosmos": "node .devcontainer/scripts/seed-cosmos.mjs",
