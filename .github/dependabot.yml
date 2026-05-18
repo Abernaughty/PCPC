@@ -31,7 +31,7 @@ updates:
       minor-and-patch:
         update-types: [minor, patch]
 
-  # Root workspace (Turborepo + jest-svelte legacy)
+  # Root workspace (Jest backend tests + Playwright E2E)
   - package-ecosystem: npm
     directory: /
     schedule:
@@ -41,11 +41,6 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
-    ignore:
-      # Pin to v4 until the legacy jest-svelte test infra migrates;
-      # otherwise Dependabot keeps re-proposing the broken 5.x bump.
-      - dependency-name: svelte
-        update-types: [version-update:semver-major]
 
   # Dockerfile base image (Azure Functions Node 22 image gets CVE patches)
   - package-ecosystem: docker
