@@ -31,16 +31,15 @@ updates:
       minor-and-patch:
         update-types: [minor, patch]
 
-  # Root workspace (Jest backend tests + Playwright E2E)
-  - package-ecosystem: npm
-    directory: /
-    schedule:
-      interval: weekly
-      day: monday
-    open-pull-requests-limit: 3
-    groups:
-      minor-and-patch:
-        update-types: [minor, patch]
+  # No root `/` block: with pnpm-workspace at root, Dependabot's `npm` ecosystem
+  # at `directory: /` sees every workspace member's deps via pnpm-lock.yaml and
+  # opens duplicate PRs that touch the wrong lockfiles (e.g. backend/functions
+  # uses npm not pnpm, so root-block PRs for backend deps update pnpm-lock.yaml
+  # instead of backend/functions/package-lock.json — what `npm ci` actually
+  # consumes at deploy). Root's only direct deps are test runners (jest,
+  # playwright, supertest, ts-jest, babel-*, @azure/cosmos for the seed script),
+  # all dev-time only — manual bumps are acceptable for those. See PRs #178/#179
+  # from 2026-05-18 for the duplicate-PR pattern this avoids.
 
   # Dockerfile base image (Azure Functions Node 22 image gets CVE patches)
   - package-ecosystem: docker
