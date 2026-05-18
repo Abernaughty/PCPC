@@ -6,8 +6,6 @@ process.env.NODE_ENV = "test";
 process.env.AzureWebJobsStorage = "UseDevelopmentStorage=true";
 process.env.COSMOS_DB_CONNECTION_STRING =
   "AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==;";
-process.env.POKEDATA_API_KEY = "test-api-key";
-process.env.POKEMON_TCG_API_KEY = "test-tcg-api-key";
 process.env.REDIS_CACHE_ENABLED = "false";
 
 // Mock fetch globally for Node.js
