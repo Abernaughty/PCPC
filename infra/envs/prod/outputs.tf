@@ -195,5 +195,25 @@ output "deployment_summary" {
     log_analytics        = module.log_analytics.name
     application_insights = module.application_insights.name
     api_management       = var.enable_api_management ? module.api_management[0].name : "Not deployed"
+    container_app        = module.container_app.name
   }
+}
+
+# -----------------------------------------------------------------------------
+# Phase 2.2 — Path C (ACA Container) outputs
+# -----------------------------------------------------------------------------
+
+output "container_app_name" {
+  description = "Name of the Path C Container App. Used by the deploy-aca.yml pipeline template to target `az containerapp update`."
+  value       = module.container_app.name
+}
+
+output "container_app_fqdn" {
+  description = "Public ingress FQDN for the Path C Container App. Operator can repoint Vercel `PUBLIC_ACA_API_BASE_URL` (Production scope) here once prod ACA is live and verified."
+  value       = module.container_app.ingress_fqdn
+}
+
+output "container_app_resource_group" {
+  description = "Resource group containing the Container App. Convenience output for pipeline `az containerapp` invocations (same as the env-wide resource group)."
+  value       = module.resource_group.name
 }

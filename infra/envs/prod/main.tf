@@ -338,3 +338,87 @@ module "api_management" {
 
   depends_on = [module.resource_group]
 }
+
+# -----------------------------------------------------------------------------
+# Phase 2.2 — Path C (ACA Container)
+#
+# The ACR consumed by this Container App lives in `pcpc-rg-shared` (PR 2.5),
+# not in `pcpc-rg-prod`. Each env's TF reads the shared ACR via
+# `data.terraform_remote_state.shared` and scopes its own UAMI's AcrPull
+# role assignment to that ACR. Dev/staging/prod all consume symmetrically.
+# See ADR-009's "ACR ownership" subsection for the rationale.
+# -----------------------------------------------------------------------------
+
+data "terraform_remote_state" "shared" {
+  backend = "azurerm"
+  config = {
+    resource_group_name  = "pcpc-terraform-state-rg"
+    storage_account_name = "pcpctfstatedacc29c2"
+    container_name       = "tfstate"
+    key                  = "shared.terraform.tfstate"
+    tenant_id            = "5f445a68-ec75-42cf-a50f-6ec158ee675c"
+    subscription_id      = "555b4cfa-ad2e-4c71-9433-620a59cf7616"
+  }
+}
+
+module "container_app" {
+  source = "../../modules/container-app"
+
+  name                = "pcpc-aca-${local.environment}"
+  resource_group_name = module.resource_group.name
+  location            = var.location
+  environment         = var.environment
+
+  log_analytics_workspace_id = module.log_analytics.id
+
+  acr_id           = data.terraform_remote_state.shared.outputs.acr_id
+  acr_login_server = data.terraform_remote_state.shared.outputs.acr_login_server
+  image_repository = var.container_app_image_repository
+  image_tag        = var.container_app_image_tag
+
+  min_replicas     = var.container_app_min_replicas
+  max_replicas     = var.container_app_max_replicas
+  cpu              = var.container_app_cpu
+  memory           = var.container_app_memory
+  http_concurrency = var.container_app_http_concurrency
+
+  cors_allowed_origins = var.container_app_cors_allowed_origins
+
+  # Non-secret env vars: same shape Path B uses (cosmos config, runtime
+  # flags, App Insights endpoint references). Container-runtime additions:
+  # FUNCTIONS_WORKER_RUNTIME (required) and AzureWebJobsStorage (set via
+  # secret_settings below).
+  app_settings = merge(
+    var.function_app_config, # non-secret config shared with Path B
+    {
+      "COSMOS_DB_ENDPOINT"                    = module.cosmos_db.endpoint
+      "FUNCTIONS_WORKER_RUNTIME"              = "node"
+      "APPINSIGHTS_INSTRUMENTATIONKEY"        = module.application_insights.instrumentation_key
+      "APPLICATIONINSIGHTS_CONNECTION_STRING" = module.application_insights.connection_string
+      "AZURE_FUNCTIONS_ENVIRONMENT"           = var.environment
+    }
+  )
+
+  # Secret env vars. Note we DO NOT carry over the Consumption-only
+  # WEBSITE_CONTENTAZUREFILECONNECTIONSTRING / WEBSITE_CONTENTSHARE
+  # settings here — those are file-share settings for the Functions
+  # Consumption plan, irrelevant in a container runtime.
+  secret_settings = merge(
+    local.function_app_secrets_filtered, # Scrydex creds (same map Path B uses)
+    {
+      "COSMOS_DB_CONNECTION_STRING" = module.cosmos_db.primary_sql_connection_string
+      "COSMOS_DB_KEY"               = module.cosmos_db.primary_key
+      "AzureWebJobsStorage"         = module.storage_account.primary_connection_string
+    }
+  )
+
+  tags = local.common_tags
+
+  depends_on = [
+    module.resource_group,
+    module.storage_account,
+    module.cosmos_db,
+    module.application_insights,
+    module.log_analytics,
+  ]
+}
