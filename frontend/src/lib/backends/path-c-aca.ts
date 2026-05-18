@@ -33,32 +33,44 @@ import type { BackendDefinition, BackendFetcher, BackendHealth } from './types';
 /**
  * Path C base URL.
  *
- * Resolved at module load from `PUBLIC_ACA_API_BASE_URL`. Set this in
- * the Vercel project per scope:
- *   dev      → https://<aca-fqdn-dev>
- *   staging  → https://<aca-fqdn-staging>   (added when Phase 2.2
- *               staging promotion lands)
- *   prod     → https://<aca-fqdn-prod>      (likewise)
+ * Resolved at module load from `PUBLIC_ACA_API_BASE_URL`. The env var is
+ * the ACA ingress host only (e.g. `https://<aca-fqdn>`); this module
+ * appends the `/api` route prefix that the Functions host serves under
+ * (see backend/functions/host.json — `extensions.http.routePrefix: "api"`).
  *
- * The dev FQDN is produced by `terraform output container_app_fqdn`
- * after the Phase 2.2 PR-2 infra applies.
+ * Set this in the Vercel project per scope:
+ *   dev      → https://<aca-fqdn-dev>
+ *   staging  → https://<aca-fqdn-staging>
+ *   prod     → https://<aca-fqdn-prod>
+ *
+ * Each env's FQDN is produced by `terraform output container_app_fqdn`
+ * after that env's Phase 2.2 infra applies.
+ *
+ * Path B doesn't need this prefix because APIM strips its own front path
+ * (`/pcpc-api/v1`) and maps to backend `/api/*` via the OpenAPI spec
+ * import. Path C bypasses APIM, so the `/api` prefix is the caller's
+ * responsibility — this module adds it once at the base.
  */
 const PATH_C_BASE = (() => {
   const fromEnv = env.PUBLIC_ACA_API_BASE_URL;
-  if (fromEnv && fromEnv.length > 0) return fromEnv.replace(/\/$/, '');
-  return '';
+  if (!fromEnv || fromEnv.length === 0) return '';
+  const trimmed = fromEnv.replace(/\/$/, '');
+  // Idempotent: tolerate operators who configured the env var with the
+  // `/api` suffix already present.
+  return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
 })();
 
 /**
  * Translate the canonical frontend path into a Path C URL. The Functions
  * code that handles these routes is bit-identical to Path B's, so this
- * is a passthrough — no shape translation.
+ * is a passthrough — no shape translation. The `/api` route prefix is
+ * already baked into PATH_C_BASE above.
  *
- *   Frontend canonical               Path C target
- *   /sets?language=en&all=true   →   /sets?language=en&all=true
- *   /sets/sv8/cards              →   /sets/sv8/cards
- *   /sets/sv8/cards/12345        →   /sets/sv8/cards/12345
- *   /health                      →   /health
+ *   Frontend canonical               Path C target (PATH_C_BASE includes /api)
+ *   /sets?language=en&all=true   →   <host>/api/sets?language=en&all=true
+ *   /sets/sv8/cards              →   <host>/api/sets/sv8/cards
+ *   /sets/sv8/cards/12345        →   <host>/api/sets/sv8/cards/12345
+ *   /health                      →   <host>/api/health
  */
 function translateCanonicalPath(canonicalPath: string): string {
   return `${PATH_C_BASE}${canonicalPath}`;
