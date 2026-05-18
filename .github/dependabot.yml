@@ -2,13 +2,32 @@
 # package ecosystems to update and where the package manifests are located.
 # Please see the documentation for all configuration options:
 # https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# This repo is a pnpm workspace (pnpm-workspace.yaml at root) whose members are
+# `frontend`, `backend/functions`, and `backend/shared`. The root pnpm-lock.yaml
+# coordinates dependency resolution across all members. Per-member npm blocks
+# (`directory: /frontend`, `/backend/shared`) would edit only the member's
+# package.json without updating the root pnpm-lock, so `pnpm install
+# --frozen-lockfile` at deploy time (Vercel) fails with ERR_PNPM_OUTDATED_LOCKFILE.
+# So: one root `npm` block handles pnpm-coordinated updates for the entire
+# workspace (frontend + backend/shared + root devDeps).
+#
+# `backend/functions` is the exception: it is a pnpm workspace member AND it
+# ships via `npm ci` in CI (per repo contract — see backend/functions/package.json
+# with `"@pcpc/shared": "file:../shared"`). It has its own package-lock.json
+# that the deploy pipeline consumes. So it needs its OWN `npm` block scoped
+# to `/backend/functions` to keep package-lock.json fresh. This produces some
+# duplicate-PR overlap for shared deps (root block + functions block may both
+# propose the same bump) — that's accepted as the price of supporting the
+# dual-lockfile pattern.
 
 version: 2
 
 updates:
-  # Frontend (Vercel-deployed SvelteKit) — most active dep surface
+  # Workspace root (pnpm) — coordinates pnpm-lock.yaml across frontend +
+  # backend/shared + root devDeps. Highest churn surface.
   - package-ecosystem: npm
-    directory: /frontend
+    directory: /
     schedule:
       interval: weekly
       day: monday
@@ -16,11 +35,12 @@ updates:
       timezone: America/Chicago
     open-pull-requests-limit: 5
     groups:
-      # Roll all minor/patch into one PR per week to cut noise
+      # Roll minor/patch into one PR per week to cut noise
       minor-and-patch:
         update-types: [minor, patch]
 
-  # Backend Functions — Azure Functions v4 + Scrydex
+  # backend/functions (npm) — owns package-lock.json for the `npm ci` deploy
+  # path. Distinct ecosystem from the pnpm workspace; do not consolidate.
   - package-ecosystem: npm
     directory: /backend/functions
     schedule:
@@ -31,27 +51,10 @@ updates:
       minor-and-patch:
         update-types: [minor, patch]
 
-  # No root `/` block: with pnpm-workspace at root, Dependabot's `npm` ecosystem
-  # at `directory: /` sees every workspace member's deps via pnpm-lock.yaml and
-  # opens duplicate PRs that touch the wrong lockfiles (e.g. backend/functions
-  # uses npm not pnpm, so root-block PRs for backend deps update pnpm-lock.yaml
-  # instead of backend/functions/package-lock.json — what `npm ci` actually
-  # consumes at deploy). Root's only direct deps are test runners (jest,
-  # playwright, supertest, ts-jest, babel-*, @azure/cosmos for the seed script),
-  # all dev-time only — manual bumps are acceptable for those. See PRs #178/#179
-  # from 2026-05-18 for the duplicate-PR pattern this avoids.
-
   # Dockerfile base image (Azure Functions Node 22 image gets CVE patches)
   - package-ecosystem: docker
     directory: /backend/functions
     schedule:
       interval: weekly
       day: monday
-    open-pull-requests-limit: 2
-
-  # @pcpc/shared — types-only package, low churn but worth tracking
-  - package-ecosystem: npm
-    directory: /backend/shared
-    schedule:
-      interval: monthly
     open-pull-requests-limit: 2

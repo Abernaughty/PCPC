@@ -1,4 +1,11 @@
 packages:
   - "frontend"
-  - "backend/functions"
   - "backend/shared"
+
+# backend/functions is intentionally NOT a pnpm-workspace member even though it
+# lives in the monorepo. It ships via `npm ci` against its own package-lock.json
+# (per repo contract — see backend/functions/package.json declaring @pcpc/shared
+# as `file:../shared`, not `workspace:*`). Listing it here would put its deps in
+# the root pnpm-lock.yaml as well, creating dual-tooling drift: Dependabot's
+# pnpm-aware root job would update pnpm-lock but not package-lock, leaving the
+# backend deploy out of sync. See PR #194 for the full rationale.
