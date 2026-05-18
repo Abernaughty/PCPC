@@ -202,7 +202,18 @@ stages:
   # ============================================================================
   - stage: Deploy_Staging
     displayName: "Deploy to Staging"
-    dependsOn: Deploy_Dev
+    # `Build` is listed explicitly (in addition to Deploy_Dev) so this stage
+    # can read `stageDependencies.Build.Build_Container_Image.outputs[...]`
+    # for the Deploy_ACA job below. Per Microsoft Learn: "Output variables
+    # are only available in the next downstream stage. If multiple stages
+    # consume the same output variable, use the `dependsOn` condition."
+    # (learn.microsoft.com/azure/devops/pipelines/process/set-variables-scripts).
+    # Execution order is unchanged — Deploy_Dev already gates this stage
+    # via its own dependsOn on Build, so adding Build here just propagates
+    # the output-variable visibility.
+    dependsOn:
+      - Build
+      - Deploy_Dev
     condition: succeeded()
     variables:
       - group: vg-pcpc-staging-config
@@ -306,7 +317,12 @@ stages:
   # ============================================================================
   - stage: Deploy_Prod
     displayName: "Deploy to Production"
-    dependsOn: Deploy_Staging
+    # See the matching note on Deploy_Staging — Build is listed alongside
+    # the upstream deploy stage so Deploy_ACA can read the cross-stage
+    # image-reference output variable.
+    dependsOn:
+      - Build
+      - Deploy_Staging
     condition: succeeded()
     variables:
       - group: vg-pcpc-prod-config
