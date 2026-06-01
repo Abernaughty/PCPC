@@ -27,7 +27,7 @@
 		"typescript": "^5.8.0",
 		"typescript-eslint": "^8.26.0",
 		"vite": "^6.2.0",
-		"vitest": "^3.0.0"
+		"vitest": "^4.1.0"
 	},
 	"dependencies": {
 		"@azure/cosmos": "^4.3.0",
