@@ -199,7 +199,7 @@ See [`infra/README.md`](infra/README.md) for full details.
 
 ## License
 
-MIT — see [LICENSE](LICENSE.txt) for details.
+MIT — see [LICENSE](LICENSE) for details.
 
 ---
 
