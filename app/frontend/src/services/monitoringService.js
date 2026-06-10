@@ -14,6 +14,7 @@
  */
 
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
+import { loggerService } from "./loggerService";
 
 class MonitoringService {
   constructor() {
@@ -37,7 +38,7 @@ class MonitoringService {
 
     // Graceful degradation if Application Insights not configured
     if (!connectionString) {
-      console.warn(
+      loggerService.warn(
         "Application Insights connection string not configured. Monitoring disabled."
       );
       return;
@@ -85,11 +86,11 @@ class MonitoringService {
       });
 
       this.isInitialized = true;
-      console.log(
+      loggerService.info(
         `Application Insights initialized for ${this.roleName} (${this.environment})`
       );
     } catch (error) {
-      console.error("Failed to initialize Application Insights:", error);
+      loggerService.error("Failed to initialize Application Insights:", error);
       this.isInitialized = false;
     }
   }
@@ -115,7 +116,7 @@ class MonitoringService {
         measurements,
       });
     } catch (error) {
-      console.error("Error tracking event:", error);
+      loggerService.error("Error tracking event:", error);
     }
   }
 
@@ -141,7 +142,7 @@ class MonitoringService {
         measurements,
       });
     } catch (error) {
-      console.error("Error tracking page view:", error);
+      loggerService.error("Error tracking page view:", error);
     }
   }
 
@@ -165,7 +166,7 @@ class MonitoringService {
         },
       });
     } catch (error) {
-      console.error("Error tracking metric:", error);
+      loggerService.error("Error tracking metric:", error);
     }
   }
 
@@ -177,7 +178,7 @@ class MonitoringService {
    */
   trackException(exception, properties = {}, severityLevel = 3) {
     if (!this.isInitialized) {
-      console.error("Exception (monitoring disabled):", exception);
+      loggerService.error("Exception (monitoring disabled):", exception);
       return;
     }
 
@@ -196,7 +197,7 @@ class MonitoringService {
         },
       });
     } catch (error) {
-      console.error("Error tracking exception:", error);
+      loggerService.error("Error tracking exception:", error);
     }
   }
 
@@ -220,7 +221,7 @@ class MonitoringService {
         },
       });
     } catch (error) {
-      console.error("Error tracking trace:", error);
+      loggerService.error("Error tracking trace:", error);
     }
   }
 
@@ -260,7 +261,7 @@ class MonitoringService {
         },
       });
     } catch (error) {
-      console.error("Error tracking dependency:", error);
+      loggerService.error("Error tracking dependency:", error);
     }
   }
 
@@ -333,7 +334,7 @@ class MonitoringService {
         });
       });
     } catch (error) {
-      console.error("Error setting user context:", error);
+      loggerService.error("Error setting user context:", error);
     }
   }
 
@@ -346,7 +347,7 @@ class MonitoringService {
     try {
       this.appInsights.clearAuthenticatedUserContext();
     } catch (error) {
-      console.error("Error clearing user context:", error);
+      loggerService.error("Error clearing user context:", error);
     }
   }
 
@@ -360,7 +361,7 @@ class MonitoringService {
     try {
       this.appInsights.flush();
     } catch (error) {
-      console.error("Error flushing telemetry:", error);
+      loggerService.error("Error flushing telemetry:", error);
     }
   }
 
@@ -389,7 +390,7 @@ class MonitoringService {
         id,
       });
     } catch (error) {
-      console.error("Error tracking web vital:", error);
+      loggerService.error("Error tracking web vital:", error);
     }
   }
 }

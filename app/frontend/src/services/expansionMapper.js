@@ -2,6 +2,7 @@
  * Expansion Mapper Service
  * Maps set codes to their respective expansions for grouping in the UI
  */
+import { loggerService } from './loggerService';
 
 // Define expansion patterns based on set codes
 const EXPANSION_PATTERNS = [
@@ -225,7 +226,7 @@ function getExpansionForSet(set) {
 function groupSetsByExpansion(sets) {
   // Safety check - if sets is not an array, return an empty object
   if (!Array.isArray(sets)) {
-    console.warn('groupSetsByExpansion was called with non-array input:', sets);
+    loggerService.warn('groupSetsByExpansion was called with non-array input:', sets);
     return {};
   }
   
@@ -261,7 +262,7 @@ function groupSetsByExpansion(sets) {
 function prepareGroupedSetsForDropdown(groupedSets) {
   // Safety check - if groupedSets is not an object, return an empty array
   if (!groupedSets || typeof groupedSets !== 'object' || Array.isArray(groupedSets)) {
-    console.warn('prepareGroupedSetsForDropdown was called with invalid input:', groupedSets);
+    loggerService.warn('prepareGroupedSetsForDropdown was called with invalid input:', groupedSets);
     return [];
   }
   

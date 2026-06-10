@@ -11,6 +11,8 @@
  * - Configuration via environment at runtime
  */
 
+import { loggerService } from "../services/loggerService";
+
 /**
  * Application configuration interface
  */
@@ -91,7 +93,7 @@ export function getRuntimeConfig(): AppConfig {
 
   // Log configuration in debug mode (helps with troubleshooting)
   if (config.enableDebug && isBrowser) {
-    console.log("[RuntimeConfig] Configuration loaded:", {
+    loggerService.debug("[RuntimeConfig] Configuration loaded:", {
       apiUrl: config.apiUrl,
       enableDebug: config.enableDebug,
       source: runtimeEnv
@@ -114,7 +116,7 @@ export function validateConfig(): boolean {
     const config = getRuntimeConfig();
 
     if (!config.apiUrl) {
-      console.error("[RuntimeConfig] API URL is not configured");
+      loggerService.error("[RuntimeConfig] API URL is not configured");
       return false;
     }
 
@@ -122,13 +124,13 @@ export function validateConfig(): boolean {
     try {
       new URL(config.apiUrl);
     } catch (error) {
-      console.error("[RuntimeConfig] Invalid API URL format:", config.apiUrl);
+      loggerService.error("[RuntimeConfig] Invalid API URL format:", config.apiUrl);
       return false;
     }
 
     return true;
   } catch (error) {
-    console.error("[RuntimeConfig] Configuration validation failed:", error);
+    loggerService.error("[RuntimeConfig] Configuration validation failed:", error);
     return false;
   }
 }

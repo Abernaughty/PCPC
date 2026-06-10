@@ -14,6 +14,7 @@
 
 import { onCLS, onFCP, onINP, onLCP, onTTFB } from "web-vitals";
 import { monitoringService } from "../services/monitoringService";
+import { loggerService } from "../services/loggerService";
 
 /**
  * Performance thresholds based on Google's recommendations
@@ -78,7 +79,7 @@ function sendToAnalytics(metric) {
 
   // Log to console in development
   if (import.meta.env.VITE_ENVIRONMENT === "development") {
-    console.log(`[Web Vitals] ${name}:`, {
+    loggerService.debug(`[Web Vitals] ${name}:`, {
       value: Math.round(value),
       rating: customRating,
       delta: Math.round(delta),
@@ -127,9 +128,9 @@ export function initWebVitals() {
     // Measures initial rendering
     onFCP(sendToAnalytics);
 
-    console.log("[Web Vitals] Core Web Vitals tracking initialized");
+    loggerService.info("[Web Vitals] Core Web Vitals tracking initialized");
   } catch (error) {
-    console.error("[Web Vitals] Failed to initialize:", error);
+    loggerService.error("[Web Vitals] Failed to initialize:", error);
     monitoringService.trackException(error, {
       context: "webVitals.init",
     });
@@ -167,7 +168,7 @@ export async function getWebVitalsSummary() {
       }
     });
   } catch (error) {
-    console.error("[Web Vitals] Failed to get summary:", error);
+    loggerService.error("[Web Vitals] Failed to get summary:", error);
   }
 
   return summary;

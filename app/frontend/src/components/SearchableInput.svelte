@@ -25,10 +25,7 @@
   
   // Filter items based on the current search value
   function filterItems() {
-    console.log(`Filtering items. Items: ${items.length}, Value: '${value}'`);
-    
     if (!value || !value.trim() || items.length === 0) {
-      console.log('No value or no items, clearing results');
       filteredItems = [];
       displayItems = [];
       showingAllResults = true;
@@ -55,8 +52,6 @@
       // Check if the base name includes the search text
       return baseName.toLowerCase().includes(searchLower);
     });
-    
-    console.log(`Found ${matches.length} matching items for '${value}'`);
     
     // Sort results by:
     // 1. Exact base name matches first
@@ -113,37 +108,28 @@
     displayItems = filteredItems.slice(0, maxDisplayItems);
     showingAllResults = displayItems.length === filteredItems.length;
     
-    console.log(`Done filtering. Found ${filteredItems.length} matches, displaying ${displayItems.length}`);
-    console.log('showingAllResults:', showingAllResults);
-    console.log('isFocused:', isFocused);
-    
     // Reset highlighted index when filtered items change
     highlightedIndex = -1;
   }
   
   // Update filtered items when items or value changes
   $: {
-    console.log(`Items: ${items.length}, Value: ${value}`);
     filterItems();
   }
   
   // Functions
   // Make sure to handle focus/blur properly
   function handleFocus() {
-    console.log('Input focused');
     isFocused = true;
   }
   
   function handleBlur(event) {
-    console.log('Input blur event');
     // Short delay to allow click to register on dropdown items
     setTimeout(() => {
       // Don't blur if clicking inside the dropdown
       if (dropdownElement && dropdownElement.contains(event.relatedTarget)) {
-        console.log('Clicked inside dropdown, keeping focus');
         return;
       }
-      console.log('Losing focus');
       isFocused = false;
     }, 100);
   }

@@ -3,6 +3,7 @@
  * Determines which sets are considered "current" and should be cached
  */
 import { currentSetsConfig } from '../data/currentSetsConfig';
+import { loggerService } from './loggerService';
 
 class SetClassifier {
   constructor() {
@@ -37,7 +38,7 @@ class SetClassifier {
    */
   updateFromApiData(allSets) {
     if (!allSets || !Array.isArray(allSets) || allSets.length === 0) {
-      console.warn('Invalid sets data for updating current sets');
+      loggerService.warn('Invalid sets data for updating current sets');
       return false;
     }
     
@@ -49,7 +50,7 @@ class SetClassifier {
       );
       
       if (currentExpansionSets.length === 0) {
-        console.warn(`Could not find any sets matching the current expansion: ${this.currentExpansion}`);
+        loggerService.warn(`Could not find any sets matching the current expansion: ${this.currentExpansion}`);
         return false;
       }
       
@@ -66,7 +67,7 @@ class SetClassifier {
       });
       
       if (currentSets.length === 0) {
-        console.warn('No current sets found after date filtering');
+        loggerService.warn('No current sets found after date filtering');
         return false;
       }
       
@@ -74,7 +75,7 @@ class SetClassifier {
       const setCodes = currentSets.map(set => set.code).filter(Boolean);
       
       if (setCodes.length === 0) {
-        console.warn('No valid set codes found in current sets');
+        loggerService.warn('No valid set codes found in current sets');
         return false;
       }
       
@@ -82,10 +83,10 @@ class SetClassifier {
       this.currentSetCodes = setCodes;
       this.lastUpdated = new Date();
       
-      console.log(`Updated current sets: ${setCodes.join(', ')}`);
+      loggerService.debug(`Updated current sets: ${setCodes.join(', ')}`);
       return true;
     } catch (error) {
-      console.error('Error updating current sets:', error);
+      loggerService.error('Error updating current sets:', error);
       return false;
     }
   }
@@ -109,7 +110,7 @@ class SetClassifier {
       await dbService.saveCurrentSetsConfig(config);
       return true;
     } catch (error) {
-      console.error('Error saving current sets config:', error);
+      loggerService.error('Error saving current sets config:', error);
       return false;
     }
   }
@@ -142,10 +143,10 @@ class SetClassifier {
         this.lastUpdated = new Date(config.lastUpdated);
       }
       
-      console.log(`Loaded current sets config from database: ${this.currentSetCodes.join(', ')}`);
+      loggerService.debug(`Loaded current sets config from database: ${this.currentSetCodes.join(', ')}`);
       return true;
     } catch (error) {
-      console.error('Error loading current sets config:', error);
+      loggerService.error('Error loading current sets config:', error);
       return false;
     }
   }
