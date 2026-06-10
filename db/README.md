@@ -2,7 +2,7 @@
 
 ## Overview
 
-This directory contains the complete database schema management system for the Pokemon Card Price Checker (PCPC) project. It provides enterprise-grade database schema documentation, migration framework, seed data management, and operational tools for Azure Cosmos DB.
+This directory contains the complete database schema management system for the Pokemon Card Price Checker (PCPC) project. It provides database schema documentation, migration framework, seed data management, and operational tools for Azure Cosmos DB.
 
 ## Directory Structure
 

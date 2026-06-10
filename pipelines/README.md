@@ -11,7 +11,7 @@ This directory now contains:
 
 ## New CI/CD Architecture
 
-The PCPC project now uses an enterprise-grade CI/CD architecture with:
+The PCPC project now uses a CI/CD architecture with:
 
 - **Two-Pipeline Strategy**: PR validation + Multi-stage CD
 - **Unified Artifact**: Build-once-deploy-many pattern

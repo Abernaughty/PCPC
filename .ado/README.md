@@ -1,6 +1,6 @@
 # PCPC CI/CD Pipelines
 
-This directory contains Azure DevOps pipeline definitions for the PCPC (Pokemon Card Price Checker) project, implementing enterprise-grade CI/CD practices.
+This directory contains Azure DevOps pipeline definitions for the PCPC (Pokemon Card Price Checker) project.
 
 ## Pipeline Architecture
 

@@ -31,7 +31,7 @@ Each runbook follows a consistent structure:
 
 ### Usage Principles
 
-- **Clarity**: Instructions should be executable by any team member
+- **Clarity**: Instructions should be executable by anyone with the required access
 - **Completeness**: All necessary steps and context included
 - **Accuracy**: Procedures tested and verified to work
 - **Consistency**: Standardized format and terminology
@@ -64,7 +64,7 @@ Each runbook follows a consistent structure:
 1. Follow [Security Incident Runbook](./security-incident-runbook.md)
 2. Isolate affected systems immediately
 3. Preserve evidence and logs
-4. Notify security team and stakeholders
+4. Document the incident and notify affected users if applicable
 
 ## Communication Templates
 
@@ -120,9 +120,8 @@ Timeline:
 
 1. **Identify Changes**: System updates requiring runbook modifications
 2. **Draft Updates**: Revise affected procedures and test changes
-3. **Review Process**: Team review of updated procedures
-4. **Approval**: Technical lead approval for critical runbooks
-5. **Deployment**: Update documentation and train team
+3. **Review**: Verify updated procedures against the live system
+4. **Deployment**: Update documentation
 
 ### Testing and Validation
 
@@ -131,55 +130,11 @@ Timeline:
 - **Documentation Validation**: Verify accuracy of commands and steps
 - **Access Verification**: Ensure required permissions are documented
 
-## Training and Competency
-
-### Onboarding Requirements
-
-New team members must complete:
-- [ ] Read all critical runbooks (Deployment, Incident Response, Backup & Recovery)
-- [ ] Complete guided walkthrough of deployment procedures
-- [ ] Shadow experienced team member during maintenance window
-- [ ] Participate in incident response simulation exercise
-
-### Ongoing Training
-
-- **Monthly**: Review one runbook with team and discuss improvements
-- **Quarterly**: Conduct incident response tabletop exercise
-- **Annually**: Complete comprehensive runbook training for all team members
-
-### Competency Assessment
-
-Team members should demonstrate ability to:
-- Execute deployment procedures independently
-- Respond appropriately to common incident scenarios
-- Escalate issues following proper procedures
-- Document actions taken during operations
-
 ## Contact Information
 
-### Primary Contacts
-
-| Role | Contact | Backup |
-|------|---------|---------|
-| **Technical Lead** | [Primary] | [Backup] |
-| **DevOps Engineer** | [Primary] | [Backup] |
-| **Security Team** | [Primary] | [Backup] |
-| **Product Owner** | [Primary] | [Backup] |
-
-### Escalation Matrix
-
-| Severity | Response Time | Primary Contact | Escalation |
-|----------|---------------|-----------------|------------|
-| **P0 - Critical** | 15 minutes | Technical Lead | CTO |
-| **P1 - High** | 1 hour | DevOps Engineer | Technical Lead |
-| **P2 - Medium** | 4 hours | Development Team | DevOps Engineer |
-| **P3 - Low** | 24 hours | Product Owner | Development Team |
-
-### External Contacts
-
-- **Azure Support**: [Support case portal and contact information]
-- **GitHub Support**: [Enterprise support contact information]
-- **Vendor Support**: [Third-party service contacts]
+- **Maintainer**: Michael Abernathy — mike@maber.io
+- **Azure Support**: open a support request through the Azure Portal
+- **GitHub Support**: https://support.github.com
 
 ## Quality Assurance
 
@@ -199,7 +154,7 @@ Team members should demonstrate ability to:
 
 **Feedback Collection**:
 - Post-incident reviews identify runbook gaps
-- Team feedback on procedure clarity and completeness
+- Feedback on procedure clarity and completeness
 - Metrics on procedure execution success rates
 
 **Improvement Process**:

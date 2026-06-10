@@ -1472,52 +1472,13 @@ az apim cache remove \
   --service-name "pokedata-apim-prod"
 ```
 
-### Escalation Procedures
+### Escalation
 
-#### When to Escalate
+PCPC is maintained by a single developer. For issues that cannot be resolved with
+this guide, contact the maintainer:
 
-**Level 1 - Development Team**:
-
-- Build failures
-- Test failures
-- Development environment issues
-- Non-critical bugs
-
-**Level 2 - DevOps Team**:
-
-- Infrastructure deployment issues
-- CI/CD pipeline failures
-- Performance degradation
-- Security vulnerabilities
-
-**Level 3 - Management**:
-
-- Complete system outages
-- Data breaches
-- Critical security incidents
-- Customer-impacting issues
-
-#### Escalation Contacts
-
-```yaml
-# Emergency contact information
-contacts:
-  development:
-    primary: "dev-team@pcpc.dev"
-    secondary: "lead-developer@pcpc.dev"
-
-  devops:
-    primary: "devops-team@pcpc.dev"
-    secondary: "infrastructure-lead@pcpc.dev"
-
-  management:
-    primary: "engineering-manager@pcpc.dev"
-    secondary: "cto@pcpc.dev"
-
-  external:
-    azure_support: "+1-800-MICROSOFT"
-    security_team: "security@company.com"
-```
+- **Maintainer**: Michael Abernathy — mike@maber.io
+- **Azure platform issues**: open a support request through the Azure Portal
 
 #### Communication Templates
 
@@ -1581,7 +1542,6 @@ This troubleshooting guide provides comprehensive coverage of common issues and 
 - **Emergency Procedures**: Critical incident response and recovery procedures
 - **Performance Optimization**: Solutions for common performance issues
 - **Security Response**: Comprehensive security incident handling
-- **Escalation Procedures**: Clear escalation paths and communication templates
 
 ### Key Troubleshooting Resources
 
@@ -1598,7 +1558,7 @@ This troubleshooting guide provides comprehensive coverage of common issues and 
 3. **Leverage Monitoring**: Use Application Insights and logs for analysis
 4. **Test Thoroughly**: Verify fixes in development before production
 5. **Update Documentation**: Keep troubleshooting guide current with new issues
-6. **Share Knowledge**: Document solutions for team learning
+6. **Share Knowledge**: Document solutions for future reference
 
 ### Preventive Measures
 
@@ -1610,4 +1570,4 @@ This troubleshooting guide provides comprehensive coverage of common issues and 
 
 For additional support, refer to the [Development Guide](./development-guide.md) for development workflows, [Deployment Guide](./deployment-guide.md) for infrastructure procedures, and [Architecture Documentation](./architecture.md) for system design details.
 
-**Emergency Contact**: For critical issues requiring immediate attention, follow the escalation procedures outlined in this guide and contact the appropriate team based on issue severity and impact.
+**Contact**: For critical issues requiring immediate attention, contact the maintainer at mike@maber.io.
