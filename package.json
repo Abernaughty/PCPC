@@ -1,8 +1,14 @@
 {
-  "name": "pcpc-testing-framework",
+  "name": "pcpc",
   "version": "1.0.0",
   "type": "module",
-  "description": "PCPC Comprehensive Testing Framework",
+  "description": "Pokemon Card Price Checker (PCPC) - full-stack card pricing application on Azure (Svelte frontend, Azure Functions backend, Cosmos DB, Terraform IaC)",
+  "author": "Michael Abernathy",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Abernaughty/PCPC.git"
+  },
   "dependencies": {
     "@azure/cosmos": "^4.0.0"
   },
