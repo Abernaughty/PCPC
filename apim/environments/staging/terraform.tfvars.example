@@ -4,6 +4,8 @@
 # Copy this file to terraform.tfvars and update the values as needed
 
 # Required variables (update these with your actual values)
+subscription_id     = "00000000-0000-0000-0000-000000000000"
+tenant_id           = "00000000-0000-0000-0000-000000000000"
 api_management_name = "pcpc-apim-staging"
 resource_group_name = "pcpc-rg-staging"
 function_app_name   = "pcpc-func-staging"

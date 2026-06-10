@@ -26,8 +26,9 @@ terraform {
     storage_account_name = "pcpctfstatedacc29c2"
     container_name       = "tfstate"
     key                  = "dev.terraform.tfstate"
-    tenant_id            = "5f445a68-ec75-42cf-a50f-6ec158ee675c"
-    subscription_id      = "555b4cfa-ad2e-4c71-9433-620a59cf7616"
+    # tenant_id and subscription_id are supplied at init time via the
+    # ARM_TENANT_ID / ARM_SUBSCRIPTION_ID environment variables, Azure CLI
+    # authentication, or -backend-config arguments.
   }
 }
 
@@ -41,7 +42,8 @@ provider "azurerm" {
       recover_soft_deleted_key_vaults = true
     }
   }
-  subscription_id = "555b4cfa-ad2e-4c71-9433-620a59cf7616"
+  subscription_id = var.subscription_id
+  tenant_id       = var.tenant_id
 }
 
 provider "random" {}

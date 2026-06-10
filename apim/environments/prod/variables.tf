@@ -1,6 +1,15 @@
 # -----------------------------------------------------------------------------
 # PRODUCTION ENVIRONMENT VARIABLES
 # -----------------------------------------------------------------------------
+variable "subscription_id" {
+  description = "The Azure subscription ID containing the API Management instance"
+  type        = string
+}
+
+variable "tenant_id" {
+  description = "The Azure AD tenant ID"
+  type        = string
+}
 
 variable "environment" {
   description = "Environment identifier"
