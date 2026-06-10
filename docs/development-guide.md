@@ -433,8 +433,7 @@ app/backend/src/
 │   ├── ImageEnhancementService.ts
 │   ├── ImageUrlUpdateService.ts
 │   ├── PokeDataToTcgMappingService.ts
-│   ├── SetMappingService.ts
-│   └── BlobStorageService_old.ts
+│   └── SetMappingService.ts
 ├── models/              # TypeScript interfaces and types
 │   ├── Card.ts
 │   ├── Set.ts
