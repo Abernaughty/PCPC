@@ -1,6 +1,5 @@
 # Pokemon Card Price Checker (PCPC)
 
-[![Tests](https://img.shields.io/badge/Tests-Passing-brightgreen.svg)](tests/README.md)
 [![Infrastructure](https://img.shields.io/badge/IaC-Terraform-purple.svg)](infra/README.md)
 [![DevContainer](https://img.shields.io/badge/DevContainer-ACR%20Optimized-blue.svg)](.devcontainer/README.md)
 
