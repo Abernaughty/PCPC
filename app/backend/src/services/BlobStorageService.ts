@@ -6,6 +6,7 @@ import {
   BlobSASPermissions,
   StorageSharedKeyCredential,
 } from '@azure/storage-blob';
+import { logger } from "../utils/logger";
 
 export interface IBlobStorageService {
   exists(blobPath: string): Promise<boolean>;
@@ -69,7 +70,7 @@ export class BlobStorageService implements IBlobStorageService {
       return true;
     } catch (err) {
       // If something goes wrong, stay "unconfigured" and let callers decide
-      console.error(`[BlobStorageService] initialization failed:`, err);
+      logger.error(`[BlobStorageService] initialization failed:`, err);
       this.blobServiceClient = undefined;
       this.containerClient = undefined;
       this.accountName = undefined;

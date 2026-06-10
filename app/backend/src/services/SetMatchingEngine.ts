@@ -1,6 +1,7 @@
 import { Set } from "../models/Set";
 import { SetMatchType } from "../models/SetMapping";
 import { PokeDataSet } from "./PokeDataApiService";
+import { logger } from "../utils/logger";
 
 interface MatchResult {
   tcgSet: Set | null;
@@ -38,7 +39,7 @@ export class SetMatchingEngine {
           String(DEFAULT_NAME_SIMILARITY_THRESHOLD)
       );
 
-    console.log(
+    logger.debug(
       `[SetMatchingEngine] Initialized with similarity threshold: ${this.similarityThreshold}`
     );
   }
@@ -116,7 +117,7 @@ export class SetMatchingEngine {
       // Strategy 1: Code match
       const tcgCode = tcgSet.code ? tcgSet.code.toUpperCase() : "";
       if (pokeDataCode && tcgCode && pokeDataCode === tcgCode) {
-        console.log(
+        logger.debug(
           `[SetMatchingEngine] Exact code match: ${pokeDataSet.name} (${pokeDataCode}) -> ${tcgSet.name} (${tcgCode})`
         );
         return {
@@ -130,7 +131,7 @@ export class SetMatchingEngine {
       // Strategy 2: Exact normalized name match
       const normalizedTcgName = this.normalizeName(tcgSet.name);
       if (normalizedPokeDataName.normalized === normalizedTcgName.normalized) {
-        console.log(
+        logger.debug(
           `[SetMatchingEngine] Exact name match: ${pokeDataSet.name} -> ${tcgSet.name}`
         );
         return {
@@ -175,16 +176,16 @@ export class SetMatchingEngine {
     // Log match quality for monitoring and threshold tuning
     if (bestMatch.tcgSet) {
       if (bestMatch.confidence < MIN_CONFIDENCE_THRESHOLD) {
-        console.warn(
+        logger.warn(
           `[SetMatchingEngine] Low confidence match (${bestMatch.confidence.toFixed(
             2
           )}): ${pokeDataSet.name} -> ${bestMatch.tcgSet.name}`
         );
-        console.warn(
+        logger.warn(
           `[SetMatchingEngine] Reason: ${bestMatch.reason}. Consider manual review.`
         );
       } else {
-        console.log(
+        logger.debug(
           `[SetMatchingEngine] Match found (confidence: ${bestMatch.confidence.toFixed(
             2
           )}): ${pokeDataSet.name} -> ${bestMatch.tcgSet.name}`
@@ -193,14 +194,14 @@ export class SetMatchingEngine {
 
       // Log alternative candidates if they exist
       if (matchCandidates.length > 1) {
-        console.log(
+        logger.debug(
           `[SetMatchingEngine] Alternative candidates for ${pokeDataSet.name}:`
         );
         matchCandidates
           .sort((a, b) => b.confidence - a.confidence)
           .slice(0, 3)
           .forEach((candidate, index) => {
-            console.log(
+            logger.debug(
               `  ${index + 1}. ${
                 candidate.tcgSet.name
               } (confidence: ${candidate.confidence.toFixed(2)}, ${
@@ -210,7 +211,7 @@ export class SetMatchingEngine {
           });
       }
     } else {
-      console.log(
+      logger.debug(
         `[SetMatchingEngine] No match found for ${pokeDataSet.name} (code: ${pokeDataCode})`
       );
     }

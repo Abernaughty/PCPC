@@ -1,5 +1,6 @@
 import { SetMapping } from "../models/SetMapping";
 import { SetMappingRepository } from "./SetMappingRepository";
+import { logger } from "../utils/logger";
 
 const MIN_CACHE_TTL_SECONDS = 60;
 
@@ -47,7 +48,7 @@ export class PokeDataToTcgMappingService {
       this.cache.set(mapping.pokeDataSetId, mapping);
     });
     this.cacheLoadedAt = Date.now();
-    console.log(
+    logger.debug(
       `[PokeDataToTcgMappingService] Cache refreshed with ${mappings.length} mappings`
     );
   }
@@ -69,20 +70,20 @@ export class PokeDataToTcgMappingService {
 
     const mapping = this.cache.get(pokeDataSetId);
     if (!mapping) {
-      console.log(
+      logger.debug(
         `[PokeDataToTcgMappingService] No mapping found for PokeData set ID ${pokeDataSetId}`
       );
       return null;
     }
 
     if (!mapping.tcgSetId) {
-      console.log(
+      logger.debug(
         `[PokeDataToTcgMappingService] Mapping for PokeData set ID ${pokeDataSetId} does not have a TCG set`
       );
       return null;
     }
 
-    console.log(
+    logger.debug(
       `[PokeDataToTcgMappingService] Mapped PokeData set ID ${pokeDataSetId} to TCG set ID ${mapping.tcgSetId}`
     );
     return mapping.tcgSetId;
@@ -143,12 +144,12 @@ export class PokeDataToTcgMappingService {
   updateCacheEntry(pokeDataSetId: number, mapping: SetMapping | null): void {
     if (!mapping) {
       this.cache.delete(pokeDataSetId);
-      console.log(
+      logger.debug(
         `[PokeDataToTcgMappingService] Removed cache entry for PokeData set ID ${pokeDataSetId}`
       );
     } else {
       this.cache.set(mapping.pokeDataSetId, mapping);
-      console.log(
+      logger.debug(
         `[PokeDataToTcgMappingService] Updated cache entry for PokeData set ID ${pokeDataSetId}`
       );
     }

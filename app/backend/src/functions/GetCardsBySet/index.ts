@@ -333,10 +333,10 @@ export async function getCardsBySet(
           `${correlationId} Transformed ${cards.length} cards to basic PokeData format (${transformTime}ms)`
         );
         context.log(
-          `${correlationId} ✅ ON-DEMAND STRATEGY: Pricing will be fetched when users request individual cards`
+          `${correlationId} ON-DEMAND STRATEGY: Pricing will be fetched when users request individual cards`
         );
         context.log(
-          `${correlationId} ✅ TOKEN EFFICIENCY: 1 API call instead of ${pokeDataCards.length} calls (${pokeDataCards.length}x reduction)`
+          `${correlationId} TOKEN EFFICIENCY: 1 API call instead of ${pokeDataCards.length} calls (${pokeDataCards.length}x reduction)`
         );
 
         // Track transformation metrics
@@ -445,7 +445,7 @@ export async function getCardsBySet(
         correlationId,
       });
       context.log(
-        `${correlationId} ⚠️ PAGINATION WARNING: Last page is full (${paginatedCards.length} cards)`
+        `${correlationId} PAGINATION WARNING: Last page is full (${paginatedCards.length} cards)`
       );
     }
 

@@ -5,6 +5,7 @@ import {
   pokeDataApiService,
   redisCacheService,
 } from "../../index";
+import { logger } from "../../utils/logger";
 
 /**
  * Smart Incremental RefreshData Function
@@ -42,7 +43,7 @@ export async function refreshData(
 
   try {
     // Step 1: Get current set count from PokeData API (5 credits)
-    console.log(
+    logger.debug(
       `${correlationId} Step 1: Checking PokeData API for current set count...`
     );
     const apiStartTime = Date.now();
@@ -72,7 +73,7 @@ export async function refreshData(
     );
 
     // Step 2: Get current database set count
-    console.log(
+    logger.debug(
       `${correlationId} Step 2: Checking database for current set count...`
     );
     const dbStartTime = Date.now();
@@ -100,13 +101,13 @@ export async function refreshData(
     if (apiSetCount === dbSetCount) {
       const totalTime = Date.now() - startTime;
       context.log(
-        `${correlationId} ✅ Set counts match (API: ${apiSetCount}, DB: ${dbSetCount})`
+        `${correlationId} Set counts match (API: ${apiSetCount}, DB: ${dbSetCount})`
       );
       context.log(
-        `${correlationId} ✅ No refresh needed - exiting after ${totalTime}ms (5 credits total)`
+        `${correlationId} No refresh needed - exiting after ${totalTime}ms (5 credits total)`
       );
       context.log(
-        `${correlationId} ✅ Smart incremental refresh complete - optimal token usage achieved`
+        `${correlationId} Smart incremental refresh complete - optimal token usage achieved`
       );
 
       // Track successful skip
@@ -131,10 +132,10 @@ export async function refreshData(
 
     // Step 4: Set counts differ - refresh set metadata only
     context.log(
-      `${correlationId} 🔄 Set count mismatch detected (API: ${apiSetCount}, DB: ${dbSetCount})`
+      `${correlationId} Set count mismatch detected (API: ${apiSetCount}, DB: ${dbSetCount})`
     );
     context.log(
-      `${correlationId} 🔄 Refreshing set metadata only (no individual card pricing)`
+      `${correlationId} Refreshing set metadata only (no individual card pricing)`
     );
 
     // Track refresh initiation
@@ -164,7 +165,7 @@ export async function refreshData(
     const refreshTime = Date.now() - refreshStartTime;
 
     context.log(
-      `${correlationId} ✅ Successfully refreshed ${transformedSets.length} set records in ${refreshTime}ms`
+      `${correlationId} Successfully refreshed ${transformedSets.length} set records in ${refreshTime}ms`
     );
 
     // Track refresh completion
@@ -196,7 +197,7 @@ export async function refreshData(
     // Check for data integrity issues
     if (apiSetCount !== dbSetCountAfter) {
       context.log(
-        `${correlationId} ⚠️ WARNING: Set count mismatch after refresh (API: ${apiSetCount}, DB: ${dbSetCountAfter})`
+        `${correlationId} WARNING: Set count mismatch after refresh (API: ${apiSetCount}, DB: ${dbSetCountAfter})`
       );
       monitoringService.trackEvent("refresh.set_count_mismatch", {
         apiCount: apiSetCount,
@@ -207,7 +208,7 @@ export async function refreshData(
       });
     } else {
       context.log(
-        `${correlationId} ✅ Data integrity verified - set counts match`
+        `${correlationId} Data integrity verified - set counts match`
       );
       monitoringService.trackEvent("data.integrity.verified", {
         setCount: dbSetCountAfter,
@@ -220,7 +221,7 @@ export async function refreshData(
     if (uniqueSetIds.size !== dbSetsAfter.length) {
       const duplicateCount = dbSetsAfter.length - uniqueSetIds.size;
       context.log(
-        `${correlationId} ⚠️ WARNING: ${duplicateCount} duplicate set IDs detected`
+        `${correlationId} WARNING: ${duplicateCount} duplicate set IDs detected`
       );
       monitoringService.trackEvent("refresh.duplicate_detected", {
         totalSets: dbSetsAfter.length,
@@ -237,7 +238,7 @@ export async function refreshData(
       await redisCacheService.delete("sets:pokedata:current");
       const cacheTime = Date.now() - cacheStartTime;
       context.log(
-        `${correlationId} ✅ Invalidated sets cache (${cacheTime}ms)`
+        `${correlationId} Invalidated sets cache (${cacheTime}ms)`
       );
 
       monitoringService.trackEvent("cache.invalidated", {
@@ -249,14 +250,14 @@ export async function refreshData(
 
     const totalTime = Date.now() - startTime;
     context.log(
-      `${correlationId} ✅ Smart incremental refresh completed in ${totalTime}ms`
+      `${correlationId} Smart incremental refresh completed in ${totalTime}ms`
     );
-    context.log(`${correlationId} ✅ Sets updated: ${transformedSets.length}`);
+    context.log(`${correlationId} Sets updated: ${transformedSets.length}`);
     context.log(
-      `${correlationId} ✅ Token usage: 5 credits (optimal efficiency)`
+      `${correlationId} Token usage: 5 credits (optimal efficiency)`
     );
     context.log(
-      `${correlationId} ✅ Card pricing will be fetched on-demand when users request specific cards`
+      `${correlationId} Card pricing will be fetched on-demand when users request specific cards`
     );
 
     // Track successful completion

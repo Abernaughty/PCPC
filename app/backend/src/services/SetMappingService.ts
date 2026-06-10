@@ -1,5 +1,6 @@
 import { SetMapping } from "../models/SetMapping";
 import { SetMappingRepository } from "./SetMappingRepository";
+import { logger } from "../utils/logger";
 
 /**
  * Service for accessing set mappings
@@ -20,7 +21,7 @@ export class SetMappingService {
   constructor(repository?: SetMappingRepository) {
     const connectionString = process.env.COSMOS_DB_CONNECTION_STRING || "";
     this.repository = repository || new SetMappingRepository(connectionString);
-    console.log(
+    logger.debug(
       "[SetMappingService] Initialized with Cosmos DB backend (migrated from JSON file)"
     );
   }
@@ -48,11 +49,11 @@ export class SetMappingService {
       });
 
       this.cacheLoadedAt = Date.now();
-      console.log(
+      logger.debug(
         `[SetMappingService] Loaded ${mappings.length} mappings from Cosmos DB`
       );
     } catch (error) {
-      console.error("[SetMappingService] Failed to load mapping data:", error);
+      logger.error("[SetMappingService] Failed to load mapping data:", error);
       throw error;
     }
   }
@@ -176,7 +177,7 @@ export class SetMappingService {
     this.cache.clear();
     this.cacheLoadedAt = null;
     await this.loadMappingData();
-    console.log("[SetMappingService] Cache reloaded from Cosmos DB");
+    logger.debug("[SetMappingService] Cache reloaded from Cosmos DB");
   }
 
   /**

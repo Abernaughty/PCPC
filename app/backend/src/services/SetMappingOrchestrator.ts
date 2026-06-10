@@ -7,6 +7,7 @@ import { PokeDataToTcgMappingService } from "./PokeDataToTcgMappingService";
 import { PokemonTcgApiService } from "./PokemonTcgApiService";
 import { SetMappingRepository } from "./SetMappingRepository";
 import { SetMatchingEngine } from "./SetMatchingEngine";
+import { logger } from "../utils/logger";
 
 interface SynchronizeOptions {
   force?: boolean;
@@ -74,7 +75,7 @@ export class SetMappingOrchestrator {
       this.monitoringService.createCorrelationId?.() ||
       `mapping-${Date.now()}`;
 
-    console.log(
+    logger.debug(
       `[SetMappingOrchestrator] (${correlationId}) Starting synchronization`
     );
 
@@ -85,7 +86,7 @@ export class SetMappingOrchestrator {
     if (tcgSets.length === 0) {
       const abortMessage =
         `[SetMappingOrchestrator] (${correlationId}) Aborting synchronization: Pokemon TCG API returned zero sets`;
-      console.error(abortMessage);
+      logger.error(abortMessage);
       this.monitoringService.trackEvent?.("mapping.sync.aborted", {
         correlationId,
         reason: "tcg_zero_sets",
@@ -102,7 +103,7 @@ export class SetMappingOrchestrator {
       metadata.lastTcgSetCount !== currentTcgCount;
 
     if (!countsChanged && !options.force) {
-      console.log(
+      logger.debug(
         `[SetMappingOrchestrator] (${correlationId}) Set counts unchanged (PokeData: ${currentPokeDataCount}, TCG: ${currentTcgCount}) – skipping`
       );
       await this.repository.upsertMetadata({
@@ -133,7 +134,7 @@ export class SetMappingOrchestrator {
       return summary;
     }
 
-    console.log(
+    logger.debug(
       `[SetMappingOrchestrator] (${correlationId}) Set counts changed or force requested. Running full synchronization.`
     );
 
@@ -155,12 +156,12 @@ export class SetMappingOrchestrator {
 
     // Log collision warnings
     if (collisionReport.hasCollisions) {
-      console.warn(
+      logger.warn(
         `[SetMappingOrchestrator] (${correlationId}) Detected collisions in TCG set index`
       );
 
       collisionReport.duplicateCodes.forEach((sets, code) => {
-        console.warn(
+        logger.warn(
           `[SetMappingOrchestrator] (${correlationId}) Duplicate code "${code}" found in sets: ${sets
             .map((s) => s.name)
             .join(", ")}`
@@ -168,7 +169,7 @@ export class SetMappingOrchestrator {
       });
 
       collisionReport.duplicateIds.forEach((sets, id) => {
-        console.warn(
+        logger.warn(
           `[SetMappingOrchestrator] (${correlationId}) Duplicate ID "${id}" found in sets: ${sets
             .map((s) => s.name)
             .join(", ")}`
@@ -198,7 +199,7 @@ export class SetMappingOrchestrator {
         summary.cardsSkipped += syncResult.cardsSkipped;
         summary.cardsErrored += syncResult.cardsErrored;
       } catch (error) {
-        console.error(
+        logger.error(
           `[SetMappingOrchestrator] (${correlationId}) Error processing set ${pokeDataSet.id}:`,
           error
         );
@@ -241,7 +242,7 @@ export class SetMappingOrchestrator {
       summary.cardsUpdated
     );
 
-    console.log(
+    logger.debug(
       `[SetMappingOrchestrator] (${correlationId}) Synchronization complete in ${summary.durationMs}ms`
     );
 
@@ -340,7 +341,7 @@ export class SetMappingOrchestrator {
           cardsSkipped = updateResult.skippedCards;
           cardsErrored = updateResult.errors;
         } catch (error) {
-          console.error(
+          logger.error(
             `[SetMappingOrchestrator] (${correlationId}) Error updating image URLs for manual mapping ${pokeDataSet.id}:`,
             error
           );
@@ -429,11 +430,11 @@ export class SetMappingOrchestrator {
         if (updateResult.errors === 0) {
           targetMapping.status = "active";
           await this.repository.upsertMapping(targetMapping);
-          console.log(
+          logger.debug(
             `[SetMappingOrchestrator] (${correlationId}) Successfully processed set ${pokeDataSet.id} with ${updateResult.updatedCards} cards updated`
           );
         } else {
-          console.warn(
+          logger.warn(
             `[SetMappingOrchestrator] (${correlationId}) Image update had errors for set ${pokeDataSet.id}, keeping status as pending`
           );
           this.monitoringService.trackEvent?.("mapping.image_update.partial", {
@@ -449,7 +450,7 @@ export class SetMappingOrchestrator {
         result.newMappings = !existingMapping ? 1 : 0;
         result.updatedMappings = existingMapping ? 1 : 0;
       } catch (error) {
-        console.error(
+        logger.error(
           `[SetMappingOrchestrator] (${correlationId}) Error in transactional processing for set ${pokeDataSet.id}:`,
           error
         );

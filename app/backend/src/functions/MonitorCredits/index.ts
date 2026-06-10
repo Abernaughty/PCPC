@@ -138,7 +138,7 @@ export async function monitorCredits(
       const dailyUsageEstimate = (processedStatus.usageSinceLastCheck / 6) * 24; // Scale 6-hour usage to daily
       const daysRemaining = creditsRemaining / Math.max(dailyUsageEstimate, 1);
 
-      context.log(`${correlationId} 📊 Usage Analysis:`);
+      context.log(`${correlationId} Usage Analysis:`);
       context.log(
         `${correlationId} - Credits consumed since last check: ${processedStatus.usageSinceLastCheck}`
       );
@@ -174,7 +174,7 @@ export async function monitorCredits(
         );
         monitoringData.projectedExhaustionDate = projectedExhaustionDate;
         context.log(
-          `${correlationId} ⚠️  Projected exhaustion date: ${projectedExhaustionDate.toISOString()}`
+          `${correlationId}  Projected exhaustion date: ${projectedExhaustionDate.toISOString()}`
         );
       }
 
@@ -186,7 +186,7 @@ export async function monitorCredits(
           `High usage detected: ${dailyUsageEstimate.toFixed(1)} credits/day`
         );
         context.log(
-          `${correlationId} 🚨 ANOMALY DETECTED: High daily usage (${dailyUsageEstimate.toFixed(
+          `${correlationId} ANOMALY DETECTED: High daily usage (${dailyUsageEstimate.toFixed(
             1
           )} credits/day)`
         );
@@ -222,19 +222,19 @@ export async function monitorCredits(
     );
     const totalTime = Date.now() - startTime;
     context.log(
-      `${correlationId} ✅ Credit monitoring complete in ${totalTime}ms`
+      `${correlationId} Credit monitoring complete in ${totalTime}ms`
     );
 
     // Log summary based on status
     switch (processedStatus.status) {
       case "healthy":
         context.log(
-          `${correlationId} ✅ STATUS: Healthy - ${creditsRemaining} credits available`
+          `${correlationId} STATUS: Healthy - ${creditsRemaining} credits available`
         );
         break;
       case "warning":
         context.log(
-          `${correlationId} 🟡 STATUS: Warning - ${creditsRemaining} credits remaining (monitor usage)`
+          `${correlationId} STATUS: Warning - ${creditsRemaining} credits remaining (monitor usage)`
         );
         break;
       case "critical":
@@ -244,7 +244,7 @@ export async function monitorCredits(
         break;
       case "exhausted":
         context.log(
-          `${correlationId} 🚨 STATUS: Exhausted - Service interruption imminent!`
+          `${correlationId} STATUS: Exhausted - Service interruption imminent!`
         );
         break;
     }
@@ -254,7 +254,7 @@ export async function monitorCredits(
       processedStatus.status === "critical" ||
       processedStatus.status === "exhausted"
     ) {
-      context.log(`${correlationId} 💡 RECOMMENDATIONS:`);
+      context.log(`${correlationId} RECOMMENDATIONS:`);
       context.log(
         `${correlationId} - Review RefreshData function for excessive API calls`
       );

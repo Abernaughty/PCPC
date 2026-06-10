@@ -2,6 +2,7 @@ import axios from 'axios';
 import { Card } from '../models/Card';
 import { Set } from '../models/Set';
 import { PriceData } from '../models/Card';
+import { logger } from "../utils/logger";
 
 export interface IPokemonTcgApiService {
     getAllSets(): Promise<Set[]>;
@@ -28,7 +29,7 @@ export class PokemonTcgApiService implements IPokemonTcgApiService {
     }
     
     async getAllSets(): Promise<Set[]> {
-        console.log(`[PokemonTcgApiService] Getting all sets`);
+        logger.debug(`[PokemonTcgApiService] Getting all sets`);
         
         const maxAttempts = this.getRetryAttempts();
         const baseDelayMs = this.getRetryBaseDelay();
@@ -50,7 +51,7 @@ export class PokemonTcgApiService implements IPokemonTcgApiService {
                 const isRetryable = this.isRetryableStatus(status) || !error.response;
                 const message = error?.message || "Unknown error";
 
-                console.error(
+                logger.error(
                     `[PokemonTcgApiService] Error getting sets (attempt ${attempt}/${maxAttempts})${status ? ` [status=${status}]` : ""}: ${message}`
                 );
 
@@ -63,7 +64,7 @@ export class PokemonTcgApiService implements IPokemonTcgApiService {
                 }
 
                 const delay = this.calculateDelay(baseDelayMs, attempt);
-                console.warn(
+                logger.warn(
                     `[PokemonTcgApiService] Retrying in ${delay}ms after retryable error${status ? ` (status ${status})` : ""}`
                 );
                 await this.delay(delay);
@@ -76,20 +77,20 @@ export class PokemonTcgApiService implements IPokemonTcgApiService {
     }
     
     async getSet(setCode: string): Promise<Set | null> {
-        console.log(`[PokemonTcgApiService] Getting set: ${setCode}`);
+        logger.debug(`[PokemonTcgApiService] Getting set: ${setCode}`);
         
         try {
             // The API doesn't support direct lookup by set code, so we need to get all sets and filter
             const sets = await this.getAllSets();
             return sets.find(set => set.code === setCode) || null;
         } catch (error: any) {
-            console.error(`[PokemonTcgApiService] Error getting set ${setCode}: ${error.message}`);
+            logger.error(`[PokemonTcgApiService] Error getting set ${setCode}: ${error.message}`);
             return null;
         }
     }
     
 async getCardsBySet(setCode: string): Promise<Card[]> {
-        console.log(`[PokemonTcgApiService] Getting cards for set: ${setCode}`);
+        logger.debug(`[PokemonTcgApiService] Getting cards for set: ${setCode}`);
         
         try {
             // Implementation with proper pagination to handle sets with more than 250 cards
@@ -98,11 +99,11 @@ async getCardsBySet(setCode: string): Promise<Card[]> {
             let hasMorePages = true;
             const pageSize = 250; // Maximum page size supported by the API
             
-            console.log(`[PokemonTcgApiService] Fetching cards with pagination (pageSize: ${pageSize})`);
+            logger.debug(`[PokemonTcgApiService] Fetching cards with pagination (pageSize: ${pageSize})`);
             
             // Keep fetching pages until no more data is returned
             while (hasMorePages) {
-                console.log(`[PokemonTcgApiService] Fetching page ${page} for set ${setCode}`);
+                logger.debug(`[PokemonTcgApiService] Fetching page ${page} for set ${setCode}`);
                 
                 const response = await axios.get(`${this.baseUrl}/cards`, { 
                     headers: this.getHeaders(),
@@ -123,44 +124,44 @@ async getCardsBySet(setCode: string): Promise<Card[]> {
                 // If we got fewer results than pageSize, we've reached the end
                 if (pageData.length < pageSize) {
                     hasMorePages = false;
-                    console.log(`[PokemonTcgApiService] Reached the end of pages for set ${setCode} (received ${pageData.length} cards)`);
+                    logger.debug(`[PokemonTcgApiService] Reached the end of pages for set ${setCode} (received ${pageData.length} cards)`);
                 } else {
                     // If we got a full page, there might be more
                     page++;
-                    console.log(`[PokemonTcgApiService] Retrieved ${pageData.length} cards, proceeding to page ${page}`);
+                    logger.debug(`[PokemonTcgApiService] Retrieved ${pageData.length} cards, proceeding to page ${page}`);
                 }
             }
             
-            console.log(`[PokemonTcgApiService] Retrieved a total of ${allCards.length} cards for set ${setCode}`);
+            logger.debug(`[PokemonTcgApiService] Retrieved a total of ${allCards.length} cards for set ${setCode}`);
             
             // Map API response to our Card model
             return allCards.map((apiCard: any) => this.mapApiCardToCard(apiCard));
         } catch (error: any) {
-            console.error(`[PokemonTcgApiService] Error getting cards for set ${setCode}: ${error.message}`);
+            logger.error(`[PokemonTcgApiService] Error getting cards for set ${setCode}: ${error.message}`);
             return [];
         }
     }
     
     async getCard(cardId: string): Promise<Card | null> {
-        console.log(`[PokemonTcgApiService] Getting card: ${cardId}`);
+        logger.debug(`[PokemonTcgApiService] Getting card: ${cardId}`);
         
         try {
             const response = await axios.get(`${this.baseUrl}/cards/${cardId}`, { headers: this.getHeaders() });
             return this.mapApiCardToCard(response.data.data);
         } catch (error: any) {
-            console.error(`[PokemonTcgApiService] Error getting card ${cardId}: ${error.message}`);
+            logger.error(`[PokemonTcgApiService] Error getting card ${cardId}: ${error.message}`);
             return null;
         }
     }
     
     async getCardPricing(cardId: string): Promise<PriceData | null> {
-        console.log(`[PokemonTcgApiService] Getting pricing for card: ${cardId}`);
+        logger.debug(`[PokemonTcgApiService] Getting pricing for card: ${cardId}`);
         
         try {
             const response = await axios.get(`${this.baseUrl}/cards/${cardId}`, { headers: this.getHeaders() });
             return this.mapApiPricingToPriceData(response.data.data.tcgplayer?.prices?.holofoil);
         } catch (error: any) {
-            console.error(`[PokemonTcgApiService] Error getting pricing for card ${cardId}: ${error.message}`);
+            logger.error(`[PokemonTcgApiService] Error getting pricing for card ${cardId}: ${error.message}`);
             return null;
         }
     }
@@ -220,11 +221,11 @@ async getCardsBySet(setCode: string): Promise<Card[]> {
             // This ensures we have some current sets to import cards for
             const isRecent = releaseTimestamp > oneYearAgo;
             
-            console.log(`Set with release date ${releaseDate} is ${isRecent ? 'current' : 'not current'}`);
+            logger.debug(`Set with release date ${releaseDate} is ${isRecent ? 'current' : 'not current'}`);
             
             return isRecent;
         } catch (error) {
-            console.error(`Error determining if set is current (release date: ${releaseDate}):`, error);
+            logger.error(`Error determining if set is current (release date: ${releaseDate}):`, error);
             return false;
         }
     }

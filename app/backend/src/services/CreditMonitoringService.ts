@@ -1,4 +1,5 @@
 import { cosmosDbService } from '../index';
+import { logger } from "../utils/logger";
 
 export interface CreditStatus {
   creditsRemaining: number;
@@ -101,7 +102,7 @@ export class CreditMonitoringService {
       
       return false;
     } catch (error) {
-      console.error(`[CreditMonitoringService] Error detecting unusual usage: ${error}`);
+      logger.error(`[CreditMonitoringService] Error detecting unusual usage: ${error}`);
       return false;
     }
   }
@@ -117,7 +118,7 @@ export class CreditMonitoringService {
       // For now, return empty array
       return [];
     } catch (error) {
-      console.error(`[CreditMonitoringService] Error getting recent monitoring data: ${error}`);
+      logger.error(`[CreditMonitoringService] Error getting recent monitoring data: ${error}`);
       return [];
     }
   }
@@ -133,14 +134,14 @@ export class CreditMonitoringService {
         container: 'credit-events' // For Cosmos DB partitioning
       };
       
-      console.log(`[CreditMonitoringService] Credit Event: ${event.eventType} - ${event.creditsRemaining} credits remaining (${event.operation})`);
+      logger.debug(`[CreditMonitoringService] Credit Event: ${event.eventType} - ${event.creditsRemaining} credits remaining (${event.operation})`);
       
       // Store in Cosmos DB for historical analysis
       // Note: This would need to be implemented in CosmosDbService
       // await cosmosDbService.saveCreditEvent(logEntry);
       
     } catch (error) {
-      console.error(`[CreditMonitoringService] Error logging credit event: ${error}`);
+      logger.error(`[CreditMonitoringService] Error logging credit event: ${error}`);
     }
   }
 
@@ -152,7 +153,7 @@ export class CreditMonitoringService {
     
     switch (creditStatus.status) {
       case 'exhausted':
-        alerts.push(`🚨 CRITICAL: PokeData API credits exhausted! Service interruption imminent.`);
+        alerts.push(`CRITICAL: PokeData API credits exhausted! Service interruption imminent.`);
         break;
       case 'critical':
         alerts.push(`🔴 CRITICAL: Only ${creditStatus.creditsRemaining} PokeData API credits remaining!`);
@@ -161,7 +162,7 @@ export class CreditMonitoringService {
         }
         break;
       case 'warning':
-        alerts.push(`🟡 WARNING: PokeData API credits running low (${creditStatus.creditsRemaining} remaining)`);
+        alerts.push(`WARNING: PokeData API credits running low (${creditStatus.creditsRemaining} remaining)`);
         break;
     }
     
@@ -182,14 +183,14 @@ export class CreditMonitoringService {
         container: 'credit-monitoring' // For Cosmos DB partitioning
       };
       
-      console.log(`[CreditMonitoringService] Saving monitoring data: ${data.creditsRemaining} credits remaining`);
+      logger.debug(`[CreditMonitoringService] Saving monitoring data: ${data.creditsRemaining} credits remaining`);
       
       // Store in Cosmos DB for historical analysis
       // Note: This would need to be implemented in CosmosDbService
       // await cosmosDbService.saveMonitoringData(monitoringEntry);
       
     } catch (error) {
-      console.error(`[CreditMonitoringService] Error saving monitoring data: ${error}`);
+      logger.error(`[CreditMonitoringService] Error saving monitoring data: ${error}`);
     }
   }
 
@@ -239,8 +240,8 @@ export class CreditMonitoringService {
       
       // Log alerts
       if (alerts.length > 0) {
-        console.warn(`${correlationId} CREDIT ALERTS:`);
-        alerts.forEach(alert => console.warn(`${correlationId} ${alert}`));
+        logger.warn(`${correlationId} CREDIT ALERTS:`);
+        alerts.forEach(alert => logger.warn(`${correlationId} ${alert}`));
       }
       
       // Update last known credits
@@ -249,7 +250,7 @@ export class CreditMonitoringService {
       return creditStatus;
       
     } catch (error) {
-      console.error(`[CreditMonitoringService] Error processing credit status: ${error}`);
+      logger.error(`[CreditMonitoringService] Error processing credit status: ${error}`);
       
       // Return basic status on error
       return {

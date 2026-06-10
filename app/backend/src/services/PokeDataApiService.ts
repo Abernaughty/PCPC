@@ -1,6 +1,7 @@
 import axios from "axios";
 import { EnhancedPriceData } from "../models/Card";
 import { CreditMonitoringService } from "./CreditMonitoringService";
+import { logger } from "../utils/logger";
 
 // Define interfaces for PokeData API responses
 export interface PokeDataSet {
@@ -99,15 +100,11 @@ export class PokeDataApiService implements IPokeDataApiService {
     this.baseUrl = baseUrl;
     this.creditMonitoringService = new CreditMonitoringService();
 
-    // Enhanced logging for service initialization
-    console.log(`🔥 [PokeDataApiService] Initializing service...`);
-    console.log(`🔥 [PokeDataApiService] Base URL: ${this.baseUrl}`);
-    console.log(
-      `🔥 [PokeDataApiService] API Key: ${
-        this.apiKey ? `SET (${this.apiKey.substring(0, 20)}...)` : "MISSING"
-      }`
+    logger.info(
+      `PokeDataApiService initialized (baseUrl: ${this.baseUrl}, apiKey: ${
+        this.apiKey ? "set" : "missing"
+      })`
     );
-    console.log(`🔥 [PokeDataApiService] Service initialized successfully`);
   }
 
   private getHeaders() {
@@ -148,16 +145,11 @@ export class PokeDataApiService implements IPokeDataApiService {
    */
   async getAllSets(): Promise<PokeDataSet[]> {
     const startTime = Date.now();
-    const isDebugMode = process.env.DEBUG_MODE === "true";
-    console.log(`🔥 [PokeDataApiService] Getting all sets - START`);
 
     // Check cache first
     if (this.setsCache.data && this.isCacheValid(this.setsCache.timestamp)) {
-      const cacheAge = Math.round(
-        (Date.now() - this.setsCache.timestamp) / 1000
-      );
-      console.log(
-        `🔥 [PokeDataApiService] Using cached sets data (${this.setsCache.data.length} sets, ${cacheAge}s old)`
+      logger.debug(
+        `[PokeDataApiService] Using cached sets data (${this.setsCache.data.length} sets)`
       );
       return this.setsCache.data;
     }
@@ -166,80 +158,18 @@ export class PokeDataApiService implements IPokeDataApiService {
       const url = `${this.baseUrl}/sets`;
       const headers = this.getHeaders();
 
-      // Enhanced request logging
-      console.log(`🔥 [PokeDataApiService] Cache miss - making API request`);
-      console.log(`🔥 [PokeDataApiService] Making HTTP GET request:`);
-      console.log(`🔥 [PokeDataApiService]   URL: ${url}`);
-      console.log(`🔥 [PokeDataApiService]   Method: GET`);
-      console.log(`🔥 [PokeDataApiService]   User-Agent: axios (default)`);
-      console.log(
-        `🔥 [PokeDataApiService]   Authorization: ${
-          headers.Authorization
-            ? `Bearer ${headers.Authorization.substring(7, 27)}...`
-            : "❌ MISSING"
-        }`
-      );
-      console.log(
-        `🔥 [PokeDataApiService]   Content-Type: ${headers["Content-Type"]}`
-      );
-
-      // Debug mode: Log full headers (sanitized)
-      if (isDebugMode) {
-        console.log(`🔥 [PokeDataApiService] [DEBUG] Full request headers:`, {
-          ...headers,
-          Authorization: headers.Authorization
-            ? "Bearer [REDACTED]"
-            : "MISSING",
-        });
-      }
+      logger.debug(`[PokeDataApiService] Cache miss - GET ${url}`);
 
       const response = await axios.get(url, { headers });
       const requestTime = Date.now() - startTime;
 
-      // Enhanced response logging
-      console.log(
-        `🔥 [PokeDataApiService] Response received (${requestTime}ms):`
-      );
-      console.log(
-        `🔥 [PokeDataApiService]   Status: ${response.status} ${response.statusText}`
-      );
-      console.log(
-        `🔥 [PokeDataApiService]   Content-Type: ${
-          response.headers["content-type"] || "unknown"
-        }`
-      );
-      console.log(
-        `🔥 [PokeDataApiService]   Content-Length: ${
-          response.headers["content-length"] || "unknown"
-        }`
-      );
-      console.log(
-        `🔥 [PokeDataApiService]   Data type: ${typeof response.data}`
-      );
-      console.log(
-        `🔥 [PokeDataApiService]   Data is array: ${Array.isArray(
-          response.data
-        )}`
-      );
-
       if (Array.isArray(response.data)) {
         const sets = response.data as PokeDataSet[];
-        console.log(
-          `🔥 [PokeDataApiService] Successfully retrieved ${sets.length} sets`
+        logger.info(
+          `[PokeDataApiService] Retrieved ${sets.length} sets in ${
+            Date.now() - startTime
+          }ms`
         );
-
-        // Log first few sets for debugging
-        if (sets.length > 0) {
-          console.log(
-            `🔥 [PokeDataApiService] Sample sets:`,
-            sets.slice(0, 3).map((s) => ({
-              id: s.id,
-              code: s.code,
-              name: s.name,
-              language: s.language,
-            }))
-          );
-        }
 
         // Update cache
         this.setsCache = {
@@ -254,206 +184,26 @@ export class PokeDataApiService implements IPokeDataApiService {
           }
         });
 
-        console.log(
-          `🔥 [PokeDataApiService] getAllSets completed successfully in ${
-            Date.now() - startTime
-          }ms`
-        );
         return sets;
       }
 
-      console.error(
-        `🔥 [PokeDataApiService] Unexpected response format for sets - not an array`
+      logger.error(
+        `[PokeDataApiService] Unexpected response format for sets - not an array`,
+        response.data
       );
-      console.error(`🔥 [PokeDataApiService] Response data:`, response.data);
       return [];
     } catch (error: any) {
       const requestTime = Date.now() - startTime;
-      const isDebugMode = process.env.DEBUG_MODE === "true";
 
-      console.error(
-        `❌ [PokeDataApiService] ERROR in getAllSets after ${requestTime}ms:`
-      );
-      console.error(
-        `❌ [PokeDataApiService] ==================== API ERROR DETAILS ====================`
-      );
-      console.error(
-        `❌ [PokeDataApiService] Error Type: ${error.constructor.name}`
-      );
-      console.error(`❌ [PokeDataApiService] Error Message: ${error.message}`);
-      console.error(
-        `❌ [PokeDataApiService] Error Code: ${error.code || "unknown"}`
-      );
-      console.error(
-        `❌ [PokeDataApiService] Request Duration: ${requestTime}ms`
-      );
-      console.error(
-        `❌ [PokeDataApiService] Timestamp: ${new Date().toISOString()}`
-      );
-
-      if (error.response) {
-        // Server responded with error status
-        console.error(`❌ [PokeDataApiService] === SERVER RESPONSE ERROR ===`);
-        console.error(
-          `❌ [PokeDataApiService] Response Status: ${error.response.status} ${error.response.statusText}`
-        );
-        console.error(
-          `❌ [PokeDataApiService] Response URL: ${
-            error.response.config?.url || "unknown"
-          }`
-        );
-        console.error(`❌ [PokeDataApiService] Response Headers:`, {
-          "content-type": error.response.headers["content-type"],
-          "content-length": error.response.headers["content-length"],
-          server: error.response.headers["server"],
-          date: error.response.headers["date"],
-          "x-ratelimit-remaining":
-            error.response.headers["x-ratelimit-remaining"],
-          "x-ratelimit-reset": error.response.headers["x-ratelimit-reset"],
-        });
-        console.error(
-          `❌ [PokeDataApiService] Response Data:`,
-          error.response.data
-        );
-
-        // Specific troubleshooting for common status codes
-        if (error.response.status === 500) {
-          console.error(
-            `❌ [PokeDataApiService] 🚨 500 INTERNAL SERVER ERROR TROUBLESHOOTING:`
-          );
-          console.error(
-            `❌ [PokeDataApiService]   - This is a server-side error on PokeData API`
-          );
-          console.error(
-            `❌ [PokeDataApiService]   - Check if API endpoint has changed: ${this.baseUrl}/sets`
-          );
-          console.error(
-            `❌ [PokeDataApiService]   - Verify API key is valid and not expired`
-          );
-          console.error(
-            `❌ [PokeDataApiService]   - Check PokeData API status/maintenance`
-          );
-          console.error(
-            `❌ [PokeDataApiService]   - API Key (first 20 chars): ${this.apiKey.substring(
-              0,
-              20
-            )}...`
-          );
-        } else if (error.response.status === 401) {
-          console.error(
-            `❌ [PokeDataApiService] 🚨 401 UNAUTHORIZED - API Key Issue`
-          );
-          console.error(
-            `❌ [PokeDataApiService]   - API Key present: ${!!this.apiKey}`
-          );
-          console.error(
-            `❌ [PokeDataApiService]   - API Key format: ${
-              this.apiKey ? "JWT-like" : "MISSING"
-            }`
-          );
-        } else if (error.response.status === 403) {
-          console.error(
-            `❌ [PokeDataApiService] 🚨 403 FORBIDDEN - Possible credit exhaustion`
-          );
-        } else if (error.response.status === 429) {
-          console.error(`❌ [PokeDataApiService] 🚨 429 RATE LIMITED`);
-        }
-      } else if (error.request) {
-        // Request was made but no response received
-        console.error(
-          `❌ [PokeDataApiService] === NETWORK/CONNECTION ERROR ===`
-        );
-        console.error(
-          `❌ [PokeDataApiService] No response received from server`
-        );
-        console.error(
-          `❌ [PokeDataApiService] Request URL: ${
-            error.config?.url || this.baseUrl + "/sets"
-          }`
-        );
-        console.error(
-          `❌ [PokeDataApiService] Request Method: ${
-            error.config?.method || "GET"
-          }`
-        );
-        console.error(
-          `❌ [PokeDataApiService] Request Timeout: ${
-            error.config?.timeout || "default"
-          }`
-        );
-        console.error(
-          `❌ [PokeDataApiService] Network Error Type: ${error.code}`
-        );
-
-        // Network troubleshooting
-        console.error(`❌ [PokeDataApiService] 🚨 NETWORK TROUBLESHOOTING:`);
-        console.error(
-          `❌ [PokeDataApiService]   - Check internet connectivity`
-        );
-        console.error(
-          `❌ [PokeDataApiService]   - Verify PokeData API is accessible: ${this.baseUrl}`
-        );
-        console.error(
-          `❌ [PokeDataApiService]   - Check for firewall/proxy issues`
-        );
-        console.error(
-          `❌ [PokeDataApiService]   - DNS resolution for: ${
-            new URL(this.baseUrl).hostname
-          }`
-        );
-      } else {
-        // Request setup error
-        console.error(`❌ [PokeDataApiService] === REQUEST SETUP ERROR ===`);
-        console.error(`❌ [PokeDataApiService] Error setting up request`);
-        console.error(`❌ [PokeDataApiService] Stack trace:`, error.stack);
-      }
-
-      // Debug mode: Additional troubleshooting info
-      if (isDebugMode) {
-        console.error(`❌ [PokeDataApiService] [DEBUG] Full error object:`, {
-          name: error.name,
-          message: error.message,
-          code: error.code,
-          stack: error.stack?.split("\n").slice(0, 5), // First 5 lines of stack
-          config: error.config
-            ? {
-                url: error.config.url,
-                method: error.config.method,
-                baseURL: error.config.baseURL,
-                timeout: error.config.timeout,
-                headers: {
-                  ...error.config.headers,
-                  Authorization: error.config.headers?.Authorization
-                    ? "Bearer [REDACTED]"
-                    : "MISSING",
-                },
-              }
-            : "No config",
-        });
-      }
-
-      console.error(
-        `❌ [PokeDataApiService] ============================================================`
-      );
-
-      // Try to provide helpful next steps
-      console.error(
-        `❌ [PokeDataApiService] 💡 NEXT STEPS FOR TROUBLESHOOTING:`
-      );
-      console.error(
-        `❌ [PokeDataApiService]   1. Check PokeData API status at their website/docs`
-      );
-      console.error(
-        `❌ [PokeDataApiService]   2. Verify API key in environment variables`
-      );
-      console.error(
-        `❌ [PokeDataApiService]   3. Test API endpoint manually with curl/Postman`
-      );
-      console.error(
-        `❌ [PokeDataApiService]   4. Check if API endpoint URL has changed`
-      );
-      console.error(
-        `❌ [PokeDataApiService]   5. Review API rate limits and credit usage`
+      logger.error(
+        `[PokeDataApiService] getAllSets failed after ${requestTime}ms: ${error.message}`,
+        error.response
+          ? {
+              status: error.response.status,
+              statusText: error.response.statusText,
+              data: error.response.data,
+            }
+          : { code: error.code }
       );
 
       return [];
@@ -486,7 +236,7 @@ export class PokeDataApiService implements IPokeDataApiService {
       return matchingSet.id;
     }
 
-    console.log(`[PokeDataApiService] No set found with code: ${setCode}`);
+    logger.debug(`[PokeDataApiService] No set found with code: ${setCode}`);
     return null;
   }
 
@@ -495,14 +245,14 @@ export class PokeDataApiService implements IPokeDataApiService {
    * @param setId The numeric ID of the set
    */
   async getCardsInSet(setId: number): Promise<PokeDataCard[]> {
-    console.log(`[PokeDataApiService] Getting cards for set ID: ${setId}`);
+    logger.debug(`[PokeDataApiService] Getting cards for set ID: ${setId}`);
 
     // Check cache first
     if (
       this.cardsCache[setId]?.data &&
       this.isCacheValid(this.cardsCache[setId].timestamp)
     ) {
-      console.log(
+      logger.debug(
         `[PokeDataApiService] Using cached cards data for set ID: ${setId}`
       );
       return this.cardsCache[setId].data || [];
@@ -514,8 +264,8 @@ export class PokeDataApiService implements IPokeDataApiService {
         set_id: setId,
       };
 
-      console.log(`[PokeDataApiService] Making request to: ${url}`);
-      console.log(`[PokeDataApiService] With params:`, params);
+      logger.debug(`[PokeDataApiService] Making request to: ${url}`);
+      logger.debug(`[PokeDataApiService] With params:`, params);
 
       const response = await axios.get(url, {
         params,
@@ -524,7 +274,7 @@ export class PokeDataApiService implements IPokeDataApiService {
 
       if (response.data && Array.isArray(response.data)) {
         const cards = response.data as PokeDataCard[];
-        console.log(
+        logger.debug(
           `[PokeDataApiService] Found ${cards.length} cards for set ID ${setId}`
         );
 
@@ -537,19 +287,19 @@ export class PokeDataApiService implements IPokeDataApiService {
         return cards;
       }
 
-      console.log(
+      logger.debug(
         `[PokeDataApiService] Unexpected response format for set cards`
       );
       return [];
     } catch (error: any) {
-      console.error(
+      logger.error(
         `[PokeDataApiService] Error getting cards for set ID ${setId}: ${error.message}`
       );
       if (error.response) {
-        console.error(
+        logger.error(
           `[PokeDataApiService] Response status: ${error.response.status}`
         );
-        console.error(
+        logger.error(
           `[PokeDataApiService] Response data:`,
           error.response.data
         );
@@ -564,13 +314,13 @@ export class PokeDataApiService implements IPokeDataApiService {
    * @param setCode The set code (e.g., "sv8pt5")
    */
   async getCardsInSetByCode(setCode: string): Promise<PokeDataCard[]> {
-    console.log(`[PokeDataApiService] Getting cards for set code: ${setCode}`);
+    logger.debug(`[PokeDataApiService] Getting cards for set code: ${setCode}`);
 
     // First get the set ID
     const setId = await this.getSetIdByCode(setCode);
 
     if (setId === null) {
-      console.log(
+      logger.debug(
         `[PokeDataApiService] Couldn't find set ID for code: ${setCode}`
       );
       return [];
@@ -589,7 +339,7 @@ export class PokeDataApiService implements IPokeDataApiService {
     setId: number,
     cardNumber: string
   ): Promise<number | null> {
-    console.log(
+    logger.debug(
       `[PokeDataApiService] Looking for card with number ${cardNumber} in set ID ${setId}`
     );
 
@@ -604,13 +354,13 @@ export class PokeDataApiService implements IPokeDataApiService {
     );
 
     if (matchingCard) {
-      console.log(
+      logger.debug(
         `[PokeDataApiService] Found card ID ${matchingCard.id} for number ${cardNumber} in set ID ${setId}`
       );
       return matchingCard.id;
     }
 
-    console.log(
+    logger.debug(
       `[PokeDataApiService] No matching card found for number ${cardNumber} in set ID ${setId}`
     );
     return null;
@@ -626,7 +376,7 @@ export class PokeDataApiService implements IPokeDataApiService {
     setCode: string,
     cardNumber: string
   ): Promise<number | null> {
-    console.log(
+    logger.debug(
       `[PokeDataApiService] Looking for card with number ${cardNumber} in set code ${setCode}`
     );
 
@@ -634,7 +384,7 @@ export class PokeDataApiService implements IPokeDataApiService {
     const setId = await this.getSetIdByCode(setCode);
 
     if (setId === null) {
-      console.log(
+      logger.debug(
         `[PokeDataApiService] Couldn't find set ID for code: ${setCode}`
       );
       return null;
@@ -650,7 +400,7 @@ export class PokeDataApiService implements IPokeDataApiService {
    * @param pokeDataId The numeric ID of the card in PokeData's system
    */
   async getFullCardDetailsById(pokeDataId: number): Promise<any> {
-    console.log(
+    logger.debug(
       `[PokeDataApiService] Getting full card details for PokeData ID: ${pokeDataId}`
     );
 
@@ -661,8 +411,8 @@ export class PokeDataApiService implements IPokeDataApiService {
         asset_type: "CARD",
       };
 
-      console.log(`[PokeDataApiService] Making request to: ${url}`);
-      console.log(`[PokeDataApiService] With params:`, params);
+      logger.debug(`[PokeDataApiService] Making request to: ${url}`);
+      logger.debug(`[PokeDataApiService] With params:`, params);
 
       const response = await axios.get(url, {
         params,
@@ -670,25 +420,25 @@ export class PokeDataApiService implements IPokeDataApiService {
       });
 
       if (response.data && response.data.pricing) {
-        console.log(
+        logger.debug(
           `[PokeDataApiService] Successfully retrieved full card details for ID ${pokeDataId}`
         );
         return response.data; // Return the FULL response, not just pricing
       }
 
-      console.log(
+      logger.debug(
         `[PokeDataApiService] No card data found for ID ${pokeDataId}`
       );
       return null;
     } catch (error: any) {
-      console.error(
+      logger.error(
         `[PokeDataApiService] Error getting full card details for ID ${pokeDataId}: ${error.message}`
       );
       if (error.response) {
-        console.error(
+        logger.error(
           `[PokeDataApiService] Response status: ${error.response.status}`
         );
-        console.error(
+        logger.error(
           `[PokeDataApiService] Response data:`,
           error.response.data
         );
@@ -702,7 +452,7 @@ export class PokeDataApiService implements IPokeDataApiService {
    * @param pokeDataId The numeric ID of the card in PokeData's system
    */
   async getCardPricingById(pokeDataId: number): Promise<any> {
-    console.log(
+    logger.debug(
       `[PokeDataApiService] Getting pricing for PokeData ID: ${pokeDataId}`
     );
 
@@ -713,8 +463,8 @@ export class PokeDataApiService implements IPokeDataApiService {
         asset_type: "CARD",
       };
 
-      console.log(`[PokeDataApiService] Making request to: ${url}`);
-      console.log(`[PokeDataApiService] With params:`, params);
+      logger.debug(`[PokeDataApiService] Making request to: ${url}`);
+      logger.debug(`[PokeDataApiService] With params:`, params);
 
       const response = await axios.get(url, {
         params,
@@ -722,25 +472,25 @@ export class PokeDataApiService implements IPokeDataApiService {
       });
 
       if (response.data && response.data.pricing) {
-        console.log(
+        logger.debug(
           `[PokeDataApiService] Successfully retrieved pricing data for ID ${pokeDataId}`
         );
         return response.data.pricing;
       }
 
-      console.log(
+      logger.debug(
         `[PokeDataApiService] No pricing data found for ID ${pokeDataId}`
       );
       return null;
     } catch (error: any) {
-      console.error(
+      logger.error(
         `[PokeDataApiService] Error getting pricing for ID ${pokeDataId}: ${error.message}`
       );
       if (error.response) {
-        console.error(
+        logger.error(
           `[PokeDataApiService] Response status: ${error.response.status}`
         );
-        console.error(
+        logger.error(
           `[PokeDataApiService] Response data:`,
           error.response.data
         );
@@ -760,13 +510,13 @@ export class PokeDataApiService implements IPokeDataApiService {
     cardId: string,
     pokeDataId?: number
   ): Promise<EnhancedPriceData | null> {
-    console.log(
+    logger.debug(
       `[PokeDataApiService] Getting enhanced pricing for card: ${cardId}`
     );
 
     // If pokeDataId is provided, use it directly
     if (pokeDataId) {
-      console.log(
+      logger.debug(
         `[PokeDataApiService] Using provided PokeData ID: ${pokeDataId}`
       );
       const pricing = await this.getCardPricingById(pokeDataId);
@@ -781,7 +531,7 @@ export class PokeDataApiService implements IPokeDataApiService {
 
     // If we have a valid set code, try to find the card ID the proper way
     if (identifiers.setCode) {
-      console.log(
+      logger.debug(
         `[PokeDataApiService] Attempting to find PokeData ID for set ${identifiers.setCode} card ${identifiers.number}`
       );
 
@@ -798,7 +548,7 @@ export class PokeDataApiService implements IPokeDataApiService {
 
           if (cardPokeDataId) {
             // Step 3: Get pricing using the found ID
-            console.log(
+            logger.debug(
               `[PokeDataApiService] Found PokeData ID ${cardPokeDataId} for card ${cardId}`
             );
             const pricing = await this.getCardPricingById(cardPokeDataId);
@@ -809,14 +559,14 @@ export class PokeDataApiService implements IPokeDataApiService {
           }
         }
       } catch (error: any) {
-        console.error(
+        logger.error(
           `[PokeDataApiService] Error in ID-based lookup for ${cardId}: ${error.message}`
         );
       }
     }
 
     // Fall back to the legacy method if the proper approach failed
-    console.log(
+    logger.debug(
       `[PokeDataApiService] Falling back to legacy method using card number: ${identifiers.number}`
     );
 
@@ -827,20 +577,20 @@ export class PokeDataApiService implements IPokeDataApiService {
         asset_type: "CARD",
       };
 
-      console.log(`[PokeDataApiService] Making request to: ${url}`);
-      console.log(`[PokeDataApiService] With params:`, params);
+      logger.debug(`[PokeDataApiService] Making request to: ${url}`);
+      logger.debug(`[PokeDataApiService] With params:`, params);
 
       const response = await axios.get(url, {
         params,
         headers: this.getHeaders(),
       });
 
-      console.log(
+      logger.debug(
         `[PokeDataApiService] API response status: ${response.status}`
       );
 
       if (response.data && response.data.name) {
-        console.log(
+        logger.debug(
           `[PokeDataApiService] Retrieved data for card: ${response.data.name}`
         );
 
@@ -851,7 +601,7 @@ export class PokeDataApiService implements IPokeDataApiService {
             .toLowerCase()
             .includes(identifiers.setCode.toLowerCase())
         ) {
-          console.warn(
+          logger.warn(
             `[PokeDataApiService] Warning: Card from different set than requested. Expected set code ${identifiers.setCode}, got data for ${response.data.name}`
           );
         }
@@ -859,15 +609,15 @@ export class PokeDataApiService implements IPokeDataApiService {
 
       return this.mapApiPricingToEnhancedPriceData(response.data);
     } catch (error: any) {
-      console.error(
+      logger.error(
         `[PokeDataApiService] Error in fallback pricing lookup for card ${cardId}: ${error.message}`
       );
 
       if (error.response) {
-        console.error(
+        logger.error(
           `[PokeDataApiService] Response status: ${error.response.status}`
         );
-        console.error(
+        logger.error(
           `[PokeDataApiService] Response data:`,
           error.response.data
         );
@@ -883,7 +633,7 @@ export class PokeDataApiService implements IPokeDataApiService {
   ): EnhancedPriceData | null {
     if (!apiPricing) return null;
 
-    console.log(
+    logger.debug(
       `[PokeDataApiService] Mapping API pricing data:`,
       JSON.stringify(apiPricing).substring(0, 200) + "..."
     );
@@ -975,12 +725,12 @@ export class PokeDataApiService implements IPokeDataApiService {
     creditsRemaining: number;
     status: string;
   } | null> {
-    console.log(`[PokeDataApiService] Checking remaining API credits`);
+    logger.debug(`[PokeDataApiService] Checking remaining API credits`);
 
     try {
       const url = `${this.baseUrl}/account`;
 
-      console.log(
+      logger.debug(
         `[PokeDataApiService] Making credit check request to: ${url}`
       );
 
@@ -990,7 +740,7 @@ export class PokeDataApiService implements IPokeDataApiService {
         const creditsRemaining = response.data.credits;
         const creditLimit = response.data.credits_limit || undefined;
 
-        console.log(
+        logger.debug(
           `[PokeDataApiService] Current credits: ${creditsRemaining}${
             creditLimit ? ` / ${creditLimit}` : ""
           }`
@@ -1017,21 +767,21 @@ export class PokeDataApiService implements IPokeDataApiService {
         };
       }
 
-      console.log(
+      logger.debug(
         `[PokeDataApiService] Unexpected response format for account endpoint:`,
         response.data
       );
       return null;
     } catch (error: any) {
-      console.error(
+      logger.error(
         `[PokeDataApiService] Error checking credits: ${error.message}`
       );
 
       if (error.response) {
-        console.error(
+        logger.error(
           `[PokeDataApiService] Response status: ${error.response.status}`
         );
-        console.error(
+        logger.error(
           `[PokeDataApiService] Response data:`,
           error.response.data
         );
@@ -1057,7 +807,7 @@ export class PokeDataApiService implements IPokeDataApiService {
       const shouldCheckCredits = this.shouldCheckCreditsForError(error);
 
       if (shouldCheckCredits) {
-        console.warn(
+        logger.warn(
           `${correlationId} API error detected, checking credits: ${error.message}`
         );
 
@@ -1085,8 +835,8 @@ export class PokeDataApiService implements IPokeDataApiService {
             creditStatus.status === "critical" ||
             creditStatus.status === "warning"
           ) {
-            console.warn(
-              `${correlationId} 🟡 LOW CREDITS WARNING: ${creditStatus.creditsRemaining} PokeData credits remaining (${creditStatus.status})`
+            logger.warn(
+              `${correlationId} LOW CREDITS WARNING: ${creditStatus.creditsRemaining} PokeData credits remaining (${creditStatus.status})`
             );
           }
         }

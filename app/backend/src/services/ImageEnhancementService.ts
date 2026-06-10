@@ -1,5 +1,6 @@
 import { PokeDataToTcgMappingService } from "./PokeDataToTcgMappingService";
 import { PokemonTcgApiService } from "./PokemonTcgApiService";
+import { logger } from "../utils/logger";
 
 // Define interfaces for PokeData card structure
 interface PokeDataCard {
@@ -91,7 +92,7 @@ export class ImageEnhancementService {
     // Remove leading zeros but preserve the number
     // "002" -> "2", "047" -> "47", "247" -> "247"
     const normalized = parseInt(cardNumber, 10).toString();
-    console.log(
+    logger.debug(
       `[ImageEnhancementService] Normalized card number: "${cardNumber}" -> "${normalized}"`
     );
     return normalized;
@@ -128,7 +129,7 @@ export class ImageEnhancementService {
     pokeDataCard: PokeDataCard,
     pokeDataSetId: number
   ): Promise<EnhancedCard> {
-    console.log(
+    logger.debug(
       `[ImageEnhancementService] Enhancing card: ${pokeDataCard.name} (ID: ${pokeDataCard.id}) from set ${pokeDataSetId}`
     );
 
@@ -136,7 +137,7 @@ export class ImageEnhancementService {
       // Step 1: Get Pokemon TCG set ID from PokeData set ID
       const tcgSetId = await this.mappingService.getTcgSetId(pokeDataSetId);
       if (!tcgSetId) {
-        console.log(
+        logger.debug(
           `[ImageEnhancementService] No TCG mapping found for PokeData set ID ${pokeDataSetId}`
         );
         return { ...pokeDataCard };
@@ -147,11 +148,11 @@ export class ImageEnhancementService {
       const tcgCardId = `${tcgSetId}-${normalizedCardNumber}`;
       const imageUrls = this.generateImageUrls(tcgSetId, normalizedCardNumber);
 
-      console.log(
+      logger.debug(
         `[ImageEnhancementService] Generated image URLs for ${tcgCardId}:`
       );
-      console.log(`[ImageEnhancementService]   Small: ${imageUrls.small}`);
-      console.log(`[ImageEnhancementService]   Large: ${imageUrls.large}`);
+      logger.debug(`[ImageEnhancementService]   Small: ${imageUrls.small}`);
+      logger.debug(`[ImageEnhancementService]   Large: ${imageUrls.large}`);
 
       // Step 3: Create enhancement metadata
       const enhancement = {
@@ -173,12 +174,12 @@ export class ImageEnhancementService {
         enhancement,
       };
 
-      console.log(
+      logger.debug(
         `[ImageEnhancementService] Successfully enhanced card: ${pokeDataCard.name} with direct URL generation`
       );
       return enhancedCard;
     } catch (error: any) {
-      console.error(
+      logger.error(
         `[ImageEnhancementService] Error enhancing card ${pokeDataCard.name}: ${error.message}`
       );
       // Return original card if enhancement fails
@@ -195,7 +196,7 @@ export class ImageEnhancementService {
   async enhancePricingCardWithImages(
     pokeDataPricing: PokeDataPricing
   ): Promise<EnhancedPricingCard> {
-    console.log(
+    logger.debug(
       `[ImageEnhancementService] Enhancing pricing card: ${pokeDataPricing.name} (ID: ${pokeDataPricing.id}) from set ${pokeDataPricing.set_id}`
     );
 
@@ -205,7 +206,7 @@ export class ImageEnhancementService {
         pokeDataPricing.set_id
       );
       if (!tcgSetId) {
-        console.log(
+        logger.debug(
           `[ImageEnhancementService] No TCG mapping found for PokeData set ID ${pokeDataPricing.set_id}`
         );
         return { ...pokeDataPricing };
@@ -218,11 +219,11 @@ export class ImageEnhancementService {
       const tcgCardId = `${tcgSetId}-${normalizedCardNumber}`;
       const imageUrls = this.generateImageUrls(tcgSetId, normalizedCardNumber);
 
-      console.log(
+      logger.debug(
         `[ImageEnhancementService] Generated image URLs for ${tcgCardId}:`
       );
-      console.log(`[ImageEnhancementService]   Small: ${imageUrls.small}`);
-      console.log(`[ImageEnhancementService]   Large: ${imageUrls.large}`);
+      logger.debug(`[ImageEnhancementService]   Small: ${imageUrls.small}`);
+      logger.debug(`[ImageEnhancementService]   Large: ${imageUrls.large}`);
 
       // Step 3: Create enhancement metadata
       const enhancement = {
@@ -244,12 +245,12 @@ export class ImageEnhancementService {
         enhancement,
       };
 
-      console.log(
+      logger.debug(
         `[ImageEnhancementService] Successfully enhanced pricing card: ${pokeDataPricing.name} with direct URL generation`
       );
       return enhancedPricingCard;
     } catch (error: any) {
-      console.error(
+      logger.error(
         `[ImageEnhancementService] Error enhancing pricing card ${pokeDataPricing.name}: ${error.message}`
       );
       // Return original card if enhancement fails
@@ -267,14 +268,14 @@ export class ImageEnhancementService {
     pokeDataCards: PokeDataCard[],
     pokeDataSetId: number
   ): Promise<EnhancedCard[]> {
-    console.log(
+    logger.debug(
       `[ImageEnhancementService] Batch enhancing ${pokeDataCards.length} cards from set ${pokeDataSetId}`
     );
 
     // Check if mapping exists before processing any cards
     const tcgSetId = await this.mappingService.getTcgSetId(pokeDataSetId);
     if (!tcgSetId) {
-      console.log(
+      logger.debug(
         `[ImageEnhancementService] No TCG mapping found for PokeData set ID ${pokeDataSetId}, returning cards without enhancement`
       );
       return pokeDataCards.map((card) => ({ ...card }));
@@ -288,12 +289,12 @@ export class ImageEnhancementService {
     try {
       const enhancedCards = await Promise.all(enhancementPromises);
       const successCount = enhancedCards.filter((card) => card.images).length;
-      console.log(
+      logger.debug(
         `[ImageEnhancementService] Successfully enhanced ${successCount}/${pokeDataCards.length} cards with images`
       );
       return enhancedCards;
     } catch (error: any) {
-      console.error(
+      logger.error(
         `[ImageEnhancementService] Error in batch enhancement: ${error.message}`
       );
       // Return original cards if batch enhancement fails

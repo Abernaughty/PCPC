@@ -1,6 +1,7 @@
 import { CosmosDbService } from "./CosmosDbService";
 import { Card } from "../models/Card";
 import { PokeDataToTcgMappingService } from "./PokeDataToTcgMappingService";
+import { logger } from "../utils/logger";
 
 export interface ImageUrlUpdateResult {
   totalCards: number;
@@ -53,19 +54,19 @@ export class ImageUrlUpdateService {
       setName: "",
     };
 
-    console.log(
+    logger.debug(
       `[ImageUrlUpdateService] Starting image URL update for set ${setId}`
     );
 
     const tcgSetId = await this.getTcgSetId(setId);
     if (!tcgSetId) {
-      console.error(
+      logger.error(
         `[ImageUrlUpdateService] No TCG mapping found for set ${setId}`
       );
       return result;
     }
 
-    console.log(
+    logger.debug(
       `[ImageUrlUpdateService] Found TCG set ID: ${tcgSetId} for PokeData set ${setId}`
     );
 
@@ -78,7 +79,7 @@ export class ImageUrlUpdateService {
       result.setName = cards[0].setName || "";
     }
 
-    console.log(
+    logger.debug(
       `[ImageUrlUpdateService] Found ${cards.length} cards to process`
     );
 
@@ -125,7 +126,7 @@ export class ImageUrlUpdateService {
           updatedCards.length = 0;
         }
       } catch (error) {
-        console.error(
+        logger.error(
           `[ImageUrlUpdateService] Error processing card ${card.cardNumber}:`,
           error
         );
@@ -133,10 +134,10 @@ export class ImageUrlUpdateService {
       }
     }
 
-    console.log(
+    logger.debug(
       `[ImageUrlUpdateService] Completed image URL update for set ${setId}`
     );
-    console.log(
+    logger.debug(
       `[ImageUrlUpdateService] Results: ${result.updatedCards} updated, ${result.skippedCards} skipped, ${result.errors} errors`
     );
 
@@ -145,12 +146,12 @@ export class ImageUrlUpdateService {
 
   async updateAllSetsImageUrls(): Promise<ImageUrlUpdateResult[]> {
     const results: ImageUrlUpdateResult[] = [];
-    console.log(
+    logger.debug(
       "[ImageUrlUpdateService] Starting image URL update for all mapped sets"
     );
 
     const setIds = await this.mappingService.getMappedPokeDataSetIds();
-    console.log(
+    logger.debug(
       `[ImageUrlUpdateService] Found ${setIds.length} mapped sets to process`
     );
 
@@ -160,7 +161,7 @@ export class ImageUrlUpdateService {
         results.push(result);
         await new Promise((resolve) => setTimeout(resolve, 500));
       } catch (error) {
-        console.error(
+        logger.error(
           `[ImageUrlUpdateService] Error processing set ${setId}:`,
           error
         );
@@ -184,21 +185,21 @@ export class ImageUrlUpdateService {
       0
     );
 
-    console.log("[ImageUrlUpdateService] ========================================");
-    console.log("[ImageUrlUpdateService] Image URL Update Complete");
-    console.log(
+    logger.debug("[ImageUrlUpdateService] ========================================");
+    logger.debug("[ImageUrlUpdateService] Image URL Update Complete");
+    logger.debug(
       `[ImageUrlUpdateService] Total cards processed: ${totalCards}`
     );
-    console.log(
+    logger.debug(
       `[ImageUrlUpdateService] Total cards updated: ${totalUpdated}`
     );
-    console.log(
+    logger.debug(
       `[ImageUrlUpdateService] Total cards skipped: ${totalSkipped}`
     );
-    console.log(
+    logger.debug(
       `[ImageUrlUpdateService] Total errors: ${totalErrors}`
     );
-    console.log("[ImageUrlUpdateService] ========================================");
+    logger.debug("[ImageUrlUpdateService] ========================================");
 
     return results;
   }
@@ -216,7 +217,7 @@ export class ImageUrlUpdateService {
             // Card needs update if it doesn't have image URLs
             return !card.imageUrl || !card.imageUrlHiRes;
         } catch (error) {
-            console.error(`[ImageUrlUpdateService] Error checking card ${cardId}:`, error);
+            logger.error(`[ImageUrlUpdateService] Error checking card ${cardId}:`, error);
             return false;
         }
     }

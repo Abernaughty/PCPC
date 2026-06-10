@@ -1,4 +1,5 @@
 import { createClient, RedisClientType } from 'redis';
+import { logger } from "../utils/logger";
 
 export interface IRedisCacheService {
     get<T>(key: string): Promise<T | null>;
@@ -20,7 +21,7 @@ export class RedisCacheService implements IRedisCacheService {
         
         if (this.enabled) {
             this.initializeClient().catch(err => {
-                console.error('Redis connection error:', err);
+                logger.error('Redis connection error:', err);
                 this.enabled = false;
             });
         }
@@ -32,19 +33,19 @@ export class RedisCacheService implements IRedisCacheService {
                 this.client = createClient({ url: this.connectionString });
                 
                 this.client.on('error', (err) => {
-                    console.error('Redis client error:', err);
+                    logger.error('Redis client error:', err);
                     this.connected = false;
                 });
                 
                 this.client.on('connect', () => {
-                    console.log('Connected to Redis');
+                    logger.info('[RedisCacheService] Connected to Redis');
                     this.connected = true;
                 });
                 
                 await this.client.connect();
             }
         } catch (error) {
-            console.error('Failed to initialize Redis client:', error);
+            logger.error('Failed to initialize Redis client:', error);
             this.enabled = false;
             throw error;
         }
@@ -69,7 +70,7 @@ export class RedisCacheService implements IRedisCacheService {
     
     async get<T>(key: string): Promise<T | null> {
         if (!await this.ensureConnected()) {
-            console.log(`[RedisCacheService] Cache disabled or not connected, skipping get for key: ${key}`);
+            logger.debug(`[RedisCacheService] Cache disabled or not connected, skipping get for key: ${key}`);
             return null;
         }
         
@@ -77,40 +78,40 @@ export class RedisCacheService implements IRedisCacheService {
             const data = await this.client!.get(key);
             return data ? JSON.parse(data) as T : null;
         } catch (error) {
-            console.error(`[RedisCacheService] Error getting cache key ${key}:`, error);
+            logger.error(`[RedisCacheService] Error getting cache key ${key}:`, error);
             return null;
         }
     }
     
     async set<T>(key: string, value: T, ttlSeconds: number): Promise<void> {
         if (!await this.ensureConnected()) {
-            console.log(`[RedisCacheService] Cache disabled or not connected, skipping set for key: ${key}`);
+            logger.debug(`[RedisCacheService] Cache disabled or not connected, skipping set for key: ${key}`);
             return;
         }
         
         try {
             await this.client!.set(key, JSON.stringify(value), { EX: ttlSeconds });
         } catch (error) {
-            console.error(`[RedisCacheService] Error setting cache key ${key}:`, error);
+            logger.error(`[RedisCacheService] Error setting cache key ${key}:`, error);
         }
     }
     
     async delete(key: string): Promise<void> {
         if (!await this.ensureConnected()) {
-            console.log(`[RedisCacheService] Cache disabled or not connected, skipping delete for key: ${key}`);
+            logger.debug(`[RedisCacheService] Cache disabled or not connected, skipping delete for key: ${key}`);
             return;
         }
         
         try {
             await this.client!.del(key);
         } catch (error) {
-            console.error(`[RedisCacheService] Error deleting cache key ${key}:`, error);
+            logger.error(`[RedisCacheService] Error deleting cache key ${key}:`, error);
         }
     }
     
     async exists(key: string): Promise<boolean> {
         if (!await this.ensureConnected()) {
-            console.log(`[RedisCacheService] Cache disabled or not connected, skipping exists check for key: ${key}`);
+            logger.debug(`[RedisCacheService] Cache disabled or not connected, skipping exists check for key: ${key}`);
             return false;
         }
         
@@ -118,14 +119,14 @@ export class RedisCacheService implements IRedisCacheService {
             const exists = await this.client!.exists(key);
             return exists === 1;
         } catch (error) {
-            console.error(`[RedisCacheService] Error checking if key exists ${key}:`, error);
+            logger.error(`[RedisCacheService] Error checking if key exists ${key}:`, error);
             return false;
         }
     }
     
     async clear(pattern: string): Promise<number> {
         if (!await this.ensureConnected()) {
-            console.log(`[RedisCacheService] Cache disabled or not connected, skipping clear for pattern: ${pattern}`);
+            logger.debug(`[RedisCacheService] Cache disabled or not connected, skipping clear for pattern: ${pattern}`);
             return 0;
         }
         
@@ -145,7 +146,7 @@ export class RedisCacheService implements IRedisCacheService {
             
             return deletedCount;
         } catch (error) {
-            console.error(`[RedisCacheService] Error clearing cache keys matching pattern ${pattern}:`, error);
+            logger.error(`[RedisCacheService] Error clearing cache keys matching pattern ${pattern}:`, error);
             return 0;
         }
     }
