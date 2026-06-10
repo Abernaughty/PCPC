@@ -197,3 +197,6 @@ tools/scripts/*.log
 .azure-cli/
 .devcontainer/azure-config/
 !.devcontainer/azure-config/.gitkeep
+
+# Generated test reports
+tests/reports/
