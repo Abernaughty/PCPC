@@ -1,0 +1,6 @@
+# Copy this file to terraform.tfvars and update the values for your environment.
+
+subscription_id     = "00000000-0000-0000-0000-000000000000"
+api_management_name = "pcpc-apim-dev"
+resource_group_name = "pcpc-rg-dev"
+function_app_name   = "pcpc-func-dev"

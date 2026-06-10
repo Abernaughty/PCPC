@@ -2,6 +2,11 @@
 # REQUIRED VARIABLES
 # -----------------------------------------------------------------------------
 
+variable "subscription_id" {
+  description = "The Azure subscription ID containing the API Management instance"
+  type        = string
+}
+
 variable "api_management_name" {
   description = "Name of the existing API Management instance"
   type        = string

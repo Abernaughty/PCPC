@@ -48,7 +48,7 @@ docker info
 az account show
 
 # Set correct subscription if needed
-az account set --subscription 555b4cfa-ad2e-4c71-9433-620a59cf7616
+az account set --subscription <subscription-id>
 
 # Verify subscription is set
 az account show --query name -o tsv
@@ -148,7 +148,7 @@ sudo chmod 666 /var/run/docker.sock
 az acr login --name maberdevcontainerregistry-ccedhvhwfndwetdp --expose-token
 
 # Check service principal permissions
-az role assignment list --assignee ed17c3a9-636a-4ab3-84da-00d9e33f4ccc --scope /subscriptions/555b4cfa-ad2e-4c71-9433-620a59cf7616
+az role assignment list --assignee <service-principal-object-id> --scope /subscriptions/<subscription-id>
 ```
 
 ### Issue: Manifest commands fail

@@ -151,7 +151,7 @@ On your host machine, you likely have:
 
 ## Current Service Principal Permissions
 
-The service principal (`ed17c3a9-636a-4ab3-84da-00d9e33f4ccc`) has the correct RBAC roles:
+The service principal (`<service-principal-object-id>`) has the correct RBAC roles:
 
 - ✅ **Reader** - Can read ACR resource properties
 - ✅ **AcrPull** - Can pull images
@@ -223,7 +223,7 @@ TOKEN=$(az account get-access-token --resource https://management.azure.com --qu
 
 # Call ACR REST API
 curl -H "Authorization: Bearer $TOKEN" \
-  "https://management.azure.com/subscriptions/555b4cfa-ad2e-4c71-9433-620a59cf7616/resourceGroups/dev-rg/providers/Microsoft.ContainerRegistry/registries/maberdevcontainerregistry/listCredentials?api-version=2023-01-01-preview"
+  "https://management.azure.com/subscriptions/<subscription-id>/resourceGroups/dev-rg/providers/Microsoft.ContainerRegistry/registries/maberdevcontainerregistry/listCredentials?api-version=2023-01-01-preview"
 ```
 
 ## Pipeline Implications
