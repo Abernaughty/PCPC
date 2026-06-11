@@ -82,7 +82,6 @@ PCPC/
 │   ├── architecture-comparison.md   (in progress)
 │   └── adr/
 ├── tests/             Jest + Playwright + k6
-├── memory-bank/       Project memory documentation
 └── .devcontainer/     ACR-backed devcontainer (~60s setup)
 ```
 
