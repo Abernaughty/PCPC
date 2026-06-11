@@ -16,6 +16,9 @@ import {
 } from '$lib/server/utils/cache';
 import { getConfig } from '$lib/server/config';
 import type { Card, CardImage } from '$lib/server/models/types';
+import { createContextLogger } from '$lib/services/logger';
+
+const log = createContextLogger('GetCardsBySet');
 
 /** Map backend Card to frontend PokemonCard shape */
 function cardToFrontend(card: Card) {
@@ -74,8 +77,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
     setId,
   });
 
-  console.log(
-    `[GetCardsBySet] Fetching cards for set ${setId}, page ${page}, pageSize ${pageSize}`
+  log.debug(
+    `Fetching cards for set ${setId}, page ${page}, pageSize ${pageSize}`
   );
 
   try {
@@ -87,14 +90,14 @@ export const GET: RequestHandler = async ({ params, url }) => {
 
     // Check Redis cache (keyed on setId + pagination)
     if (config.enableRedisCache) {
-      console.log(`[GetCardsBySet] Checking Redis cache with key: ${cacheKey}`);
+      log.debug(`Checking Redis cache with key: ${cacheKey}`);
       const redisService = getRedisCacheService();
       const cachedEntry = await redisService.get<CacheEntry<Card[]>>(cacheKey);
 
       cards = parseCacheEntry<Card[]>(cachedEntry);
 
       if (cards) {
-        console.log(`[GetCardsBySet] Cache hit for set ${setId} (${cards.length} cards)`);
+        log.debug(`Cache hit for set ${setId} (${cards.length} cards)`);
         cacheHit = true;
         cacheAge = cachedEntry ? getCacheAge(cachedEntry.timestamp) : 0;
 
@@ -107,7 +110,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
           cacheAge,
         });
       } else {
-        console.log(`[GetCardsBySet] Cache miss for set ${setId}`);
+        log.debug(`Cache miss for set ${setId}`);
 
         monitoring.trackEvent('cache.miss', {
           functionName: 'GetCardsBySet',
@@ -128,17 +131,17 @@ export const GET: RequestHandler = async ({ params, url }) => {
         const expansion = await scrydexService.getExpansion(setId);
         if (expansion) {
           expectedTotal = expansion.total || 0;
-          console.log(`[GetCardsBySet] Set ${setId} expected total: ${expectedTotal}`);
+          log.debug(`Set ${setId} expected total: ${expectedTotal}`);
         }
       } catch (err: any) {
-        console.warn(`[GetCardsBySet] Could not fetch set metadata for ${setId}: ${err.message}`);
+        log.warn(`Could not fetch set metadata for ${setId}: ${err.message}`);
         // Non-fatal: we'll still try Cosmos/Scrydex without count validation
       }
     }
 
     // Check Cosmos DB
     if (!cards) {
-      console.log(`[GetCardsBySet] Checking Cosmos DB for set ${setId}`);
+      log.debug(`Checking Cosmos DB for set ${setId}`);
       const cosmosService = getCosmosDbService();
       const cosmosCards = await cosmosService.getCardsBySetId(setId);
 
@@ -146,8 +149,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
         // Staleness check 1: count mismatch
         // If we know the expected total and Cosmos has fewer, the data is stale.
         if (expectedTotal > 0 && cosmosCards.length < expectedTotal) {
-          console.log(
-            `[GetCardsBySet] Cosmos DB has stale data for set ${setId}: ` +
+          log.debug(
+            `Cosmos DB has stale data for set ${setId}: ` +
             `${cosmosCards.length} cards vs ${expectedTotal} expected. Falling through to Scrydex API.`
           );
 
@@ -167,8 +170,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
         // is now available on Scrydex. saveCards() will upsert to self-correct.
         else if (!cardsHavePricingData(cosmosCards)) {
           const withPricing = cosmosCards.filter(cardHasPricing).length;
-          console.log(
-            `[GetCardsBySet] Cosmos DB cards for set ${setId} lack pricing data: ` +
+          log.debug(
+            `Cosmos DB cards for set ${setId} lack pricing data: ` +
             `${withPricing}/${cosmosCards.length} have pricing. Falling through to Scrydex API.`
           );
 
@@ -182,8 +185,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
           });
           // cards remains null — will proceed to Scrydex fetch below
         } else {
-          console.log(
-            `[GetCardsBySet] Found ${cosmosCards.length} cards in Cosmos DB for set ${setId}`
+          log.debug(
+            `Found ${cosmosCards.length} cards in Cosmos DB for set ${setId}`
           );
           cards = cosmosCards;
         }
@@ -193,7 +196,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
     // Fetch from Scrydex API — paginate through ALL pages to avoid truncation
     // Cards now include pricing data via ?select=...&include=prices
     if (!cards || cards.length === 0) {
-      console.log(`[GetCardsBySet] Fetching cards from Scrydex API for set ${setId}`);
+      log.debug(`Fetching cards from Scrydex API for set ${setId}`);
       const apiStartTime = Date.now();
 
       try {
@@ -201,8 +204,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
         const allScrydexCards = await scrydexService.getAllCardsInExpansion(setId);
         const apiDuration = Date.now() - apiStartTime;
 
-        console.log(
-          `[GetCardsBySet] Scrydex API returned ${allScrydexCards.length} cards (${apiDuration}ms)`
+        log.debug(
+          `Scrydex API returned ${allScrydexCards.length} cards (${apiDuration}ms)`
         );
 
         monitoring.trackMetric('api.scrydex.duration', apiDuration, {
@@ -250,21 +253,21 @@ export const GET: RequestHandler = async ({ params, url }) => {
         });
 
         if (cardsToSave.length > 0) {
-          console.log(`[GetCardsBySet] Saving ${cardsToSave.length} cards to Cosmos DB`);
+          log.debug(`Saving ${cardsToSave.length} cards to Cosmos DB`);
           await cosmosService.saveCards(cardsToSave);
         }
 
         cards = cardsToSave;
       } catch (error: any) {
-        console.error(
-          `[GetCardsBySet] Error fetching from Scrydex API: ${error.message}`
+        log.error(
+          `Error fetching from Scrydex API: ${error.message}`
         );
         throw error;
       }
     }
 
     if (!cards || cards.length === 0) {
-      console.log(`[GetCardsBySet] No cards found for set ${setId}`);
+      log.debug(`No cards found for set ${setId}`);
       return apiError(`No cards found for set ${setId}`, 404);
     }
 
@@ -278,7 +281,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
 
     // Cache the paginated result
     if (!cacheHit && config.enableRedisCache) {
-      console.log(`[GetCardsBySet] Caching ${paginatedCards.length} cards`);
+      log.debug(`Caching ${paginatedCards.length} cards`);
       const redisService = getRedisCacheService();
       await redisService.set(
         cacheKey,
@@ -309,8 +312,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
       pricingIncluded,
     });
 
-    console.log(
-      `[GetCardsBySet] Successfully returning ${paginatedCards.length} cards (${duration}ms, pricing: ${pricingIncluded})`
+    log.debug(
+      `Successfully returning ${paginatedCards.length} cards (${duration}ms, pricing: ${pricingIncluded})`
     );
 
     return apiSuccess(
@@ -329,7 +332,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
   } catch (error: any) {
     const duration = Date.now() - startTime;
 
-    console.error(`[GetCardsBySet] Error: ${error.message}`);
+    log.error(`Error: ${error.message}`);
 
     monitoring.trackException(error, {
       functionName: 'GetCardsBySet',

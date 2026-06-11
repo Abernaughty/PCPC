@@ -1,3 +1,5 @@
+import { logger } from '$lib/services/logger';
+
 export interface IMonitoringService {
   trackEvent(name: string, properties?: Record<string, any>): void;
   trackMetric(name: string, value: number, properties?: Record<string, any>): void;
@@ -24,7 +26,7 @@ export class MonitoringService implements IMonitoringService {
       properties: properties || {},
     };
 
-    console.log(`[EVENT] ${JSON.stringify(logEntry)}`);
+    logger.debug(`[EVENT] ${JSON.stringify(logEntry)}`);
   }
 
   trackMetric(name: string, value: number, properties?: Record<string, any>): void {
@@ -37,7 +39,7 @@ export class MonitoringService implements IMonitoringService {
       properties: properties || {},
     };
 
-    console.log(`[METRIC] ${JSON.stringify(logEntry)}`);
+    logger.debug(`[METRIC] ${JSON.stringify(logEntry)}`);
   }
 
   trackException(error: Error, properties?: Record<string, any>): void {
@@ -50,7 +52,7 @@ export class MonitoringService implements IMonitoringService {
       properties: properties || {},
     };
 
-    console.error(`[EXCEPTION] ${JSON.stringify(logEntry)}`);
+    logger.error(`[EXCEPTION] ${JSON.stringify(logEntry)}`);
   }
 
   startTimer(): () => number {

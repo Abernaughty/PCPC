@@ -16,6 +16,9 @@ import {
 } from '$lib/server/utils/cache';
 import { getConfig } from '$lib/server/config';
 import type { Card, CardImage } from '$lib/server/models/types';
+import { createContextLogger } from '$lib/services/logger';
+
+const log = createContextLogger('GetCardInfo');
 
 /** Check whether a card has any actual price values in its variants */
 function cardHasPricing(card: Card | null): boolean {
@@ -57,7 +60,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
     cardId,
   });
 
-  console.log(`[GetCardInfo] Fetching card ${cardId} from set ${setId}`);
+  log.debug(`Fetching card ${cardId} from set ${setId}`);
 
   try {
     const config = getConfig();
@@ -68,14 +71,14 @@ export const GET: RequestHandler = async ({ params, url }) => {
 
     // Check Redis cache (keyed on cardId + setId)
     if (config.enableRedisCache) {
-      console.log(`[GetCardInfo] Checking Redis cache with key: ${cacheKey}`);
+      log.debug(`Checking Redis cache with key: ${cacheKey}`);
       const redisService = getRedisCacheService();
       const cachedEntry = await redisService.get<CacheEntry<Card>>(cacheKey);
 
       card = parseCacheEntry<Card>(cachedEntry);
 
       if (card) {
-        console.log(`[GetCardInfo] Cache hit for card ${cardId}`);
+        log.debug(`Cache hit for card ${cardId}`);
         cacheHit = true;
         cacheAge = cachedEntry ? getCacheAge(cachedEntry.timestamp) : 0;
 
@@ -87,7 +90,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
           cacheAge,
         });
       } else {
-        console.log(`[GetCardInfo] Cache miss for card ${cardId}`);
+        log.debug(`Cache miss for card ${cardId}`);
 
         monitoring.trackEvent('cache.miss', {
           functionName: 'GetCardInfo',
@@ -100,12 +103,12 @@ export const GET: RequestHandler = async ({ params, url }) => {
 
     // Check Cosmos DB
     if (!card) {
-      console.log(`[GetCardInfo] Checking Cosmos DB for card ${cardId}`);
+      log.debug(`Checking Cosmos DB for card ${cardId}`);
       const cosmosService = getCosmosDbService();
       card = await cosmosService.getCard(cardId, setId);
 
       if (card) {
-        console.log(`[GetCardInfo] Found card ${cardId} in Cosmos DB`);
+        log.debug(`Found card ${cardId} in Cosmos DB`);
       }
     }
 
@@ -114,11 +117,11 @@ export const GET: RequestHandler = async ({ params, url }) => {
     const needsPricing = !cardHasPricing(card);
     if (!card || needsPricing) {
       if (card && needsPricing) {
-        console.log(
-          `[GetCardInfo] Card ${cardId} exists but has no pricing data, fetching from Scrydex API`
+        log.debug(
+          `Card ${cardId} exists but has no pricing data, fetching from Scrydex API`
         );
       } else {
-        console.log(`[GetCardInfo] Fetching card details from Scrydex API`);
+        log.debug(`Fetching card details from Scrydex API`);
       }
       const apiStartTime = Date.now();
 
@@ -128,12 +131,12 @@ export const GET: RequestHandler = async ({ params, url }) => {
 
         if (!scrydexCard) {
           if (!card) {
-            console.log(`[GetCardInfo] Card ${cardId} not found in Scrydex API`);
+            log.debug(`Card ${cardId} not found in Scrydex API`);
             return apiError(`Card ${cardId} not found`, 404);
           }
           // If we have a cached/DB card but Scrydex failed, continue with what we have
-          console.warn(
-            `[GetCardInfo] Scrydex API returned null for ${cardId}, using existing data`
+          log.warn(
+            `Scrydex API returned null for ${cardId}, using existing data`
           );
         } else {
           const apiDuration = Date.now() - apiStartTime;
@@ -172,32 +175,32 @@ export const GET: RequestHandler = async ({ params, url }) => {
           };
 
           // Save to Cosmos DB
-          console.log(`[GetCardInfo] Saving card ${cardId} to Cosmos DB`);
+          log.debug(`Saving card ${cardId} to Cosmos DB`);
           const cosmosService = getCosmosDbService();
           await cosmosService.saveCard(card);
         }
       } catch (error: any) {
         if (!card) {
-          console.error(
-            `[GetCardInfo] Error fetching from Scrydex API: ${error.message}`
+          log.error(
+            `Error fetching from Scrydex API: ${error.message}`
           );
           throw error;
         }
         // If we have existing data, log warning but don't fail
-        console.warn(
-          `[GetCardInfo] Failed to refresh from Scrydex API: ${error.message}, using existing data`
+        log.warn(
+          `Failed to refresh from Scrydex API: ${error.message}, using existing data`
         );
       }
     }
 
     if (!card) {
-      console.log(`[GetCardInfo] Card ${cardId} not found`);
+      log.debug(`Card ${cardId} not found`);
       return apiError(`Card ${cardId} not found`, 404);
     }
 
     // Cache the card
     if (!cacheHit && config.enableRedisCache) {
-      console.log(`[GetCardInfo] Caching card ${cardId}`);
+      log.debug(`Caching card ${cardId}`);
       const redisService = getRedisCacheService();
       await redisService.set(
         cacheKey,
@@ -226,13 +229,13 @@ export const GET: RequestHandler = async ({ params, url }) => {
       hasPricing,
     });
 
-    console.log(`[GetCardInfo] Successfully returning card ${cardId} (${duration}ms)`);
+    log.debug(`Successfully returning card ${cardId} (${duration}ms)`);
 
     return apiSuccess(cardToFrontend(card), 200, cacheHit);
   } catch (error: any) {
     const duration = Date.now() - startTime;
 
-    console.error(`[GetCardInfo] Error: ${error.message}`);
+    log.error(`Error: ${error.message}`);
 
     monitoring.trackException(error, {
       functionName: 'GetCardInfo',

@@ -5,12 +5,15 @@ import { monitoring } from '$lib/server/services/monitoring';
 import { getConfig } from '$lib/server/config';
 import type { HealthCheckResult, ComponentHealth } from '$lib/server/models/types';
 import { json } from '@sveltejs/kit';
+import { createContextLogger } from '$lib/services/logger';
+
+const log = createContextLogger('HealthCheck');
 
 export const GET: RequestHandler = async () => {
   const startTime = Date.now();
   const correlationId = monitoring.createCorrelationId();
 
-  console.log(`[HealthCheck] Starting health check - Correlation ID: ${correlationId}`);
+  log.debug(`Starting health check - Correlation ID: ${correlationId}`);
 
   try {
     const config = getConfig();
@@ -60,7 +63,7 @@ export const GET: RequestHandler = async () => {
       checksPerformed: Object.keys(checks).length,
     });
 
-    console.log(`[HealthCheck] Completed in ${duration}ms - Status: ${overallStatus}`);
+    log.debug(`Completed in ${duration}ms - Status: ${overallStatus}`);
 
     const statusCode =
       overallStatus === 'healthy' ? 200 : overallStatus === 'degraded' ? 207 : 503;
@@ -75,7 +78,7 @@ export const GET: RequestHandler = async () => {
       duration,
     });
 
-    console.error(`[HealthCheck] Error during health check:`, error);
+    log.error(`Error during health check:`, error);
 
     const result: HealthCheckResult = {
       status: 'unhealthy',

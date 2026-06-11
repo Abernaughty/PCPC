@@ -11,6 +11,9 @@ import {
   type CacheEntry,
 } from '$lib/server/utils/cache';
 import { getConfig } from '$lib/server/config';
+import { createContextLogger } from '$lib/services/logger';
+
+const log = createContextLogger('GetSets');
 
 export const GET: RequestHandler = async ({ url }) => {
   const startTime = Date.now();
@@ -30,10 +33,6 @@ export const GET: RequestHandler = async ({ url }) => {
     const config = getConfig();
     const setsTtl = config.cacheTtlSets;
 
-    console.log(
-      `[GetSets] Parameters: language=${language}, returnAll=${returnAll}, page=${page}, pageSize=${pageSize}`
-    );
-
     const cacheKey = `${CacheKeys.setList()}-scrydex-${language}`;
     let sets: any[] | null = null;
     let cacheHit = false;
@@ -42,7 +41,6 @@ export const GET: RequestHandler = async ({ url }) => {
     // Check Redis cache (keyed on language; freshness on language switch
     // comes from the cache-key miss, no client-supplied bust needed)
     if (config.enableRedisCache) {
-      console.log(`[GetSets] Checking Redis cache with key: ${cacheKey}`);
       const cacheCheckStart = Date.now();
       const redisService = getRedisCacheService();
       const cachedEntry = await redisService.get<CacheEntry<any[]>>(cacheKey);
@@ -51,7 +49,7 @@ export const GET: RequestHandler = async ({ url }) => {
       sets = parseCacheEntry<any[]>(cachedEntry);
 
       if (sets) {
-        console.log(`[GetSets] Cache hit for set list (${sets.length} sets)`);
+        log.debug(`Cache hit for set list (${sets.length} sets)`);
         cacheHit = true;
         cacheAge = cachedEntry ? getCacheAge(cachedEntry.timestamp) : 0;
 
@@ -68,7 +66,7 @@ export const GET: RequestHandler = async ({ url }) => {
           result: 'hit',
         });
       } else {
-        console.log(`[GetSets] Cache miss for set list`);
+        log.debug('Cache miss for set list');
 
         monitoring.trackEvent('cache.miss', {
           functionName: 'GetSets',
@@ -85,7 +83,6 @@ export const GET: RequestHandler = async ({ url }) => {
 
     // Fetch from Scrydex API if not cached
     if (!sets) {
-      console.log(`[GetSets] Fetching sets from Scrydex API`);
       const apiStartTime = Date.now();
 
       try {
@@ -123,8 +120,8 @@ export const GET: RequestHandler = async ({ url }) => {
           };
         });
 
-        console.log(
-          `[GetSets] Scrydex API returned ${expansions.length} expansions for language ${language} (${apiDuration}ms)`
+        log.debug(
+          `Scrydex API returned ${expansions.length} expansions for language ${language} (${apiDuration}ms)`
         );
 
         monitoring.trackMetric('api.scrydex.duration', apiDuration, {
@@ -135,7 +132,6 @@ export const GET: RequestHandler = async ({ url }) => {
 
         // Save to cache
         if (sets && sets.length > 0 && config.enableRedisCache) {
-          console.log(`[GetSets] Saving ${sets.length} sets to Redis cache`);
           const redisService = getRedisCacheService();
           await redisService.set(
             cacheKey,
@@ -144,13 +140,13 @@ export const GET: RequestHandler = async ({ url }) => {
           );
         }
       } catch (error: any) {
-        console.log(`[GetSets] Error fetching from Scrydex API: ${error.message}`);
+        log.error(`Error fetching from Scrydex API: ${error.message}`);
         throw error;
       }
     }
 
     if (!sets || sets.length === 0) {
-      console.log(`[GetSets] No sets found for language: ${language}`);
+      log.warn(`No sets found for language: ${language}`);
       return apiError(`No sets found for language: ${language}`, 404);
     }
 
@@ -189,7 +185,6 @@ export const GET: RequestHandler = async ({ url }) => {
         totalCount: enhancedSets.length,
         totalPages: 1,
       };
-      console.log(`[GetSets] Returning ALL ${enhancedSets.length} sets`);
     } else {
       const totalCount = enhancedSets.length;
       const totalPages = Math.ceil(totalCount / pageSize);
@@ -203,10 +198,6 @@ export const GET: RequestHandler = async ({ url }) => {
         totalCount,
         totalPages,
       };
-
-      console.log(
-        `[GetSets] Returning page ${page}/${totalPages} with ${finalSets.length} sets`
-      );
     }
 
     const duration = Date.now() - startTime;
@@ -228,9 +219,7 @@ export const GET: RequestHandler = async ({ url }) => {
       returnAll,
     });
 
-    console.log(
-      `[GetSets] Successfully returning ${finalSets.length} sets (${duration}ms)`
-    );
+    log.debug(`Returning ${finalSets.length} sets (${duration}ms, cached: ${cacheHit})`);
 
     return apiSuccess(
       {
@@ -243,7 +232,7 @@ export const GET: RequestHandler = async ({ url }) => {
   } catch (error: any) {
     const duration = Date.now() - startTime;
 
-    console.log(`[GetSets] Error: ${error.message}`);
+    log.error(`Error: ${error.message}`, error);
 
     monitoring.trackException(error, {
       functionName: 'GetSets',
