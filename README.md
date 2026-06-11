@@ -116,4 +116,4 @@ Full plan with risks, success metrics, and open questions: [`docs/PORTFOLIO_PLAN
 
 ## License
 
-MIT — see [LICENSE.txt](LICENSE.txt).
+MIT — see [LICENSE](LICENSE).
