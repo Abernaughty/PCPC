@@ -2,7 +2,7 @@
 
 ## Overview
 
-This directory contains the comprehensive testing framework for the Pokemon Card Price Checker (PCPC) project, implementing enterprise-grade testing practices following the Test Pyramid pattern.
+This directory contains the comprehensive testing framework for the Pokemon Card Price Checker (PCPC) project, following the Test Pyramid pattern.
 
 ## Testing Architecture
 

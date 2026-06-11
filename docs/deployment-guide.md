@@ -233,8 +233,8 @@ module "api_management" {
   resource_group_name = module.resource_group.name
   location           = module.resource_group.location
 
-  publisher_name  = "PCPC Team"
-  publisher_email = "team@pcpc.dev"
+  publisher_name  = "maber.io"
+  publisher_email = "devops@maber.io"
 
   sku_name = "Consumption_0"
 
@@ -1729,7 +1729,7 @@ This deployment guide provides comprehensive coverage of the PCPC deployment pro
 - **Security Best Practices**: Azure Key Vault integration and RBAC
 - **Multi-Environment Strategy**: Development, staging, and production environments
 
-The deployment architecture supports enterprise-grade requirements with zero-downtime deployments, automated rollback capabilities, and comprehensive monitoring.
+The deployment architecture supports zero-downtime deployments, automated rollback capabilities, and comprehensive monitoring.
 
 **Next Steps**: After completing infrastructure deployment, refer to the [Development Guide](./development-guide.md) for local development workflows and the [Troubleshooting Guide](./troubleshooting.md) for common deployment issues and resolutions.
 

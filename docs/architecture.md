@@ -19,7 +19,7 @@
 
 ### High-Level System Architecture
 
-The PCPC system follows a modern cloud-native, serverless architecture pattern with clear separation of concerns and enterprise-grade scalability.
+The PCPC system follows a modern cloud-native, serverless architecture pattern with clear separation of concerns and scalable design.
 
 ```mermaid
 graph TB
@@ -784,7 +784,7 @@ graph TB
 
 ## Development Architecture
 
-### Revolutionary DevContainer Architecture
+### DevContainer Architecture
 
 ```mermaid
 graph TB
@@ -1108,12 +1108,12 @@ graph TB
 
 ## Summary
 
-The PCPC system architecture demonstrates enterprise-grade design principles with:
+The PCPC system architecture is built around the following design principles:
 
 - **Cloud-Native**: Serverless-first approach with Azure managed services
 - **Performance-Optimized**: Multi-tier caching and optimized data access patterns
 - **Security-First**: Defense in depth with comprehensive security layers
-- **Developer-Friendly**: Revolutionary DevContainer with 95% setup time reduction
+- **Developer-Friendly**: DevContainer with 95% setup time reduction
 - **Scalable**: Designed for growth with clear evolution path
 
 This architecture serves as both a functional Pokemon card price checking application and a comprehensive demonstration of advanced software engineering capabilities suitable for senior-level technical roles.

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the comprehensive security architecture, policies, and procedures for the Pokemon Card Price Checker (PCPC) application. The security model follows enterprise-grade practices with defense-in-depth principles, ensuring data protection, system integrity, and compliance with industry standards.
+This document outlines the comprehensive security architecture, policies, and procedures for the Pokemon Card Price Checker (PCPC) application. The security model follows defense-in-depth principles, ensuring data protection, system integrity, and compliance with industry standards.
 
 ## Security Architecture
 
@@ -529,7 +529,7 @@ export const rotateApiKeys: AzureFunction = async function (context, myTimer) {
 - [ ] Test all API integrations
 - [ ] Revoke old API keys
 - [ ] Update documentation and runbooks
-- [ ] Notify team of rotation completion
+- [ ] Record rotation completion
 
 ## Security Scanning Integration
 
@@ -711,12 +711,14 @@ class GdprDataService {
 
 **Severity Classification**:
 
-| Severity | Definition | Response Time | Escalation |
-|----------|------------|---------------|------------|
-| **Critical** | Data breach, system compromise | 15 minutes | CISO, Legal |
-| **High** | Service disruption, security vulnerability | 1 hour | Security Team |
-| **Medium** | Performance degradation, minor security issue | 4 hours | Development Team |
-| **Low** | Cosmetic issues, enhancement requests | 24 hours | Product Team |
+| Severity | Definition | Target Response Time |
+|----------|------------|----------------------|
+| **Critical** | Data breach, system compromise | 15 minutes |
+| **High** | Service disruption, security vulnerability | 1 hour |
+| **Medium** | Performance degradation, minor security issue | 4 hours |
+| **Low** | Cosmetic issues, enhancement requests | 24 hours |
+
+All incidents are handled by the maintainer (mike@maber.io).
 
 ## Security Monitoring and Alerting
 
@@ -835,12 +837,6 @@ class SecurityLogger {
 
 #### Continuous Security Validation
 
-**Red Team Exercises**:
-- Quarterly simulated attacks
-- Social engineering assessments
-- Physical security evaluations
-- Incident response testing
-
 ## Security Training and Awareness
 
 ### Developer Security Training
@@ -855,33 +851,17 @@ class SecurityLogger {
 - Error handling and logging
 - Secure API design
 
-**Training Schedule**:
-- Initial training for new team members
-- Annual refresher training for all developers
-- Quarterly security updates and threat briefings
-- Ad-hoc training for new technologies or threats
-
-#### Security Champions Program
-
-**Program Structure**:
-- Designated security champions in each development team
-- Monthly security champion meetings
-- Security-focused code reviews
-- Security tool evaluation and adoption
-- Incident response participation
-
 ## Incident Response Procedures
 
 ### Security Incident Classification
 
 #### Incident Types and Response
 
-| Incident Type | Examples | Initial Response | Investigation Lead |
-|---------------|----------|------------------|-------------------|
-| **Data Breach** | Unauthorized data access, data exfiltration | Isolate affected systems, notify stakeholders | CISO |
-| **System Compromise** | Malware, unauthorized access | Disconnect from network, preserve evidence | Security Team |
-| **Denial of Service** | DDoS attack, service disruption | Activate DDoS protection, scale resources | Operations Team |
-| **Insider Threat** | Malicious employee activity | Disable access, HR notification | CISO + HR |
+| Incident Type | Examples | Initial Response |
+|---------------|----------|------------------|
+| **Data Breach** | Unauthorized data access, data exfiltration | Isolate affected systems, notify affected users |
+| **System Compromise** | Malware, unauthorized access | Disconnect from network, preserve evidence |
+| **Denial of Service** | DDoS attack, service disruption | Activate DDoS protection, scale resources |
 
 ### Incident Response Playbook
 
