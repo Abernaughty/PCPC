@@ -25,7 +25,6 @@ This index links the core documents for architecture, development, deployment, a
 
 ### 📋 Reference
 - [Architecture Decision Records](./adr/) - Historical technical decisions
-- [Operational Runbooks](./runbooks/) - Step-by-step operational procedures
 
 ## Documentation Categories
 
@@ -69,7 +68,6 @@ This index links the core documents for architecture, development, deployment, a
 | Document | Purpose | Audience | Word Count |
 |----------|---------|----------|------------|
 | [Architecture Decision Records](./adr/) | Historical technical decisions | Technical Leads | 3,000+ |
-| [Operational Runbooks](./runbooks/) | Step-by-step operational procedures | Operations Team | 3,000+ |
 
 **Total Tier 4**: 6,000+ words
 
@@ -104,7 +102,6 @@ This index links the core documents for architecture, development, deployment, a
 1. [Deployment Guide](./deployment-guide.md) - Complete deployment procedures
 2. [Monitoring Documentation](./monitoring.md) - Observability setup and alerting
 3. [Security Documentation](./security.md) - Security implementation
-4. [Runbooks](./runbooks/) - Operational procedures for incident response
 
 **System Reliability**:
 - [Performance Documentation](./performance.md) - Performance monitoring and optimization
@@ -129,7 +126,6 @@ This index links the core documents for architecture, development, deployment, a
 1. [Security Documentation](./security.md) - Comprehensive security architecture
 2. [Deployment Guide](./deployment-guide.md) - Secure deployment practices
 3. [Monitoring Documentation](./monitoring.md) - Security monitoring and alerting
-4. [Runbooks](./runbooks/) - Security incident response procedures
 
 ## Key Features & Highlights
 
@@ -221,7 +217,6 @@ This index links the core documents for architecture, development, deployment, a
 - [Security Documentation](./security.md) - Security team and compliance
 - [Performance Documentation](./performance.md) - Performance optimization
 - [ADR](./adr/) - Technical decision context
-- [Runbooks](./runbooks/) - Operational procedures
 
 ## Contributing to Documentation
 
