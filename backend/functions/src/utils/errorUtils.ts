@@ -1,4 +1,5 @@
 import type { ErrorResponse } from '@pcpc/shared';
+import { logger } from "./logger";
 
 /**
  * Create a standardized error response
@@ -89,7 +90,7 @@ export function createServerError(
  * @returns The error response
  */
 export function handleError(error: any, path?: string): ErrorResponse {
-    console.error(`Error in request to ${path || 'unknown path'}:`, error);
+    logger.error(`Error in request to ${path || 'unknown path'}:`, error);
     
     // If it's already an ErrorResponse, return it
     if (error && typeof error === 'object' && 'error' in error && 'status' in error) {
@@ -122,7 +123,7 @@ export function handleError(error: any, path?: string): ErrorResponse {
  * @param context Additional context information
  */
 export function logError(error: any, context: Record<string, any> = {}): void {
-    console.error('Error:', {
+    logger.error('Error:', {
         message: error.message,
         stack: error.stack,
         ...context,

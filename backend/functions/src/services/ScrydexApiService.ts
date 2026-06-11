@@ -6,6 +6,7 @@ import type {
   ScrydexUsage,
   ScrydexListing,
 } from "@pcpc/shared";
+import { logger } from "../utils/logger";
 
 export interface SearchOptions {
   page?: number;
@@ -117,17 +118,10 @@ export class ScrydexApiService implements IScrydexApiService {
     this.apiKey = apiKey;
     this.teamId = teamId;
     this.baseUrl = baseUrl;
-    console.log("[ScrydexApiService] Initializing...");
-    console.log(`[ScrydexApiService] Base URL: ${this.baseUrl}`);
-    console.log(
-      `[ScrydexApiService] API Key: ${
-        this.apiKey ? `SET (${this.apiKey.substring(0, 8)}...)` : "MISSING"
-      }`
-    );
-    console.log(
-      `[ScrydexApiService] Team ID: ${
-        this.teamId ? `SET (${this.teamId.substring(0, 8)}...)` : "MISSING"
-      }`
+    logger.info(
+      `[ScrydexApiService] Initializing (base URL: ${this.baseUrl}, API key ${
+        this.apiKey ? "set" : "MISSING"
+      }, team ID ${this.teamId ? "set" : "MISSING"})`
     );
   }
 
@@ -153,7 +147,7 @@ export class ScrydexApiService implements IScrydexApiService {
             response.headers.get("retry-after") || "1",
             10
           );
-          console.warn(
+          logger.warn(
             `[ScrydexApiService] Rate limited (429), waiting ${retryAfter}s before retry ${attempt}/${maxRetries}...`
           );
           await new Promise((resolve) => setTimeout(resolve, retryAfter * 1000));
@@ -167,7 +161,7 @@ export class ScrydexApiService implements IScrydexApiService {
         return (await response.json()) as T;
       } catch (error) {
         lastError = error as Error;
-        console.warn(
+        logger.warn(
           `[ScrydexApiService] Attempt ${attempt}/${maxRetries} failed: ${lastError.message}`
         );
         if (attempt < maxRetries) {
@@ -195,7 +189,7 @@ export class ScrydexApiService implements IScrydexApiService {
       cached?.data &&
       this.isCacheValid(cached.timestamp, this.EXPANSION_CACHE_TTL)
     ) {
-      console.log(
+      logger.debug(
         `[ScrydexApiService] Returning cached expansions for '${language}' (${cached.data.length} expansions)`
       );
       return cached.data;
@@ -208,9 +202,6 @@ export class ScrydexApiService implements IScrydexApiService {
 
     const startTime = Date.now();
     try {
-      console.log(
-        `[ScrydexApiService] Fetching all expansions (language: ${language})`
-      );
       const allExpansions: ScrydexExpansion[] = [];
       let currentPage = 1;
       const fetchPageSize = 100;
@@ -221,17 +212,12 @@ export class ScrydexApiService implements IScrydexApiService {
         );
         allExpansions.push(...response.data);
         currentPage++;
-        console.log(
-          `[ScrydexApiService] Expansions page ${
-            response.page || currentPage - 1
-          }: ${response.data.length} items, ${allExpansions.length} total so far`
-        );
         if (response.data.length === 0 || response.data.length < fetchPageSize)
           break;
       }
 
       const duration = Date.now() - startTime;
-      console.log(
+      logger.info(
         `[ScrydexApiService] Retrieved ${allExpansions.length} expansions for '${language}' (${duration}ms)`
       );
       this.expansionsCache[language] = {
@@ -240,27 +226,23 @@ export class ScrydexApiService implements IScrydexApiService {
       };
       return allExpansions;
     } catch (error) {
-      console.error(
-        "[ScrydexApiService] Error fetching expansions:",
-        error
-      );
+      logger.error("[ScrydexApiService] Error fetching expansions:", error);
       throw error;
     }
   }
 
   async getExpansion(expansionId: string): Promise<ScrydexExpansion | null> {
     try {
-      console.log(`[ScrydexApiService] Fetching expansion ${expansionId}`);
       const response = await this.fetchWithRetry<{ data: ScrydexExpansion }>(
         `${this.baseUrl}/expansions/${expansionId}`
       );
       return response.data;
     } catch (error) {
       if ((error as Error).message.includes("404")) {
-        console.log(`[ScrydexApiService] Expansion ${expansionId} not found`);
+        logger.debug(`[ScrydexApiService] Expansion ${expansionId} not found`);
         return null;
       }
-      console.error(
+      logger.error(
         `[ScrydexApiService] Error fetching expansion ${expansionId}:`,
         error
       );
@@ -278,18 +260,15 @@ export class ScrydexApiService implements IScrydexApiService {
       this.cardsCache[cacheKey]?.data &&
       this.isCacheValid(this.cardsCache[cacheKey].timestamp, this.CARD_CACHE_TTL)
     ) {
-      console.log(
+      logger.debug(
         `[ScrydexApiService] Returning cached cards for expansion ${expansionId} (page ${page})`
       );
       return this.cardsCache[cacheKey].data!;
     }
     try {
-      console.log(
-        `[ScrydexApiService] Fetching cards for expansion ${expansionId} (page ${page}, pageSize ${pageSize})`
-      );
       const url = `${this.baseUrl}/expansions/${expansionId}/cards?page=${page}&page_size=${pageSize}&select=${CARD_LIST_SELECT_FIELDS}&include=prices`;
       const response = await this.fetchPaginated<ScrydexCard>(url);
-      console.log(
+      logger.debug(
         `[ScrydexApiService] Retrieved ${response.data.length} cards for expansion ${expansionId} (page ${
           response.page || page
         }, totalCount ${response.totalCount || "n/a"})`
@@ -297,7 +276,7 @@ export class ScrydexApiService implements IScrydexApiService {
       this.cardsCache[cacheKey] = { data: response, timestamp: Date.now() };
       return response;
     } catch (error) {
-      console.error(
+      logger.error(
         `[ScrydexApiService] Error fetching cards for expansion ${expansionId}:`,
         error
       );
@@ -309,9 +288,6 @@ export class ScrydexApiService implements IScrydexApiService {
     const allCards: ScrydexCard[] = [];
     let currentPage = 1;
     const fetchPageSize = 100;
-    console.log(
-      `[ScrydexApiService] Fetching ALL cards for expansion ${expansionId}`
-    );
 
     while (true) {
       const response = await this.getCardsInExpansion(
@@ -321,16 +297,11 @@ export class ScrydexApiService implements IScrydexApiService {
       );
       allCards.push(...response.data);
       currentPage++;
-      console.log(
-        `[ScrydexApiService] Cards page ${
-          response.page || currentPage - 1
-        }: ${response.data.length} items, ${allCards.length} total so far`
-      );
       if (response.data.length === 0 || response.data.length < fetchPageSize)
         break;
     }
 
-    console.log(
+    logger.info(
       `[ScrydexApiService] Retrieved all ${allCards.length} cards for expansion ${expansionId}`
     );
     return allCards;
@@ -348,18 +319,13 @@ export class ScrydexApiService implements IScrydexApiService {
         includePrices ? this.PRICING_CACHE_TTL : this.CARD_CACHE_TTL
       )
     ) {
-      console.log(
+      logger.debug(
         `[ScrydexApiService] Returning cached card ${cardId} (includePrices: ${includePrices})`
       );
       return this.cardDetailCache[cacheKey].data;
     }
     try {
       const includeParam = includePrices ? "?include=prices" : "";
-      console.log(
-        `[ScrydexApiService] Fetching card ${cardId}${
-          includePrices ? " with prices" : ""
-        }`
-      );
       const response = await this.fetchWithRetry<{ data: ScrydexCard }>(
         `${this.baseUrl}/cards/${cardId}${includeParam}`
       );
@@ -370,13 +336,10 @@ export class ScrydexApiService implements IScrydexApiService {
       return response.data;
     } catch (error) {
       if ((error as Error).message.includes("404")) {
-        console.log(`[ScrydexApiService] Card ${cardId} not found`);
+        logger.debug(`[ScrydexApiService] Card ${cardId} not found`);
         return null;
       }
-      console.error(
-        `[ScrydexApiService] Error fetching card ${cardId}:`,
-        error
-      );
+      logger.error(`[ScrydexApiService] Error fetching card ${cardId}:`, error);
       throw error;
     }
   }
@@ -387,9 +350,6 @@ export class ScrydexApiService implements IScrydexApiService {
   ): Promise<ScrydexPaginatedResponse<ScrydexCard>> {
     const { page = 1, pageSize = 25, language = "en" } = options;
     try {
-      console.log(
-        `[ScrydexApiService] Searching cards: "${query}" (page ${page})`
-      );
       const params = new URLSearchParams({
         q: query,
         page: String(page),
@@ -398,12 +358,12 @@ export class ScrydexApiService implements IScrydexApiService {
       const response = await this.fetchPaginated<ScrydexCard>(
         `${this.baseUrl}/${language}/cards/search?${params}`
       );
-      console.log(
+      logger.debug(
         `[ScrydexApiService] Search returned ${response.data.length} of ${response.totalCount} results`
       );
       return response;
     } catch (error) {
-      console.error(
+      logger.error(
         `[ScrydexApiService] Error searching cards for "${query}":`,
         error
       );
@@ -417,9 +377,6 @@ export class ScrydexApiService implements IScrydexApiService {
   ): Promise<ScrydexPaginatedResponse<ScrydexListing>> {
     const { page = 1, pageSize = 25, condition } = options;
     try {
-      console.log(
-        `[ScrydexApiService] Fetching listings for card ${cardId}`
-      );
       const params = new URLSearchParams({
         page: String(page),
         page_size: String(pageSize),
@@ -428,12 +385,12 @@ export class ScrydexApiService implements IScrydexApiService {
       const response = await this.fetchPaginated<ScrydexListing>(
         `${this.baseUrl}/cards/${cardId}/listings?${params}`
       );
-      console.log(
+      logger.debug(
         `[ScrydexApiService] Retrieved ${response.data.length} listings for card ${cardId}`
       );
       return response;
     } catch (error) {
-      console.error(
+      logger.error(
         `[ScrydexApiService] Error fetching listings for card ${cardId}:`,
         error
       );
@@ -443,7 +400,6 @@ export class ScrydexApiService implements IScrydexApiService {
 
   async getUsage(): Promise<ScrydexUsage | null> {
     try {
-      console.log("[ScrydexApiService] Fetching API usage");
       const response = await this.fetchWithRetry<{
         total_credits: number;
         remaining_credits: number;
@@ -457,7 +413,7 @@ export class ScrydexApiService implements IScrydexApiService {
         overageCreditRate: response.overage_credit_rate,
       };
     } catch (error) {
-      console.error("[ScrydexApiService] Error fetching usage:", error);
+      logger.error("[ScrydexApiService] Error fetching usage:", error);
       return null;
     }
   }

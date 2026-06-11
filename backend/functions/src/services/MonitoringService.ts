@@ -1,5 +1,6 @@
 import { useAzureMonitor } from "@azure/monitor-opentelemetry";
 import { SpanStatusCode, trace } from "@opentelemetry/api";
+import { logger } from "../utils/logger";
 
 /**
  * MonitoringService - Centralized telemetry and monitoring service
@@ -46,7 +47,7 @@ export class MonitoringService {
         process.env.APPLICATIONINSIGHTS_CONNECTION_STRING;
 
       if (!connectionString) {
-        console.warn(
+        logger.warn(
           "[MonitoringService] Application Insights connection string not configured. Telemetry will be logged to console only."
         );
         this.isInitialized = false;
@@ -64,11 +65,11 @@ export class MonitoringService {
       this.tracer = trace.getTracer("pcpc-backend", this.version);
       this.isInitialized = true;
 
-      console.log(
+      logger.debug(
         "[MonitoringService] Application Insights initialized successfully"
       );
     } catch (error) {
-      console.error(
+      logger.error(
         "[MonitoringService] Failed to initialize Application Insights:",
         error
       );
@@ -109,7 +110,7 @@ export class MonitoringService {
     }
 
     // Always log to console for development visibility
-    console.log(`[Event] ${name}`, enrichedProperties);
+    logger.debug(`[Event] ${name}`, enrichedProperties);
   }
 
   /**
@@ -140,7 +141,7 @@ export class MonitoringService {
       span.end();
     }
 
-    console.log(`[Metric] ${name}: ${value}`, enrichedProperties);
+    logger.debug(`[Metric] ${name}: ${value}`, enrichedProperties);
   }
 
   /**
@@ -171,7 +172,7 @@ export class MonitoringService {
       span.end();
     }
 
-    console.error(
+    logger.error(
       `[Exception] ${error.name}: ${error.message}`,
       enrichedProperties
     );
@@ -225,7 +226,7 @@ export class MonitoringService {
     }
 
     const status = success ? "SUCCESS" : "FAILED";
-    console.log(
+    logger.debug(
       `[Dependency] ${name} (${type}): ${status} - ${duration}ms`,
       enrichedProperties
     );
@@ -263,7 +264,7 @@ export class MonitoringService {
     }
 
     const severityName = this.getSeverityName(severity);
-    console.log(`[Trace:${severityName}] ${message}`, enrichedProperties);
+    logger.debug(`[Trace:${severityName}] ${message}`, enrichedProperties);
   }
 
   /**
