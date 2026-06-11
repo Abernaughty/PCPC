@@ -9,7 +9,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 4.40.0"
+      version = ">= 4.47.0, < 5.0.0"
     }
   }
 }
@@ -17,7 +17,7 @@ terraform {
 # Configure the Azure Provider
 provider "azurerm" {
   features {}
-  subscription_id = "555b4cfa-ad2e-4c71-9433-620a59cf7616"
+  subscription_id = var.subscription_id
 }
 
 # Create a resource group for the example

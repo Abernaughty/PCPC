@@ -26,7 +26,8 @@ terraform {
 
 provider "azurerm" {
   features {}
-  subscription_id = "555b4cfa-ad2e-4c71-9433-620a59cf7616"
+  subscription_id = var.subscription_id
+  tenant_id       = var.tenant_id
 }
 
 # -----------------------------------------------------------------------------
@@ -95,6 +96,7 @@ module "pcpc_apim" {
   source = "../../terraform"
 
   # Required variables
+  subscription_id     = var.subscription_id
   api_management_name = var.api_management_name
   resource_group_name = var.resource_group_name
   function_app_name   = var.function_app_name

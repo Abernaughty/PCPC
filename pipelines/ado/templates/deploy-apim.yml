@@ -121,8 +121,14 @@ steps:
           TF_PLAN_ARGS+=("-var=${name}=${value}")
         }
 
+        # Resolve subscription/tenant from the authenticated Azure CLI context
+        SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+        TENANT_ID=$(az account show --query tenantId -o tsv)
+
         TF_PLAN_ARGS=(
           "-var=environment=${{ parameters.environment }}"
+          "-var=subscription_id=${SUBSCRIPTION_ID}"
+          "-var=tenant_id=${TENANT_ID}"
           "-var=api_management_name=${APIM_NAME}"
           "-var=resource_group_name=${APIM_RESOURCE_GROUP}"
           "-var=function_app_name=${FUNCTION_APP_NAME}"

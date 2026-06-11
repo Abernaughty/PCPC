@@ -256,10 +256,16 @@ steps:
         echo "✓ Secrets configuration file found"
         echo ""
 
+        # Resolve subscription/tenant from the authenticated Azure CLI context
+        SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+        TENANT_ID=$(az account show --query tenantId -o tsv)
+
         # Run terraform plan
         # Note: secrets.auto.tfvars is automatically loaded by Terraform
         terraform plan \
           -var="environment=${{ parameters.environment }}" \
+          -var="subscription_id=${SUBSCRIPTION_ID}" \
+          -var="tenant_id=${TENANT_ID}" \
           -out=tfplan \
           -detailed-exitcode || EXIT_CODE=$?
 

@@ -1,3 +1,14 @@
+# Azure Configuration
+variable "subscription_id" {
+  description = "The Azure subscription ID to deploy resources into"
+  type        = string
+}
+
+variable "tenant_id" {
+  description = "The Azure AD tenant ID"
+  type        = string
+}
+
 variable "project_name" {
   description = "Project name used in tags."
   type        = string

@@ -11,7 +11,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Configuration
-SUBSCRIPTION_ID="555b4cfa-ad2e-4c71-9433-620a59cf7616"
+SUBSCRIPTION_ID="${SUBSCRIPTION_ID:-$(az account show --query id -o tsv)}"
 ENVIRONMENT="staging"
 RESOURCE_GROUP="pcpc-rg-${ENVIRONMENT}"
 BACKEND_RG="pcpc-terraform-state-rg"

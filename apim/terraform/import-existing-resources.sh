@@ -45,7 +45,7 @@ esac
 # DEFAULT CONFIGURATION
 # -----------------------------------------------------------------------------
 
-SUBSCRIPTION_ID="555b4cfa-ad2e-4c71-9433-620a59cf7616"
+SUBSCRIPTION_ID="${SUBSCRIPTION_ID:-$(az account show --query id -o tsv)}"
 TFVARS_FILE=""
 RESOURCE_GROUP=""
 APIM_NAME=""
