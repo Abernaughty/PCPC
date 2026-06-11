@@ -46,7 +46,7 @@ function cardToFrontend(card: Card) {
   };
 }
 
-export const GET: RequestHandler = async ({ params, url }) => {
+export const GET: RequestHandler = async ({ params }) => {
   const startTime = Date.now();
   const correlationId = monitoring.createCorrelationId();
 
