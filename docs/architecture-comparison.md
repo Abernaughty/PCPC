@@ -5,8 +5,7 @@
 > are live. Path C (ACA Container) ships in Phase 2.2 — the infra and
 > pipeline land first, then the frontend toggle wires `?backend=aca`.
 
-This document is the marquee artifact of the PCPC portfolio. The plan
-(see [`PORTFOLIO_PLAN.md`](./PORTFOLIO_PLAN.md)) is to ship one product
+This document is the marquee artifact of the PCPC portfolio. The plan is to ship one product
 multiple ways from one repo so the architectural comparison is
 *operational*, not just *described*. This doc is where the tradeoffs are
 written down.

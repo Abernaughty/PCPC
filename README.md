@@ -2,7 +2,7 @@
 
 A single product (Pokémon card pricing) deployed three ways from one repo to demonstrate architectural range across modern-edge, enterprise-cloud, and managed-container patterns. **One frontend, three interchangeable backends, one shared schema.**
 
-> **Status:** Phase 2.2 done — three live paths from one repo. See [`docs/PORTFOLIO_PLAN.md`](docs/PORTFOLIO_PLAN.md).
+> **Status:** Phase 2.2 done — three live paths from one repo.
 > **Live demo:** [pcpc.maber.io](https://pcpc.maber.io) — toggle all three backends via the corner badge or `?backend=vercel|azure|aca`.
 > **Architecture comparison:** [`docs/architecture-comparison.md`](docs/architecture-comparison.md).
 
@@ -79,7 +79,6 @@ PCPC/
 ├── db/                Cosmos DB schema
 ├── pipelines/ado/     Azure DevOps multi-stage CI/CD
 ├── docs/
-│   ├── PORTFOLIO_PLAN.md
 │   ├── architecture-comparison.md   (in progress)
 │   └── adr/
 ├── tests/             Jest + Playwright + k6
@@ -109,10 +108,8 @@ Backend (Path B) and infrastructure are run via `pipelines/ado/` and Terraform m
 | **0** | Consolidate maber-web/apps/pcpc into this repo, set up workspace, add portfolio surface | done |
 | **1** | Live two-path toggle (Vercel BFF + APIM/Functions), ADR-007 & ADR-008, comparison doc | done |
 | **2.1** | Cut backend over from PokeData to Scrydex; `@pcpc/shared` canonical types; smoke tests re-promoted to blocking | done (PRs #145, #146) |
-| **2.2** | Containerize Functions, ship ACA path, ADR-009 | done — dev only; staging/prod promotion tracked in `PORTFOLIO_PLAN.md` |
-| **3** | Polish: portfolio site, LinkedIn distribution, ADR-010 | next |
-
-Full plan with risks, success metrics, and open questions: [`docs/PORTFOLIO_PLAN.md`](docs/PORTFOLIO_PLAN.md).
+| **2.2** | Containerize Functions, ship ACA path, ADR-009 | done — dev only; staging/prod promotion planned |
+| **3** | Polish: portfolio site, ADR-010 | next |
 
 ## License
 

@@ -298,7 +298,7 @@ variable "container_app_image_tag" {
 }
 
 variable "container_app_min_replicas" {
-  description = "Minimum ACA replicas. Default 1 keeps the frontend's 2-second probeHealth timeout from falsely degrading Path C after idle periods (resolved as PORTFOLIO_PLAN.md open question #7)."
+  description = "Minimum ACA replicas. Default 1 keeps the frontend's 2-second probeHealth timeout from falsely degrading Path C after idle periods."
   type        = number
   default     = 1
 }

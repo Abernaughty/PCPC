@@ -37,7 +37,7 @@ Each ADR follows a standardized format:
 
 ### Planned (three-path portfolio story)
 
-These ADRs document the architectural reasoning behind PCPC's three-path deployment story. Each is created as part of the phase that ships the corresponding architecture. See [`docs/PORTFOLIO_PLAN.md`](../PORTFOLIO_PLAN.md).
+These ADRs document the architectural reasoning behind PCPC's three-path deployment story. Each is created as part of the phase that ships the corresponding architecture.
 
 | ADR | Title | Phase | Status |
 |-----|-------|-------|--------|

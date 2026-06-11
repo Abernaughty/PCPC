@@ -1,6 +1,6 @@
 # PCPC frontend
 
-The SvelteKit 2 + Svelte 5 application that serves [`pcpc.maber.io`](https://pcpc.maber.io) and acts as **Path A** in PCPC's three-path architecture (see [`../docs/PORTFOLIO_PLAN.md`](../docs/PORTFOLIO_PLAN.md)).
+The SvelteKit 2 + Svelte 5 application that serves [`pcpc.maber.io`](https://pcpc.maber.io) and acts as **Path A** in PCPC's three-path architecture (see [`../docs/architecture-comparison.md`](../docs/architecture-comparison.md)).
 
 The frontend is also the runtime backend toggle: a `?backend=vercel|azure|aca` query parameter swaps which API the page calls, with healthcheck-driven graceful degradation if any backend is down.
 
@@ -80,6 +80,6 @@ The Vercel project (`prj_k26pGexXyOzihAIlIWPYsBL67vXT`) was repointed from `mabe
 
 ## Path A wiring (today)
 
-Each `src/routes/api/**/+server.ts` is a serverless function on Vercel that talks to Cosmos / Redis / Scrydex through the services in `src/lib/server/`. Phase 1 will add a backend abstraction layer so `?backend=vercel|azure` swaps the data fetcher; Phase 2 wires `?backend=aca`. See [`../docs/PORTFOLIO_PLAN.md`](../docs/PORTFOLIO_PLAN.md).
+Each `src/routes/api/**/+server.ts` is a serverless function on Vercel that talks to Cosmos / Redis / Scrydex through the services in `src/lib/server/`. Phase 1 will add a backend abstraction layer so `?backend=vercel|azure` swaps the data fetcher; Phase 2 wires `?backend=aca`.
 
 The `@pcpc/shared` workspace package (currently a placeholder) will hold canonical Scrydex types once the backend migrates from PokeData in Phase 2.

@@ -118,8 +118,7 @@ The decision rule, written for future selves and for portfolio readers:
 - **Pros**: Simpler operational surface; lower cost; the BFF pattern is
   fashionable and well-understood.
 - **Cons**: Removes the entire enterprise/regulated-industry story from the
-  portfolio; fails the audience-flexibility goal in
-  [`docs/PORTFOLIO_PLAN.md`](../PORTFOLIO_PLAN.md); APIM is exactly the
+  portfolio; fails the project's audience-flexibility goal; APIM is exactly the
   kind of artifact defense and regulated-industry recruiters look for.
 - **Reason for rejection**: Audience flexibility is a stated goal. Dropping
   APIM optimizes for the modern-startup audience at the cost of every other

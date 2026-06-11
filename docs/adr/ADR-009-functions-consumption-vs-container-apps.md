@@ -12,7 +12,7 @@ After Phase 2.1, Path B (APIM → Azure Functions v4 on a Consumption plan) is
 Scrydex-native end-to-end. The Functions code is stable, the schema is
 canonical, and the deployment pipeline is mature. Path B alone already
 satisfies the enterprise/regulated-industry audience the portfolio plan
-([`PORTFOLIO_PLAN.md`](../PORTFOLIO_PLAN.md)) targets with Azure depth.
+targets with Azure depth.
 
 Phase 2.2 adds a **third path** by taking the *same* Functions code,
 packaging it as an OCI image, and running it on **Azure Container Apps**
@@ -148,7 +148,7 @@ The decision rule, written for future selves and for portfolio readers:
   workload); the entire Kubernetes operational surface (RBAC, CNI,
   upgrades, etcd, ingress controllers) added to a portfolio project for
   a workload that does not need it.
-- **Reason for rejection**: PORTFOLIO_PLAN.md:64 explicitly scopes AKS
+- **Reason for rejection**: The project plan explicitly scopes AKS
   out. [ADR-010](./ADR-010-path-to-aks.md) *(planned, Phase 3)*
   documents the path-to-AKS thinking without paying the AKS cost.
 

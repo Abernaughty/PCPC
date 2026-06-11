@@ -13,12 +13,11 @@ deferred per this ADR.
 
 ## Context
 
-[Phase 1B](../PORTFOLIO_PLAN.md) shipped APIM custom-domain plumbing that
+Phase 1B shipped APIM custom-domain plumbing that
 intended to bind `dev-api.pcpc.maber.io`, `staging-api.pcpc.maber.io`, and
 `api.pcpc.maber.io` to each environment's APIM gateway with the **free
 Azure-managed TLS certificate** option. The decision to use the managed
-cert path resolved [Open Question #6 in the
-plan](../PORTFOLIO_PLAN.md#open-questions).
+cert path resolved an open question in the project plan.
 
 After the Phase 1B + hotfix PRs merged, the dev CD pipeline failed at
 `terraform apply` with:

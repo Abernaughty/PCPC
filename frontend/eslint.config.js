@@ -30,7 +30,7 @@ export default [
 		// CI on every occurrence is too aggressive while the app is still
 		// evolving. Tighten to "error" once the cleanup is in flight. This
 		// config was inlined from @maber/config/eslint during the Phase 0
-		// consolidation — see docs/PORTFOLIO_PLAN.md.
+		// consolidation.
 		rules: {
 			// `any` is intentional at external API boundaries (Cosmos, Scrydex).
 			// Codify boundary types later; warn for now.

@@ -33,8 +33,8 @@ non-obvious ones:
   the dev env so Path B (App Insights → this workspace) and Path C share
   the workspace.
 - **`min_replicas` (default `1`)** — keeps the frontend's 2-second
-  `probeHealth` timeout from falsely degrading Path C after idle periods.
-  Resolved as PORTFOLIO_PLAN open question #7. `min=0` is supported (the
+  `probeHealth` timeout from falsely degrading Path C after idle periods
+  (see ADR-009). `min=0` is supported (the
   variable validation allows it) but the toggle will hide Path C after
   every idle window unless the probe timeout is also raised.
 - **`cors_allowed_origins`** — Path C bypasses APIM, so this is the only

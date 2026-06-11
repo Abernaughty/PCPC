@@ -79,7 +79,7 @@ variable "tags" {
 # -----------------------------------------------------------------------------
 
 variable "min_replicas" {
-  description = "Minimum number of replicas. PCPC defaults to 1 in dev so the frontend's 2-second probeHealth timeout never falsely degrades Path C after an idle period (see ADR-009 and the open-question resolution in PORTFOLIO_PLAN.md)."
+  description = "Minimum number of replicas. PCPC defaults to 1 in dev so the frontend's 2-second probeHealth timeout never falsely degrades Path C after an idle period (see ADR-009)."
   type        = number
   default     = 1
 

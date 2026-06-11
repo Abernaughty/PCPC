@@ -12,7 +12,7 @@ Supersedes: row 31 of [ADR-011](./ADR-011-deployment-topology-and-testing-model.
 
 ## Context
 
-[Phase 1B](../PORTFOLIO_PLAN.md) configured CORS on the dev APIM as `*` so
+Phase 1B configured CORS on the dev APIM as `*` so
 Vercel per-PR preview URLs (`https://pcpc-git-{branch-slug}-abernaughtys-projects.vercel.app`)
 could exercise the BackendToggle's Path B healthcheck. Staging and prod
 were locked to `https://pcpc.maber.io`.

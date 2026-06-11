@@ -5,9 +5,8 @@
  * paths (?backend=vercel|azure|aca) swaps the active definition; everything
  * downstream — routes, stores, services — stays unchanged.
  *
- * See docs/PORTFOLIO_PLAN.md (Phases 1 and 2), docs/adr/ADR-008 (Path A vs
- * Path B gateway tradeoff), and docs/adr/ADR-009 (Path B vs Path C runtime
- * tradeoff) for context.
+ * See docs/adr/ADR-008 (Path A vs Path B gateway tradeoff) and
+ * docs/adr/ADR-009 (Path B vs Path C runtime tradeoff) for context.
  */
 
 import type { ApiResponse } from '$lib/types';

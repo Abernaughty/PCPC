@@ -11,7 +11,7 @@ Date: 2026-05-06
 PCPC is a single product (Pokémon card pricing) but is being deployed three
 ways from one repository to demonstrate architectural range across modern-edge,
 enterprise-cloud, and managed-container patterns. The motivation is documented
-in [`docs/PORTFOLIO_PLAN.md`](../PORTFOLIO_PLAN.md): the project is a portfolio
+in the project plan: the project is a portfolio
 artifact, and recruiters evaluate fit across audiences (defense/regulated,
 enterprise mid-market, modern startup) whose architectural vocabulary differs.
 A single deployed shape forces the reader to imagine the others. Three live
@@ -144,8 +144,7 @@ a working product — the toggle just shows fewer options.
   one.
 - **Phase coupling.** Path C requires the Functions schema migration to land
   first (Phase 2), which is the largest single piece of work in the plan.
-  Phasing risk is real and explicitly tracked in
-  [`docs/PORTFOLIO_PLAN.md`](../PORTFOLIO_PLAN.md).
+  Phasing risk is real and explicitly tracked in the project plan.
 
 ## Alternatives Considered
 

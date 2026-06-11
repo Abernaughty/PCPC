@@ -110,7 +110,7 @@ without a concrete use case would be feature creep.
   not just *that* they should. The decision-doc-explaining-the-choice is
   itself a senior signal.
 - **Within budget.** Three envs at portfolio traffic stay within the
-  $10–25/month target documented in `docs/PORTFOLIO_PLAN.md`. No financial
+  $10–25/month target documented in the project plan. No financial
   pressure to simplify.
 - **Cleanly composable with Vercel scopes.** The Vercel
   Production/Preview/Development model maps onto two of the three Azure
@@ -165,7 +165,7 @@ without a concrete use case would be feature creep.
   is trying to demonstrate. A real production deploy with no separate
   dev environment is amateur, not pragmatic.
 - **Reason for rejection:** Audience-flexibility goal is explicitly
-  stated in `docs/PORTFOLIO_PLAN.md`. Single-env collapses the enterprise
+  stated in the project plan. Single-env collapses the enterprise
   audience entirely.
 
 ### Option C — Per-env Vercel deployments matching per-env APIMs
