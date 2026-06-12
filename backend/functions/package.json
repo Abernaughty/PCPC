@@ -31,12 +31,12 @@
   },
   "dependencies": {
     "@azure/cosmos": "^4.3.0",
-    "@azure/functions": "^4.7.2",
-    "@azure/monitor-opentelemetry": "^1.18.0",
-    "@azure/storage-blob": "^12.27.0",
+    "@azure/functions": "^4.16.0",
+    "@azure/monitor-opentelemetry": "^1.18.1",
+    "@azure/storage-blob": "^12.32.0",
     "@opentelemetry/api": "^1.9.0",
-    "@opentelemetry/instrumentation": "^0.218.0",
-    "@typespec/ts-http-runtime": "^0.3.5",
+    "@opentelemetry/instrumentation": "^0.219.0",
+    "@typespec/ts-http-runtime": "^0.3.6",
     "cookie": "^0.6.0",
     "dotenv": "^16.5.0",
     "redis": "^4.7.0"
