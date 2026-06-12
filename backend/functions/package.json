@@ -38,7 +38,7 @@
     "@opentelemetry/instrumentation": "^0.218.0",
     "@typespec/ts-http-runtime": "^0.3.5",
     "cookie": "^0.6.0",
-    "dotenv": "^16.5.0",
+    "dotenv": "^17.4.2",
     "redis": "^4.7.0"
   },
   "overrides": {
