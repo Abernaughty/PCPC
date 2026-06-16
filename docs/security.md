@@ -106,26 +106,21 @@ sequenceDiagram
 
 #### Azure Functions Authorization
 
-**Function-Level Security**:
-```typescript
-import { AuthorizationLevel } from '@azure/functions';
+**Current model: anonymous host auth, gateway-enforced access**
 
-export const httpTrigger: AzureFunction = async function (context, req) {
-    // Function configured with authLevel: 'function'
-    // Requires x-functions-key header or code query parameter
-    
-    // Additional custom authorization logic
-    if (!validateRequestOrigin(req)) {
-        context.res = {
-            status: 403,
-            body: { error: "Forbidden: Invalid request origin" }
-        };
-        return;
-    }
-    
-    // Process authorized request
-};
+All HTTP triggers are registered with `authLevel: "anonymous"` on the Functions host. Authentication and access control are enforced at the gateway layer (APIM subscription key on the APIM path, ACA ingress/CORS on the Container Apps path), not by Azure Functions host keys. There is no `x-functions-key` requirement in the current deployment.
+
+```typescript
+// backend/functions/src/index.ts
+app.http("getSetList", {
+    methods: ["GET"],
+    authLevel: "anonymous", // auth enforced at the gateway, not the host
+    route: "sets",
+    handler: getSetList,
+});
 ```
+
+Function-key auth (`authLevel: "function"`, requiring an `x-functions-key` header or `code` query parameter) is available in the Azure Functions runtime, but is intentionally not used: with the Container Apps gateway bypassing APIM, host-key auth would 401 every browser request. Moving auth to the gateway lets the same code path serve both gateways. APIM still provides subscription-key validation, rate limiting, the developer portal, and observability.
 
 ### Planned Enhancements
 
@@ -243,7 +238,8 @@ const getSecret = (secretName: string): string => {
 };
 
 // Usage example
-const pokeDataApiKey = getSecret('POKEDATA_API_KEY');
+const scrydexApiKey = getSecret('SCRYDEX_API_KEY');
+const scrydexTeamId = getSecret('SCRYDEX_TEAM_ID');
 const cosmosDbConnectionString = getSecret('COSMOS_DB_CONNECTION_STRING');
 ```
 
@@ -429,7 +425,7 @@ graph LR
 ```
 
 **Examples**:
-- `dev-functions-apikey-pokedata`
+- `dev-functions-apikey-scrydex`
 - `prod-cosmos-connectionstring-primary`
 - `dev-storage-key-images`
 
@@ -484,23 +480,23 @@ resource "azurerm_key_vault_access_policy" "functions" {
 
 #### Automated Rotation
 
-**PokeData API Key Rotation**:
+**Scrydex API Key Rotation**:
 ```typescript
 // Azure Function for API key rotation
 export const rotateApiKeys: AzureFunction = async function (context, myTimer) {
     try {
         // Get current key from Key Vault
-        const currentKey = await getSecret('POKEDATA_API_KEY');
+        const currentKey = await getSecret('SCRYDEX_API_KEY');
         
-        // Generate new key via PokeData API
+        // Generate new key via Scrydex API
         const newKey = await generateNewApiKey();
         
         // Update Key Vault with new key
-        await updateSecret('POKEDATA_API_KEY', newKey);
+        await updateSecret('SCRYDEX_API_KEY', newKey);
         
         // Update Application Settings
         await updateFunctionAppSettings({
-            'POKEDATA_API_KEY': `@Microsoft.KeyVault(SecretUri=${keyVaultUri})`
+            'SCRYDEX_API_KEY': `@Microsoft.KeyVault(SecretUri=${keyVaultUri})`
         });
         
         // Test new key

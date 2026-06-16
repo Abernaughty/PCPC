@@ -17,17 +17,16 @@
 
 ## API Overview
 
-The PCPC API provides RESTful endpoints for accessing Pokemon card data, pricing information, and set metadata. The API is built on Azure Functions v4 with Node.js 22 LTS and follows OpenAPI 3.0 specifications.
+The PCPC API provides RESTful endpoints for accessing Pokemon card data, pricing information, and set metadata. All card, set, and pricing data originates from the [Scrydex](https://scrydex.com) API and is persisted in Cosmos DB and (optionally) cached in Redis. The HTTP API is implemented as Azure Functions v4 on Node.js 22 LTS and is described by an OpenAPI 3.0 contract published through Azure API Management (APIM).
 
 ### API Features
 
-- **RESTful Design**: Standard HTTP methods and status codes
-- **JSON Responses**: All responses in JSON format with consistent structure
-- **Comprehensive Data**: Card metadata, pricing, images, and set information
-- **Performance Optimized**: Multi-tier caching for sub-second response times
-- **Error Handling**: Detailed error responses with actionable information
-- **Rate Limiting**: Fair usage policies with clear limits
-- **Versioning**: API versioning for backward compatibility
+- **RESTful Design**: Standard HTTP methods (read-only `GET`) and status codes
+- **JSON Responses**: All responses use a single consistent envelope
+- **Scrydex-native Data**: Card metadata, multi-condition/graded pricing, images, and set information sourced from Scrydex
+- **Performance Optimized**: Redis + Cosmos DB caching with a 12-hour background refresh timer
+- **Error Handling**: Flat, consistent error envelope
+- **Gateway Rate Limiting**: Fair usage enforced at the APIM gateway
 
 ### API Architecture
 
@@ -35,106 +34,140 @@ The PCPC API provides RESTful endpoints for accessing Pokemon card data, pricing
 graph TB
     subgraph "Client Applications"
         WEB[Web Frontend]
-        MOBILE[Mobile Apps]
         THIRD_PARTY[Third-party Integrations]
     end
 
-    subgraph "API Gateway"
-        APIM[Azure API Management<br/>Rate Limiting & Authentication]
-        CACHE[Response Cache<br/>5-60 minute TTL]
+    subgraph "API Gateway (Path B)"
+        APIM[Azure API Management<br/>Subscription Keys, Rate Limiting, CORS]
     end
 
-    subgraph "Backend Services"
-        FUNCTIONS[Azure Functions v4<br/>Business Logic]
-        SERVICES[Service Layer<br/>Data Processing]
+    subgraph "Backends"
+        SVELTE[SvelteKit BFF<br/>Path A: /api/* routes]
+        FUNCTIONS[Azure Functions v4<br/>Paths B/C: business logic]
     end
 
-    subgraph "Data Sources"
+    subgraph "Data & Cache"
+        REDIS[Redis Cache<br/>optional]
         COSMOS[Cosmos DB<br/>Primary Data Store]
-        POKEDATA[PokeData API<br/>Pricing Data]
-        POKEMONTCG[Pokemon TCG API<br/>Metadata]
+        SCRYDEX[Scrydex API<br/>Source of Truth]
     end
 
+    WEB --> SVELTE
     WEB --> APIM
-    MOBILE --> APIM
     THIRD_PARTY --> APIM
 
-    APIM --> CACHE
-    CACHE --> FUNCTIONS
-    FUNCTIONS --> SERVICES
-
-    SERVICES --> COSMOS
-    SERVICES --> POKEDATA
-    SERVICES --> POKEMONTCG
+    APIM --> FUNCTIONS
+    SVELTE --> REDIS
+    SVELTE --> COSMOS
+    SVELTE --> SCRYDEX
+    FUNCTIONS --> REDIS
+    FUNCTIONS --> COSMOS
+    FUNCTIONS --> SCRYDEX
 ```
+
+### Request paths
+
+The same logical endpoints are served by more than one runtime:
+
+- **Path A — SvelteKit BFF**: server routes under `/api/*` in the frontend app. Calls Scrydex/Cosmos/Redis directly.
+- **Path B — Azure Functions behind APIM**: the OpenAPI contract published at `*.azure-api.net/pokedata-api`. APIM provides subscription-key auth, rate limiting, the developer portal, and observability.
+- **Path C — Azure Functions on Azure Container Apps**: the same Functions code, fronted by ACA ingress (CORS) instead of APIM.
+
+The Azure Functions host registers its routes with the `api` route prefix (`backend/functions/host.json`), so all Functions endpoints live under `/api`. The Functions read endpoints use `authLevel: "anonymous"` — authentication is enforced at the gateway, not the function host.
+
+Response shapes are nearly identical across paths; the only meaningful difference is the health endpoint envelope (see [Health Check](#health-check)).
 
 ## Authentication
 
-### Subscription Key Authentication
+### Subscription Key Authentication (APIM gateway)
 
-The PCPC API uses subscription key authentication through Azure API Management. All requests must include a valid subscription key.
+The Azure Functions HTTP triggers are registered with `authLevel: "anonymous"`; there is no function-key check at the host. Authentication is enforced **at the Azure API Management gateway** (Path B). All requests through APIM must include a valid subscription key, supplied either as a header (recommended) or a query parameter.
 
 #### Header Authentication (Recommended)
 
 ```http
-GET /api/sets
-Host: api.pcpc.example.com
+GET /pokedata-api/sets
+Host: maber-apim-prod.azure-api.net
 Ocp-Apim-Subscription-Key: your-subscription-key-here
 ```
 
 #### Query Parameter Authentication
 
 ```http
-GET /api/sets?subscription-key=your-subscription-key-here
-Host: api.pcpc.example.com
+GET /pokedata-api/sets?subscription-key=your-subscription-key-here
+Host: maber-apim-prod.azure-api.net
 ```
 
-### Obtaining API Keys
+> Both schemes are defined in the OpenAPI contract (`apim/specs/pcpc-api-v1.yaml`): `apiKeyHeader` (`Ocp-Apim-Subscription-Key`) and `apiKeyQuery` (`subscription-key`).
 
-1. **Starter Product**: Basic access with standard rate limits
-
-   - **Rate Limit**: 300 calls per 60 seconds
-   - **Features**: All public endpoints
-   - **Cost**: Free
-
-2. **Premium Product**: Enhanced access with higher limits
-   - **Rate Limit**: 1000 calls per 60 seconds
-   - **Features**: All endpoints + priority support
-   - **Cost**: Contact for pricing
-
-### Future Authentication Methods
-
-- **OAuth 2.0**: User authentication for personalized features
-- **JWT Tokens**: Stateless authentication for mobile apps
-- **Certificate-based**: High-security scenarios
+When calling the Azure Functions host directly (local development, or Path C via ACA ingress), no subscription key is required because the function endpoints are anonymous. CORS and rate limiting are then handled by the relevant gateway/ingress rather than the function code.
 
 ## Base URLs
 
-### Production Environment
+### APIM Gateway (Path B)
+
+The APIM base path is `/pokedata-api` (no `/api` or version segment). From `apim/specs/pcpc-api-v1.yaml`:
 
 ```
-https://api.pcpc.example.com/api/v1
+https://maber-apim-test.azure-api.net/pokedata-api      (development)
+https://maber-apim-staging.azure-api.net/pokedata-api   (staging)
+https://maber-apim-prod.azure-api.net/pokedata-api      (production)
 ```
 
-### Development Environment
+### Azure Functions (local development)
 
-```
-https://api-dev.pcpc.example.com/api/v1
-```
-
-### Local Development
+Functions run locally with the `api` route prefix:
 
 ```
 http://localhost:7071/api
 ```
 
+### SvelteKit BFF (Path A)
+
+Served from the frontend application origin under `/api`, e.g. `https://<frontend-host>/api`.
+
+> Endpoint paths below are written relative to the chosen base URL (e.g. `/sets` is `https://maber-apim-prod.azure-api.net/pokedata-api/sets` via APIM, or `http://localhost:7071/api/sets` locally).
+
 ## API Endpoints
 
-### Sets Endpoints
+All endpoints are `GET` only. There are exactly four:
 
-#### Get All Sets
+| Method | Path                            | Description                       |
+| ------ | ------------------------------- | --------------------------------- |
+| GET    | `/sets`                         | List Pokemon card sets            |
+| GET    | `/sets/{setId}/cards`           | List cards for a set              |
+| GET    | `/sets/{setId}/cards/{cardId}`  | Get a single card with pricing    |
+| GET    | `/health`                       | Service and dependency health     |
 
-Retrieve a paginated list of Pokemon card sets with optional filtering.
+### Response Envelope
+
+Every successful response uses the same envelope (`ApiResponse<T>` in `backend/shared/src/types/envelopes.ts`, produced by `apiSuccess` in `frontend/src/lib/server/utils/errors.ts`):
+
+```json
+{
+  "status": 200,
+  "data": {  },
+  "timestamp": "2025-06-16T10:30:00.000Z",
+  "cached": true,
+  "cacheAge": 300
+}
+```
+
+| Field       | Type    | Notes                                                          |
+| ----------- | ------- | -------------------------------------------------------------- |
+| `status`    | integer | HTTP status code, mirrored in the body                         |
+| `data`      | object  | Endpoint-specific payload                                      |
+| `timestamp` | string  | ISO 8601 response time                                         |
+| `cached`    | boolean | Whether the payload was served from cache                      |
+| `cacheAge`  | integer | Age of cached data in seconds (present only on cache hits)     |
+
+> There is **no** top-level `success` field and **no** `version` field on data responses.
+
+---
+
+### Get Set List
+
+Retrieve a list of Pokemon card sets. Results are sorted by release date (newest first) and annotated with `releaseYear` and `isRecent`.
 
 ```http
 GET /sets
@@ -142,18 +175,19 @@ GET /sets
 
 **Query Parameters:**
 
-| Parameter | Type    | Required | Default | Description                        |
-| --------- | ------- | -------- | ------- | ---------------------------------- |
-| `page`    | integer | No       | 1       | Page number for pagination         |
-| `limit`   | integer | No       | 20      | Number of sets per page (max 100)  |
-| `series`  | string  | No       | -       | Filter by series name              |
-| `recent`  | boolean | No       | false   | Show only recent sets              |
-| `all`     | boolean | No       | false   | Return all sets without pagination |
+| Parameter  | Type    | Required | Default | Description                                                            |
+| ---------- | ------- | -------- | ------- | ---------------------------------------------------------------------- |
+| `language` | string  | No       | `en`    | Language code used to query Scrydex expansions (lowercased)            |
+| `all`      | boolean | No       | `false` | When `true`, return all sets without pagination                        |
+| `page`     | integer | No       | `1`     | Page number for pagination                                             |
+| `pageSize` | integer | No       | `100`   | Number of sets per page                                                |
+
+> There is no client-controllable cache-bypass parameter. Freshness comes from language-keyed cache keys, the 12-hour `RefreshData` timer, and the Redis TTL.
 
 **Example Request:**
 
 ```http
-GET /sets?page=1&limit=10&series=Base
+GET /sets?page=1&pageSize=2&language=en
 Ocp-Apim-Subscription-Key: your-key-here
 ```
 
@@ -161,105 +195,49 @@ Ocp-Apim-Subscription-Key: your-key-here
 
 ```json
 {
-  "success": true,
+  "status": 200,
   "data": {
     "sets": [
       {
-        "id": "base1",
-        "series": "Base",
-        "name": "Base Set",
-        "releaseDate": "1999-01-09",
-        "totalCards": 102,
-        "symbolUrl": "https://images.pokemontcg.io/base1/symbol.png",
-        "logoUrl": "https://images.pokemontcg.io/base1/logo.png",
-        "isRecent": false,
-        "metadata": {
-          "source": "pokemontcg",
-          "lastUpdated": "2025-09-28T21:00:00Z"
-        }
+        "id": "sv8",
+        "code": "sv8",
+        "name": "Surging Sparks",
+        "series": "Scarlet & Violet",
+        "releaseDate": "2024-11-08",
+        "total": 252,
+        "printedTotal": 191,
+        "language": "English",
+        "languageCode": "EN",
+        "isOnlineOnly": false,
+        "logo": "https://images.scrydex.com/sv8/logo",
+        "symbol": "https://images.scrydex.com/sv8/symbol",
+        "cardCount": 252,
+        "isCurrent": true,
+        "lastUpdated": "2025-06-16T09:00:00.000Z",
+        "releaseYear": 2024,
+        "isRecent": true
       }
     ],
     "pagination": {
-      "currentPage": 1,
-      "totalPages": 15,
-      "totalSets": 142,
-      "hasNext": true,
-      "hasPrevious": false
+      "page": 1,
+      "pageSize": 2,
+      "totalCount": 150,
+      "totalPages": 75
     }
   },
-  "timestamp": "2025-09-28T21:00:00Z",
-  "version": "1.0.0"
+  "timestamp": "2025-06-16T10:30:00.000Z",
+  "cached": true,
+  "cacheAge": 300
 }
 ```
 
-**Response Codes:**
+**Response Codes:** `200` OK, `404` no sets found for the language, `500` server error. (Through APIM: `401` for a missing/invalid subscription key, `429` when rate-limited.)
 
-- `200 OK`: Successful response
-- `400 Bad Request`: Invalid query parameters
-- `401 Unauthorized`: Missing or invalid API key
-- `429 Too Many Requests`: Rate limit exceeded
-- `500 Internal Server Error`: Server error
+---
 
-#### Get Set by ID
+### Get Cards By Set
 
-Retrieve detailed information about a specific Pokemon card set.
-
-```http
-GET /sets/{setId}
-```
-
-**Path Parameters:**
-
-| Parameter | Type   | Required | Description                   |
-| --------- | ------ | -------- | ----------------------------- |
-| `setId`   | string | Yes      | Unique identifier for the set |
-
-**Example Request:**
-
-```http
-GET /sets/base1
-Ocp-Apim-Subscription-Key: your-key-here
-```
-
-**Example Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "base1",
-    "series": "Base",
-    "name": "Base Set",
-    "releaseDate": "1999-01-09",
-    "totalCards": 102,
-    "symbolUrl": "https://images.pokemontcg.io/base1/symbol.png",
-    "logoUrl": "https://images.pokemontcg.io/base1/logo.png",
-    "isRecent": false,
-    "cards": {
-      "total": 102,
-      "breakdown": {
-        "Common": 32,
-        "Uncommon": 32,
-        "Rare": 16,
-        "Rare Holo": 16,
-        "Energy": 6
-      }
-    },
-    "metadata": {
-      "source": "pokemontcg",
-      "lastUpdated": "2025-09-28T21:00:00Z"
-    }
-  },
-  "timestamp": "2025-09-28T21:00:00Z",
-  "version": "1.0.0"
-}
-```
-
-### Cards Endpoints
-
-#### Get Cards by Set
-
-Retrieve all cards from a specific Pokemon card set with optional filtering and pagination.
+Retrieve the cards belonging to a set, with pricing. Results are paginated in-memory after the full set is loaded from cache/Cosmos/Scrydex.
 
 ```http
 GET /sets/{setId}/cards
@@ -267,24 +245,25 @@ GET /sets/{setId}/cards
 
 **Path Parameters:**
 
-| Parameter | Type   | Required | Description                   |
-| --------- | ------ | -------- | ----------------------------- |
-| `setId`   | string | Yes      | Unique identifier for the set |
+| Parameter | Type   | Required | Description                  |
+| --------- | ------ | -------- | ---------------------------- |
+| `setId`   | string | Yes      | Set identifier (e.g. `sv8`)  |
+
+> The published OpenAPI contract names this path segment `setCode`; the Azure Functions route binds it as `setId`. They refer to the same value.
 
 **Query Parameters:**
 
-| Parameter        | Type    | Required | Default | Description                         |
-| ---------------- | ------- | -------- | ------- | ----------------------------------- |
-| `page`           | integer | No       | 1       | Page number for pagination          |
-| `limit`          | integer | No       | 20      | Number of cards per page (max 100)  |
-| `rarity`         | string  | No       | -       | Filter by card rarity               |
-| `name`           | string  | No       | -       | Search by card name (partial match) |
-| `includePricing` | boolean | No       | true    | Include pricing information         |
+| Parameter  | Type    | Required | Default | Description                                       |
+| ---------- | ------- | -------- | ------- | ------------------------------------------------- |
+| `page`     | integer | No       | `1`     | Page number (must be `>= 1`)                      |
+| `pageSize` | integer | No       | `500`   | Cards per page, capped at `500` (must be `>= 1`)  |
+
+> No other query parameters are supported (no `rarity`, `name`, `includePricing`, etc.). There is no client-controllable cache-bypass parameter.
 
 **Example Request:**
 
 ```http
-GET /sets/base1/cards?page=1&limit=5&rarity=Rare%20Holo
+GET /sets/sv8/cards?page=1&pageSize=2
 Ocp-Apim-Subscription-Key: your-key-here
 ```
 
@@ -292,50 +271,74 @@ Ocp-Apim-Subscription-Key: your-key-here
 
 ```json
 {
-  "success": true,
+  "status": 200,
   "data": {
-    "setId": "base1",
-    "setName": "Base Set",
     "cards": [
       {
-        "id": "base1-1",
+        "id": "sv8-001",
+        "name": "Exeggcute",
+        "number": "1",
         "cardNumber": "1",
-        "name": "Alakazam",
-        "rarity": "Rare Holo",
-        "images": {
-          "small": "https://images.pokemontcg.io/base1/1.png",
-          "large": "https://images.pokemontcg.io/base1/1_hires.png"
-        },
-        "pricing": {
-          "market": 45.5,
-          "low": 35.0,
-          "mid": 45.5,
-          "high": 65.0,
-          "lastUpdated": "2025-09-28T20:30:00Z"
-        },
-        "metadata": {
-          "tcgSetId": "base1",
-          "pokeDataId": "base-set-alakazam-1",
-          "lastSync": "2025-09-28T21:00:00Z"
-        }
+        "printedNumber": "001",
+        "rarity": "Common",
+        "rarityCode": "C",
+        "artist": "Sumiyoshi Kizuki",
+        "images": [
+          {
+            "type": "front",
+            "small": "https://images.scrydex.com/sv8/sv8-001/small",
+            "medium": "https://images.scrydex.com/sv8/sv8-001/medium",
+            "large": "https://images.scrydex.com/sv8/sv8-001/large"
+          }
+        ],
+        "variants": [
+          {
+            "name": "Normal",
+            "prices": [
+              {
+                "condition": "NM",
+                "type": "raw",
+                "isPerfect": false,
+                "isError": false,
+                "isSigned": false,
+                "low": 0.05,
+                "mid": 0.12,
+                "high": 0.5,
+                "market": 0.1,
+                "currency": "USD",
+                "trends": {
+                  "days7": { "priceChange": -0.01, "percentChange": -9.1 },
+                  "days30": { "priceChange": 0.02, "percentChange": 25.0 }
+                }
+              }
+            ]
+          }
+        ],
+        "setCode": "sv8",
+        "setId": "sv8",
+        "setName": "Surging Sparks",
+        "pricingLastUpdated": "2025-06-16T09:00:00.000Z"
       }
     ],
     "pagination": {
-      "currentPage": 1,
-      "totalPages": 4,
-      "totalCards": 16,
-      "hasNext": true,
-      "hasPrevious": false
+      "page": 1,
+      "pageSize": 2,
+      "totalCount": 252,
+      "totalPages": 126
     }
   },
-  "timestamp": "2025-09-28T21:00:00Z",
-  "version": "1.0.0"
+  "timestamp": "2025-06-16T10:30:00.000Z",
+  "cached": false
 }
 ```
 
-#### Get Card Details
+**Response Codes:** `200` OK, `400` missing/invalid `setId` or pagination params, `404` no cards for the set, `500` server error.
 
-Retrieve detailed information about a specific Pokemon card including pricing and variants.
+---
+
+### Get Card Info
+
+Retrieve a single card by set and card identifier, including its variants and pricing. If the cached/stored card lacks pricing, the service re-fetches it from Scrydex with prices.
 
 ```http
 GET /sets/{setId}/cards/{cardId}
@@ -345,21 +348,15 @@ GET /sets/{setId}/cards/{cardId}
 
 | Parameter | Type   | Required | Description                    |
 | --------- | ------ | -------- | ------------------------------ |
-| `setId`   | string | Yes      | Unique identifier for the set  |
-| `cardId`  | string | Yes      | Unique identifier for the card |
+| `setId`   | string | Yes      | Set identifier (e.g. `sv8`)    |
+| `cardId`  | string | Yes      | Card identifier (e.g. `sv8-001`) |
 
-**Query Parameters:**
-
-| Parameter         | Type    | Required | Default | Description                               |
-| ----------------- | ------- | -------- | ------- | ----------------------------------------- |
-| `includePricing`  | boolean | No       | true    | Include detailed pricing information      |
-| `includeVariants` | boolean | No       | false   | Include card variants (1st Edition, etc.) |
-| `priceHistory`    | boolean | No       | false   | Include price history data                |
+**Query Parameters:** None.
 
 **Example Request:**
 
 ```http
-GET /sets/base1/cards/base1-1?includePricing=true&includeVariants=true
+GET /sets/sv8/cards/sv8-001
 Ocp-Apim-Subscription-Key: your-key-here
 ```
 
@@ -367,422 +364,350 @@ Ocp-Apim-Subscription-Key: your-key-here
 
 ```json
 {
-  "success": true,
+  "status": 200,
   "data": {
-    "id": "base1-1",
-    "setId": "base1",
-    "setName": "Base Set",
+    "id": "sv8-001",
+    "name": "Exeggcute",
+    "number": "1",
     "cardNumber": "1",
-    "name": "Alakazam",
-    "rarity": "Rare Holo",
-    "type": "Psychic",
-    "hp": 80,
-    "images": {
-      "small": "https://images.pokemontcg.io/base1/1.png",
-      "large": "https://images.pokemontcg.io/base1/1_hires.png"
-    },
-    "pricing": {
-      "normal": {
-        "market": 45.5,
-        "low": 35.0,
-        "mid": 45.5,
-        "high": 65.0,
-        "lastUpdated": "2025-09-28T20:30:00Z"
-      },
-      "holofoil": {
-        "market": 85.0,
-        "low": 70.0,
-        "mid": 85.0,
-        "high": 120.0,
-        "lastUpdated": "2025-09-28T20:30:00Z"
+    "printedNumber": "001",
+    "rarity": "Common",
+    "rarityCode": "C",
+    "artist": "Sumiyoshi Kizuki",
+    "images": [
+      {
+        "type": "front",
+        "small": "https://images.scrydex.com/sv8/sv8-001/small",
+        "medium": "https://images.scrydex.com/sv8/sv8-001/medium",
+        "large": "https://images.scrydex.com/sv8/sv8-001/large"
       }
-    },
+    ],
     "variants": [
       {
-        "type": "1st Edition",
-        "available": false,
-        "reason": "Not available for Base Set"
-      },
-      {
-        "type": "Shadowless",
-        "available": true,
-        "pricing": {
-          "market": 125.0,
-          "low": 100.0,
-          "mid": 125.0,
-          "high": 180.0
-        }
+        "name": "Normal",
+        "prices": [
+          {
+            "condition": "NM",
+            "type": "raw",
+            "isPerfect": false,
+            "isError": false,
+            "isSigned": false,
+            "low": 0.05,
+            "mid": 0.12,
+            "high": 0.5,
+            "market": 0.1,
+            "currency": "USD"
+          },
+          {
+            "condition": "Graded",
+            "type": "graded",
+            "company": "PSA",
+            "grade": "10",
+            "isPerfect": true,
+            "isError": false,
+            "isSigned": false,
+            "low": 20.0,
+            "mid": 28.5,
+            "high": 40.0,
+            "market": 30.0,
+            "currency": "USD"
+          }
+        ]
       }
     ],
-    "metadata": {
-      "tcgSetId": "base1",
-      "pokeDataId": "base-set-alakazam-1",
-      "lastSync": "2025-09-28T21:00:00Z"
-    }
+    "setCode": "sv8",
+    "setId": "sv8",
+    "setName": "Surging Sparks",
+    "pricingLastUpdated": "2025-06-16T09:00:00.000Z"
   },
-  "timestamp": "2025-09-28T21:00:00Z",
-  "version": "1.0.0"
+  "timestamp": "2025-06-16T10:30:00.000Z",
+  "cached": false
 }
 ```
 
-### Search Endpoints
+**Response Codes:** `200` OK, `400` missing/empty identifiers, `404` card not found, `500` server error.
 
-#### Search Cards
+---
 
-Search for Pokemon cards across all sets with advanced filtering options.
+### Health Check
 
-```http
-GET /search/cards
-```
-
-**Query Parameters:**
-
-| Parameter   | Type    | Required | Default   | Description                           |
-| ----------- | ------- | -------- | --------- | ------------------------------------- |
-| `q`         | string  | Yes      | -         | Search query (card name, set, etc.)   |
-| `page`      | integer | No       | 1         | Page number for pagination            |
-| `limit`     | integer | No       | 20        | Number of results per page (max 100)  |
-| `rarity`    | string  | No       | -         | Filter by rarity                      |
-| `series`    | string  | No       | -         | Filter by series                      |
-| `type`      | string  | No       | -         | Filter by Pokemon type                |
-| `minPrice`  | number  | No       | -         | Minimum price filter                  |
-| `maxPrice`  | number  | No       | -         | Maximum price filter                  |
-| `sortBy`    | string  | No       | relevance | Sort by: relevance, name, price, date |
-| `sortOrder` | string  | No       | asc       | Sort order: asc, desc                 |
-
-**Example Request:**
-
-```http
-GET /search/cards?q=Charizard&rarity=Rare%20Holo&minPrice=50&sortBy=price&sortOrder=desc
-Ocp-Apim-Subscription-Key: your-key-here
-```
-
-**Example Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "query": "Charizard",
-    "filters": {
-      "rarity": "Rare Holo",
-      "minPrice": 50
-    },
-    "results": [
-      {
-        "id": "base1-4",
-        "setId": "base1",
-        "setName": "Base Set",
-        "cardNumber": "4",
-        "name": "Charizard",
-        "rarity": "Rare Holo",
-        "images": {
-          "small": "https://images.pokemontcg.io/base1/4.png",
-          "large": "https://images.pokemontcg.io/base1/4_hires.png"
-        },
-        "pricing": {
-          "market": 350.0,
-          "low": 280.0,
-          "mid": 350.0,
-          "high": 450.0,
-          "lastUpdated": "2025-09-28T20:30:00Z"
-        },
-        "relevanceScore": 0.95
-      }
-    ],
-    "pagination": {
-      "currentPage": 1,
-      "totalPages": 3,
-      "totalResults": 25,
-      "hasNext": true,
-      "hasPrevious": false
-    }
-  },
-  "timestamp": "2025-09-28T21:00:00Z",
-  "version": "1.0.0"
-}
-```
-
-### Health and Status Endpoints
-
-#### API Health Check
-
-Check the health and status of the API and its dependencies.
+Check the health of the service and its runtime dependencies.
 
 ```http
 GET /health
 ```
 
-**Example Response:**
+**Status codes:** `200` (all healthy), `207` (one or more components degraded), `503` (a component is unhealthy).
+
+The dependencies reported are `runtime`, `cosmosdb` (when a Cosmos connection string is configured), `scrydexApi` (when a Scrydex API key is configured), and `redis` (reported as `disabled` when Redis caching is off).
+
+> **Path difference:** the health endpoint is the one place the envelope differs between runtimes. The Azure Functions response (Paths B/C) nests components under `checks` and includes `version` and `environment`. The SvelteKit BFF (Path A) nests them under `components` and omits `version`/`environment`. The health endpoint does **not** use the standard `ApiResponse` envelope.
+
+**Example Response (Azure Functions — Paths B/C):**
 
 ```json
 {
-  "success": true,
-  "data": {
-    "status": "healthy",
-    "version": "1.0.0",
-    "timestamp": "2025-09-28T21:00:00Z",
-    "dependencies": {
-      "cosmosDb": {
-        "status": "healthy",
-        "responseTime": "45ms"
-      },
-      "pokeDataApi": {
-        "status": "healthy",
-        "responseTime": "120ms"
-      },
-      "pokemonTcgApi": {
-        "status": "healthy",
-        "responseTime": "95ms"
-      },
-      "redisCache": {
-        "status": "optional",
-        "responseTime": "N/A"
-      }
+  "status": "healthy",
+  "timestamp": "2025-06-16T10:30:00.000Z",
+  "checks": {
+    "runtime": {
+      "status": "healthy",
+      "responseTime": 0,
+      "message": "Function runtime operational",
+      "lastChecked": "2025-06-16T10:30:00.000Z"
+    },
+    "cosmosdb": {
+      "status": "healthy",
+      "responseTime": 45,
+      "message": "Cosmos DB connection successful",
+      "lastChecked": "2025-06-16T10:30:00.000Z"
+    },
+    "scrydexApi": {
+      "status": "healthy",
+      "responseTime": 120,
+      "message": "Scrydex API accessible",
+      "lastChecked": "2025-06-16T10:30:00.000Z"
+    },
+    "redis": {
+      "status": "disabled",
+      "message": "Redis caching is disabled"
     }
+  },
+  "version": "1.0.0",
+  "environment": "production"
+}
+```
+
+**Example Response (SvelteKit BFF — Path A):**
+
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-06-16T10:30:00.000Z",
+  "components": {
+    "runtime": { "status": "healthy", "latency": 0, "message": "Function runtime operational" },
+    "cosmosdb": { "status": "healthy", "latency": 45, "message": "Cosmos DB connection successful" },
+    "scrydexApi": { "status": "healthy", "latency": 120, "message": "Scrydex API accessible" },
+    "redis": { "status": "disabled", "message": "Redis caching is disabled" }
   }
 }
 ```
 
-#### API Statistics
-
-Get usage statistics and performance metrics for the API.
-
-```http
-GET /stats
-```
-
-**Example Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "requests": {
-      "total": 1250000,
-      "today": 15000,
-      "lastHour": 850
-    },
-    "performance": {
-      "averageResponseTime": "245ms",
-      "p95ResponseTime": "450ms",
-      "p99ResponseTime": "850ms"
-    },
-    "cacheHitRate": 0.85,
-    "errorRate": 0.002,
-    "uptime": "99.95%"
-  },
-  "timestamp": "2025-09-28T21:00:00Z",
-  "version": "1.0.0"
-}
-```
+Component `status` values are `healthy`, `degraded`, `unhealthy`, or `disabled`.
 
 ## Data Models
+
+All models below are camelCase canonical shapes mapped from Scrydex at the service boundary (`backend/functions/src/utils/scrydexToCosmos.ts`). The on-wire card shape is produced by `cardToApiResponse` (`backend/functions/src/utils/cardToApiResponse.ts`); the SvelteKit BFF applies the same mapping (`cardToFrontend`).
 
 ### Set Model
 
 ```json
 {
   "id": "string",
-  "series": "string",
+  "code": "string",
   "name": "string",
-  "releaseDate": "string (ISO 8601)",
-  "totalCards": "integer",
-  "symbolUrl": "string (URL)",
-  "logoUrl": "string (URL)",
-  "isRecent": "boolean",
-  "metadata": {
-    "source": "string",
-    "lastUpdated": "string (ISO 8601)"
-  }
+  "series": "string",
+  "releaseDate": "string (ISO date, optional)",
+  "total": "integer (optional)",
+  "printedTotal": "integer (optional)",
+  "language": "string (optional)",
+  "languageCode": "string (optional, e.g. EN, JP)",
+  "isOnlineOnly": "boolean (optional)",
+  "logo": "string URL (optional)",
+  "symbol": "string URL (optional)",
+  "cardCount": "integer (optional)",
+  "isCurrent": "boolean (optional)",
+  "lastUpdated": "string (ISO 8601, optional)"
 }
 ```
 
-### Card Model
+The `/sets` endpoint additionally annotates each set with `releaseYear` (integer) and `isRecent` (boolean).
+
+> Note: image fields are `symbol` and `logo` (not `symbolUrl`/`logoUrl`); the card count fields are `total`/`cardCount` (not `totalCards`). There is no `metadata.source` field.
+
+### Card Model (on-wire)
 
 ```json
 {
   "id": "string",
-  "setId": "string",
-  "cardNumber": "string",
   "name": "string",
+  "number": "string",
+  "cardNumber": "string",
+  "printedNumber": "string (optional)",
   "rarity": "string",
+  "rarityCode": "string (optional)",
+  "artist": "string (optional)",
+  "images": "CardImage[] (optional)",
+  "variants": "CardVariant[] (optional)",
+  "setCode": "string",
+  "setId": "string",
+  "setName": "string",
+  "pricingLastUpdated": "string (ISO 8601, optional)"
+}
+```
+
+> `number` and `cardNumber` carry the same value (kept for compatibility). There is no `type`, `hp`, `pokeDataId`, `tcgSetId`, or `metadata` field. Pricing is **not** a flat object — it lives inside `variants[].prices[]`.
+
+### Image Model
+
+Images are an **array** of `CardImage` objects:
+
+```json
+{
   "type": "string",
-  "hp": "integer",
-  "images": {
-    "small": "string (URL)",
-    "large": "string (URL)"
-  },
-  "pricing": {
-    "market": "number",
-    "low": "number",
-    "mid": "number",
-    "high": "number",
-    "lastUpdated": "string (ISO 8601)"
-  },
-  "metadata": {
-    "tcgSetId": "string",
-    "pokeDataId": "string",
-    "lastSync": "string (ISO 8601)"
-  }
+  "small": "string URL",
+  "medium": "string URL",
+  "large": "string URL"
 }
 ```
 
-### Pricing Model
+### Variant Model
 
 ```json
 {
-  "market": "number",
+  "name": "string",
+  "images": "CardImage[] (optional)",
+  "prices": "VariantPrice[]"
+}
+```
+
+### Pricing Model (`VariantPrice`)
+
+Pricing is per-variant and per-condition/grade. Each entry in `variants[].prices[]`:
+
+```json
+{
+  "condition": "string",
+  "type": "raw | graded",
+  "company": "string (optional, e.g. PSA, for graded)",
+  "grade": "string (optional, e.g. 10, for graded)",
+  "isPerfect": "boolean",
+  "isError": "boolean",
+  "isSigned": "boolean",
   "low": "number",
-  "mid": "number",
-  "high": "number",
-  "currency": "string (default: USD)",
-  "condition": "string (default: Near Mint)",
-  "lastUpdated": "string (ISO 8601)",
-  "source": "string"
+  "mid": "number (optional)",
+  "high": "number (optional)",
+  "market": "number",
+  "currency": "string",
+  "trends": "PriceTrends (optional)"
 }
 ```
 
-### Error Model
+### Price Trends Model
 
 ```json
 {
-  "success": false,
-  "error": {
-    "code": "string",
-    "message": "string",
-    "details": "string",
-    "timestamp": "string (ISO 8601)",
-    "requestId": "string"
-  }
+  "days1": { "priceChange": "number", "percentChange": "number" },
+  "days7": { "priceChange": "number", "percentChange": "number" },
+  "days14": { "priceChange": "number", "percentChange": "number" },
+  "days30": { "priceChange": "number", "percentChange": "number" },
+  "days90": { "priceChange": "number", "percentChange": "number" },
+  "days180": { "priceChange": "number", "percentChange": "number" }
 }
 ```
+
+All `daysN` keys are optional, and each `TrendData` value has `priceChange` and `percentChange`.
 
 ### Pagination Model
 
 ```json
 {
-  "currentPage": "integer",
-  "totalPages": "integer",
-  "totalResults": "integer",
-  "hasNext": "boolean",
-  "hasPrevious": "boolean",
-  "nextPage": "string (URL)",
-  "previousPage": "string (URL)"
+  "page": "integer",
+  "pageSize": "integer",
+  "totalCount": "integer",
+  "totalPages": "integer"
 }
 ```
+
+### Error Model
+
+See [Error Handling](#error-handling).
 
 ## Error Handling
 
 ### Error Response Format
 
-All API errors follow a consistent format with detailed information for debugging and user feedback.
+Errors use a **flat** envelope (no nested `error` object, no `success` field). The exact fields depend on the runtime:
+
+**SvelteKit BFF (Path A)** — `apiError` in `frontend/src/lib/server/utils/errors.ts`:
 
 ```json
 {
-  "success": false,
-  "error": {
-    "code": "INVALID_SET_ID",
-    "message": "The specified set ID does not exist",
-    "details": "Set ID 'invalid-set' was not found in the database",
-    "timestamp": "2025-09-28T21:00:00Z",
-    "requestId": "req-12345-67890"
-  }
+  "status": 404,
+  "error": "Card sv8-999 not found",
+  "timestamp": "2025-06-16T10:30:00.000Z"
 }
 ```
 
-### Common Error Codes
+**Azure Functions (Paths B/C)** — `createErrorResponse`/`handleError` in `backend/functions/src/utils/errorUtils.ts`:
 
-| HTTP Status | Error Code                 | Description                        | Resolution                                   |
-| ----------- | -------------------------- | ---------------------------------- | -------------------------------------------- |
-| 400         | `INVALID_PARAMETER`        | Invalid query parameter            | Check parameter format and values            |
-| 400         | `MISSING_PARAMETER`        | Required parameter missing         | Include all required parameters              |
-| 401         | `INVALID_API_KEY`          | API key is invalid or missing      | Verify subscription key                      |
-| 403         | `INSUFFICIENT_PERMISSIONS` | API key lacks required permissions | Upgrade to appropriate product tier          |
-| 404         | `SET_NOT_FOUND`            | Specified set does not exist       | Verify set ID exists                         |
-| 404         | `CARD_NOT_FOUND`           | Specified card does not exist      | Verify card ID exists in set                 |
-| 429         | `RATE_LIMIT_EXCEEDED`      | Too many requests                  | Wait before making more requests             |
-| 500         | `INTERNAL_ERROR`           | Server error occurred              | Retry request, contact support if persistent |
-| 502         | `EXTERNAL_API_ERROR`       | External service unavailable       | Retry request, may return cached data        |
-| 503         | `SERVICE_UNAVAILABLE`      | API temporarily unavailable        | Retry with exponential backoff               |
+```json
+{
+  "error": "Card not found: sv8-999",
+  "status": 404,
+  "timestamp": "2025-06-16T10:30:00.000Z",
+  "path": "GetCardInfo",
+  "details": null
+}
+```
+
+| Field         | Type    | Notes                                                                 |
+| ------------- | ------- | --------------------------------------------------------------------- |
+| `status`      | integer | HTTP status code                                                      |
+| `error`       | string  | Human-readable error message                                          |
+| `timestamp`   | string  | ISO 8601                                                              |
+| `path`        | string  | Functions only — the originating function/context name                |
+| `details`     | any     | Functions only — optional extra context (stack trace in development)  |
+| `correlationId` | string | Documented in the OpenAPI contract for debugging; not emitted by the current handler code |
+
+### Common Status Codes
+
+| HTTP Status | When                                                                 |
+| ----------- | -------------------------------------------------------------------- |
+| 200         | Successful response                                                  |
+| 207         | Health check: at least one component degraded                       |
+| 400         | Missing/invalid path or query parameters                            |
+| 401         | APIM: missing or invalid subscription key                           |
+| 404         | Set or card not found                                               |
+| 429         | APIM: rate limit exceeded                                           |
+| 500         | Server error                                                        |
+| 503         | Health check: a component is unhealthy                              |
 
 ### Error Handling Best Practices
 
-1. **Check HTTP Status Codes**: Always check the HTTP status code first
-2. **Parse Error Response**: Extract error code and message for specific handling
-3. **Implement Retry Logic**: Use exponential backoff for transient errors
-4. **Log Request IDs**: Include request ID in support requests
-5. **Handle Rate Limits**: Implement proper rate limiting in client applications
+1. **Check HTTP Status Codes**: Always check the HTTP status code first.
+2. **Read the `error` string**: It contains the human-readable reason.
+3. **Implement Retry Logic**: Use exponential backoff for `429`/`5xx`.
+4. **Handle Rate Limits**: Respect APIM rate-limit responses in client applications.
 
 ## Rate Limiting
 
-### Rate Limit Headers
-
-All API responses include rate limiting headers:
-
-```http
-X-RateLimit-Limit: 300
-X-RateLimit-Remaining: 299
-X-RateLimit-Reset: 1640995200
-X-RateLimit-Reset-After: 60
-```
-
-### Rate Limit Tiers
-
-| Product Tier   | Requests per Minute | Burst Limit | Reset Window |
-| -------------- | ------------------- | ----------- | ------------ |
-| **Starter**    | 300                 | 50          | 60 seconds   |
-| **Premium**    | 1000                | 200         | 60 seconds   |
-| **Enterprise** | Custom              | Custom      | Custom       |
-
-### Rate Limit Exceeded Response
-
-```json
-{
-  "success": false,
-  "error": {
-    "code": "RATE_LIMIT_EXCEEDED",
-    "message": "Rate limit exceeded",
-    "details": "You have exceeded the rate limit of 300 requests per minute",
-    "retryAfter": 45,
-    "timestamp": "2025-09-28T21:00:00Z",
-    "requestId": "req-12345-67890"
-  }
-}
-```
+Rate limiting is enforced at the APIM gateway (Path B), not in the Functions code. Limits are configured per APIM product/subscription. When a limit is exceeded, APIM returns `429 Too Many Requests`; clients should back off and retry. The Functions host itself applies concurrency throttling via `host.json` (`maxConcurrentRequests`, `maxOutstandingRequests`, `dynamicThrottlesEnabled`) rather than per-subscription rate limits.
 
 ## Caching
 
-### Cache Headers
+Responses indicate cache state via the `cached` and `cacheAge` envelope fields. Card and cards-by-set responses also set a `Cache-Control: public, max-age=<ttl>` header.
 
-API responses include caching headers to optimize performance:
+### Server-side cache flow
 
-```http
-Cache-Control: public, max-age=3600
-ETag: "abc123def456"
-Last-Modified: Sat, 28 Sep 2025 21:00:00 GMT
-Vary: Accept-Encoding
-```
+For each request the backend tries, in order: Redis (when `ENABLE_REDIS_CACHE=true`) → Cosmos DB → Scrydex API. Fresh Scrydex results are written back to Cosmos and Redis. Cards-by-set additionally performs staleness checks (expected card count vs. stored count, and presence of pricing) before serving stored data.
 
-### Cache Strategies by Endpoint
+Default TTLs (overridable via environment variables):
 
-| Endpoint                | Cache Duration | Strategy                             |
-| ----------------------- | -------------- | ------------------------------------ |
-| `/sets`                 | 60 minutes     | Public cache, stale-while-revalidate |
-| `/sets/{id}`            | 60 minutes     | Public cache, immutable for old sets |
-| `/sets/{id}/cards`      | 30 minutes     | Public cache, conditional requests   |
-| `/sets/{id}/cards/{id}` | 30 minutes     | Public cache, ETag validation        |
-| `/search/cards`         | 15 minutes     | Private cache, vary by query         |
-| `/health`               | 5 minutes      | Public cache, short TTL              |
+| Data           | Env var            | Default            |
+| -------------- | ------------------ | ------------------ |
+| Set list       | `CACHE_TTL_SETS`   | 604800s (7 days)   |
+| Cards          | `CACHE_TTL_CARDS`  | 3600s–86400s\*     |
+
+\* Card detail defaults to 3600s; cards-by-set defaults to 86400s in the Functions handler.
+
+Background refresh is handled by the `RefreshData` timer trigger (every 12 hours) and `MonitorScrydexUsage` (every 6 hours).
 
 ### Client-Side Caching
 
-Recommended client-side caching strategies:
-
-1. **HTTP Caching**: Respect cache headers for automatic caching
-2. **Application Cache**: Cache frequently accessed data locally
-3. **Conditional Requests**: Use ETag and Last-Modified headers
-4. **Background Refresh**: Update cache in background for better UX
+1. **HTTP Caching**: Respect `Cache-Control` headers where present.
+2. **Application Cache**: Cache frequently accessed data locally.
+3. **Background Refresh**: Update local caches in the background for better UX.
 
 ## Examples
 
@@ -792,9 +717,10 @@ Recommended client-side caching strategies:
 const axios = require("axios");
 
 class PCPCApiClient {
-  constructor(apiKey, baseUrl = "https://api.pcpc.example.com/api/v1") {
-    this.apiKey = apiKey;
-    this.baseUrl = baseUrl;
+  constructor(
+    apiKey,
+    baseUrl = "https://maber-apim-prod.azure-api.net/pokedata-api"
+  ) {
     this.client = axios.create({
       baseURL: baseUrl,
       headers: {
@@ -804,119 +730,49 @@ class PCPCApiClient {
     });
   }
 
-  async getSets(options = {}) {
-    const { page = 1, limit = 20, series, recent } = options;
-    const params = { page, limit };
-    if (series) params.series = series;
-    if (recent) params.recent = recent;
-
-    try {
-      const response = await this.client.get("/sets", { params });
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+  async getSets({ page = 1, pageSize = 100, language = "en", all = false } = {}) {
+    const params = { page, pageSize, language };
+    if (all) params.all = true;
+    const { data } = await this.client.get("/sets", { params });
+    return data; // { status, data: { sets, pagination }, timestamp, cached, cacheAge }
   }
 
-  async getCardsBySet(setId, options = {}) {
-    const { page = 1, limit = 20, rarity, includePricing = true } = options;
-    const params = { page, limit, includePricing };
-    if (rarity) params.rarity = rarity;
-
-    try {
-      const response = await this.client.get(`/sets/${setId}/cards`, {
-        params,
-      });
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+  async getCardsBySet(setId, { page = 1, pageSize = 500 } = {}) {
+    const { data } = await this.client.get(`/sets/${setId}/cards`, {
+      params: { page, pageSize },
+    });
+    return data; // { status, data: { cards, pagination }, ... }
   }
 
-  async getCard(setId, cardId, options = {}) {
-    const { includePricing = true, includeVariants = false } = options;
-    const params = { includePricing, includeVariants };
-
-    try {
-      const response = await this.client.get(`/sets/${setId}/cards/${cardId}`, {
-        params,
-      });
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+  async getCard(setId, cardId) {
+    const { data } = await this.client.get(`/sets/${setId}/cards/${cardId}`);
+    return data; // { status, data: <card>, ... }
   }
 
-  async searchCards(query, options = {}) {
-    const {
-      page = 1,
-      limit = 20,
-      rarity,
-      minPrice,
-      maxPrice,
-      sortBy = "relevance",
-    } = options;
-    const params = { q: query, page, limit, sortBy };
-    if (rarity) params.rarity = rarity;
-    if (minPrice) params.minPrice = minPrice;
-    if (maxPrice) params.maxPrice = maxPrice;
-
-    try {
-      const response = await this.client.get("/search/cards", { params });
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
-  }
-
-  handleError(error) {
-    if (error.response) {
-      const { status, data } = error.response;
-      const apiError = new Error(data.error?.message || "API Error");
-      apiError.code = data.error?.code;
-      apiError.status = status;
-      apiError.requestId = data.error?.requestId;
-      return apiError;
-    }
-    return error;
+  async health() {
+    const { data } = await this.client.get("/health");
+    return data;
   }
 }
 
-// Usage Example
+// Usage
 const client = new PCPCApiClient("your-api-key-here");
 
 async function example() {
   try {
-    // Get all sets
-    const sets = await client.getSets({ page: 1, limit: 10 });
+    const sets = await client.getSets({ pageSize: 10 });
     console.log("Sets:", sets.data.sets);
 
-    // Get cards from Base Set
-    const cards = await client.getCardsBySet("base1", {
-      rarity: "Rare Holo",
-      includePricing: true,
-    });
+    const cards = await client.getCardsBySet("sv8", { pageSize: 50 });
     console.log("Cards:", cards.data.cards);
 
-    // Get specific card details
-    const card = await client.getCard("base1", "base1-4", {
-      includePricing: true,
-      includeVariants: true,
-    });
+    const card = await client.getCard("sv8", "sv8-001");
     console.log("Card:", card.data);
-
-    // Search for Charizard cards
-    const searchResults = await client.searchCards("Charizard", {
-      rarity: "Rare Holo",
-      minPrice: 100,
-      sortBy: "price",
-      sortOrder: "desc",
-    });
-    console.log("Search Results:", searchResults.data.results);
+    console.log("First price:", card.data.variants?.[0]?.prices?.[0]);
   } catch (error) {
-    console.error("API Error:", error.message);
-    console.error("Error Code:", error.code);
-    console.error("Request ID:", error.requestId);
+    const body = error.response?.data;
+    console.error("API Error:", body?.error || error.message);
+    console.error("Status:", body?.status);
   }
 }
 
@@ -927,217 +783,125 @@ example();
 
 ```python
 import requests
-from typing import Optional, Dict, Any
 import time
-
-class PCPCApiClient:
-    def __init__(self, api_key: str, base_url: str = "https://api.pcpc.example.com/api/v1"):
-        self.api_key = api_key
-        self.base_url = base_url
-        self.session = requests.Session()
-        self.session.headers.update({
-            'Ocp-Apim-Subscription-Key': api_key,
-            'Content-Type': 'application/json'
-        })
-
-    def _make_request(self, method: str, endpoint: str, params: Optional[Dict] = None) -> Dict[str, Any]:
-        url = f"{self.base_url}{endpoint}"
-
-        try:
-            response = self.session.request(method, url, params=params)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 429:
-                # Handle rate limiting with exponential backoff
-                retry_after = int(e.response.headers.get('Retry-After', 60))
-                time.sleep(retry_after)
-                return self._make_request(method, endpoint, params)
-            else:
-                error_data = e.response.json() if e.response.content else {}
-                raise APIError(
-                    message=error_data.get('error', {}).get('message', str(e)),
-                    code=error_data.get('error', {}).get('code'),
-                    status_code=e.response.status_code,
-                    request_id=error_data.get('error', {}).get('requestId')
-                )
-
-    def get_sets(self, page: int = 1, limit: int = 20, series: Optional[str] = None,
-                 recent: Optional[bool] = None) -> Dict[str, Any]:
-        params = {'page': page, 'limit': limit}
-        if series:
-            params['series'] = series
-        if recent is not None:
-            params['recent'] = recent
-
-        return self._make_request('GET', '/sets', params)
-
-    def get_cards_by_set(self, set_id: str, page: int = 1, limit: int = 20,
-                        rarity: Optional[str] = None, include_pricing: bool = True) -> Dict[str, Any]:
-        params = {'page': page, 'limit': limit, 'includePricing': include_pricing}
-        if rarity:
-            params['rarity'] = rarity
-
-        return self._make_request('GET', f'/sets/{set_id}/cards', params)
-
-    def get_card(self, set_id: str, card_id: str, include_pricing: bool = True,
-                 include_variants: bool = False) -> Dict[str, Any]:
-        params = {'includePricing': include_pricing, 'includeVariants': include_variants}
-        return self._make_request('GET', f'/sets/{set_id}/cards/{card_id}', params)
-
-    def search_cards(self, query: str, page: int = 1, limit: int = 20,
-                    rarity: Optional[str] = None, min_price: Optional[float] = None,
-                    max_price: Optional[float] = None, sort_by: str = "relevance") -> Dict[str, Any]:
-        params = {'q': query, 'page': page, 'limit': limit, 'sortBy': sort_by}
-        if rarity:
-            params['rarity'] = rarity
-        if min_price:
-            params['minPrice'] = min_price
-        if max_price:
-            params['maxPrice'] = max_price
-
-        return self._make_request('GET', '/search/cards', params)
+from typing import Optional, Dict, Any
 
 
 class APIError(Exception):
-    """Custom exception for API errors"""
-    def __init__(self, message: str, code: Optional[str] = None,
-                 status_code: Optional[int] = None, request_id: Optional[str] = None):
+    def __init__(self, message: str, status: Optional[int] = None):
         super().__init__(message)
-        self.code = code
-        self.status_code = status_code
-        self.request_id = request_id
+        self.status = status
 
 
-# Usage Example
+class PCPCApiClient:
+    def __init__(self, api_key: str,
+                 base_url: str = "https://maber-apim-prod.azure-api.net/pokedata-api"):
+        self.base_url = base_url
+        self.session = requests.Session()
+        self.session.headers.update({
+            "Ocp-Apim-Subscription-Key": api_key,
+            "Content-Type": "application/json",
+        })
+
+    def _get(self, endpoint: str, params: Optional[Dict] = None) -> Dict[str, Any]:
+        resp = self.session.get(f"{self.base_url}{endpoint}", params=params)
+        if resp.status_code == 429:
+            retry_after = int(resp.headers.get("Retry-After", 60))
+            time.sleep(retry_after)
+            return self._get(endpoint, params)
+        if not resp.ok:
+            body = resp.json() if resp.content else {}
+            raise APIError(body.get("error", resp.reason), resp.status_code)
+        return resp.json()
+
+    def get_sets(self, page: int = 1, page_size: int = 100,
+                 language: str = "en", all: bool = False) -> Dict[str, Any]:
+        params = {"page": page, "pageSize": page_size, "language": language}
+        if all:
+            params["all"] = "true"
+        return self._get("/sets", params)
+
+    def get_cards_by_set(self, set_id: str, page: int = 1,
+                         page_size: int = 500) -> Dict[str, Any]:
+        return self._get(f"/sets/{set_id}/cards",
+                         {"page": page, "pageSize": page_size})
+
+    def get_card(self, set_id: str, card_id: str) -> Dict[str, Any]:
+        return self._get(f"/sets/{set_id}/cards/{card_id}")
+
+    def health(self) -> Dict[str, Any]:
+        return self._get("/health")
+
+
+# Usage
 client = PCPCApiClient("your-api-key-here")
 
 try:
-    # Get all sets
-    sets = client.get_sets(page=1, limit=10)
-    print("Sets:", sets['data']['sets'])
+    sets = client.get_sets(page_size=10)
+    print("Sets:", sets["data"]["sets"])
 
-    # Get cards from Base Set
-    cards = client.get_cards_by_set("base1", rarity="Rare Holo", include_pricing=True)
-    print("Cards:", cards['data']['cards'])
+    cards = client.get_cards_by_set("sv8", page_size=50)
+    print("Cards:", cards["data"]["cards"])
 
-    # Get specific card details
-    card = client.get_card("base1", "base1-4", include_pricing=True, include_variants=True)
-    print("Card:", card['data'])
-
-    # Search for Charizard cards
-    search_results = client.search_cards("Charizard", rarity="Rare Holo",
-                                       min_price=100, sort_by="price")
-    print("Search Results:", search_results['data']['results'])
-
+    card = client.get_card("sv8", "sv8-001")
+    print("Card:", card["data"]["name"])
+    variants = card["data"].get("variants", [])
+    if variants and variants[0].get("prices"):
+        print("First price:", variants[0]["prices"][0])
 except APIError as e:
-    print(f"API Error: {e}")
-    print(f"Error Code: {e.code}")
-    print(f"Status Code: {e.status_code}")
-    print(f"Request ID: {e.request_id}")
+    print(f"API Error ({e.status}): {e}")
 ```
 
 ### cURL Examples
 
-#### Get All Sets
+#### Get Set List
 
 ```bash
-curl -X GET "https://api.pcpc.example.com/api/v1/sets?page=1&limit=10" \
-  -H "Ocp-Apim-Subscription-Key: your-api-key-here" \
-  -H "Content-Type: application/json"
+curl -X GET "https://maber-apim-prod.azure-api.net/pokedata-api/sets?page=1&pageSize=10" \
+  -H "Ocp-Apim-Subscription-Key: your-api-key-here"
 ```
 
 #### Get Cards by Set
 
 ```bash
-curl -X GET "https://api.pcpc.example.com/api/v1/sets/base1/cards?rarity=Rare%20Holo" \
-  -H "Ocp-Apim-Subscription-Key: your-api-key-here" \
-  -H "Content-Type: application/json"
+curl -X GET "https://maber-apim-prod.azure-api.net/pokedata-api/sets/sv8/cards?pageSize=50" \
+  -H "Ocp-Apim-Subscription-Key: your-api-key-here"
 ```
 
-#### Search Cards
+#### Get Card Info
 
 ```bash
-curl -X GET "https://api.pcpc.example.com/api/v1/search/cards?q=Charizard&minPrice=100" \
-  -H "Ocp-Apim-Subscription-Key: your-api-key-here" \
-  -H "Content-Type: application/json"
+curl -X GET "https://maber-apim-prod.azure-api.net/pokedata-api/sets/sv8/cards/sv8-001" \
+  -H "Ocp-Apim-Subscription-Key: your-api-key-here"
+```
+
+#### Local Development (Azure Functions, no subscription key)
+
+```bash
+curl -X GET "http://localhost:7071/api/sets?pageSize=10"
+curl -X GET "http://localhost:7071/api/health"
 ```
 
 ## SDKs and Tools
 
-### Official SDKs
+### OpenAPI Specification
 
-- **JavaScript/Node.js**: Available via npm (`npm install pcpc-api-client`)
-- **Python**: Available via pip (`pip install pcpc-api-client`)
-- **C#/.NET**: Available via NuGet (`Install-Package PCPC.ApiClient`)
-- **Go**: Available via go get (`go get github.com/pcpc/go-client`)
+The authoritative HTTP contract is published at `apim/specs/pcpc-api-v1.yaml` (OpenAPI 3.0.1) and surfaced through the APIM developer portal. Use it to generate clients or import into API tooling.
 
-### Third-Party Tools
+### Recommended Tooling
 
-- **Postman Collection**: Import our comprehensive API collection
-- **OpenAPI Specification**: Available at `/api/v1/openapi.json`
-- **Swagger UI**: Interactive documentation at `/docs`
-- **Insomnia Collection**: REST client collection available
+- **Postman / Insomnia**: Import the OpenAPI spec to generate a collection.
+- **APIM Developer Portal**: Interactive try-it console with subscription-key management.
 
 ### Development Tools
 
-#### API Testing
-
 ```bash
-# Test API health
-curl -X GET "https://api.pcpc.example.com/api/v1/health" \
+# Health check (local Functions)
+curl -X GET "http://localhost:7071/api/health"
+
+# Validate subscription key through APIM
+curl -X GET "https://maber-apim-prod.azure-api.net/pokedata-api/sets?pageSize=1" \
   -H "Ocp-Apim-Subscription-Key: your-key"
-
-# Validate API key
-curl -X GET "https://api.pcpc.example.com/api/v1/sets?limit=1" \
-  -H "Ocp-Apim-Subscription-Key: your-key"
-```
-
-#### Rate Limit Testing
-
-```bash
-# Check current rate limit status
-curl -I -X GET "https://api.pcpc.example.com/api/v1/health" \
-  -H "Ocp-Apim-Subscription-Key: your-key"
-```
-
-### Integration Examples
-
-#### Webhook Integration
-
-```javascript
-// Example webhook handler for real-time price updates
-app.post("/webhook/price-updates", (req, res) => {
-  const { cardId, oldPrice, newPrice, timestamp } = req.body;
-
-  // Process price update
-  console.log(`Price update for ${cardId}: ${oldPrice} -> ${newPrice}`);
-
-  res.status(200).json({ received: true });
-});
-```
-
-#### Batch Processing
-
-```python
-import asyncio
-import aiohttp
-
-async def fetch_multiple_cards(session, card_ids):
-    tasks = []
-    for card_id in card_ids:
-        task = fetch_card_details(session, card_id)
-        tasks.append(task)
-
-    results = await asyncio.gather(*tasks)
-    return results
-
-async def fetch_card_details(session, card_id):
-    url = f"https://api.pcpc.example.com/api/v1/sets/{card_id.split('-')[0]}/cards/{card_id}"
-    headers = {'Ocp-Apim-Subscription-Key': 'your-key'}
-
-    async with session.get(url, headers=headers) as response:
-        return await response.json()
 ```
 
 ---
@@ -1157,24 +921,7 @@ async def fetch_card_details(session, card_id):
 - **Issue Tracker**: Report bugs and request features
 - **Discussions**: Community Q&A and feature discussions
 
-### Support Channels
-
-- **Documentation**: Comprehensive guides and references
-- **Community Support**: GitHub Discussions and Issues
-- **Premium Support**: Available for Premium and Enterprise tiers
-
-### Status and Updates
-
-- **API Status**: [https://status.pcpc.example.com](https://status.pcpc.example.com)
-- **Changelog**: [API version history and updates](../CHANGELOG.md)
-- **Announcements**: Follow our GitHub repository for updates
-
 ---
 
-**Last Updated**: September 28, 2025  
-**API Version**: 1.0.0  
-**Documentation Version**: 1.0.0
-
-```
-
-```
+**Data Source**: Scrydex
+**API Contract**: `apim/specs/pcpc-api-v1.yaml` (OpenAPI 3.0.1, version 1.0)

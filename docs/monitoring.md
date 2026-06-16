@@ -68,7 +68,15 @@ graph TB
 
 ### Frontend Monitoring
 
-#### Web SDK Configuration
+> **Status: Not yet implemented (planned).** The frontend does not currently
+> ship any Application Insights browser SDK. There is no
+> `@microsoft/applicationinsights-web` or `web-vitals` dependency in
+> `frontend/package.json`, and no telemetry initialization in `frontend/src`.
+> The code samples in this section describe a planned approach and are NOT
+> reflective of the current build. Backend telemetry (see below) is the only
+> Application Insights integration that exists today.
+
+#### Web SDK Configuration (planned)
 
 ```javascript
 import { ApplicationInsights } from '@microsoft/applicationinsights-web';
@@ -143,7 +151,10 @@ export class TelemetryService {
 }
 ```
 
-#### Core Web Vitals Tracking
+#### Core Web Vitals Tracking (planned)
+
+> Not implemented. There is no `web-vitals` dependency in the frontend; the
+> sample below is a planned design only.
 
 ```javascript
 // Enhanced performance monitoring
@@ -217,130 +228,89 @@ const webVitalsMonitor = new WebVitalsMonitor();
 
 ### Backend Function Monitoring
 
+The backend uses the `@azure/monitor-opentelemetry` package (a real dependency
+in `backend/functions/package.json`), initialized via `useAzureMonitor()`.
+Telemetry is accessed through a `MonitoringService` singleton
+(`backend/functions/src/services/MonitoringService.ts`), which wraps
+OpenTelemetry spans behind `trackEvent`, `trackMetric`, `trackException`,
+`trackDependency`, and `trackTrace` helpers. There is no `applicationinsights`
+(classic SDK) `TelemetryClient` in this codebase.
+
+#### MonitoringService Initialization
+
+```typescript
+// backend/functions/src/services/MonitoringService.ts
+import { useAzureMonitor } from "@azure/monitor-opentelemetry";
+import { SpanStatusCode, trace } from "@opentelemetry/api";
+
+export class MonitoringService {
+    private static instance: MonitoringService;
+    private tracer: any;
+    private isInitialized = false;
+
+    public static getInstance(): MonitoringService {
+        if (!MonitoringService.instance) {
+            MonitoringService.instance = new MonitoringService();
+        }
+        return MonitoringService.instance;
+    }
+
+    private initialize(): void {
+        const connectionString = process.env.APPLICATIONINSIGHTS_CONNECTION_STRING;
+        if (!connectionString) {
+            // Graceful degradation: log to console only when not configured
+            this.isInitialized = false;
+            return;
+        }
+
+        useAzureMonitor({
+            azureMonitorExporterOptions: { connectionString },
+            samplingRatio: this.getSamplingRatio(),
+        });
+
+        this.tracer = trace.getTracer("pcpc-backend", this.version);
+        this.isInitialized = true;
+    }
+}
+
+// Export singleton for convenience
+export const monitoring = MonitoringService.getInstance();
+```
+
 #### Function Instrumentation
 
 ```typescript
-import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
-import { TelemetryClient, SeverityLevel } from "applicationinsights";
+// backend/functions/src/index.ts wires the singleton at startup
+import { MonitoringService } from "./services/MonitoringService";
+export const monitoringService = MonitoringService.getInstance();
+```
 
-// Initialize Application Insights client
-const telemetryClient = new TelemetryClient();
+```typescript
+// Using the singleton inside a handler
+import { monitoring } from "../services/MonitoringService";
 
-// Monitoring wrapper for Azure Functions
-export function withMonitoring<T extends any[]>(
-    functionName: string,
-    handler: (request: HttpRequest, context: InvocationContext, ...args: T) => Promise<HttpResponseInit>
-) {
-    return async (request: HttpRequest, context: InvocationContext, ...args: T): Promise<HttpResponseInit> => {
-        const startTime = Date.now();
-        const correlationId = context.invocationId;
-        
-        // Start operation tracking
-        const operation = telemetryClient.startOperation(context, request);
-        
-        try {
-            // Log function start
-            context.log(`Function ${functionName} started`, {
-                correlationId: correlationId,
-                requestUrl: request.url,
-                method: request.method
-            });
-            
-            // Execute function
-            const result = await handler(request, context, ...args);
-            
-            // Calculate execution metrics
-            const executionTime = Date.now() - startTime;
-            const statusCode = result.status || 200;
-            
-            // Track success metrics
-            telemetryClient.trackMetric({
-                name: `Function.${functionName}.ExecutionTime`,
-                value: executionTime,
-                properties: {
-                    functionName: functionName,
-                    statusCode: statusCode.toString(),
-                    correlationId: correlationId
-                }
-            });
-            
-            telemetryClient.trackMetric({
-                name: `Function.${functionName}.Success`,
-                value: 1,
-                properties: {
-                    functionName: functionName,
-                    statusCode: statusCode.toString()
-                }
-            });
-            
-            // Log successful completion
-            context.log(`Function ${functionName} completed successfully`, {
-                correlationId: correlationId,
-                executionTime: `${executionTime}ms`,
-                statusCode: statusCode
-            });
-            
-            return result;
-            
-        } catch (error) {
-            const executionTime = Date.now() - startTime;
-            
-            // Track error metrics
-            telemetryClient.trackException({
-                exception: error as Error,
-                properties: {
-                    functionName: functionName,
-                    correlationId: correlationId,
-                    executionTime: executionTime.toString()
-                },
-                severity: SeverityLevel.Error
-            });
-            
-            telemetryClient.trackMetric({
-                name: `Function.${functionName}.Error`,
-                value: 1,
-                properties: {
-                    functionName: functionName,
-                    errorType: error.constructor.name,
-                    correlationId: correlationId
-                }
-            });
-            
-            // Log error
-            context.log.error(`Function ${functionName} failed`, {
-                correlationId: correlationId,
-                error: error.message,
-                stack: error.stack,
-                executionTime: `${executionTime}ms`
-            });
-            
-            throw error;
-            
-        } finally {
-            // Complete operation tracking
-            telemetryClient.completeOperation(operation);
-        }
-    };
-}
-
-// Usage example
-export const getSetList = withMonitoring('GetSetList', async (request, context) => {
-    // Function implementation
-    const sets = await cardService.getAllSets();
-    
-    return {
-        status: 200,
-        jsonBody: { sets }
-    };
-});
+export const getSetList = async (request, context) => {
+    const op = monitoring.startOperation("GetSetList");
+    try {
+        const sets = await cardService.getAllSets();
+        monitoring.trackEvent("CardSetList", { count: sets.length });
+        return { status: 200, jsonBody: { sets } };
+    } catch (error) {
+        monitoring.trackException(error as Error, { functionName: "GetSetList" });
+        throw error;
+    } finally {
+        op.end();
+    }
+};
 ```
 
 #### Database Query Monitoring
 
 ```typescript
-// Cosmos DB monitoring wrapper
+// Cosmos DB monitoring wrapper (uses the MonitoringService singleton)
+import { monitoring } from "../services/MonitoringService";
+
 export class MonitoredCosmosService {
-    private telemetryClient = new TelemetryClient();
     
     async executeQuery<T>(
         containerName: string,
@@ -357,41 +327,37 @@ export class MonitoredCosmosService {
             
             const executionTime = Date.now() - startTime;
             
-            // Track query metrics
-            this.telemetryClient.trackDependency({
-                dependencyTypeName: 'Azure DocumentDB',
-                name: operationName,
-                data: query.query.substring(0, 100) + '...',
-                duration: executionTime,
-                success: true,
-                properties: {
+            // Track query metrics (positional signature on MonitoringService)
+            monitoring.trackDependency(
+                operationName,
+                'Azure DocumentDB',
+                query.query.substring(0, 100) + '...',
+                executionTime,
+                true,
+                {
                     containerName: containerName,
                     requestCharge: response.requestCharge.toString(),
                     itemCount: response.resources.length.toString(),
                     partitionKey: options?.partitionKey?.toString()
                 }
+            );
+            
+            monitoring.trackMetric('CosmosDB.RequestCharge', response.requestCharge, {
+                containerName: containerName,
+                queryType: this.categorizeQuery(query.query)
             });
             
-            this.telemetryClient.trackMetric({
-                name: 'CosmosDB.RequestCharge',
-                value: response.requestCharge,
-                properties: {
-                    containerName: containerName,
-                    queryType: this.categorizeQuery(query.query)
-                }
-            });
-            
-            // Log performance warnings
+            // Log performance warnings (severity 2 = Warning)
             if (response.requestCharge > 50) {
-                this.telemetryClient.trackTrace({
-                    message: `High RU consumption detected: ${response.requestCharge} RUs`,
-                    severityLevel: SeverityLevel.Warning,
-                    properties: {
+                monitoring.trackTrace(
+                    `High RU consumption detected: ${response.requestCharge} RUs`,
+                    2,
+                    {
                         containerName: containerName,
                         query: query.query,
                         requestCharge: response.requestCharge.toString()
                     }
-                });
+                );
             }
             
             return {
@@ -402,17 +368,17 @@ export class MonitoredCosmosService {
         } catch (error) {
             const executionTime = Date.now() - startTime;
             
-            this.telemetryClient.trackDependency({
-                dependencyTypeName: 'Azure DocumentDB',
-                name: operationName,
-                data: query.query.substring(0, 100) + '...',
-                duration: executionTime,
-                success: false,
-                properties: {
+            monitoring.trackDependency(
+                operationName,
+                'Azure DocumentDB',
+                query.query.substring(0, 100) + '...',
+                executionTime,
+                false,
+                {
                     containerName: containerName,
                     error: error.message
                 }
-            });
+            );
             
             throw error;
         }
@@ -685,7 +651,7 @@ async function checkCosmosDbHealth(): Promise<HealthCheckResult> {
 async function checkExternalApiHealth(): Promise<HealthCheckResult> {
     try {
         const startTime = Date.now();
-        const response = await fetch('https://api.pokemontcg.io/v2/sets?pageSize=1');
+        const response = await fetch('https://api.scrydex.com/pokemon/v1/sets?pageSize=1');
         const responseTime = Date.now() - startTime;
         
         if (response.ok) {
@@ -755,12 +721,15 @@ requests
 
 ### Synthetic Monitoring
 
+> Synthetic monitoring is not yet deployed (see Next Steps). The sample below
+> reuses the existing `MonitoringService` singleton for telemetry.
+
 ```typescript
 // Automated endpoint testing
 import { chromium } from 'playwright';
+import { monitoring } from "../services/MonitoringService";
 
 export class SyntheticMonitoring {
-    private telemetryClient = new TelemetryClient();
     
     async runHealthChecks(): Promise<void> {
         const browser = await chromium.launch();
@@ -790,22 +759,15 @@ export class SyntheticMonitoring {
             
             const loadTime = Date.now() - startTime;
             
-            this.telemetryClient.trackMetric({
-                name: 'SyntheticTest.HomepageLoad',
-                value: loadTime,
-                properties: {
-                    testType: 'synthetic',
-                    endpoint: 'homepage'
-                }
+            monitoring.trackMetric('SyntheticTest.HomepageLoad', loadTime, {
+                testType: 'synthetic',
+                endpoint: 'homepage'
             });
             
         } catch (error) {
-            this.telemetryClient.trackException({
-                exception: error,
-                properties: {
-                    testType: 'synthetic',
-                    testName: 'HomepageLoad'
-                }
+            monitoring.trackException(error as Error, {
+                testType: 'synthetic',
+                testName: 'HomepageLoad'
             });
         }
     }
@@ -823,23 +785,16 @@ export class SyntheticMonitoring {
                 const response = await fetch(endpoint);
                 const responseTime = Date.now() - startTime;
                 
-                this.telemetryClient.trackMetric({
-                    name: 'SyntheticTest.APIResponse',
-                    value: responseTime,
-                    properties: {
-                        endpoint: endpoint,
-                        statusCode: response.status.toString(),
-                        success: response.ok.toString()
-                    }
+                monitoring.trackMetric('SyntheticTest.APIResponse', responseTime, {
+                    endpoint: endpoint,
+                    statusCode: response.status.toString(),
+                    success: response.ok.toString()
                 });
                 
             } catch (error) {
-                this.telemetryClient.trackException({
-                    exception: error,
-                    properties: {
-                        testType: 'synthetic',
-                        endpoint: endpoint
-                    }
+                monitoring.trackException(error as Error, {
+                    testType: 'synthetic',
+                    endpoint: endpoint
                 });
             }
         }
