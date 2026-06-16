@@ -17,9 +17,11 @@ jobs:
       - checkout: self
         displayName: "Checkout Repository"
 
-      # Install root dependencies (Jest, shared configs)
+      # Install root dependencies (Jest, shared configs).
+      # Root is a pnpm workspace (pnpm-lock.yaml); there is no root
+      # package-lock.json, so install via pnpm, matching Vercel and local dev.
       - script: |
-          npm ci
+          npx --yes pnpm@10.32.1 install --frozen-lockfile
         displayName: "Install Root Dependencies"
         workingDirectory: $(System.DefaultWorkingDirectory)
 
