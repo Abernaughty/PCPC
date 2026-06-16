@@ -195,7 +195,7 @@ between Consumption and ACA is in
 
 - Azure API Management with declarative policies and a developer portal
 - Azure Functions v4 on Node.js 22 with idiomatic separation of concerns
-- 9-module Terraform composition (resource group, key vault, cosmos, function app, storage, app insights, log analytics, APIM, static web app legacy module)
+- 10-module Terraform composition (resource group, key vault, cosmos, function app, storage, app insights, log analytics, APIM, container registry, container app)
 - Azure DevOps multi-stage pipelines with ACR-backed CI containers
 - Application Insights + Log Analytics for end-to-end observability
 - Managed identity, Key Vault references, audit log integration

@@ -12,15 +12,19 @@ The infrastructure is organized into reusable modules and environment-specific c
 infra/
 ├── modules/                    # Reusable Terraform modules
 │   ├── api-management/        # Azure API Management
+│   ├── application-insights/  # Application Insights + monitor alerts
 │   ├── container-app/         # Azure Container Apps (Path C)
 │   ├── container-registry/    # Azure Container Registry
 │   ├── cosmos-db/             # Cosmos DB (serverless NoSQL)
 │   ├── function-app/          # Azure Functions (Path B)
+│   ├── key-vault/             # Azure Key Vault (secrets, access policies)
+│   ├── log-analytics/         # Log Analytics workspace
+│   ├── resource-group/        # Azure resource group
 │   └── storage-account/       # Azure Blob Storage
 └── envs/                      # Environment-specific configurations
     ├── dev/                   # Development environment
-    ├── staging/               # Staging environment (planned)
-    └── prod/                  # Production environment (planned)
+    ├── staging/               # Staging environment
+    └── prod/                  # Production environment
 ```
 
 ## Azure Resources
@@ -56,4 +60,4 @@ terraform apply -var-file="terraform.tfvars"
 - Terraform >= 1.13.3
 - Azure CLI (authenticated)
 - Azure subscription with required permissions
-- State storage backend configured (see `state-storage/` in the deployment guide)
+- Remote state backend configured: each environment uses an `azurerm` backend (see the `backend "azurerm"` block in `envs/<env>/main.tf`) backed by the `pcpc-terraform-state-rg` resource group and `tfstate` blob container. See the [Deployment Guide](../docs/deployment-guide.md) for setup details.
