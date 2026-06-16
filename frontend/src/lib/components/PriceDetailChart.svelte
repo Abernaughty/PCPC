@@ -83,4 +83,5 @@
 
 <style>
   .detail-chart-container { border: 0.5px solid var(--amber-border); border-radius: var(--radius-input); padding: 12px; margin-top: 8px; background-color: rgba(196, 154, 108, 0.02); height: 200px; animation: expand-in 0.25s ease-out; position: relative; }
+  @media (max-width: 768px) { .detail-chart-container { height: 170px; padding: 10px; } }
 </style>

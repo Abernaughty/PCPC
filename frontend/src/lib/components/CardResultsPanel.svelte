@@ -137,7 +137,8 @@
     .results-header { flex-direction: column; gap: 6px; align-items: center; text-align: center; }
     .header-meta { justify-content: center; }
     .results-layout { flex-direction: column; align-items: center; }
-    .results-sidebar { position: static; }
+    .results-sidebar { position: static; width: 100%; max-width: 260px; }
+    .results-main { width: 100%; min-width: 0; }
   }
 
   @media (max-width: 480px) {
