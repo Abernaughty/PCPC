@@ -51,8 +51,7 @@ jobs:
       # Root is a pnpm workspace (pnpm-lock.yaml); there is no root
       # package-lock.json, so install via pnpm, matching Vercel and local dev.
       - script: |
-          npm install -g pnpm@10.32.1
-          pnpm install --frozen-lockfile
+          npx --yes pnpm@10.32.1 install --frozen-lockfile
         displayName: "Install Root Dependencies"
         workingDirectory: $(System.DefaultWorkingDirectory)
 
