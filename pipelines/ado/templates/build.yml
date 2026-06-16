@@ -47,9 +47,12 @@ jobs:
       vmImage: "ubuntu-latest"
     container: node-azure
     steps:
-      # Install root dependencies (for Jest testing framework)
+      # Install root dependencies (for Jest testing framework).
+      # Root is a pnpm workspace (pnpm-lock.yaml); there is no root
+      # package-lock.json, so install via pnpm, matching Vercel and local dev.
       - script: |
-          npm ci
+          corepack enable
+          pnpm install --frozen-lockfile
         displayName: "Install Root Dependencies"
         workingDirectory: $(System.DefaultWorkingDirectory)
 
