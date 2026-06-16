@@ -80,7 +80,7 @@ graph TB
 
 ### Azure Resources
 
-The PCPC infrastructure consists of 7 core Azure resources managed through Terraform modules:
+The PCPC infrastructure is managed through 10 Terraform modules (`infra/modules/`): `api-management`, `application-insights`, `container-app`, `container-registry`, `cosmos-db`, `function-app`, `key-vault`, `log-analytics`, `resource-group`, and `storage-account`. The core resources are described below. (The frontend is no longer provisioned by Terraform; see the Static Web App note.)
 
 #### 1. Resource Group (`infra/modules/resource-group/`)
 
@@ -103,33 +103,11 @@ module "resource_group" {
 }
 ```
 
-#### 2. Static Web App (`infra/modules/static-web-app/`)
+#### 2. Frontend (Vercel — not managed by Terraform)
 
-**Purpose**: Hosts the Svelte frontend application
-**Features (current)**:
+**Purpose**: Hosts the SvelteKit frontend application
 
-- Managed Azure Static Web Apps resource
-- Configuration via Terraform variables (no repo-binding in TF)
-- Deployed via Azure DevOps template (`.ado/templates/deploy-swa.yml`)
-
-> Note: Custom domains are provisioned by Terraform when enabled and when Porkbun API credentials are provided. Azure CDN/Front Door is not provisioned at this time and remains a future enhancement.
-
-**Minimal Module Configuration (current)**:
-
-```hcl
-module "static_web_app" {
-  source = "../../modules/static-web-app"
-
-  name                = "pcpc-swa-dev"
-  resource_group_name = module.resource_group.name
-  location            = module.resource_group.location
-
-  # Build/deploy is handled by Azure DevOps
-  # Optional app_settings or flags can be set here
-
-  tags = local.common_tags
-}
-```
+> **Note:** As of 2026-05-14, the frontend is deployed to [Vercel](https://vercel.com/) using `@sveltejs/adapter-vercel` (see `frontend/svelte.config.js`). It is **not** provisioned by this Terraform configuration — there is no `infra/modules/static-web-app/` module. The prior Azure Static Web Apps + Porkbun DNS provisioning was removed. Frontend deployment is handled by Vercel's own build/deploy pipeline (Git integration), so there are no Terraform resources to apply for the frontend.
 
 #### 3. Function App (`infra/modules/function-app/`)
 
@@ -159,7 +137,7 @@ module "function_app" {
     WEBSITE_NODE_DEFAULT_VERSION = "~22"
 
     COSMOS_DB_CONNECTION_STRING = module.cosmos_db.connection_string
-    COSMOS_DB_DATABASE_NAME     = "PokeData"
+    COSMOS_DB_DATABASE_NAME     = "PokemonCards"
 
     POKEDATA_API_KEY     = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.pokedata_api_key.id})"
     POKEMON_TCG_API_KEY  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.pokemon_tcg_api_key.id})"
@@ -189,7 +167,7 @@ module "cosmos_db" {
   resource_group_name = module.resource_group.name
   location           = module.resource_group.location
 
-  database_name = "PokeData"
+  database_name = "PokemonCards"
 
   containers = [
     {
@@ -607,23 +585,31 @@ curl -X GET "https://pokedata-apim-dev.azure-api.net/api/sets" \
 
 #### Remote State Configuration
 
+Terraform state is stored in Azure Blob Storage. The backend is declared inline in each environment's `main.tf` (there is no separate `backend.tf` or `state-storage/` directory). For example, `infra/envs/dev/main.tf`:
+
 ```hcl
-# backend.tf
 terraform {
+  # Remote backend for state management
   backend "azurerm" {
-    resource_group_name  = "terraform-state-rg"
-    storage_account_name = "terraformstatestorage"
+    resource_group_name  = "pcpc-terraform-state-rg"
+    storage_account_name = "pcpctfstatedacc29c2"
     container_name       = "tfstate"
-    key                  = "pcpc/dev/terraform.tfstate"
+    key                  = "dev.terraform.tfstate"
+    # tenant_id and subscription_id are supplied at init time via the
+    # ARM_TENANT_ID / ARM_SUBSCRIPTION_ID environment variables, Azure CLI
+    # authentication, or -backend-config arguments.
   }
 }
 ```
 
+The `staging` and `prod` environments use the same storage account and container with their own state keys (`staging.terraform.tfstate`, `prod.terraform.tfstate`).
+
 #### State Management Commands
 
 ```bash
-# Initialize remote state
-terraform init -backend-config="backend.hcl"
+# Initialize remote state (auth values come from ARM_* env vars / az login,
+# or pass them with -backend-config="key=value" arguments)
+terraform init
 
 # Import existing resources
 terraform import azurerm_resource_group.main /subscriptions/sub-id/resourceGroups/rg-name
@@ -666,30 +652,22 @@ terraform workspace list
 
 ## Application Deployment
 
-### Frontend Deployment (Static Web App)
+### Frontend Deployment (Vercel)
 
-The frontend deployment is automated through Azure DevOps using the Static Web Apps template.
+The frontend (`frontend/`) is a SvelteKit app deployed to Vercel via `@sveltejs/adapter-vercel` (see `frontend/svelte.config.js`). Deployment is driven by Vercel's Git integration: pushes to the connected branch trigger a Vercel build and deploy. There is no Azure or Terraform step for the frontend.
 
-#### Deployment Configuration
-
-**Azure DevOps Template** (`.ado/templates/deploy-swa.yml`)
-
-This template builds the frontend and deploys to the SWA resource. Configure variables (e.g., API base URL, subscription key) via variable groups or pipeline variables.
-
-#### Manual Deployment
+#### Local Build
 
 ```bash
 # Build frontend locally
-cd app/frontend
+cd frontend
 npm install
 npm run build
-
-# Deploy using Azure CLI
-az staticwebapp deploy \
-  --name "pokedata-dev" \
-  --resource-group "pokedata-dev-rg" \
-  --source-location "public"
 ```
+
+#### Configuration
+
+Frontend environment variables (e.g., API base URL, subscription key) are configured in the Vercel project settings rather than in Azure DevOps. See the [Environment Variables](#environment-variables) section for the relevant `VITE_*` values.
 
 ### Backend Deployment (Azure Functions)
 
@@ -706,7 +684,7 @@ trigger:
       - main
   paths:
     include:
-      - app/backend/*
+      - backend/functions/*
 
 pool:
   vmImage: "ubuntu-latest"
@@ -729,14 +707,14 @@ stages:
             displayName: "Install Node.js"
 
           - script: |
-              cd app/backend
+              cd backend/functions
               npm install
               npm run build
             displayName: "Install dependencies and build"
 
           - task: ArchiveFiles@2
             inputs:
-              rootFolderOrFile: "app/backend"
+              rootFolderOrFile: "backend/functions"
               includeRootFolder: false
               archiveType: "zip"
               archiveFile: "$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip"
@@ -777,7 +755,7 @@ stages:
 
 ```bash
 # Build backend locally
-cd app/backend
+cd backend/functions
 npm install
 npm run build
 
@@ -804,11 +782,11 @@ az functionapp function list \
 # Deploy database schema using Cosmos DB Data Migration Tool
 dt.exe /s:JsonFile /s.Files:db/schemas/containers/sets.json \
   /t:CosmosDB /t.ConnectionString:"AccountEndpoint=https://pokedata-cosmos-dev.documents.azure.com:443/;AccountKey=your-key;" \
-  /t.Database:PokeData /t.Collection:sets
+  /t.Database:PokemonCards /t.Collection:sets
 
 dt.exe /s:JsonFile /s.Files:db/schemas/containers/cards.json \
   /t:CosmosDB /t.ConnectionString:"AccountEndpoint=https://pokedata-cosmos-dev.documents.azure.com:443/;AccountKey=your-key;" \
-  /t.Database:PokeData /t.Collection:cards
+  /t.Database:PokemonCards /t.Collection:cards
 ```
 
 #### Index Management
@@ -818,14 +796,14 @@ dt.exe /s:JsonFile /s.Files:db/schemas/containers/cards.json \
 az cosmosdb sql container update \
   --resource-group "pokedata-dev-rg" \
   --account-name "pokedata-cosmos-dev" \
-  --database-name "PokeData" \
+  --database-name "PokemonCards" \
   --name "sets" \
   --idx @db/schemas/indexes/sets-indexes.json
 
 az cosmosdb sql container update \
   --resource-group "pokedata-dev-rg" \
   --account-name "pokedata-cosmos-dev" \
-  --database-name "PokeData" \
+  --database-name "PokemonCards" \
   --name "cards" \
   --idx @db/schemas/indexes/cards-indexes.json
 ```
@@ -1027,7 +1005,7 @@ VITE_CACHE_TTL=3600
     "WEBSITE_NODE_DEFAULT_VERSION": "~22",
 
     "COSMOS_DB_CONNECTION_STRING": "AccountEndpoint=https://pokedata-cosmos-dev.documents.azure.com:443/;AccountKey=...",
-    "COSMOS_DB_DATABASE_NAME": "PokeData",
+    "COSMOS_DB_DATABASE_NAME": "PokemonCards",
 
     "POKEDATA_API_KEY": "@Microsoft.KeyVault(SecretUri=https://pokedata-kv-dev.vault.azure.net/secrets/pokedata-api-key/)",
     "POKEMON_TCG_API_KEY": "@Microsoft.KeyVault(SecretUri=https://pokedata-kv-dev.vault.azure.net/secrets/pokemon-tcg-api-key/)",
@@ -1090,7 +1068,7 @@ resource "azurerm_key_vault_secret" "pokemon_tcg_api_key" {
 
 #### Environment Variable Templates
 
-**Development Template** (`app/frontend/.env.example`):
+**Development Template** (`frontend/.env.example`):
 
 ```bash
 # API Configuration
@@ -1113,7 +1091,7 @@ VITE_CACHE_TTL=300
 VITE_API_TIMEOUT=10000
 ```
 
-**Backend Template** (`app/backend/.env.example`):
+**Backend Template** (`backend/functions/.env.example`):
 
 ```bash
 # Azure Functions Configuration
@@ -1124,7 +1102,7 @@ WEBSITE_NODE_DEFAULT_VERSION=~22
 
 # Database Configuration
 COSMOS_DB_CONNECTION_STRING=AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==
-COSMOS_DB_DATABASE_NAME=PokeData
+COSMOS_DB_DATABASE_NAME=PokemonCards
 
 # External API Keys (use Key Vault references in production)
 POKEDATA_API_KEY=your-pokedata-api-key
@@ -1354,7 +1332,7 @@ async function checkDatabaseHealth(): Promise<"healthy" | "unhealthy"> {
     // Simple database connectivity check
     const cosmosClient = getCosmosClient();
     await cosmosClient
-      .database("PokeData")
+      .database("PokemonCards")
       .container("sets")
       .items.query("SELECT TOP 1 * FROM c")
       .fetchNext();
@@ -1712,7 +1690,7 @@ az staticwebapp appsettings set \
 az cosmosdb sql database restore \
   --resource-group "pokedata-prod-rg" \
   --account-name "pokedata-cosmos-prod" \
-  --database-name "PokeData" \
+  --database-name "PokemonCards" \
   --restore-timestamp "2025-09-28T20:00:00Z"
 ```
 
@@ -1722,7 +1700,7 @@ az cosmosdb sql database restore \
 
 This deployment guide provides comprehensive coverage of the PCPC deployment process, from infrastructure setup to production monitoring. Key highlights include:
 
-- **Complete Infrastructure as Code**: 7 Terraform modules with multi-environment support
+- **Complete Infrastructure as Code**: 10 Terraform modules with multi-environment support
 - **Automated CI/CD Pipelines**: Azure DevOps validation and deployment pipelines
 - **Comprehensive Monitoring**: Application Insights with custom dashboards and alerts
 - **Rollout**: Direct deploy with validations (blue-green/canary planned)

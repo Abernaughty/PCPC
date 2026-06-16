@@ -6,6 +6,8 @@
 **Stack:** SvelteKit 2 · Svelte 5 · TailwindCSS 4 · TypeScript 5 · adapter-vercel
 **Theme:** Dark-mode-first (light mode deferred)
 
+> **Historical design snapshot.** This is the original redesign proposal, written before the move into the PCPC repo (paths below reference the old `apps/pcpc/...` layout). Most of it shipped, but the component breakdown diverged in one place: the proposed standalone `PriceTable.svelte` and `GradedPriceGrid.svelte` were ultimately folded into `PricingPanel.svelte` and do not exist as separate components. See `frontend/src/lib/components/` for the current inventory.
+
 ---
 
 ## 1. Design direction — "Elevated dark"

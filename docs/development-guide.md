@@ -59,11 +59,11 @@ Before you begin, ensure you have the following installed:
 4. **Install Dependencies**
 
    ```bash
-   # Frontend dependencies (154 packages)
-   cd app/frontend && npm install
+   # Frontend dependencies
+   cd frontend && npm install
 
-   # Backend dependencies (94 packages)
-   cd ../backend && npm install
+   # Backend dependencies
+   cd ../backend/functions && npm install
 
    # Return to root
    cd ../..
@@ -73,10 +73,10 @@ Before you begin, ensure you have the following installed:
 
    ```bash
    # Start frontend development server
-   cd app/frontend && npm run dev
+   cd frontend && npm run dev
 
    # In another terminal, start backend
-   cd app/backend && npm run start
+   cd backend/functions && npm run start
    ```
 
 ### Repository Structure
@@ -85,24 +85,25 @@ Understanding the PCPC repository structure is crucial for effective development
 
 ```
 PCPC/
-├── app/                          # Application code
-│   ├── frontend/                 # Svelte frontend application
-│   │   ├── src/                  # Source code (components, services, stores)
-│   │   ├── public/               # Static assets and build output
-│   │   └── package.json          # Frontend dependencies and scripts
-│   └── backend/                  # Azure Functions backend
-│       ├── src/                  # TypeScript source code
-│       │   ├── functions/        # Azure Functions (5 functions)
-│       │   ├── services/         # Business logic services (11 services)
-│       │   ├── models/           # TypeScript interfaces and types
-│       │   └── utils/            # Utility functions and helpers
-│       └── package.json          # Backend dependencies and scripts
+├── frontend/                     # SvelteKit frontend application
+│   ├── src/                      # Source code (components, services, stores)
+│   ├── static/                   # Static assets
+│   └── package.json              # Frontend dependencies and scripts
+├── backend/                      # Backend code
+│   ├── functions/                # Azure Functions app
+│   │   ├── src/                  # TypeScript source code
+│   │   │   ├── functions/        # Azure Functions (6 functions)
+│   │   │   ├── services/         # Business logic services
+│   │   │   ├── models/           # TypeScript interfaces and types
+│   │   │   └── utils/            # Utility functions and helpers
+│   │   └── package.json          # Backend dependencies and scripts
+│   └── shared/                   # Shared types (@pcpc/shared)
 ├── infra/                        # Infrastructure as Code
 │   ├── modules/                  # Terraform modules (7 modules)
 │   └── envs/                     # Environment-specific configurations
 ├── tests/                        # Comprehensive testing framework
-│   ├── frontend/                 # Frontend component tests
 │   ├── backend/                  # Backend function tests
+│   ├── e2e/                      # End-to-end (Playwright) tests
 │   └── config/                   # Testing configuration and utilities
 ├── docs/                         # Documentation suite
 ├── apim/                         # API Management as Code
@@ -184,50 +185,63 @@ The DevContainer includes a comprehensive extension pack:
 
 #### Frontend Environment Variables
 
-Create `app/frontend/.env` based on `.env.example`:
+Create `frontend/.env` based on `frontend/.env.example`:
 
 ```bash
-# API Configuration
-VITE_API_BASE_URL=http://localhost:7071/api
-VITE_APIM_SUBSCRIPTION_KEY=your-subscription-key-here
+# Azure Cosmos DB
+COSMOS_DB_CONNECTION_STRING=
+COSMOS_DB_DATABASE_NAME=PokemonCards
+COSMOS_DB_CARDS_CONTAINER_NAME=Cards
+COSMOS_DB_SETS_CONTAINER_NAME=Sets
 
-# Feature Flags
-VITE_ENABLE_DEBUG_PANEL=true
-VITE_ENABLE_PERFORMANCE_MONITORING=true
-VITE_ENABLE_CACHE_DEBUGGING=true
+# Redis Cache (optional)
+REDIS_CONNECTION_STRING=
+ENABLE_REDIS_CACHE=false
 
-# External APIs
-VITE_POKEDATA_API_BASE_URL=https://www.pokedata.io/v0
-VITE_POKEMON_TCG_API_BASE_URL=https://api.pokemontcg.io/v2
+# Scrydex API
+SCRYDEX_API_KEY=
+SCRYDEX_TEAM_ID=
+SCRYDEX_API_BASE_URL=https://api.scrydex.com/pokemon/v1
 
-# Development Settings
-VITE_ENVIRONMENT=development
-VITE_LOG_LEVEL=debug
+# Cache TTLs (seconds)
+CACHE_TTL_SETS=604800
+CACHE_TTL_CARDS=3600
+
+# Frontend (Vite - prefixed with VITE_)
+VITE_API_URL=/api
 ```
 
 #### Backend Environment Variables
 
-Create `app/backend/local.settings.json` based on the template:
+Create `backend/functions/local.settings.json` based on the `local.settings.json.example` template:
 
 ```json
 {
   "IsEncrypted": false,
   "Values": {
-    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "node",
     "FUNCTIONS_EXTENSION_VERSION": "~4",
+    "NODE_ENV": "development",
 
     "COSMOS_DB_CONNECTION_STRING": "AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==",
-    "COSMOS_DB_DATABASE_NAME": "PokeData",
+    "COSMOS_DB_DATABASE_NAME": "PokemonCards",
+    "COSMOS_DB_CARDS_CONTAINER_NAME": "Cards",
+    "COSMOS_DB_SETS_CONTAINER_NAME": "Sets",
 
-    "POKEDATA_API_KEY": "your-pokedata-api-key",
-    "POKEMON_TCG_API_KEY": "your-pokemon-tcg-api-key",
+    "SCRYDEX_API_KEY": "your_scrydex_api_key_here",
+    "SCRYDEX_TEAM_ID": "your_scrydex_team_id_here",
+    "SCRYDEX_API_BASE_URL": "https://api.scrydex.com/pokemon/v1",
 
-    "REDIS_CACHE_ENABLED": "false",
-    "REDIS_CONNECTION_STRING": "",
+    "REDIS_CONNECTION_STRING": "localhost:6379",
+    "ENABLE_REDIS_CACHE": "false",
 
-    "BLOB_STORAGE_CONNECTION_STRING": "UseDevelopmentStorage=true",
-    "BLOB_CONTAINER_NAME": "images"
+    "DEBUG_MODE": "true",
+    "CACHE_TTL_SETS": "604800",
+    "CACHE_TTL_CARDS": "86400"
+  },
+  "Host": {
+    "LocalHttpPort": 7071,
+    "CORS": "*"
   }
 }
 ```
@@ -236,7 +250,7 @@ Create `app/backend/local.settings.json` based on the template:
 
 The DevContainer automatically forwards the following ports:
 
-- **3000**: Frontend development server (Svelte)
+- **5173**: Frontend development server (Vite/SvelteKit)
 - **7071**: Azure Functions local runtime
 - **8081**: Cosmos DB Emulator
 - **10000-10002**: Azurite Storage Emulator
@@ -253,9 +267,9 @@ The DevContainer automatically forwards the following ports:
 # VS Code will automatically start the container
 
 # Start development services (examples)
-cd app/frontend && npm run dev
+cd frontend && npm run dev
 # In another terminal
-cd app/backend && npm run start
+cd backend/functions && npm run start
  
 # Run unit tests from repo root
 npm test
@@ -265,7 +279,7 @@ npm test
 
 ```bash
 # Navigate to frontend directory
-cd app/frontend
+cd frontend
 
 # Start development server with hot reload
 npm run dev
@@ -289,7 +303,7 @@ npm run preview
 
 ```bash
 # Navigate to backend directory
-cd app/backend
+cd backend/functions
 
 # Start Azure Functions runtime
 npm run start
@@ -312,11 +326,8 @@ npm run watch
 #### 4. Testing Workflow
 
 ```bash
-# Run all tests (26 tests across frontend and backend)
+# Run all backend tests (Jest, from repo root)
 npm test
-
-# Run frontend tests only
-npm run test:frontend
 
 # Run backend tests only
 npm run test:backend
@@ -326,6 +337,9 @@ npm run test:watch
 
 # Generate coverage report
 npm run test:coverage
+
+# Run frontend tests (from the frontend package)
+cd frontend && npm test
 ```
 
 ### Git Workflow
@@ -379,73 +393,38 @@ git commit -m "infra: update Terraform modules"
 #### Frontend Code Structure
 
 ```
-app/frontend/src/
-├── components/           # Reusable Svelte components
-│   ├── SearchableSelect.svelte
-│   ├── CardSearchSelect.svelte
-│   ├── CardVariantSelector.svelte
-│   ├── FeatureFlagDebugPanel.svelte
-│   └── SearchableInput.svelte
-├── services/            # Business logic and API services
-│   ├── cloudDataService.js
-│   ├── hybridDataService.js
-│   ├── featureFlagService.js
-│   ├── cacheService.js
-│   ├── debugService.js
-│   ├── performanceService.js
-│   └── corsProxy.js
-├── stores/              # Svelte stores for state management
-│   ├── themeStore.js
-│   ├── setStore.js
-│   ├── cardStore.js
-│   ├── cacheStore.js
-│   └── debugStore.js
-├── utils/               # Utility functions and helpers
-│   ├── cacheUtils.js
-│   ├── dateUtils.js
-│   ├── formatUtils.js
-│   └── validationUtils.js
-├── config/              # Configuration and constants
-│   ├── apiConfig.js
-│   ├── cacheConfig.js
-│   └── debugConfig.js
-└── data/                # Static data and mappings
-    └── setMappings.js
+frontend/src/
+├── lib/                  # Shared library code ($lib alias)
+│   ├── components/       # Reusable Svelte components
+│   ├── services/         # Business logic and API services
+│   ├── stores/           # Svelte stores for state management
+│   ├── backends/         # Data-source backend adapters
+│   ├── server/           # Server-only modules
+│   └── utils/            # Utility functions and helpers
+└── routes/               # SvelteKit routes (pages + API endpoints)
+    ├── api/              # Server API route handlers
+    ├── cards/            # Card pages
+    └── sets/             # Set pages
 ```
 
 #### Backend Code Structure
 
 ```
-app/backend/src/
+backend/functions/src/
 ├── functions/           # Azure Functions (HTTP and Timer)
 │   ├── GetSetList/
 │   ├── GetCardsBySet/
 │   ├── GetCardInfo/
+│   ├── HealthCheck/
 │   ├── RefreshData/
-│   └── MonitorCredits/
+│   └── MonitorScrydexUsage/
 ├── services/            # Business logic services
 │   ├── CosmosDbService.ts
 │   ├── RedisCacheService.ts
-│   ├── BlobStorageService.ts
-│   ├── PokeDataApiService.ts
-│   ├── PokemonTcgApiService.ts
-│   ├── CreditMonitoringService.ts
-│   ├── ImageEnhancementService.ts
-│   ├── ImageUrlUpdateService.ts
-│   ├── PokeDataToTcgMappingService.ts
-│   ├── SetMappingService.ts
-│   └── BlobStorageService_old.ts
+│   ├── ScrydexApiService.ts
+│   └── MonitoringService.ts
 ├── models/              # TypeScript interfaces and types
-│   ├── Card.ts
-│   ├── Set.ts
-│   ├── ApiResponse.ts
-│   └── Config.ts
 └── utils/               # Utility functions
-    ├── cacheUtils.ts
-    ├── errorUtils.ts
-    ├── logUtils.ts
-    ├── validationUtils.ts
-    └── performanceUtils.ts
 ```
 
 ## Code Standards
@@ -724,7 +703,7 @@ PCPC follows the Test Pyramid pattern with comprehensive coverage:
 // tests/frontend/components/SearchableSelect.test.js
 import { render, fireEvent, waitFor } from "@testing-library/svelte";
 import { expect, test, describe, vi } from "vitest";
-import SearchableSelect from "../../../app/frontend/src/components/SearchableSelect.svelte";
+import SearchableSelect from "../../../frontend/src/lib/components/SearchableSelect.svelte";
 
 describe("SearchableSelect Component", () => {
   const mockOptions = [
@@ -773,7 +752,7 @@ describe("SearchableSelect Component", () => {
 ```javascript
 // tests/frontend/services/cacheService.test.js
 import { describe, test, expect, beforeEach, vi } from "vitest";
-import { cacheService } from "../../../app/frontend/src/services/cacheService.js";
+import { cacheService } from "../../../frontend/src/lib/services/cacheService.js";
 
 describe("Cache Service", () => {
   beforeEach(() => {
@@ -809,7 +788,7 @@ describe("Cache Service", () => {
 // tests/backend/functions/GetSetList.test.js
 import { describe, test, expect, beforeEach, vi } from "vitest";
 import { app } from "@azure/functions";
-import { GetSetList } from "../../../app/backend/src/functions/GetSetList/index.js";
+import { GetSetList } from "../../../backend/functions/src/functions/GetSetList/index.js";
 
 describe("GetSetList Function", () => {
   beforeEach(() => {
@@ -862,7 +841,7 @@ describe("GetSetList Function", () => {
 ```typescript
 // tests/backend/services/CosmosDbService.test.ts
 import { describe, test, expect, beforeEach, vi } from "vitest";
-import { CosmosDbService } from "../../../app/backend/src/services/CosmosDbService";
+import { CosmosDbService } from "../../../backend/functions/src/services/CosmosDbService";
 
 describe("CosmosDbService", () => {
   let cosmosDbService: CosmosDbService;
@@ -919,7 +898,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: "html",
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: "http://localhost:5173",
     trace: "on-first-retry",
   },
   projects: [
@@ -946,8 +925,8 @@ export default defineConfig({
   ],
   webServer: {
     command: "npm run dev",
-    port: 3000,
-    cwd: "./app/frontend",
+    port: 5173,
+    cwd: "./frontend",
   },
 });
 ```
@@ -971,7 +950,7 @@ The PCPC frontend includes comprehensive debugging tools:
 
 ```javascript
 // Built-in debug panel (available in development)
-// Access via: http://localhost:3000?debug=true
+// Access via: http://localhost:5173?debug=true
 
 // Debug service provides comprehensive logging
 import { debugService } from "../services/debugService.js";
@@ -999,9 +978,9 @@ Configure VS Code debugging for frontend:
   "name": "Debug Frontend",
   "type": "node",
   "request": "launch",
-  "program": "${workspaceFolder}/app/frontend/node_modules/.bin/rollup",
-  "args": ["-c", "--watch"],
-  "cwd": "${workspaceFolder}/app/frontend",
+  "program": "${workspaceFolder}/frontend/node_modules/.bin/vite",
+  "args": ["dev"],
+  "cwd": "${workspaceFolder}/frontend",
   "console": "integratedTerminal",
   "env": {
     "NODE_ENV": "development"
@@ -1019,9 +998,9 @@ Configure VS Code debugging for frontend:
   "name": "Debug Backend",
   "type": "node",
   "request": "launch",
-  "program": "${workspaceFolder}/app/backend/node_modules/.bin/func",
+  "program": "${workspaceFolder}/backend/functions/node_modules/.bin/func",
   "args": ["start", "--typescript"],
-  "cwd": "${workspaceFolder}/app/backend",
+  "cwd": "${workspaceFolder}/backend/functions",
   "console": "integratedTerminal",
   "env": {
     "NODE_ENV": "development"
@@ -1162,47 +1141,26 @@ class DebugCacheService {
 
 #### Build Optimization
 
-```javascript
-// rollup.config.cjs - Production optimizations
-export default {
-  input: "src/main.js",
-  output: {
-    sourcemap: !production,
-    format: "iife",
-    name: "app",
-    file: "public/build/bundle.js",
+```typescript
+// vite.config.ts - SvelteKit build configuration
+import { sveltekit } from "@sveltejs/kit/vite";
+import tailwindcss from "@tailwindcss/vite";
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  plugins: [tailwindcss(), sveltekit()],
+  build: {
+    // Vite/Rollup applies production minification and tree-shaking automatically.
+    // Tune chunking, sourcemaps, and target here as needed.
+    sourcemap: false,
+    target: "esnext",
   },
-  plugins: [
-    svelte({
-      compilerOptions: {
-        dev: !production,
-      },
-    }),
-    css({ output: "bundle.css" }),
-    resolve({
-      browser: true,
-      dedupe: ["svelte"],
-    }),
-    commonjs(),
-
-    // Production optimizations
-    production &&
-      terser({
-        compress: {
-          drop_console: true,
-          drop_debugger: true,
-        },
-      }),
-
-    // Bundle analyzer (optional)
-    production &&
-      analyzer({
-        summaryOnly: true,
-        limit: 10,
-      }),
-  ],
-};
+});
 ```
+
+The frontend is built with Vite (via the SvelteKit plugin); there is no
+hand-written Rollup config. Run `npm run build` for a production build and
+`npm run preview` to serve it locally.
 
 #### Runtime Performance
 
@@ -1266,7 +1224,7 @@ export function getCosmosClient(): CosmosClient {
 // Batch operations for efficiency
 export async function batchUpdateCards(cards: Card[]): Promise<void> {
   const client = getCosmosClient();
-  const container = client.database("PokeData").container("cards");
+  const container = client.database("PokemonCards").container("Cards");
 
   // Process in batches of 100
   const batchSize = 100;

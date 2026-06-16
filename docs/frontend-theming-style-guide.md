@@ -2,10 +2,12 @@
 
 ## Overview
 
-This style guide documents the CSS theming system for the PCPC frontend application. It provides a comprehensive reference for the design token hierarchy, usage patterns, and best practices for maintaining consistent, theme-aware component styling.
+This style guide documents the CSS theming system for the PCPC frontend application. It is the reference for the design token catalog, usage patterns, and best practices for consistent component styling.
 
-**Last Updated:** October 1, 2025  
-**Version:** 1.0.0
+The current theme is the **"Elevated Dark" v7** token system. It is **dark-mode-first**; a light mode is deferred (not yet implemented). The design intent and approved token values come from `frontend/PCPC_v7_Design_Spec.md` (Issue #12C, "Visual personality pass").
+
+**Last Updated:** June 16, 2026
+**Version:** 2.0.0 (v7 "Elevated Dark")
 
 ---
 
@@ -13,12 +15,12 @@ This style guide documents the CSS theming system for the PCPC frontend applicat
 
 1. [Design Token System](#design-token-system)
 2. [Token Categories](#token-categories)
-3. [Component Styling Patterns](#component-styling-patterns)
-4. [Do's and Don'ts](#dos-and-donts)
-5. [Reference Implementation](#reference-implementation)
-6. [Common Patterns](#common-patterns)
-7. [Accessibility Guidelines](#accessibility-guidelines)
-8. [Migration Guide](#migration-guide)
+3. [Theme Switching](#theme-switching)
+4. [Tailwind v4 Setup](#tailwind-v4-setup)
+5. [Component Styling Patterns](#component-styling-patterns)
+6. [Do's and Don'ts](#dos-and-donts)
+7. [Reference Implementation](#reference-implementation)
+8. [Accessibility Guidelines](#accessibility-guidelines)
 
 ---
 
@@ -26,346 +28,311 @@ This style guide documents the CSS theming system for the PCPC frontend applicat
 
 ### Architecture
 
-PCPC uses a **semantic token system** with CSS Custom Properties (CSS Variables) for runtime theme switching. The system is defined in `app/frontend/public/global.css` and follows this hierarchy:
+PCPC uses a **semantic token system** built on CSS Custom Properties (CSS variables). All tokens are defined once, under a single `:root` block, in:
 
 ```
-Semantic Tokens (Purpose-Based)
-└─> Component Usage
-    └─> Runtime Theme Switching
+frontend/src/app.css
 ```
 
-### Theme Switching
+There is no separate global stylesheet — `app.css` is the single source of truth. It is imported once at the app entry (`frontend/src/routes/+layout.svelte` / the root layout) and the tokens cascade to every component.
 
-Themes are controlled via the `data-theme` attribute on the root element:
+The hierarchy is:
 
-```html
-<!-- Light Mode (default) -->
-<html data-theme="light">
-  <!-- Dark Mode -->
-  <html data-theme="dark"></html>
-</html>
+```
+Raw token definitions (:root in app.css)
+└─> Backward-compat aliases (also :root, mapping legacy names → new tokens)
+    └─> Component usage (var(--token) in .svelte <style> blocks)
 ```
 
-All theme transitions are smooth with a 0.3s ease animation applied globally.
+Tokens are organized into groups: **surfaces**, **text hierarchy**, **accents**, **pricing/semantic**, **grading-company colors**, **chart colors**, **rarity colors**, **borders**, **radius/spacing**, **type scale**, **shadows**, and **transitions**.
+
+> Note on legacy names: the old `--bg-*`, `--text-inverse`, `--color-pokemon-*`, `--shadow-light/medium/heavy`, etc. still exist, but **only as backward-compat aliases** at the bottom of `app.css` (they `var()`-reference the real v7 tokens). New code should use the v7 tokens documented below, not the aliases.
 
 ---
 
 ## Token Categories
 
-### 1. Background Colors
+All values below are the literal definitions from `frontend/src/app.css` (`:root`, lines 8–163).
 
-#### Page & Layout Backgrounds
+### 1. Surfaces (three depth levels)
 
-| Token                | Light Mode        | Dark Mode | Usage                                   |
-| -------------------- | ----------------- | --------- | --------------------------------------- |
-| `--bg-primary`       | `#000000`         | `#000000` | Main page background behind all content |
-| `--bg-secondary`     | `rgba(0,0,0,0.9)` | `#41444e` | Card image containers, scrollbar tracks |
-| `--bg-tertiary`      | `rgba(0,0,0,0.9)` | `#41444e` | Results section background              |
-| `--bg-image-opacity` | `1`               | `1`       | Background image opacity                |
+| Token         | Value     | Usage                                          |
+| ------------- | --------- | ---------------------------------------------- |
+| `--surface-0` | `#0d0f14` | Page background (deepest level), `body`        |
+| `--surface-1` | `#12141b` | Containers, headers, group/section backgrounds |
+| `--surface-2` | `#1a1d28` | Inputs, dropdowns, cards, elevated elements    |
 
-#### Container Backgrounds
+### 2. Text Hierarchy
 
-| Token               | Light Mode        | Dark Mode | Usage                                 |
-| ------------------- | ----------------- | --------- | ------------------------------------- |
-| `--bg-container`    | `rgba(0,0,0,0.9)` | `#41444e` | Main form container background        |
-| `--bg-dropdown`     | `#41444e`         | `#22242f` | Input fields, dropdown menus          |
-| `--bg-hover`        | `#000000`         | `#22242f` | Hover states for interactive elements |
-| `--bg-group-header` | `#000000`         | `#41444e` | Group headers in dropdown lists       |
+| Token              | Value     | Usage                                       |
+| ------------------ | --------- | ------------------------------------------- |
+| `--text-primary`   | `#e8eaef` | Primary body text, headings                 |
+| `--text-secondary` | `#d7dee3` | Secondary text                              |
+| `--text-muted`     | `#9ca3af` | Labels, secondary detail, placeholders icon |
+| `--text-dim`       | `#7c8493` | Dimmed text, input placeholders, the title slash |
+| `--text-faint`     | `#374151` | Faintest text / disabled-adjacent           |
 
-**Usage Example:**
+### 3. Accents
 
-```css
-.form-container {
-  background-color: var(--bg-container);
-}
+| Token               | Value     | Usage                                |
+| ------------------- | --------- | ------------------------------------ |
+| `--accent-red`      | `#e8453c` | Primary accent: buttons, focus, selected indicators |
+| `--accent-red-dark` | `#d63a31` | Button hover state                   |
+| `--amber`           | `#c49a6c` | v7 accent: meta chips, detail buttons, expanded borders |
+| `--amber-dim`       | `rgba(196, 154, 108, 0.12)` | Amber tint backgrounds |
+| `--amber-border`    | `rgba(196, 154, 108, 0.25)` | Amber hairline borders |
 
-.dropdown-menu {
-  background-color: var(--bg-dropdown);
-}
+### 4. Pricing (semantic)
 
-.dropdown-item:hover {
-  background-color: var(--bg-hover);
-}
-```
+| Token             | Value     | Usage                  |
+| ----------------- | --------- | ---------------------- |
+| `--price-green`   | `#4ade80` | Price up / positive    |
+| `--price-red`     | `#f87171` | Price down / error     |
+| `--price-neutral` | `#9ca3af` | Neutral / no change    |
 
-### 2. Typography Colors
+### 5. Language Badges
 
-| Token              | Light Mode | Dark Mode | Usage                                  |
-| ------------------ | ---------- | --------- | -------------------------------------- |
-| `--text-primary`   | `#000000`  | `#d7dee3` | Main text (labels, body, card details) |
-| `--text-secondary` | `#000000`  | `#d7dee3` | Secondary text (currency, timestamps)  |
-| `--text-muted`     | `#000000`  | `#e3d7d7` | Disabled inputs, placeholders          |
-| `--text-inverse`   | `#000000`  | `#eeff00` | Text on contrasting backgrounds        |
+| Token            | Value                      | Usage                    |
+| ---------------- | -------------------------- | ------------------------ |
+| `--badge-en-bg`  | `rgba(59, 130, 246, 0.1)`  | English badge background |
+| `--badge-en-text`| `#60a5fa`                  | English badge text; also links / cached indicator |
+| `--badge-jp-bg`  | `rgba(232, 69, 60, 0.1)`   | Japanese badge background |
+| `--badge-jp-text`| `#f09595`                  | Japanese badge text      |
 
-**Usage Example:**
+### 6. Borders
 
-```css
-.label {
-  color: var(--text-primary);
-}
+| Token             | Value                       | Usage                        |
+| ----------------- | --------------------------- | ---------------------------- |
+| `--border-subtle` | `rgba(255, 255, 255, 0.06)` | Standard hairline borders    |
+| `--border-faint`  | `rgba(255, 255, 255, 0.03)` | Faintest separators          |
 
-.timestamp {
-  color: var(--text-secondary);
-}
+Borders in v7 are hairline (0.5px) by convention.
 
-input::placeholder {
-  color: var(--text-muted);
-}
+### 7. Grading-Company Colors
 
-.header-text {
-  color: var(--text-inverse);
-}
-```
+| Token               | Value                       | Usage          |
+| ------------------- | --------------------------- | -------------- |
+| `--grade-psa`       | `rgba(59, 130, 246, 0.15)`  | PSA chip bg    |
+| `--grade-psa-text`  | `#60a5fa`                   | PSA text       |
+| `--grade-cgc`       | `rgba(139, 92, 246, 0.15)`  | CGC chip bg    |
+| `--grade-cgc-text`  | `#a78bfa`                   | CGC text       |
+| `--grade-bgs`       | `rgba(234, 179, 8, 0.15)`   | BGS chip bg    |
+| `--grade-bgs-text`  | `#fbbf24`                   | BGS text       |
+| `--grade-sgc`       | `rgba(52, 211, 153, 0.1)`   | SGC chip bg    |
+| `--grade-sgc-text`  | `#34d399`                   | SGC text       |
 
-### 3. Border Colors
+### 8. Chart Colors
 
-| Token                | Light Mode | Dark Mode | Usage                                     |
-| -------------------- | ---------- | --------- | ----------------------------------------- |
-| `--border-primary`   | `#000000`  | `#22242f` | Primary borders (results, cards, buttons) |
-| `--border-secondary` | `#000000`  | `#000000` | Secondary borders (list separators)       |
-| `--border-input`     | `#000000`  | `#48365b` | Input field borders (normal state)        |
-| `--border-focus`     | `#000000`  | `#48365b` | Input field borders (focused state)       |
+Per-condition (`chart.js` datasets):
 
-**Usage Example:**
+| Token        | Value     | Condition         |
+| ------------ | --------- | ----------------- |
+| `--chart-nm` | `#4ade80` | Near Mint         |
+| `--chart-lp` | `#60a5fa` | Lightly Played    |
+| `--chart-mp` | `#a78bfa` | Moderately Played |
+| `--chart-hp` | `#fbbf24` | Heavily Played    |
+| `--chart-dm` | `#f87171` | Damaged           |
 
-```css
-.card {
-  border: 1px solid var(--border-primary);
-}
+Per-company graded: `--chart-psa` `#60a5fa`, `--chart-cgc` `#a78bfa`, `--chart-bgs` `#fbbf24`, `--chart-sgc` `#34d399`.
 
-.list-item {
-  border-bottom: 1px solid var(--border-secondary);
-}
+Per-company luminance shades (compare chart) are also defined, e.g. `--psa-1..3`, `--cgc-1..6`, `--bgs-1..3`, `--sgc-1..3`. See `app.css` lines 69–73 for the full set.
 
-input {
-  border: 1px solid var(--border-input);
-}
+### 9. Rarity Colors
 
-input:focus {
-  border-color: var(--border-focus);
-}
-```
+| Token               | Value     | Rarity                       |
+| ------------------- | --------- | ---------------------------- |
+| `--rarity-common`   | `#6b7280` | Common                       |
+| `--rarity-uncommon` | `#4ade80` | Uncommon                     |
+| `--rarity-rare`     | `#60a5fa` | Rare                         |
+| `--rarity-holo`     | `#a78bfa` | Holo                         |
+| `--rarity-ultra`    | `#fbbf24` | Ultra Rare                   |
+| `--rarity-full-art` | `#f472b6` | Full Art                     |
+| `--rarity-sar-from` | `#fbbf24` | SAR gradient start (gold)    |
+| `--rarity-sar-to`   | `#f472b6` | SAR gradient end (pink)      |
+| `--rarity-hyper`    | `#f59e0b` | Hyper Rare                   |
 
-### 4. Brand Colors (Pokemon Theme)
+### 10. Radius & Spacing
 
-| Token                      | Light Mode | Dark Mode | Usage                               |
-| -------------------------- | ---------- | --------- | ----------------------------------- |
-| `--color-pokemon-blue`     | `#000000`  | `#d7dee3` | Header, headings, cached indicators |
-| `--color-pokemon-red`      | `#000000`  | `#ff0000` | Primary buttons, prices, errors     |
-| `--color-pokemon-red-dark` | `#000000`  | `#ff0000` | Button hover states                 |
+| Token             | Value     | Usage              |
+| ----------------- | --------- | ------------------ |
+| `--radius-card`   | `10px`    | Cards              |
+| `--radius-input`  | `6px`     | Inputs, dropdowns  |
+| `--radius-badge`  | `4px`     | Badges             |
+| `--radius-pill`   | `6px`     | Pills              |
 
-**Usage Example:**
+Layout tokens: `--content-max-width: 1400px`, `--sidebar-width: 200px`, `--layout-gap: 24px` (these scale up at the `1800px` / `2200px` breakpoints — see lines 237–254).
 
-```css
-.header {
-  background-color: var(--color-pokemon-blue);
-}
+### 11. Type Scale
 
-.price-value {
-  color: var(--color-pokemon-red);
-}
+| Token             | Value  | Usage                     |
+| ----------------- | ------ | ------------------------- |
+| `--fs-micro`      | `10px` | Micro labels              |
+| `--fs-badge`      | `11px` | Badges, uppercase labels  |
+| `--fs-body`       | `12px` | Body text                 |
+| `--fs-secondary`  | `13px` | Secondary text            |
+| `--fs-card-name`  | `20px` | Card name                 |
+| `--fs-hero`       | `28px` | Hero price                |
 
-.primary-button {
-  background-color: var(--color-pokemon-red);
-}
+These scale up at `min-width: 1800px` and `--fs-hero` shrinks to `24px` at `max-width: 768px`. The font family is **Geist** (with a system-font fallback stack).
 
-.primary-button:hover {
-  background-color: var(--color-pokemon-red-dark);
-}
-```
+### 12. Shadows
 
-### 5. Interactive States
+| Token           | Value                                | Usage              |
+| --------------- | ------------------------------------ | ------------------ |
+| `--shadow-sm`   | `0 1px 2px rgba(0, 0, 0, 0.3)`       | Subtle elevation   |
+| `--shadow-md`   | `0 4px 12px rgba(0, 0, 0, 0.4)`      | Dropdowns, popovers |
+| `--shadow-lg`   | `0 8px 24px rgba(0, 0, 0, 0.5)`      | Modals             |
+| `--shadow-glow` | `0 0 40px rgba(232, 69, 60, 0.08)`   | Accent glow        |
 
-| Token            | Light Mode | Dark Mode | Usage                                     |
-| ---------------- | ---------- | --------- | ----------------------------------------- |
-| `--bg-hover`     | `#000000`  | `#22242f` | Hover background for interactive elements |
-| `--border-focus` | `#000000`  | `#48365b` | Focus state borders                       |
+### 13. Transitions & Focus
 
-### 6. Shadows
+| Token                | Value                                                          | Usage                |
+| -------------------- | -------------------------------------------------------------- | -------------------- |
+| `--transition-speed` | `0.2s`                                                         | Hover/focus timing   |
+| `--transition-fn`    | `ease`                                                         | Easing function      |
+| `--focus-ring`       | `0 0 0 2px var(--surface-0), 0 0 0 4px rgba(232, 69, 60, 0.4)` | `box-shadow` focus ring on inputs |
 
-| Token             | Light Mode        | Dark Mode         | Usage                            |
-| ----------------- | ----------------- | ----------------- | -------------------------------- |
-| `--shadow-light`  | `rgba(0,0,0,0.1)` | `rgba(0,0,0,0.3)` | Light shadows                    |
-| `--shadow-medium` | `rgba(0,0,0,0.2)` | `rgba(0,0,0,0.5)` | Medium shadows (results section) |
-| `--shadow-heavy`  | `rgba(0,0,0,0.3)` | `rgba(0,0,0,0.7)` | Heavy shadows (form container)   |
+---
 
-**Usage Example:**
+## Theme Switching
 
-```css
-.card {
-  box-shadow: 0 2px 4px var(--shadow-light);
-}
+**There is no working light/dark CSS switch today.** Document and code reality:
 
-.modal {
-  box-shadow: 0 4px 8px var(--shadow-medium);
-}
+- `app.css` defines all tokens under a single `:root` block. There are **no `[data-theme]` selectors** anywhere in `app.css` (confirmed: 0 occurrences). The system is dark-mode-first; light mode is explicitly deferred (see the header comment in `app.css`).
+- A theme store exists at `frontend/src/lib/stores/theme.svelte.ts` (re-exported from `frontend/src/lib/stores/index.ts` as `themeStore`). It tracks a `'light' | 'dark'` value, persists it to `localStorage`, reads the OS `prefers-color-scheme`, and calls `document.documentElement.setAttribute('data-theme', theme)`.
+- **However, no CSS consumes that `data-theme` attribute.** Because there are no `[data-theme="..."]` rules, setting the attribute has no visual effect — the app renders the dark `:root` tokens regardless of the store's value. The store is effectively dormant theming plumbing.
 
-.elevated-container {
-  box-shadow: 0 8px 16px var(--shadow-heavy);
-}
-```
+Practical implication: do **not** write components that rely on a theme toggle changing colors. If a real light mode is added later, it should introduce a `[data-theme='light']` (or `@media (prefers-color-scheme: light)`) block in `app.css` that overrides the `:root` token values — at which point this section should be updated.
 
-### 7. Transitions
+---
 
-| Token                | Value  | Usage                                                   |
-| -------------------- | ------ | ------------------------------------------------------- |
-| `--transition-speed` | `0.3s` | Animation speed for theme transitions and hover effects |
+## Tailwind v4 Setup
 
-**Usage Example:**
+PCPC uses **Tailwind CSS v4** in CSS-first mode (no `tailwind.config.js`):
 
-```css
-.animated-element {
-  transition: all var(--transition-speed) ease;
-}
-```
+- `frontend/package.json` pins `tailwindcss` and `@tailwindcss/vite` at `^4.1.0`.
+- Tailwind is wired in as a Vite plugin in `frontend/vite.config.ts`:
+
+  ```ts
+  import tailwindcss from '@tailwindcss/vite';
+  import { sveltekit } from '@sveltejs/kit/vite';
+  import { defineConfig } from 'vite';
+
+  export default defineConfig({
+    plugins: [tailwindcss(), sveltekit()]
+  });
+  ```
+
+- Tailwind is activated by a single line at the top of `app.css`:
+
+  ```css
+  @import 'tailwindcss';
+  ```
+
+So `app.css` does double duty: it pulls in Tailwind and defines the design tokens. Components mix Tailwind utility classes with scoped `<style>` blocks that reference the CSS variables above.
 
 ---
 
 ## Component Styling Patterns
 
-### Pattern 1: Basic Component (Recommended)
-
-Use semantic tokens directly in component styles:
+### Pattern 1: Surfaces and text
 
 ```svelte
 <style>
-  .component {
-    background-color: var(--bg-dropdown);
+  .panel {
+    background-color: var(--surface-1);
     color: var(--text-primary);
-    border: 1px solid var(--border-primary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
   }
-
-  .component:hover {
-    background-color: var(--bg-hover);
+  .panel .meta {
+    color: var(--text-muted);
+    font-size: var(--fs-badge);
   }
 </style>
 ```
 
-### Pattern 2: Interactive Elements
+### Pattern 2: Primary button (accent)
 
-For buttons, links, and clickable items:
+The global `button` element already uses the accent (see `app.css` lines 212–218). To match it in a custom element:
 
 ```svelte
 <style>
   .button {
-    background-color: var(--color-pokemon-red);
-    color: white;
+    background-color: var(--accent-red);
+    color: #ffffff;
     border: none;
-    transition: background-color var(--transition-speed) ease;
+    border-radius: var(--radius-input);
+    transition: background-color var(--transition-speed) var(--transition-fn);
   }
-
-  .button:hover {
-    background-color: var(--color-pokemon-red-dark);
+  .button:hover:not(:disabled) {
+    background-color: var(--accent-red-dark);
   }
-
   .button:disabled {
-    background-color: var(--border-primary);
-    color: var(--text-muted);
+    background-color: var(--surface-2);
+    color: var(--text-dim);
     cursor: not-allowed;
   }
 </style>
 ```
 
-### Pattern 3: Form Inputs
-
-For text inputs, selects, and textareas:
+### Pattern 3: Form input with focus ring
 
 ```svelte
 <style>
   .input {
-    background-color: var(--bg-dropdown);
+    background-color: var(--surface-2);
     color: var(--text-primary);
-    border: 1px solid var(--border-input);
-    padding: 0.5rem;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-input);
   }
-
   .input:focus {
-    border-color: var(--border-focus);
     outline: none;
+    border-color: var(--accent-red);
+    box-shadow: var(--focus-ring);
   }
-
   .input::placeholder {
-    color: var(--text-muted);
-  }
-
-  .input:disabled {
-    color: var(--text-muted);
-    background-color: var(--bg-hover);
+    color: var(--text-dim);
   }
 </style>
 ```
 
-### Pattern 4: Dropdown Menus
-
-For dropdown lists and select menus:
+### Pattern 4: Dropdown menu
 
 ```svelte
 <style>
   .dropdown {
-    background-color: var(--bg-dropdown);
-    border: 1px solid var(--border-primary);
-    box-shadow: 0 4px 8px var(--shadow-medium);
+    background-color: var(--surface-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-input);
+    box-shadow: var(--shadow-md);
   }
-
-  .dropdown-item {
-    color: var(--text-primary);
-    padding: 0.5rem;
-    border-bottom: 1px solid var(--border-secondary);
+  .group-label {
+    background-color: var(--surface-1);
+    color: var(--text-muted);
+    font-size: var(--fs-badge);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
-
   .dropdown-item:hover {
-    background-color: var(--bg-hover);
-    color: var(--color-pokemon-blue);
+    background-color: var(--bg-hover); /* alias → rgba(255,255,255,0.04) */
   }
-
-  .dropdown-item:last-child {
-    border-bottom: none;
+  .dropdown-item.selected {
+    border-left: 3px solid var(--accent-red);
   }
 </style>
 ```
 
-### Pattern 5: Group Headers
-
-For section headers within lists:
+### Pattern 5: Pricing and rarity semantics
 
 ```svelte
 <style>
-  .group-header {
-    background-color: var(--bg-group-header);
-    color: var(--color-pokemon-blue);
-    padding: 0.5rem;
-    font-weight: bold;
-    border-bottom: 1px solid var(--border-primary);
-    position: sticky;
-    top: 0;
-  }
-</style>
-```
+  .price-up   { color: var(--price-green); }
+  .price-down { color: var(--price-red); }
+  .price-flat { color: var(--price-neutral); }
 
-### Pattern 6: Cards and Containers
-
-For card components and content containers:
-
-```svelte
-<style>
-  .card {
-    background-color: var(--bg-container);
-    border: 1px solid var(--border-primary);
-    border-radius: 4px;
-    padding: 1rem;
-    box-shadow: 0 2px 4px var(--shadow-light);
-  }
-
-  .card-header {
-    color: var(--color-pokemon-blue);
-    border-bottom: 1px solid var(--border-secondary);
-    padding-bottom: 0.5rem;
-    margin-bottom: 1rem;
-  }
-
-  .card-body {
-    color: var(--text-primary);
-  }
+  .rarity-rare { color: var(--rarity-rare); }
+  .rarity-holo { color: var(--rarity-holo); }
 </style>
 ```
 
@@ -373,462 +340,123 @@ For card components and content containers:
 
 ## Do's and Don'ts
 
-### ✅ DO
+### DO
 
-#### Use Semantic Tokens
+- Use v7 tokens (`--surface-*`, `--text-*`, `--accent-*`, `--price-*`, `--grade-*`, `--rarity-*`) directly in component `<style>` blocks.
+- Use `--focus-ring` for input focus states, matching the global `input:focus` rule.
+- Use the type-scale tokens (`--fs-body`, `--fs-badge`, …) instead of hardcoded `px` sizes so components scale at the desktop/mobile breakpoints.
+- Use the radius and shadow tokens for consistent elevation.
 
 ```css
-/* ✅ CORRECT - Uses semantic tokens */
-.dropdown {
-  background-color: var(--bg-dropdown);
+/* CORRECT — v7 tokens */
+.card {
+  background-color: var(--surface-2);
   color: var(--text-primary);
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-md);
 }
 ```
 
-#### Use Theme-Aware Interactive States
+### DON'T
+
+- Don't hardcode hex/rgba colors that a token already covers.
 
 ```css
-/* ✅ CORRECT - Theme-aware hover state */
-.item:hover {
-  background-color: var(--bg-hover);
-  color: var(--color-pokemon-blue);
-}
+/* WRONG */
+.card { background-color: #1a1d28; color: #e8eaef; }
+/* CORRECT */
+.card { background-color: var(--surface-2); color: var(--text-primary); }
 ```
 
-#### Use Consistent Spacing
-
-```css
-/* ✅ CORRECT - Consistent padding */
-.component {
-  padding: 0.5rem;
-  margin: 0.5rem 0;
-}
-```
-
-#### Use Transitions for Smooth Theme Switching
-
-```css
-/* ✅ CORRECT - Smooth transitions */
-.component {
-  transition: background-color var(--transition-speed) ease, color var(
-        --transition-speed
-      ) ease;
-}
-```
-
-### ❌ DON'T
-
-#### Don't Use Hardcoded Colors
-
-```css
-/* ❌ WRONG - Hardcoded white background */
-.dropdown {
-  background-color: white;
-  color: #333;
-  border: 1px solid #ddd;
-}
-
-/* ✅ CORRECT - Use semantic tokens */
-.dropdown {
-  background-color: var(--bg-dropdown);
-  color: var(--text-primary);
-  border: 1px solid var(--border-primary);
-}
-```
-
-#### Don't Use Magic RGBA Values
-
-```css
-/* ❌ WRONG - Hardcoded rgba */
-.overlay {
-  background-color: rgba(255, 255, 255, 0.2);
-}
-
-/* ✅ CORRECT - Use semantic tokens or define new token */
-.overlay {
-  background-color: var(--bg-secondary);
-}
-```
-
-#### Don't Use Hardcoded Hover States
-
-```css
-/* ❌ WRONG - Hardcoded hover colors */
-.item:hover {
-  background-color: #f0f0f0;
-  color: #3c5aa6;
-}
-
-/* ✅ CORRECT - Theme-aware hover */
-.item:hover {
-  background-color: var(--bg-hover);
-  color: var(--color-pokemon-blue);
-}
-```
-
-#### Don't Mix Hardcoded and Token-Based Styles
-
-```css
-/* ❌ WRONG - Inconsistent approach */
-.component {
-  background-color: var(--bg-dropdown); /* Token */
-  color: #333; /* Hardcoded */
-  border: 1px solid var(--border-primary); /* Token */
-}
-
-/* ✅ CORRECT - Consistent token usage */
-.component {
-  background-color: var(--bg-dropdown);
-  color: var(--text-primary);
-  border: 1px solid var(--border-primary);
-}
-```
+- Don't reach for the backward-compat aliases (`--bg-primary`, `--color-pokemon-red`, `--shadow-light`, `--text-inverse`, …) in new code. They map to v7 tokens but exist only so legacy components keep working — prefer the real token (`--surface-0`, `--accent-red`, etc.).
+- Don't write theme-toggle-dependent styling. As documented above, no CSS responds to `data-theme`, so a "light mode override" you add to a component will never trigger.
 
 ---
 
 ## Reference Implementation
 
-### SearchableSelect.svelte (Correct Pattern)
+### `SearchableSelect.svelte` (correct pattern)
 
-This component demonstrates the correct usage of the theming system:
+`frontend/src/lib/components/SearchableSelect.svelte` is a good real-world example of the v7 system in use. Its scoped `<style>` block uses tokens throughout:
 
 ```svelte
 <style>
-  /* Input field - uses semantic tokens */
-  input {
-    width: 100%;
-    padding: 0.5rem;
-    font-size: 1rem;
-    border: 1px solid var(--border-input);
-    border-radius: 4px;
-    background-color: var(--bg-dropdown);
+  .searchable-input {
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-input, 6px);
+    background-color: var(--surface-2);
     color: var(--text-primary);
+    font-size: var(--fs-body);
+    transition: border-color var(--transition-speed, 0.2s) ease,
+                box-shadow var(--transition-speed, 0.2s) ease;
   }
-
-  /* Dropdown menu - theme-aware */
+  .searchable-input:focus {
+    outline: none;
+    border-color: var(--accent-red);
+    box-shadow: var(--focus-ring);
+  }
   .dropdown {
-    background-color: var(--bg-dropdown);
-    border: 1px solid var(--border-primary);
-    box-shadow: 0 4px 8px var(--shadow-light);
+    background-color: var(--surface-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-input, 6px);
+    box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.4));
   }
-
-  /* Group headers - uses brand colors */
-  .group-header {
-    background-color: var(--bg-group-header);
-    color: var(--color-pokemon-blue);
-    border-bottom: 1px solid var(--border-primary);
+  .group-label {
+    background-color: var(--surface-1);
+    color: var(--text-muted);
+    font-size: var(--fs-badge);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
-
-  /* List items - proper hover states */
-  .item {
-    color: var(--text-primary);
-    border-bottom: 1px solid var(--border-secondary);
+  .dropdown-item { color: var(--text-primary); }
+  .dropdown-item:hover,
+  .dropdown-item.highlighted {
+    background-color: var(--bg-hover, rgba(255, 255, 255, 0.04));
   }
-
-  .item:hover, .highlighted {
-    background-color: var(--bg-hover);
-    color: var(--color-pokemon-blue);
-  }
-
-  /* Secondary text - uses muted color */
-  .secondary {
-    color: var(--text-secondary);
-  }
+  .dropdown-item.selected { border-left: 3px solid var(--accent-red); }
+  .item-secondary { color: var(--text-muted); font-size: var(--fs-badge); }
 </style>
 ```
 
-**Key Takeaways:**
+**Key takeaways:**
 
-1. All colors use CSS variables
-2. Hover states use theme-aware tokens
-3. Interactive elements have proper focus states
-4. Consistent spacing and transitions
-
----
-
-## Common Patterns
-
-### Pattern: Modal/Dialog
-
-```svelte
-<style>
-  .modal-overlay {
-    background-color: var(--bg-secondary);
-    /* Note: For semi-transparent overlays, consider adding opacity */
-    opacity: 0.95;
-  }
-
-  .modal-content {
-    background-color: var(--bg-container);
-    border: 1px solid var(--border-primary);
-    box-shadow: 0 8px 16px var(--shadow-heavy);
-    color: var(--text-primary);
-  }
-
-  .modal-header {
-    color: var(--color-pokemon-blue);
-    border-bottom: 1px solid var(--border-secondary);
-  }
-</style>
-```
-
-### Pattern: List with Separators
-
-```svelte
-<style>
-  .list {
-    background-color: var(--bg-dropdown);
-    border: 1px solid var(--border-primary);
-  }
-
-  .list-item {
-    color: var(--text-primary);
-    padding: 0.75rem;
-    border-bottom: 1px solid var(--border-secondary);
-  }
-
-  .list-item:last-child {
-    border-bottom: none;
-  }
-
-  .list-item:hover {
-    background-color: var(--bg-hover);
-  }
-</style>
-```
-
-### Pattern: Status Indicators
-
-```svelte
-<style>
-  .status {
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.875rem;
-  }
-
-  .status-success {
-    background-color: var(--color-pokemon-blue);
-    color: white;
-  }
-
-  .status-error {
-    background-color: var(--color-pokemon-red);
-    color: white;
-  }
-
-  .status-warning {
-    background-color: var(--bg-hover);
-    color: var(--text-primary);
-    border: 1px solid var(--border-primary);
-  }
-</style>
-```
-
-### Pattern: Loading States
-
-```svelte
-<style>
-  .loading {
-    color: var(--text-secondary);
-    background-color: var(--bg-hover);
-    padding: 1rem;
-    text-align: center;
-  }
-
-  .skeleton {
-    background-color: var(--bg-hover);
-    border-radius: 4px;
-    animation: pulse 1.5s ease-in-out infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
-</style>
-```
+1. Surfaces come from `--surface-1` / `--surface-2`; text from `--text-primary` / `--text-muted`.
+2. Focus uses `border-color: var(--accent-red)` plus `box-shadow: var(--focus-ring)`, matching the global input style.
+3. Radius, shadow, type-scale, and transition tokens are used (with literal fallbacks) rather than magic values.
+4. The selected-row affordance is an `--accent-red` left border.
 
 ---
 
 ## Accessibility Guidelines
 
-### Color Contrast
+### Color contrast
 
-Ensure sufficient color contrast ratios for accessibility:
+Target WCAG AA against the dark surfaces:
 
-- **Normal text:** Minimum 4.5:1 contrast ratio
-- **Large text (18pt+):** Minimum 3:1 contrast ratio
-- **Interactive elements:** Minimum 3:1 contrast ratio
+- Normal text: ≥ 4.5:1
+- Large text (≥ 18px / `--fs-card-name` and up): ≥ 3:1
+- Interactive/non-text indicators: ≥ 3:1
 
-### Focus States
+`--text-primary` (`#e8eaef`) and `--text-secondary` (`#d7dee3`) clear AA on all three surface levels; `--text-dim` (`#7c8493`) and `--text-faint` (`#374151`) are intentionally low-contrast — use them only for de-emphasized, non-essential text.
 
-Always provide visible focus indicators:
+### Focus states
+
+Use the shared focus ring so keyboard focus is always visible:
 
 ```css
-.interactive-element:focus {
-  outline: 2px solid var(--border-focus);
-  outline-offset: 2px;
-}
-
-/* Or use box-shadow for custom focus rings */
-.button:focus {
-  box-shadow: 0 0 0 3px rgba(60, 90, 166, 0.3);
+.interactive:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 ```
 
-### Keyboard Navigation
+### Keyboard navigation
 
-Ensure all interactive elements are keyboard accessible:
-
-```svelte
-<div
-  role="button"
-  tabindex="0"
-  on:click={handleClick}
-  on:keydown={e => e.key === 'Enter' && handleClick()}
->
-  Interactive Element
-</div>
-```
+All interactive elements must be reachable and operable by keyboard. `SearchableSelect.svelte` is the reference: it handles `ArrowUp`/`ArrowDown`/`Enter`/`Escape`, manages a highlighted index, and exposes `role="option"` with `aria-selected`.
 
 ---
 
-## Migration Guide
-
-### Step 1: Identify Hardcoded Colors
-
-Search for common hardcoded color patterns:
-
-- `color: white` or `color: #fff`
-- `background-color: white` or `background: #fff`
-- `color: #333` or similar dark grays
-- `border: 1px solid #ddd` or similar light grays
-- `rgba(255, 255, 255, ...)` or similar rgba values
-
-### Step 2: Map to Semantic Tokens
-
-Use this mapping guide:
-
-| Hardcoded Value          | Semantic Token                                       | Context                   |
-| ------------------------ | ---------------------------------------------------- | ------------------------- |
-| `white` (background)     | `var(--bg-dropdown)`                                 | Input fields, dropdowns   |
-| `white` (text)           | `var(--text-inverse)`                                | Text on dark backgrounds  |
-| `#333`, `#666` (text)    | `var(--text-primary)` or `var(--text-secondary)`     | Body text                 |
-| `#ddd`, `#ccc` (borders) | `var(--border-primary)` or `var(--border-secondary)` | Borders                   |
-| `#f0f0f0` (hover)        | `var(--bg-hover)`                                    | Hover states              |
-| `#3c5aa6` (blue)         | `var(--color-pokemon-blue)`                          | Brand blue                |
-| `rgba(255,255,255,0.2)`  | `var(--bg-secondary)` + opacity                      | Semi-transparent overlays |
-
-### Step 3: Replace Systematically
-
-Replace one component at a time:
-
-```css
-/* BEFORE */
-.dropdown {
-  background-color: white;
-  border: 1px solid #ddd;
-  color: #333;
-}
-
-.dropdown-item:hover {
-  background-color: #f0f0f0;
-  color: #3c5aa6;
-}
-
-/* AFTER */
-.dropdown {
-  background-color: var(--bg-dropdown);
-  border: 1px solid var(--border-primary);
-  color: var(--text-primary);
-}
-
-.dropdown-item:hover {
-  background-color: var(--bg-hover);
-  color: var(--color-pokemon-blue);
-}
-```
-
-### Step 4: Test Both Themes
-
-After each component migration:
-
-1. Test in light mode
-2. Test in dark mode
-3. Test theme switching transition
-4. Verify hover/focus states
-5. Check accessibility contrast
-
-### Step 5: Document Component-Specific Patterns
-
-If a component needs unique styling, document it:
-
-```svelte
-<style>
-  /* Special case: This component needs higher contrast */
-  .special-dropdown {
-    /* Override with more specific token if needed */
-    background-color: var(--bg-container);
-    /* Or define component-specific variable */
-    --dropdown-bg: var(--bg-container);
-  }
-</style>
-```
-
----
-
-## Quick Reference Card
-
-### Most Common Tokens
-
-```css
-/* Backgrounds */
---bg-dropdown        /* Input fields, dropdowns */
---bg-container       /* Form containers, cards */
---bg-hover           /* Hover states */
-
-/* Text */
---text-primary       /* Main text */
---text-secondary     /* Secondary text */
---text-muted         /* Disabled, placeholders */
-
-/* Borders */
---border-primary     /* Main borders */
---border-secondary   /* List separators */
---border-input       /* Input borders */
-
-/* Brand */
---color-pokemon-blue /* Headers, links */
---color-pokemon-red  /* Buttons, prices */
-```
-
-### Common Replacements
-
-```css
-white           → var(--bg-dropdown)
-#333, #666      → var(--text-primary)
-#ddd, #ccc      → var(--border-primary)
-#f0f0f0         → var(--bg-hover)
-#3c5aa6         → var(--color-pokemon-blue)
-```
-
----
-
-## Conclusion
-
-This style guide provides a comprehensive reference for maintaining consistent, theme-aware styling across the PCPC frontend application. By following these patterns and guidelines, you ensure:
-
-1. **Consistency:** All components use the same theming system
-2. **Maintainability:** Changes to the theme affect all components automatically
-3. **Accessibility:** Proper contrast and focus states are maintained
-4. **User Experience:** Smooth theme transitions and predictable interactions
-
-For questions or clarifications, refer to the reference implementation in `SearchableSelect.svelte` or consult this guide.
-
----
-
-**Document Version:** 1.0.0  
-**Last Updated:** October 1, 2025  
-**Maintained By:** PCPC Development Team
+**Document Version:** 2.0.0 ("Elevated Dark" v7)
+**Last Updated:** June 16, 2026
+**Source of truth:** `frontend/src/app.css` · **Design intent:** `frontend/PCPC_v7_Design_Spec.md`

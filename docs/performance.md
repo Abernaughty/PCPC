@@ -56,89 +56,46 @@ graph TB
 
 ### Bundle Optimization Strategy
 
-#### Rollup Configuration Performance
+#### Vite Build Configuration Performance
 
-**Production Build Optimization**:
-```javascript
-// rollup.config.js - Performance optimized configuration
-export default {
-    input: 'src/main.js',
-    output: {
-        sourcemap: false, // Disable in production for size
-        format: 'iife',
-        name: 'app',
-        file: 'public/build/bundle.js',
-        // Code splitting for performance
-        manualChunks: {
-            vendor: ['svelte', 'axios'],
-            utils: ['src/utils/index.js']
-        }
-    },
-    plugins: [
-        svelte({
-            compilerOptions: {
-                dev: false,
-                // Performance optimizations
-                hydratable: false,
-                legacy: false
-            },
-            // CSS extraction for parallel loading
-            emitCss: true
-        }),
-        resolve({
-            browser: true,
-            dedupe: ['svelte']
-        }),
-        commonjs(),
-        // Minification with performance focus
-        terser({
-            compress: {
-                drop_console: true,
-                drop_debugger: true,
-                pure_funcs: ['console.log']
-            },
-            mangle: {
-                reserved: ['$', 'exports', 'require']
-            }
-        }),
-        // Asset optimization
-        copy({
-            targets: [{
-                src: 'src/assets/**/*',
-                dest: 'public/build/assets',
-                transform: (contents, filename) => {
-                    // Image compression logic
-                    if (filename.endsWith('.jpg') || filename.endsWith('.png')) {
-                        return compressImage(contents);
-                    }
-                    return contents;
-                }
-            }]
-        })
-    ]
-};
+The frontend is built with Vite and SvelteKit. Production builds run through
+`vite build` (which uses Rollup internally), so most bundling, code splitting,
+and minification optimizations are applied automatically by Vite's defaults.
+
+**Vite Configuration** (`frontend/vite.config.ts`):
+```typescript
+import { sveltekit } from '@sveltejs/kit/vite';
+import tailwindcss from '@tailwindcss/vite';
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+    plugins: [tailwindcss(), sveltekit()]
+    // Vite applies production minification (esbuild), tree shaking, and
+    // automatic code splitting out of the box. Add a `build` block here only
+    // when overriding defaults (e.g. rollupOptions.output.manualChunks).
+});
 ```
 
 #### Bundle Analysis and Optimization
 
-**Current Bundle Performance** (verified):
-- **Production Build Time**: 2.4 seconds
-- **Development Build Time**: 1.3 seconds  
+**Bundle Performance** (illustrative targets):
+- **Production Build Time**: ~2-3 seconds
 - **Bundle Size**: Optimized through tree shaking and minification
-- **Dependencies**: 154 packages efficiently bundled
+- **Dependencies**: Efficiently bundled via Vite's Rollup-based pipeline
 
 **Bundle Size Optimization**:
 ```bash
-# Analyze bundle composition
-npm run build:analyze
+# Build the frontend (output goes to the SvelteKit build directory)
+cd frontend
+npm run build
+
+# Analyze bundle composition with Vite's visualizer
+npx vite-bundle-visualizer
 
 # Bundle size tracking
 echo "Bundle Size Analysis:" > bundle-report.txt
 echo "========================" >> bundle-report.txt
-ls -la public/build/ >> bundle-report.txt
-echo "" >> bundle-report.txt
-echo "Gzipped Sizes:" >> bundle-report.txt
-gzip -c public/build/bundle.js | wc -c >> bundle-report.txt
+ls -la build/ >> bundle-report.txt
 ```
 
 ### Lazy Loading Implementation
@@ -591,12 +548,18 @@ graph TD
     D -->|Miss| F{API Management Cache}
     F -->|Hit| G[Return API Cache]
     F -->|Miss| H[Azure Functions]
-    H --> I{Application Cache}
-    I -->|Hit| J[Return Function Cache]
+    H --> I{Redis Cache}
+    I -->|Hit| J[Return Cached Data]
     I -->|Miss| K[Cosmos DB Query]
     K --> L[Cache Response at All Levels]
     L --> M[Return to User]
 ```
+
+> The server-side Redis tier is implemented by `RedisCacheService`
+> (`backend/functions/src/services/RedisCacheService.ts`) and is only active
+> when the `ENABLE_REDIS_CACHE` app setting is set to `"true"`. The client tier
+> uses IndexedDB and the gateway tier uses the API Management response cache
+> (`cache-lookup`/`cache-store`).
 
 ### Frontend Caching Implementation
 
@@ -1246,7 +1209,7 @@ The PCPC performance architecture establishes a comprehensive foundation for del
 ### Key Performance Achievements
 
 - **Sub-second API Responses**: Optimized caching and database queries
-- **Fast Build Times**: 2.4-second production builds with optimized bundling
+- **Fast Build Times**: Quick production builds via Vite's optimized bundling
 - **Efficient Resource Utilization**: Multi-tier caching reducing server load
 - **Comprehensive Monitoring**: Real-time performance tracking and alerting
 - **Scalable Architecture**: Designed for growth without performance degradation

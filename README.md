@@ -42,7 +42,7 @@ All three paths share the same Cosmos DB account and the same TypeScript types v
 
 **Azure** · API Management · Functions v4 · Container Apps + KEDA · Cosmos DB · Redis · Application Insights · Key Vault · Managed Identity · ACR
 
-**IaC + Pipelines** · Terraform (9 modules) · Azure DevOps multi-stage pipelines · ACR-backed CI containers · Static Web Apps
+**IaC + Pipelines** · Terraform (10 modules) · Azure DevOps multi-stage pipelines · ACR-backed CI containers · Static Web Apps
 
 **Architecture / Practice** · ADR-driven design · Repository consolidation via `git filter-repo` · Multi-runtime type sharing · Architectural decision documentation
 
@@ -59,7 +59,7 @@ All three paths share the same Cosmos DB account and the same TypeScript types v
 
 ## Architecture decision records
 
-Decisions live in [`docs/adr/`](docs/adr/). The existing ADRs (001–006) cover earlier infrastructure choices (package manager, runtime, caching, devcontainer, schema, API integration). The three-path portfolio story adds:
+Decisions live in [`docs/adr/`](docs/adr/). The earlier ADRs — [ADR-001](docs/adr/ADR-001-package-manager-standardization.md) (package manager) and [ADR-004](docs/adr/ADR-004-devcontainer-acr-optimization.md) (devcontainer ACR optimization) — cover foundational infrastructure choices. The three-path portfolio story adds:
 
 - **[ADR-007](docs/adr/ADR-007-api-architecture-spectrum.md)** — API architecture spectrum (why three paths exist) *(Accepted, Phase 1)*
 - **[ADR-008](docs/adr/ADR-008-apim-vs-bff-gateway.md)** — APIM vs SvelteKit BFF as gateway *(Accepted, Phase 1)*

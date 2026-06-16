@@ -49,11 +49,11 @@ graph TD
 | Issue                         | Symptoms                 | Quick Fix                            |
 | ----------------------------- | ------------------------ | ------------------------------------ |
 | DevContainer won't start      | Container fails to build | `docker system prune -a`             |
-| Frontend build fails          | Rollup errors            | `rm -rf node_modules && npm install` |
+| Frontend build fails          | Vite/SvelteKit errors    | `rm -rf node_modules && npm install` |
 | Backend functions not working | 500 errors               | Check `local.settings.json`          |
 | API calls failing             | CORS errors              | Verify APIM CORS policy              |
 | Database connection issues    | Cosmos DB errors         | Check connection string              |
-| Tests failing                 | Jest/Playwright errors   | `npm run test:clean && npm test`     |
+| Tests failing                 | Jest/Playwright errors   | `npm test`                           |
 
 ### Most Frequent Issues
 
@@ -75,7 +75,7 @@ docker ps -a
 docker logs pcpc-devcontainer
 
 # Check port conflicts
-netstat -tulpn | grep -E "(3000|7071|8081|10000)"
+netstat -tulpn | grep -E "(5173|7071|8081|10000)"
 ```
 
 **Solutions**:
@@ -132,7 +132,7 @@ npm install -g npm@latest
 
 **Symptoms**:
 
-- Frontend build fails with Rollup errors
+- Frontend build fails with Vite/SvelteKit errors
 - Backend TypeScript compilation errors
 - Missing dependencies
 
@@ -140,11 +140,11 @@ npm install -g npm@latest
 
 ```bash
 # Frontend build diagnosis
-cd app/frontend
+cd frontend
 npm run build 2>&1 | tee build.log
 
 # Backend build diagnosis
-cd app/backend
+cd backend/functions
 npm run build 2>&1 | tee build.log
 
 # Check for missing files
@@ -155,13 +155,13 @@ find . -name "*.js" -o -name "*.ts" | head -10
 
 ```bash
 # Frontend build fix
-cd app/frontend
-rm -rf node_modules public/build
+cd frontend
+rm -rf node_modules .svelte-kit build
 npm install
 npm run build
 
 # Backend build fix
-cd app/backend
+cd backend/functions
 rm -rf node_modules dist
 npm install
 npm run build
@@ -246,14 +246,14 @@ docker pull maberdevcontainerregistry-ccedhvhwfndwetdp.azurecr.io/pcpc-devcontai
 
 ```bash
 # Check port usage
-netstat -tulpn | grep -E "(3000|7071|8081|10000|10001|10002)"
+netstat -tulpn | grep -E "(5173|7071|8081|10000|10001|10002)"
 
 # Windows specific
-netstat -ano | findstr -E "(3000|7071|8081|10000)"
+netstat -ano | findstr -E "(5173|7071|8081|10000)"
 
 # Find process using port
-lsof -i :3000  # Linux/Mac
-netstat -ano | findstr :3000  # Windows
+lsof -i :5173  # Linux/Mac
+netstat -ano | findstr :5173  # Windows
 ```
 
 **Solutions**:
@@ -261,7 +261,7 @@ netstat -ano | findstr :3000  # Windows
 ```bash
 # Kill processes using ports
 # Linux/Mac
-sudo kill -9 $(lsof -t -i:3000)
+sudo kill -9 $(lsof -t -i:5173)
 
 # Windows
 taskkill /PID <PID> /F
@@ -308,38 +308,38 @@ code --list-extensions --show-versions
 
 #### Frontend Development Problems
 
-**Issue**: Svelte development server issues
+**Issue**: SvelteKit development server issues
 
 **Symptoms**:
 
-- Hot reload not working
-- Build errors with Rollup
+- Hot reload (HMR) not working
+- Build errors with Vite/SvelteKit
 - Component rendering issues
 
 **Diagnostic Steps**:
 
 ```bash
-cd app/frontend
+cd frontend
 
-# Check development server
+# Check development server (Vite, defaults to port 5173)
 npm run dev
 
 # Check build process
 npm run build
 
 # Check component syntax
-npx svelte-check
+npm run check
 ```
 
 **Solutions**:
 
 ```bash
 # Fix hot reload
-# Check rollup.config.cjs livereload configuration
-# Ensure port 35729 is available
+# Restart the Vite dev server (npm run dev)
+# Ensure the Vite dev port (5173) is available
 
 # Fix build errors
-rm -rf public/build
+rm -rf .svelte-kit build
 npm run build
 
 # Fix component issues
@@ -360,7 +360,7 @@ npm run build
 **Diagnostic Steps**:
 
 ```bash
-cd app/backend
+cd backend/functions
 
 # Check Functions runtime
 func --version  # Should be 4.x
@@ -681,8 +681,8 @@ az functionapp function show \
   --name "pokedata-func-dev" \
   --function-name "GetSetList"
 
-# Test function locally
-cd app/backend
+# Test function locally (listens on port 7071)
+cd backend/functions
 func start --typescript
 ```
 
@@ -757,7 +757,7 @@ async function testDatabaseConnection() {
     });
 
     const { database } = await client.databases.createIfNotExists({
-      id: "PokeData",
+      id: "PokemonCards",
     });
 
     console.log("Database connection successful");
@@ -835,11 +835,10 @@ performance.measure('app-load-time', 'app-start', 'app-ready');
 
 // Check bundle size
 npm run build
-ls -lh public/build/
+ls -lh build/
 
-// Analyze bundle composition
-npm install -g webpack-bundle-analyzer
-npx webpack-bundle-analyzer public/build/bundle.js
+// Analyze bundle composition (Vite + rollup-plugin-visualizer)
+npx vite-bundle-visualizer
 ```
 
 **Solutions**:
@@ -964,7 +963,7 @@ export async function GetSetList(
   context: InvocationContext
 ): Promise<HttpResponseInit> {
   // Use pre-initialized clients
-  const container = cosmosClient.database("PokeData").container("sets");
+  const container = cosmosClient.database("PokemonCards").container("Sets");
   // ... function logic
 }
 
@@ -1085,7 +1084,7 @@ az apim subscription regenerate-key \
 # Verify Key Vault access
 az keyvault secret show \
   --vault-name "pokedata-kv-dev" \
-  --name "pokedata-api-key"
+  --name "scrydex-api-key"
 ```
 
 ### SSL/TLS Issues
@@ -1156,33 +1155,18 @@ curl -X POST "https://dc.services.visualstudio.com/v2/track" \
 **Solutions**:
 
 ```typescript
-// Fix Application Insights integration
-import { ApplicationInsights } from "@azure/applicationinsights-web";
+// Fix backend telemetry (Azure Functions)
+// The backend uses the @azure/monitor-opentelemetry distro
+import { useAzureMonitor } from "@azure/monitor-opentelemetry";
 
-const appInsights = new ApplicationInsights({
-  config: {
-    instrumentationKey: process.env.APPINSIGHTS_INSTRUMENTATIONKEY,
-    enableAutoRouteTracking: true,
-    enableCorsCorrelation: true,
-    enableRequestHeaderTracking: true,
-    enableResponseHeaderTracking: true,
+useAzureMonitor({
+  azureMonitorExporterOptions: {
+    connectionString: process.env.APPLICATIONINSIGHTS_CONNECTION_STRING,
   },
 });
 
-appInsights.loadAppInsights();
-
-// Add custom telemetry
-appInsights.trackEvent({
-  name: "CardSearch",
-  properties: {
-    searchTerm: searchTerm,
-    resultCount: results.length,
-  },
-});
-
-// Fix backend telemetry
-// Ensure APPINSIGHTS_INSTRUMENTATIONKEY is set
-// Verify Application Insights SDK is installed
+// Ensure APPLICATIONINSIGHTS_CONNECTION_STRING is set in app settings
+// Verify @azure/monitor-opentelemetry is installed in backend/functions
 ```
 
 ### Log Analysis
@@ -1206,7 +1190,7 @@ az functionapp config appsettings list \
   --name "pokedata-func-dev"
 
 # Check log level
-grep -r "LOG_LEVEL" app/backend/
+grep -r "LOG_LEVEL" backend/functions/
 
 # Test logging
 az functionapp log tail --name "pokedata-func-dev" --resource-group "pokedata-dev-rg"
@@ -1324,13 +1308,13 @@ az functionapp function disable \
 az cosmosdb sql database backup show \
   --resource-group "pokedata-prod-rg" \
   --account-name "pokedata-cosmos-prod" \
-  --database-name "PokeData"
+  --database-name "PokemonCards"
 
 # Restore from backup
 az cosmosdb sql database restore \
   --resource-group "pokedata-prod-rg" \
   --account-name "pokedata-cosmos-prod" \
-  --database-name "PokeData" \
+  --database-name "PokemonCards" \
   --restore-timestamp "2025-09-28T19:00:00Z"
 ```
 
@@ -1366,19 +1350,19 @@ az apim subscription regenerate-key \
 # Update Key Vault secrets
 az keyvault secret set \
   --vault-name "pokedata-kv-prod" \
-  --name "pokedata-api-key" \
+  --name "scrydex-api-key" \
   --value "new-secure-api-key"
 
 az keyvault secret set \
   --vault-name "pokedata-kv-prod" \
-  --name "pokemon-tcg-api-key" \
-  --value "new-secure-tcg-key"
+  --name "scrydex-team-id" \
+  --value "new-secure-team-id"
 
 # Update Function App settings
 az functionapp config appsettings set \
   --resource-group "pokedata-prod-rg" \
   --name "pokedata-func-prod" \
-  --settings "POKEDATA_API_KEY=@Microsoft.KeyVault(SecretUri=https://pokedata-kv-prod.vault.azure.net/secrets/pokedata-api-key/)"
+  --settings "SCRYDEX_API_KEY=@Microsoft.KeyVault(SecretUri=https://pokedata-kv-prod.vault.azure.net/secrets/scrydex-api-key/)"
 
 # Update frontend environment variables
 # Deploy new build with updated subscription keys
@@ -1414,7 +1398,7 @@ az monitor app-insights query \
 az cosmosdb sql database throughput show \
   --resource-group "pokedata-prod-rg" \
   --account-name "pokedata-cosmos-prod" \
-  --name "PokeData"
+  --name "PokemonCards"
 ```
 
 ### Performance Degradation
@@ -1442,7 +1426,7 @@ az monitor metrics list \
 az cosmosdb sql database throughput show \
   --resource-group "pokedata-prod-rg" \
   --account-name "pokedata-cosmos-prod" \
-  --name "PokeData"
+  --name "PokemonCards"
 
 # Check API Management throttling
 az apim api list \
@@ -1463,7 +1447,7 @@ az functionapp plan update \
 az cosmosdb sql database throughput update \
   --resource-group "pokedata-prod-rg" \
   --account-name "pokedata-cosmos-prod" \
-  --name "PokeData" \
+  --name "PokemonCards" \
   --throughput 10000
 
 # Clear caches
