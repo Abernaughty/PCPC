@@ -70,7 +70,7 @@ graph TB
 The same logical endpoints are served by more than one runtime:
 
 - **Path A — SvelteKit BFF**: server routes under `/api/*` in the frontend app. Calls Scrydex/Cosmos/Redis directly.
-- **Path B — Azure Functions behind APIM**: the OpenAPI contract published at `*.azure-api.net/pokedata-api`. APIM provides subscription-key auth, rate limiting, the developer portal, and observability.
+- **Path B — Azure Functions behind APIM**: served at `pcpc-apim-{env}.azure-api.net/pcpc-api/{version}` (e.g. `https://pcpc-apim-dev.azure-api.net/pcpc-api/v1`). APIM provides rate limiting, the developer portal, and observability. The API and its `starter` product are deployed with `subscription_required = false`, so the public demo path needs no key (see [Authentication](#authentication)).
 - **Path C — Azure Functions on Azure Container Apps**: the same Functions code, fronted by ACA ingress (CORS) instead of APIM.
 
 The Azure Functions host registers its routes with the `api` route prefix (`backend/functions/host.json`), so all Functions endpoints live under `/api`. The Functions read endpoints use `authLevel: "anonymous"` — authentication is enforced at the gateway, not the function host.
@@ -79,23 +79,27 @@ Response shapes are nearly identical across paths; the only meaningful differenc
 
 ## Authentication
 
-### Subscription Key Authentication (APIM gateway)
+The Azure Functions HTTP triggers are registered with `authLevel: "anonymous"` (`backend/functions/src/index.ts`); there is no function-key check at the host. Access control is delegated to the gateway in front of them.
 
-The Azure Functions HTTP triggers are registered with `authLevel: "anonymous"`; there is no function-key check at the host. Authentication is enforced **at the Azure API Management gateway** (Path B). All requests through APIM must include a valid subscription key, supplied either as a header (recommended) or a query parameter.
+### Path B (APIM) — subscription keys are optional, tier-dependent
 
-#### Header Authentication (Recommended)
+The PCPC API and its `starter` product are deployed with `subscription_required = false` (`apim/terraform/apis.tf`, `apim/terraform/variables.tf`), so the **public demo path requires no subscription key** — the frontend Path B client calls APIM without one (`frontend/src/lib/backends/path-b-azure.ts`). A subscription key is only required for the `premium` and `unlimited` products (`subscription_required = true`), which apply tighter rate limits/quotas for trusted consumers.
+
+When a key *is* required (premium/unlimited tiers), supply it as a header (recommended) or a query parameter:
+
+#### Header (recommended)
 
 ```http
-GET /pokedata-api/sets
-Host: maber-apim-prod.azure-api.net
+GET /pcpc-api/v1/sets
+Host: pcpc-apim-dev.azure-api.net
 Ocp-Apim-Subscription-Key: your-subscription-key-here
 ```
 
-#### Query Parameter Authentication
+#### Query parameter
 
 ```http
-GET /pokedata-api/sets?subscription-key=your-subscription-key-here
-Host: maber-apim-prod.azure-api.net
+GET /pcpc-api/v1/sets?subscription-key=your-subscription-key-here
+Host: pcpc-apim-dev.azure-api.net
 ```
 
 > Both schemes are defined in the OpenAPI contract (`apim/specs/pcpc-api-v1.yaml`): `apiKeyHeader` (`Ocp-Apim-Subscription-Key`) and `apiKeyQuery` (`subscription-key`).
@@ -106,13 +110,15 @@ When calling the Azure Functions host directly (local development, or Path C via
 
 ### APIM Gateway (Path B)
 
-The APIM base path is `/pokedata-api` (no `/api` or version segment). From `apim/specs/pcpc-api-v1.yaml`:
+The APIM API path is `pcpc-api/{version}` (set in `apim/terraform/apis.tf` as `path = "pcpc-api/${var.api_version}"`; `api_version` defaults to `v1`). Custom domains (`api.pcpc.maber.io`) are deferred per [ADR-012](adr/ADR-012-apim-managed-cert-suspension.md), so the working base URL is the per-environment APIM hostname:
 
 ```
-https://maber-apim-test.azure-api.net/pokedata-api      (development)
-https://maber-apim-staging.azure-api.net/pokedata-api   (staging)
-https://maber-apim-prod.azure-api.net/pokedata-api      (production)
+https://pcpc-apim-dev.azure-api.net/pcpc-api/v1      (development)
+https://pcpc-apim-staging.azure-api.net/pcpc-api/v1  (staging)
+https://pcpc-apim-prod.azure-api.net/pcpc-api/v1     (production)
 ```
+
+The frontend Path B client reads this from the `PUBLIC_AZURE_API_BASE_URL` env var and falls back to the dev URL above (`frontend/src/lib/backends/path-b-azure.ts`).
 
 ### Azure Functions (local development)
 
@@ -126,7 +132,7 @@ http://localhost:7071/api
 
 Served from the frontend application origin under `/api`, e.g. `https://<frontend-host>/api`.
 
-> Endpoint paths below are written relative to the chosen base URL (e.g. `/sets` is `https://maber-apim-prod.azure-api.net/pokedata-api/sets` via APIM, or `http://localhost:7071/api/sets` locally).
+> Endpoint paths below are written relative to the chosen base URL (e.g. `/sets` is `https://pcpc-apim-dev.azure-api.net/pcpc-api/v1/sets` via APIM, or `http://localhost:7071/api/sets` locally).
 
 ## API Endpoints
 
@@ -718,14 +724,15 @@ const axios = require("axios");
 
 class PCPCApiClient {
   constructor(
-    apiKey,
-    baseUrl = "https://maber-apim-prod.azure-api.net/pokedata-api"
+    { baseUrl = "https://pcpc-apim-dev.azure-api.net/pcpc-api/v1", apiKey } = {}
   ) {
     this.client = axios.create({
       baseURL: baseUrl,
       headers: {
-        "Ocp-Apim-Subscription-Key": apiKey,
         "Content-Type": "application/json",
+        // The starter (demo) product needs no key; only the premium/unlimited
+        // products set subscription_required = true.
+        ...(apiKey ? { "Ocp-Apim-Subscription-Key": apiKey } : {}),
       },
     });
   }
@@ -755,8 +762,8 @@ class PCPCApiClient {
   }
 }
 
-// Usage
-const client = new PCPCApiClient("your-api-key-here");
+// Usage — no key needed for the public demo path
+const client = new PCPCApiClient();
 
 async function example() {
   try {
@@ -794,14 +801,14 @@ class APIError(Exception):
 
 
 class PCPCApiClient:
-    def __init__(self, api_key: str,
-                 base_url: str = "https://maber-apim-prod.azure-api.net/pokedata-api"):
+    def __init__(self, base_url: str = "https://pcpc-apim-dev.azure-api.net/pcpc-api/v1",
+                 api_key: Optional[str] = None):
         self.base_url = base_url
         self.session = requests.Session()
-        self.session.headers.update({
-            "Ocp-Apim-Subscription-Key": api_key,
-            "Content-Type": "application/json",
-        })
+        self.session.headers.update({"Content-Type": "application/json"})
+        # The starter (demo) product needs no key; only premium/unlimited do.
+        if api_key:
+            self.session.headers["Ocp-Apim-Subscription-Key"] = api_key
 
     def _get(self, endpoint: str, params: Optional[Dict] = None) -> Dict[str, Any]:
         resp = self.session.get(f"{self.base_url}{endpoint}", params=params)
@@ -833,8 +840,8 @@ class PCPCApiClient:
         return self._get("/health")
 
 
-# Usage
-client = PCPCApiClient("your-api-key-here")
+# Usage — no key needed for the public demo path
+client = PCPCApiClient()
 
 try:
     sets = client.get_sets(page_size=10)
@@ -854,26 +861,27 @@ except APIError as e:
 
 ### cURL Examples
 
+The public demo path (starter product) requires no subscription key:
+
 #### Get Set List
 
 ```bash
-curl -X GET "https://maber-apim-prod.azure-api.net/pokedata-api/sets?page=1&pageSize=10" \
-  -H "Ocp-Apim-Subscription-Key: your-api-key-here"
+curl -X GET "https://pcpc-apim-dev.azure-api.net/pcpc-api/v1/sets?page=1&pageSize=10"
 ```
 
 #### Get Cards by Set
 
 ```bash
-curl -X GET "https://maber-apim-prod.azure-api.net/pokedata-api/sets/sv8/cards?pageSize=50" \
-  -H "Ocp-Apim-Subscription-Key: your-api-key-here"
+curl -X GET "https://pcpc-apim-dev.azure-api.net/pcpc-api/v1/sets/sv8/cards?pageSize=50"
 ```
 
 #### Get Card Info
 
 ```bash
-curl -X GET "https://maber-apim-prod.azure-api.net/pokedata-api/sets/sv8/cards/sv8-001" \
-  -H "Ocp-Apim-Subscription-Key: your-api-key-here"
+curl -X GET "https://pcpc-apim-dev.azure-api.net/pcpc-api/v1/sets/sv8/cards/sv8-001"
 ```
+
+> For the `premium`/`unlimited` products (which set `subscription_required = true`), add `-H "Ocp-Apim-Subscription-Key: your-key"`.
 
 #### Local Development (Azure Functions, no subscription key)
 
@@ -899,8 +907,11 @@ The authoritative HTTP contract is published at `apim/specs/pcpc-api-v1.yaml` (O
 # Health check (local Functions)
 curl -X GET "http://localhost:7071/api/health"
 
-# Validate subscription key through APIM
-curl -X GET "https://maber-apim-prod.azure-api.net/pokedata-api/sets?pageSize=1" \
+# Through APIM (demo path — no key required)
+curl -X GET "https://pcpc-apim-dev.azure-api.net/pcpc-api/v1/sets?pageSize=1"
+
+# With a subscription key (premium/unlimited products)
+curl -X GET "https://pcpc-apim-dev.azure-api.net/pcpc-api/v1/sets?pageSize=1" \
   -H "Ocp-Apim-Subscription-Key: your-key"
 ```
 
