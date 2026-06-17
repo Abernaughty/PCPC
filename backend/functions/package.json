@@ -39,7 +39,7 @@
     "@typespec/ts-http-runtime": "^0.3.5",
     "cookie": "^0.7.0",
     "dotenv": "^16.5.0",
-    "redis": "^4.7.0"
+    "redis": "^6.0.0"
   },
   "overrides": {
     "@opentelemetry/exporter-prometheus": "^0.217.0",
