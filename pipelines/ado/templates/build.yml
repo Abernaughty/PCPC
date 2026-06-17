@@ -59,16 +59,12 @@ jobs:
       # BACKEND BUILD
       # ============================================================================
 
+      # backend/functions is a pnpm-workspace member; its deps were installed by
+      # the root `pnpm install --frozen-lockfile` above. Build via the filter.
       - script: |
-          echo "Building backend application..."
-          npm ci
-        displayName: "Install Backend Dependencies"
-        workingDirectory: $(System.DefaultWorkingDirectory)/backend/functions
-
-      - script: |
-          npm run build
+          npx --yes pnpm@10.32.1 --filter pcpc-backend run build
         displayName: "Build Backend (TypeScript)"
-        workingDirectory: $(System.DefaultWorkingDirectory)/backend/functions
+        workingDirectory: $(System.DefaultWorkingDirectory)
 
       - script: |
           if [ ! -d "dist" ]; then
@@ -87,26 +83,33 @@ jobs:
       - script: |
           echo "Creating unified artifact structure..."
 
-          # Create artifact directory structure
-          mkdir -p $(Build.ArtifactStagingDirectory)/drop/functions
+          # functions/ is produced by `pnpm deploy` below (it creates the dir);
+          # only pre-create the apim/ subtree here.
           mkdir -p $(Build.ArtifactStagingDirectory)/drop/apim
 
           echo "Artifact structure created:"
           tree -L 2 $(Build.ArtifactStagingDirectory)/drop || ls -R $(Build.ArtifactStagingDirectory)/drop
         displayName: "Create Artifact Structure"
 
-      # Copy backend build output and package files (node_modules excluded - restored at deployment)
-      - task: CopyFiles@2
-        displayName: "Copy Backend Build to Artifact"
-        inputs:
-          SourceFolder: "$(System.DefaultWorkingDirectory)/backend/functions"
-          Contents: |
-            dist/**
-            host.json
-            package.json
-            package-lock.json
-          TargetFolder: "$(Build.ArtifactStagingDirectory)/drop/functions"
-          CleanTargetFolder: false
+      # Produce a self-contained, deployable functions/ folder via pnpm deploy:
+      # dist + host.json + package.json + a flat PRODUCTION node_modules.
+      # The SAME folder is consumed by the Function App deploy and the ACA image.
+      #   --prod                       : omit devDependencies (incl. type-only @pcpc/shared)
+      #   --legacy                     : pnpm 10 otherwise requires injected workspaces
+      #   --config.node-linker=hoisted : flat node_modules (no .pnpm symlink farm) so the
+      #                                  Function App zip-deploy resolves modules reliably
+      - script: |
+          set -euo pipefail
+          npx --yes pnpm@10.32.1 --filter pcpc-backend deploy \
+            --prod --legacy --config.node-linker=hoisted \
+            "$(Build.ArtifactStagingDirectory)/drop/functions"
+
+          echo "Deployed functions/ contents:"
+          ls -lah "$(Build.ArtifactStagingDirectory)/drop/functions"
+          test -f "$(Build.ArtifactStagingDirectory)/drop/functions/dist/index.js"
+          test -d "$(Build.ArtifactStagingDirectory)/drop/functions/node_modules"
+        displayName: "Bundle Backend (pnpm deploy --prod)"
+        workingDirectory: $(System.DefaultWorkingDirectory)
 
       # Copy APIM configuration
       - task: CopyFiles@2

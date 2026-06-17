@@ -179,25 +179,22 @@ steps:
     displayName: "Skip Functions Deployment"
     condition: and(succeeded(), eq(variables['ShouldDeployFunctions'], 'false'))
 
-  # Install production dependencies (node_modules excluded from artifact)
+  # node_modules is baked into the artifact at build time (`pnpm deploy --prod`,
+  # flat/hoisted), so there is NO install step here — just verify it arrived.
   - script: |
       cd $(System.ArtifactsDirectory)/${{ parameters.artifactName }}/functions
 
-      echo "Installing production dependencies..."
-      npm ci --production --no-audit --no-fund
-
-      if [ $? -ne 0 ]; then
-        echo "##vso[task.logissue type=error]Failed to install dependencies"
+      if [ ! -d node_modules ]; then
+        echo "##vso[task.logissue type=error]node_modules missing from artifact (pnpm deploy should have bundled it at build time)"
         exit 1
       fi
 
-      echo "Dependencies installed successfully"
+      echo "Bundled production dependencies present."
       echo "node_modules size:"
-      du -sh node_modules 2>/dev/null || echo "node_modules directory created"
-
+      du -sh node_modules 2>/dev/null || true
       echo "Total files in functions directory:"
       find . -type f | wc -l
-    displayName: "Install Backend Dependencies"
+    displayName: "Verify Bundled Dependencies"
     condition: and(succeeded(), eq(variables['ShouldDeployFunctions'], 'true'))
 
   # Deploy Azure Functions

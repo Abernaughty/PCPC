@@ -1,11 +1,12 @@
 packages:
   - "frontend"
   - "backend/shared"
+  - "backend/functions"
 
-# backend/functions is intentionally NOT a pnpm-workspace member even though it
-# lives in the monorepo. It ships via `npm ci` against its own package-lock.json
-# (per repo contract — see backend/functions/package.json declaring @pcpc/shared
-# as `file:../shared`, not `workspace:*`). Listing it here would put its deps in
-# the root pnpm-lock.yaml as well, creating dual-tooling drift: Dependabot's
-# pnpm-aware root job would update pnpm-lock but not package-lock, leaving the
-# backend deploy out of sync. See PR #194 for the full rationale.
+# backend/functions is a full pnpm-workspace member. It is deployed via
+# `pnpm --filter pcpc-backend deploy --prod <dir>` (build time), which produces
+# a self-contained folder (dist + host.json + package.json + a prod node_modules)
+# consumed by BOTH the Function App deploy and the ACA container image — so there
+# is no `npm ci` deploy and no separate package-lock.json to drift. This
+# supersedes PR #194's split (which kept a second npm lockfile because the deploy
+# used `npm ci`; that rationale no longer applies under `pnpm deploy`).

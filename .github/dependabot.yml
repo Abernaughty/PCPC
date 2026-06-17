@@ -24,8 +24,9 @@
 version: 2
 
 updates:
-  # Workspace root (pnpm) — coordinates pnpm-lock.yaml across frontend +
-  # backend/shared + root devDeps. Highest churn surface.
+  # Workspace root (pnpm) — single block covering the ENTIRE JS workspace:
+  # frontend, backend/shared, AND backend/functions (all pnpm members sharing
+  # one pnpm-lock.yaml). There is no separate backend/functions npm block.
   - package-ecosystem: npm
     directory: /
     schedule:
@@ -33,7 +34,7 @@ updates:
       day: monday
       time: "09:00"
       timezone: America/Chicago
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 5
     # Do not auto-rebase open PRs when main moves. Rebasing re-triggers the
     # required ADO check (and Codex review) on every base change; with several
     # PRs open that is the main source of validation/notification storms. A PR
@@ -44,21 +45,6 @@ updates:
       # (minor/patch) separate from risky (major), so a breaking major can't
       # block the safe stream. Cuts PR count, Codex reviews, and ADO runs while
       # still ingesting all updates (stay-current).
-      minor-and-patch:
-        update-types: [minor, patch]
-      major:
-        update-types: [major]
-
-  # backend/functions (npm) — owns package-lock.json for the `npm ci` deploy
-  # path. Distinct ecosystem from the pnpm workspace; do not consolidate.
-  - package-ecosystem: npm
-    directory: /backend/functions
-    schedule:
-      interval: weekly
-      day: monday
-    open-pull-requests-limit: 3
-    rebase-strategy: disabled
-    groups:
       minor-and-patch:
         update-types: [minor, patch]
       major:

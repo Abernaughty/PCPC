@@ -25,28 +25,26 @@ jobs:
         displayName: "Install Root Dependencies"
         workingDirectory: $(System.DefaultWorkingDirectory)
 
-      # Install backend dependencies
-      - script: |
-          npm ci
-        displayName: "Install Backend Dependencies"
-        workingDirectory: $(System.DefaultWorkingDirectory)/backend/functions
+      # backend/functions is a pnpm-workspace member; its deps were installed by
+      # the root `pnpm install --frozen-lockfile` above. No separate install.
 
-      # Run ESLint
+      # Run ESLint (no-op until a lint script is added; non-blocking)
       - script: |
-          npm run lint || echo "⚠️  Linting warnings found (non-blocking)"
+          npx --yes pnpm@10.32.1 --filter pcpc-backend run lint || echo "⚠️  Lint skipped/with warnings (non-blocking)"
         displayName: "Lint Backend Code"
-        workingDirectory: $(System.DefaultWorkingDirectory)/backend/functions
+        workingDirectory: $(System.DefaultWorkingDirectory)
         continueOnError: true
 
       # TypeScript compilation check
       - script: |
-          npx tsc --noEmit
+          npx --yes pnpm@10.32.1 --filter pcpc-backend exec tsc --noEmit
         displayName: "TypeScript Compilation Check"
-        workingDirectory: $(System.DefaultWorkingDirectory)/backend/functions
+        workingDirectory: $(System.DefaultWorkingDirectory)
 
-      # Run tests with coverage
+      # Run tests with coverage (invoke jest via pnpm exec; `pnpm test -- …`
+      # would forward the `--` and jest would treat the flags as path patterns).
       - script: |
-          npm test -- --coverage --coverageDirectory=$(System.DefaultWorkingDirectory)/coverage/backend
+          npx --yes pnpm@10.32.1 exec jest --config=jest.config.cjs --coverage --coverageDirectory=$(System.DefaultWorkingDirectory)/coverage/backend
         displayName: "Run Backend Tests"
         workingDirectory: $(System.DefaultWorkingDirectory)
         env:
@@ -54,9 +52,9 @@ jobs:
 
       # Build backend
       - script: |
-          npm run build
+          npx --yes pnpm@10.32.1 --filter pcpc-backend run build
         displayName: "Build Backend"
-        workingDirectory: $(System.DefaultWorkingDirectory)/backend/functions
+        workingDirectory: $(System.DefaultWorkingDirectory)
 
       # Verify build output
       - script: |
@@ -72,11 +70,12 @@ jobs:
         displayName: "Verify Build Output"
         workingDirectory: $(System.DefaultWorkingDirectory)/backend/functions
 
-      # Security audit (non-blocking)
+      # Security audit (non-blocking). One unified pnpm audit over the whole
+      # workspace (production deps) now that backend/functions is a member.
       - script: |
-          npm audit --audit-level=high || echo "⚠️  Security vulnerabilities found (non-blocking)"
-        displayName: "Security Audit (npm audit)"
-        workingDirectory: $(System.DefaultWorkingDirectory)/backend/functions
+          npx --yes pnpm@10.32.1 audit --prod || echo "⚠️  Security vulnerabilities found (non-blocking)"
+        displayName: "Security Audit (pnpm audit)"
+        workingDirectory: $(System.DefaultWorkingDirectory)
         continueOnError: true
 
       # Publish test results
