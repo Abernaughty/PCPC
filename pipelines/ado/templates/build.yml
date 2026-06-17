@@ -94,14 +94,18 @@ jobs:
       # Produce a self-contained, deployable functions/ folder via pnpm deploy:
       # dist + host.json + package.json + a flat PRODUCTION node_modules.
       # The SAME folder is consumed by the Function App deploy and the ACA image.
-      #   --prod                       : omit devDependencies (incl. type-only @pcpc/shared)
-      #   --legacy                     : pnpm 10 otherwise requires injected workspaces
-      #   --config.node-linker=hoisted : flat node_modules (no .pnpm symlink farm) so the
-      #                                  Function App zip-deploy resolves modules reliably
+      #   --prod                                  : omit devDeps (incl. type-only @pcpc/shared)
+      #   --config.inject-workspace-packages=true : pnpm 10's lockfile-FAITHFUL deploy — copies prod
+      #                                             deps from the store populated by the
+      #                                             `pnpm install --frozen-lockfile` above (pinned to
+      #                                             pnpm-lock.yaml). NOT `--legacy`, which re-resolves
+      #                                             version ranges and could drift from the lockfile.
+      #   --config.node-linker=hoisted            : flat node_modules (no .pnpm symlink farm) so the
+      #                                             Function App zip-deploy resolves modules reliably
       - script: |
           set -euo pipefail
           npx --yes pnpm@10.32.1 --filter pcpc-backend deploy \
-            --prod --legacy --config.node-linker=hoisted \
+            --prod --config.inject-workspace-packages=true --config.node-linker=hoisted \
             "$(Build.ArtifactStagingDirectory)/drop/functions"
 
           echo "Deployed functions/ contents:"

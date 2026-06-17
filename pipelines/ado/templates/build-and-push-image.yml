@@ -181,8 +181,10 @@ steps:
 
       npx --yes pnpm@10.32.1 install --frozen-lockfile
       npx --yes pnpm@10.32.1 --filter pcpc-backend run build
+      # Lockfile-faithful deploy (copies from the frozen-installed store, no
+      # range re-resolution). See build.yml for the flag rationale.
       npx --yes pnpm@10.32.1 --filter pcpc-backend deploy \
-        --prod --legacy --config.node-linker=hoisted "$DEPLOY_DIR"
+        --prod --config.inject-workspace-packages=true --config.node-linker=hoisted "$DEPLOY_DIR"
 
       test -f "$DEPLOY_DIR/dist/index.js"
       test -d "$DEPLOY_DIR/node_modules"
