@@ -128,36 +128,64 @@ jobs:
           TargetFolder: "$(Build.ArtifactStagingDirectory)/drop/apim"
           CleanTargetFolder: false
 
-      # Create release manifest with build metadata
+      # Create release manifest with build metadata.
+      #
+      # Built with `jq -n --arg` rather than an inline heredoc so that
+      # free-form fields (notably the commit message) are JSON-escaped and
+      # never interpreted by the shell. Values arrive via env: (below) — ADO
+      # expands the macros into environment variables, which bash treats as
+      # inert data — instead of being substituted into the script body. This
+      # closes the command/JSON-injection vector a crafted commit message
+      # would otherwise open (audit finding S2).
       - script: |
-          cat > $(Build.ArtifactStagingDirectory)/drop/release.json << EOF
-          {
-            "buildId": "$(Build.BuildId)",
-            "buildNumber": "$(Build.BuildNumber)",
-            "sourceVersion": "$(Build.SourceVersion)",
-            "sourceBranch": "$(Build.SourceBranch)",
-            "buildTimestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-            "buildConfiguration": "${{ parameters.buildConfiguration }}",
-            "repository": "$(Build.Repository.Name)",
-            "commitMessage": "$(Build.SourceVersionMessage)",
-            "triggeredBy": "$(Build.RequestedFor)",
-            "components": {
-              "backend": {
-                "path": "functions/",
-                "technology": "Azure Functions v4",
-                "runtime": "Node.js ${{ parameters.nodeVersion }}"
-              },
-              "apim": {
-                "path": "apim/",
-                "technology": "Terraform + OpenAPI"
+          set -euo pipefail
+          jq -n \
+            --arg buildId "$BUILD_ID" \
+            --arg buildNumber "$BUILD_NUMBER" \
+            --arg sourceVersion "$SOURCE_VERSION" \
+            --arg sourceBranch "$SOURCE_BRANCH" \
+            --arg buildTimestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+            --arg buildConfiguration "$BUILD_CONFIGURATION" \
+            --arg repository "$REPOSITORY" \
+            --arg commitMessage "$COMMIT_MESSAGE" \
+            --arg triggeredBy "$TRIGGERED_BY" \
+            --arg nodeVersion "$NODE_VERSION" \
+            '{
+              buildId: $buildId,
+              buildNumber: $buildNumber,
+              sourceVersion: $sourceVersion,
+              sourceBranch: $sourceBranch,
+              buildTimestamp: $buildTimestamp,
+              buildConfiguration: $buildConfiguration,
+              repository: $repository,
+              commitMessage: $commitMessage,
+              triggeredBy: $triggeredBy,
+              components: {
+                backend: {
+                  path: "functions/",
+                  technology: "Azure Functions v4",
+                  runtime: ("Node.js " + $nodeVersion)
+                },
+                apim: {
+                  path: "apim/",
+                  technology: "Terraform + OpenAPI"
+                }
               }
-            }
-          }
-          EOF
+            }' > "$(Build.ArtifactStagingDirectory)/drop/release.json"
 
           echo "Release manifest created:"
-          cat $(Build.ArtifactStagingDirectory)/drop/release.json
+          cat "$(Build.ArtifactStagingDirectory)/drop/release.json"
         displayName: "Create Release Manifest"
+        env:
+          BUILD_ID: $(Build.BuildId)
+          BUILD_NUMBER: $(Build.BuildNumber)
+          SOURCE_VERSION: $(Build.SourceVersion)
+          SOURCE_BRANCH: $(Build.SourceBranch)
+          BUILD_CONFIGURATION: ${{ parameters.buildConfiguration }}
+          REPOSITORY: $(Build.Repository.Name)
+          COMMIT_MESSAGE: $(Build.SourceVersionMessage)
+          TRIGGERED_BY: $(Build.RequestedFor)
+          NODE_VERSION: ${{ parameters.nodeVersion }}
 
       # Create checksums for artifact integrity verification
       - script: |

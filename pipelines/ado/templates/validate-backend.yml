@@ -107,7 +107,7 @@ jobs:
           echo "======================================"
           echo "✅ Linting: Completed"
           echo "✅ TypeScript: Compiled"
-          echo "✅ Tests: $(tests_passed)/$(tests_total) passed"
+          echo "✅ Tests: Completed (see published test results)"
           echo "✅ Build: Successful"
           echo "✅ Security: Audited"
         displayName: "Display Validation Summary"

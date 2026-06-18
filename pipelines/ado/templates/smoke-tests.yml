@@ -120,7 +120,18 @@ steps:
             --query "gatewayUrl" -o tsv 2>/dev/null || echo "")
 
           if [ -n "$APIM_URL" ]; then
-            run_health_check "API Management" "pipelines/ado/scripts/health-check-apim.sh" "$APIM_URL"
+            # Resolve the APIM subscription (master) key BEFORE running the
+            # health check, then pass it in as the script's second argument.
+            # Previously this was resolved AFTER the health check already ran,
+            # so the CORS and rate-limiting probes inside health-check-apim.sh
+            # always executed without a key (audit finding B1).
+            if resolve_apim_master_key "${{ parameters.apimName }}" "${{ parameters.resourceGroupName }}"; then
+              run_health_check "API Management" "pipelines/ado/scripts/health-check-apim.sh" "$APIM_URL" "$APIM_SUBSCRIPTION_KEY"
+            else
+              echo "✗ Could not resolve APIM subscription key"
+              increment_failed
+              echo ""
+            fi
           else
             echo "⚠ Could not retrieve APIM URL"
             increment_warnings
@@ -129,12 +140,6 @@ steps:
         else
           echo "⊘ API Management not configured - skipping"
           echo ""
-        fi
-
-        if [ -n "${{ parameters.apimName }}" ]; then
-          if ! resolve_apim_master_key "${{ parameters.apimName }}" "${{ parameters.resourceGroupName }}"; then
-            exit 1
-          fi
         fi
 
 

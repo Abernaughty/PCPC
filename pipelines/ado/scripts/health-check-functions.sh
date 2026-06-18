@@ -165,10 +165,12 @@ if [ -z "$FUNCTION_KEY" ]; then
     add_warning
   fi
 else
-  SETLIST_URL="${FUNCTION_APP_URL}/api/sets?all=true&code=${FUNCTION_KEY}"
-  echo "Testing: ${FUNCTION_APP_URL}/api/sets?all=true&code=***"
+  # Send the key via the x-functions-key header rather than a ?code= query
+  # string so it never lands in request logs (audit finding S3).
+  SETLIST_URL="${FUNCTION_APP_URL}/api/sets?all=true"
+  echo "Testing: ${SETLIST_URL} (key via x-functions-key header)"
 
-  RESPONSE=$(curl -s -w "\n%{http_code}" "$SETLIST_URL" || echo "000")
+  RESPONSE=$(curl -s -w "\n%{http_code}" -H "x-functions-key: ${FUNCTION_KEY}" "$SETLIST_URL" || echo "000")
   HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
   BODY_RAW=$(echo "$RESPONSE" | sed '$d')
 

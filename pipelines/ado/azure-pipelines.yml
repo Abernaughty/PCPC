@@ -21,13 +21,12 @@ trigger:
 pr: none # PR validation handled by azure-pipelines-pr.yml
 
 variables:
+  # NOTE: Environment variable groups (vg-pcpc-<env>-config/secrets) are
+  # deliberately NOT loaded here at pipeline scope. Loading them globally would
+  # put prod secrets in scope for the auto-deploying (un-gated) Deploy_Dev jobs.
+  # Each Deploy_* stage declares only its own env's groups below, so secrets
+  # never cross environment boundaries. The Build stage needs no env groups.
   - template: variables/ci-images.yml
-  - group: vg-pcpc-dev-config
-  - group: vg-pcpc-dev-secrets
-  - group: vg-pcpc-staging-config
-  - group: vg-pcpc-staging-secrets
-  - group: vg-pcpc-prod-config
-  - group: vg-pcpc-prod-secrets
   - name: buildConfiguration
     value: "Release"
   - name: nodeVersion

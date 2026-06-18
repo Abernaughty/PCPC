@@ -96,49 +96,20 @@ steps:
         echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
         echo ""
 
-        # DEBUG: Check if secret variables are available as environment variables
-        echo "DEBUG: Checking secret environment variables..."
+        # Verify required secret env vars are present (mapped via env: below).
+        # Report presence only — never values or lengths (audit finding S4).
+        # Porkbun creds are kept until the SWA decommission destroy applies in
+        # all three envs (the porkbun_dns_record resource pending destroy still
+        # references them); remove in the follow-up cleanup PR.
+        echo "Checking secret environment variables..."
         echo "-----------------------------------------------"
-
-        # Check each secret variable (mapped via env: parameter)
-        if [ -z "${SCRYDEX_API_KEY}" ]; then
-          echo "  ❌ SCRYDEX_API_KEY is NOT SET or EMPTY"
-        else
-          echo "  ✅ SCRYDEX_API_KEY is set (length: ${#SCRYDEX_API_KEY})"
-        fi
-
-        if [ -z "${SCRYDEX_TEAM_ID}" ]; then
-          echo "  ❌ SCRYDEX_TEAM_ID is NOT SET or EMPTY"
-        else
-          echo "  ✅ SCRYDEX_TEAM_ID is set (length: ${#SCRYDEX_TEAM_ID})"
-        fi
-
-        if [ -z "${ARM_CLIENT_ID}" ]; then
-          echo "  ❌ ARM_CLIENT_ID is NOT SET or EMPTY"
-        else
-          echo "  ✅ ARM_CLIENT_ID is set (length: ${#ARM_CLIENT_ID})"
-        fi
-
-        if [ -z "${ARM_CLIENT_SECRET}" ]; then
-          echo "  ❌ ARM_CLIENT_SECRET is NOT SET or EMPTY"
-        else
-          echo "  ✅ ARM_CLIENT_SECRET is set (length: ${#ARM_CLIENT_SECRET})"
-        fi
-
-        # Porkbun creds kept until the SWA decommission destroy applies in all
-        # three envs (the porkbun_dns_record resource pending destroy still
-        # references them). Remove in the follow-up cleanup PR.
-        if [ -z "${PORKBUN_API_KEY}" ]; then
-          echo "  ❌ PORKBUN_API_KEY is NOT SET or EMPTY"
-        else
-          echo "  ✅ PORKBUN_API_KEY is set (length: ${#PORKBUN_API_KEY})"
-        fi
-
-        if [ -z "${PORKBUN_SECRET_KEY}" ]; then
-          echo "  ❌ PORKBUN_SECRET_KEY is NOT SET or EMPTY"
-        else
-          echo "  ✅ PORKBUN_SECRET_KEY is set (length: ${#PORKBUN_SECRET_KEY})"
-        fi
+        for var in SCRYDEX_API_KEY SCRYDEX_TEAM_ID ARM_CLIENT_ID ARM_CLIENT_SECRET PORKBUN_API_KEY PORKBUN_SECRET_KEY; do
+          if [ -z "${!var:-}" ]; then
+            echo "  ❌ ${var} is NOT SET or EMPTY"
+          else
+            echo "  ✅ ${var} is set"
+          fi
+        done
         echo ""
 
         # Create secrets.auto.tfvars file using bash environment variables
@@ -190,8 +161,7 @@ steps:
             EMPTY_COUNT=$((EMPTY_COUNT + 1))
           elif [[ $line =~ \"([^\"]+)\"[[:space:]]*=[[:space:]]*\"(.+)\" ]]; then
             key="${BASH_REMATCH[1]}"
-            value="${BASH_REMATCH[2]}"
-            echo "  ✅ $key has value (length: ${#value})"
+            echo "  ✅ $key has value"
           fi
         done < secrets.auto.tfvars
 
@@ -419,3 +389,14 @@ steps:
         echo "Storage Account: $(terraform output -raw storage_account_name 2>/dev/null || echo 'N/A')"
         echo "=========================================="
         echo ""
+
+  # Always remove the generated secrets file from the agent workspace, even if
+  # an earlier step failed. Microsoft-hosted agents are ephemeral, but on a
+  # self-hosted agent the workspace persists between runs, so leaving
+  # secrets.auto.tfvars on disk would leak the API keys (audit finding S4).
+  - script: |
+      rm -f secrets.auto.tfvars
+      echo "✓ Removed secrets.auto.tfvars from workspace"
+    displayName: "Clean Up Secrets File"
+    condition: always()
+    workingDirectory: "${{ parameters.workingDirectory }}/${{ parameters.environment }}"
