@@ -131,7 +131,7 @@ export class RedisCacheService implements IRedisCacheService {
         }
         
         try {
-            let cursor = 0;
+            let cursor = '0';
             let deletedCount = 0;
             
             do {
@@ -142,7 +142,7 @@ export class RedisCacheService implements IRedisCacheService {
                     await this.client!.del(scanResult.keys);
                     deletedCount += scanResult.keys.length;
                 }
-            } while (cursor !== 0);
+            } while (cursor !== '0');
             
             return deletedCount;
         } catch (error) {
