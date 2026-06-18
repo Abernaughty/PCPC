@@ -54,16 +54,16 @@ steps:
       fi
 
       echo "Verifying artifact integrity..."
-      sha256sum -c checksums.txt
-
-      if [ $? -eq 0 ]; then
+      # Blocking: a checksum mismatch must fail the deploy. Previously this step
+      # was continueOnError: true, so a corrupt/tampered artifact only logged a
+      # warning and deployed anyway, defeating the check (audit finding B3).
+      if sha256sum -c checksums.txt; then
         echo "✓ Artifact integrity verified successfully"
       else
         echo "##vso[task.logissue type=error]Artifact integrity verification failed"
         exit 1
       fi
     displayName: "Verify Artifact Integrity"
-    continueOnError: true
 
   # Display release manifest
   - script: |
@@ -316,10 +316,14 @@ steps:
           #
           # Blocking. Phase 2 migrated this endpoint to Scrydex; the
           # previous non-blocking transition window is closed.
+          #
+          # The key is sent via the x-functions-key header (read from env)
+          # rather than a ?code= query string, so it never lands in gateway
+          # or application request logs (audit finding S3).
           echo "Test 2: GetSetList Endpoint"
-          echo "GET $(functionAppUrl)/api/sets?code=***"
+          echo "GET $(functionAppUrl)/api/sets (key via x-functions-key header)"
 
-          SETS_RESPONSE=$(curl -s -w "\n%{http_code}" "$(functionAppUrl)/api/sets?code=$(functionKey)")
+          SETS_RESPONSE=$(curl -s -w "\n%{http_code}" -H "x-functions-key: ${FUNCTION_KEY}" "$(functionAppUrl)/api/sets")
           SETS_STATUS=$(echo "$SETS_RESPONSE" | tail -n1)
           SETS_BODY=$(echo "$SETS_RESPONSE" | head -n-1)
 
@@ -350,6 +354,10 @@ steps:
           echo "=========================================="
         displayName: "Run Function App Smoke Tests"
         continueOnError: false
+        env:
+          # Map the secret function key into the script env so it is sent as a
+          # header (see S3) rather than interpolated into the URL/command line.
+          FUNCTION_KEY: $(functionKey)
 
   # Display deployment summary
   - script: |
