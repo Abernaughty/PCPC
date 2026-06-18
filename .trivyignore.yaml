@@ -8,6 +8,12 @@
 
 vulnerabilities:
   - id: CVE-2026-48109
+    # Scope the waiver to the base-image Azure Functions ExtensionBundle only
+    # (version-agnostic glob, so it survives 4.35.0 -> 4.36.0 bundle bumps).
+    # If MessagePack ever appears elsewhere (e.g. our node_modules or another
+    # layer), this entry will NOT suppress it and the gate still flags it.
+    paths:
+      - "**/FuncExtensionBundles/**"
     statement: >-
       MessagePack 2.5.192 (HIGH, fixed in 2.5.301) ships inside Microsoft's
       Azure Functions ExtensionBundle (.NET), which is baked into the official
