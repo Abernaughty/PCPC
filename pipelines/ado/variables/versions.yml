@@ -1,0 +1,16 @@
+# Centralized tool versions for CI/CD pipeline *scripts*.
+#
+# Scope: this file holds versions that pipeline scripts invoke directly (e.g.
+# `npx pnpm@$(pnpmVersion)`). Runtime/toolchain versions that are baked into the
+# CI container images are NOT defined here — their single source of truth is the
+# image Dockerfiles:
+#   - Terraform, TFLint, Checkov : .ci/images/terraform/Dockerfile
+#   - Node.js                    : .ci/images/node22 + node-azure Dockerfiles
+#   - Spectral CLI               : .ci/images/node22/Dockerfile
+# and the Function App runtime is governed by AzureFunctionApp@2 runtimeStack
+# (NODE|22) plus the function-app Terraform module (node_version = "~22").
+#
+# pnpmVersion mirrors the authoritative `packageManager` field in the root
+# package.json — keep the two in sync when bumping pnpm.
+variables:
+  pnpmVersion: "10.32.1"

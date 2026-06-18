@@ -1,10 +1,6 @@
 # Infrastructure Validation Template
 # Validates Terraform configuration and infrastructure as code
-
-parameters:
-  - name: terraformVersion
-    type: string
-    default: "1.13.3"
+# Terraform/TFLint/Checkov versions are governed by the terraform CI image.
 
 jobs:
   - job: ValidateInfrastructure

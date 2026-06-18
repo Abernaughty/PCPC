@@ -27,6 +27,7 @@ variables:
   # Each Deploy_* stage declares only its own env's groups below, so secrets
   # never cross environment boundaries. The Build stage needs no env groups.
   - template: variables/ci-images.yml
+  - template: variables/versions.yml
   - name: buildConfiguration
     value: "Release"
   - name: nodeVersion
@@ -53,14 +54,6 @@ stages:
         parameters:
           buildConfiguration: $(buildConfiguration)
           nodeVersion: $(nodeVersion)
-          azureSubscription: "az-pcpc-dev"
-          apimName: "pcpc-apim-dev"
-          apimResourceGroup: "pcpc-rg-dev"
-          apimBaseUrl: "https://pcpc-apim-dev.azure-api.net/pcpc-api"
-          apimBasePath: "pcpc-api"
-          useApiManagement: "true"
-          functionAppName: $(FUNCTION_APP_NAME)
-          functionResourceGroup: $(APIM_RESOURCE_GROUP)
 
       # Build the Path C (ACA) container image and push to PCPC's shared ACR.
       # Runs in parallel with the unified-artifact build above — they're
@@ -88,361 +81,49 @@ stages:
               acrResourceGroup: "pcpc-rg-shared"
 
   # ============================================================================
-  # STAGE 2: DEPLOY TO DEV
-  # Automatic deployment to development environment
+  # DEPLOY STAGES (dev → staging → prod)
+  # Each environment is one invocation of templates/deploy-stage.yml — the
+  # ~110-line stage body used to be copy-pasted three times (audit D1/D2).
+  # `Build` is in every stage's dependsOn so the Deploy_ACA job can read the
+  # cross-stage Build_Container_Image output variable (image built once, rolled
+  # to all three envs). Execution order is preserved by the staged dependsOn.
   # ============================================================================
-  - stage: Deploy_Dev
-    displayName: "Deploy to Dev"
-    dependsOn: Build
-    condition: succeeded()
-    variables:
-      - group: vg-pcpc-dev-config
-      - group: vg-pcpc-dev-secrets
-    jobs:
-      # Deploy Infrastructure
-      - job: Deploy_Infrastructure
-        displayName: "Deploy Infrastructure"
-        pool:
-          vmImage: "ubuntu-latest"
-        container: terraform
-        steps:
-          - template: templates/deploy-infra.yml
-            parameters:
-              environment: dev
-              azureSubscription: "az-pcpc-dev"
-              terraformVersion: "1.13.3"
 
-      # Deploy Backend Functions
-      - job: Deploy_Functions
-        displayName: "Deploy Azure Functions"
-        dependsOn: Deploy_Infrastructure
-        condition: succeeded()
-        pool:
-          vmImage: "ubuntu-latest"
-        container: node-azure
-        steps:
-          - template: templates/deploy-functions.yml
-            parameters:
-              environment: dev
-              azureSubscription: "az-pcpc-dev"
-              functionAppName: $(FUNCTION_APP_NAME)
-              resourceGroupName: $(APIM_RESOURCE_GROUP)
+  # STAGE 2: DEPLOY TO DEV — automatic, no approval gate.
+  - template: templates/deploy-stage.yml
+    parameters:
+      stageName: Deploy_Dev
+      displayName: "Deploy to Dev"
+      environment: dev
+      azureSubscription: "az-pcpc-dev"
+      containerAppName: "pcpc-aca-dev"
+      requiresApproval: false
+      dependsOn:
+        - Build
 
-      # Deploy APIM APIs and Policies
-      - job: Deploy_APIM
-        displayName: "Deploy APIM APIs & Policies"
-        dependsOn:
-          - Deploy_Infrastructure
-          - Deploy_Functions
-        condition: succeeded()
-        pool:
-          vmImage: "ubuntu-latest"
-        container: terraform
-        steps:
-          - template: templates/deploy-apim.yml
-            parameters:
-              environment: dev
-              azureSubscription: "az-pcpc-dev"
+  # STAGE 3: DEPLOY TO STAGING — approval-gated via the pcpc-staging Environment.
+  - template: templates/deploy-stage.yml
+    parameters:
+      stageName: Deploy_Staging
+      displayName: "Deploy to Staging"
+      environment: staging
+      azureSubscription: "az-pcpc-staging"
+      containerAppName: "pcpc-aca-staging"
+      requiresApproval: true
+      dependsOn:
+        - Build
+        - Deploy_Dev
 
-      # Phase 2.2 — Deploy Path C (ACA Container).
-      #
-      # Parallel to Deploy_Functions (Path B). Consumes the canonical
-      # SHA-tagged image reference from the Build stage's
-      # `Build_Container_Image` job (cross-stage `stageDependencies` output)
-      # and rolls a new revision on the Container App. The image-build
-      # itself lives in the Build stage so that future Deploy_Staging /
-      # Deploy_Prod ACA jobs can consume the same artifact.
-      #
-      # `dependsOn: Deploy_Infrastructure` so Terraform has provisioned
-      # the Container App before we try to roll it. (Build stage already
-      # completed by the time Deploy_Dev runs — that's the stage-level
-      # dependsOn at the parent.)
-      - job: Deploy_ACA
-        displayName: "Deploy Path C (ACA Container)"
-        dependsOn: Deploy_Infrastructure
-        condition: succeeded()
-        pool:
-          vmImage: "ubuntu-latest"
-        variables:
-          # Map the Build stage's image-build job output to a job-scoped
-          # variable so we can pass it as a runtime parameter below.
-          containerImageReference: $[ stageDependencies.Build.Build_Container_Image.outputs['discover_image.ContainerImageReference'] ]
-        steps:
-          - template: templates/deploy-aca.yml
-            parameters:
-              environment: dev
-              azureSubscription: "az-pcpc-dev"
-              containerAppName: "pcpc-aca-dev"
-              resourceGroupName: $(APIM_RESOURCE_GROUP)
-              containerImageReference: $(containerImageReference)
-
-      # Run Smoke Tests
-      - job: Smoke_Tests
-        displayName: "Run Smoke Tests"
-        dependsOn:
-          - Deploy_Functions
-          - Deploy_APIM
-        condition: succeeded()
-        pool:
-          vmImage: "ubuntu-latest"
-        container: node-azure
-        steps:
-          - template: templates/smoke-tests.yml
-            parameters:
-              environment: dev
-              azureSubscription: "az-pcpc-dev"
-              resourceGroupName: $(APIM_RESOURCE_GROUP)
-              functionAppName: $(FUNCTION_APP_NAME)
-              apimName: $(APIM_NAME)
-
-  # ============================================================================
-  # STAGE 3: DEPLOY TO STAGING
-  # Approval-gated deployment to staging environment
-  # ============================================================================
-  - stage: Deploy_Staging
-    displayName: "Deploy to Staging"
-    # `Build` is listed explicitly (in addition to Deploy_Dev) so this stage
-    # can read `stageDependencies.Build.Build_Container_Image.outputs[...]`
-    # for the Deploy_ACA job below. Per Microsoft Learn: "Output variables
-    # are only available in the next downstream stage. If multiple stages
-    # consume the same output variable, use the `dependsOn` condition."
-    # (learn.microsoft.com/azure/devops/pipelines/process/set-variables-scripts).
-    # Execution order is unchanged — Deploy_Dev already gates this stage
-    # via its own dependsOn on Build, so adding Build here just propagates
-    # the output-variable visibility.
-    dependsOn:
-      - Build
-      - Deploy_Dev
-    condition: succeeded()
-    variables:
-      - group: vg-pcpc-staging-config
-      - group: vg-pcpc-staging-secrets
-    jobs:
-      # Deploy Infrastructure
-      - deployment: Deploy_Infrastructure
-        displayName: "Deploy Infrastructure"
-        environment: pcpc-staging # Approval gate configured in Azure DevOps
-        pool:
-          vmImage: "ubuntu-latest"
-        container: terraform
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-                - template: templates/deploy-infra.yml
-                  parameters:
-                    environment: staging
-                    azureSubscription: "az-pcpc-staging"
-                    terraformVersion: "1.13.3"
-
-      # Deploy Backend Functions
-      - job: Deploy_Functions
-        displayName: "Deploy Azure Functions"
-        dependsOn: Deploy_Infrastructure
-        condition: succeeded()
-        pool:
-          vmImage: "ubuntu-latest"
-        container: node-azure
-        steps:
-          - template: templates/deploy-functions.yml
-            parameters:
-              environment: staging
-              azureSubscription: "az-pcpc-staging"
-              functionAppName: $(FUNCTION_APP_NAME)
-              resourceGroupName: $(APIM_RESOURCE_GROUP)
-
-      # Deploy APIM APIs and Policies
-      - job: Deploy_APIM
-        displayName: "Deploy APIM APIs & Policies"
-        dependsOn:
-          - Deploy_Functions
-        condition: succeeded()
-        pool:
-          vmImage: "ubuntu-latest"
-        container: terraform
-        steps:
-          - template: templates/deploy-apim.yml
-            parameters:
-              environment: staging
-              azureSubscription: "az-pcpc-staging"
-
-      # Phase 2.2 — Deploy Path C (ACA Container) to staging.
-      #
-      # Mirror of Deploy_Dev's Deploy_ACA job. Consumes the same canonical
-      # SHA-tagged image reference from the Build stage's Build_Container_Image
-      # job — one image build per pipeline run, all envs roll the same artifact.
-      # The infra stage above runs as `deployment:` against the `pcpc-staging`
-      # environment for the approval gate, which gates this job too via
-      # dependsOn.
-      - job: Deploy_ACA
-        displayName: "Deploy Path C (ACA Container)"
-        dependsOn: Deploy_Infrastructure
-        condition: succeeded()
-        pool:
-          vmImage: "ubuntu-latest"
-        variables:
-          containerImageReference: $[ stageDependencies.Build.Build_Container_Image.outputs['discover_image.ContainerImageReference'] ]
-        steps:
-          - template: templates/deploy-aca.yml
-            parameters:
-              environment: staging
-              azureSubscription: "az-pcpc-staging"
-              containerAppName: "pcpc-aca-staging"
-              resourceGroupName: $(APIM_RESOURCE_GROUP)
-              containerImageReference: $(containerImageReference)
-
-      # Run Smoke Tests
-      - job: Smoke_Tests
-        displayName: "Run Smoke Tests"
-        dependsOn:
-          - Deploy_Functions
-          - Deploy_APIM
-        condition: succeeded()
-        pool:
-          vmImage: "ubuntu-latest"
-        container: node-azure
-        steps:
-          - template: templates/smoke-tests.yml
-            parameters:
-              environment: staging
-              azureSubscription: "az-pcpc-staging"
-              resourceGroupName: $(APIM_RESOURCE_GROUP)
-              functionAppName: $(FUNCTION_APP_NAME)
-              apimName: $(APIM_NAME)
-
-  # ============================================================================
-  # STAGE 4: DEPLOY TO PRODUCTION
-  # Approval-gated deployment to production environment
-  # ============================================================================
-  - stage: Deploy_Prod
-    displayName: "Deploy to Production"
-    # See the matching note on Deploy_Staging — Build is listed alongside
-    # the upstream deploy stage so Deploy_ACA can read the cross-stage
-    # image-reference output variable.
-    dependsOn:
-      - Build
-      - Deploy_Staging
-    condition: succeeded()
-    variables:
-      - group: vg-pcpc-prod-config
-      - group: vg-pcpc-prod-secrets
-    jobs:
-      # Deploy Infrastructure
-      - deployment: Deploy_Infrastructure
-        displayName: "Deploy Infrastructure"
-        environment: pcpc-prod # Approval gate configured in Azure DevOps
-        pool:
-          vmImage: "ubuntu-latest"
-        container: terraform
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-                - template: templates/deploy-infra.yml
-                  parameters:
-                    environment: prod
-                    azureSubscription: "az-pcpc-prod"
-                    terraformVersion: "1.13.3"
-
-      # Deploy Backend Functions
-      - job: Deploy_Functions
-        displayName: "Deploy Azure Functions"
-        dependsOn: Deploy_Infrastructure
-        condition: succeeded()
-        pool:
-          vmImage: "ubuntu-latest"
-        container: node-azure
-        steps:
-          - template: templates/deploy-functions.yml
-            parameters:
-              environment: prod
-              azureSubscription: "az-pcpc-prod"
-              functionAppName: $(FUNCTION_APP_NAME)
-              resourceGroupName: $(APIM_RESOURCE_GROUP)
-
-      # Deploy APIM APIs and Policies
-      - job: Deploy_APIM
-        displayName: "Deploy APIM APIs & Policies"
-        dependsOn:
-          - Deploy_Functions
-        condition: succeeded()
-        pool:
-          vmImage: "ubuntu-latest"
-        container: terraform
-        steps:
-          - template: templates/deploy-apim.yml
-            parameters:
-              environment: prod
-              azureSubscription: "az-pcpc-prod"
-
-      # Phase 2.2 — Deploy Path C (ACA Container) to prod.
-      #
-      # Mirror of Deploy_Dev / Deploy_Staging's Deploy_ACA job. Same SHA-tagged
-      # image reference from the Build stage as the other two envs. The infra
-      # stage above runs as `deployment:` against the `pcpc-prod` environment
-      # for the production approval gate, which gates this job too.
-      - job: Deploy_ACA
-        displayName: "Deploy Path C (ACA Container)"
-        dependsOn: Deploy_Infrastructure
-        condition: succeeded()
-        pool:
-          vmImage: "ubuntu-latest"
-        variables:
-          containerImageReference: $[ stageDependencies.Build.Build_Container_Image.outputs['discover_image.ContainerImageReference'] ]
-        steps:
-          - template: templates/deploy-aca.yml
-            parameters:
-              environment: prod
-              azureSubscription: "az-pcpc-prod"
-              containerAppName: "pcpc-aca-prod"
-              resourceGroupName: $(APIM_RESOURCE_GROUP)
-              containerImageReference: $(containerImageReference)
-
-      # Run Smoke Tests
-      - job: Smoke_Tests
-        displayName: "Run Smoke Tests"
-        dependsOn:
-          - Deploy_Functions
-          - Deploy_APIM
-        condition: succeeded()
-        pool:
-          vmImage: "ubuntu-latest"
-        container: node-azure
-        steps:
-          - template: templates/smoke-tests.yml
-            parameters:
-              environment: prod
-              azureSubscription: "az-pcpc-prod"
-              resourceGroupName: $(APIM_RESOURCE_GROUP)
-              functionAppName: $(FUNCTION_APP_NAME)
-              apimName: $(APIM_NAME)
-
-      # Final Deployment Summary
-      - job: Deployment_Summary
-        displayName: "Deployment Summary"
-        dependsOn: Smoke_Tests
-        condition: succeeded()
-        pool:
-          vmImage: "ubuntu-latest"
-        container: node-azure
-        steps:
-          - checkout: none
-          - script: |
-              echo "=========================================="
-              echo "PRODUCTION DEPLOYMENT COMPLETE"
-              echo "=========================================="
-              echo ""
-              echo "Environment: Production"
-              echo "Build ID: $(Build.BuildId)"
-              echo "Build Number: $(Build.BuildNumber)"
-              echo "Source Branch: $(Build.SourceBranch)"
-              echo "Source Version: $(Build.SourceVersion)"
-              echo ""
-              echo "Deployed Components:"
-              echo "  ✓ Infrastructure (Terraform)"
-              echo "  ✓ Path B: Azure Functions Backend + APIM"
-              echo "  ✓ Path C: Container App (ACA)"
-              echo ""
-              echo "All smoke tests passed successfully."
-              echo "=========================================="
-            displayName: "Display Deployment Summary"
+  # STAGE 4: DEPLOY TO PRODUCTION — approval-gated via the pcpc-prod Environment.
+  - template: templates/deploy-stage.yml
+    parameters:
+      stageName: Deploy_Prod
+      displayName: "Deploy to Production"
+      environment: prod
+      azureSubscription: "az-pcpc-prod"
+      containerAppName: "pcpc-aca-prod"
+      requiresApproval: true
+      includeSummary: true
+      dependsOn:
+        - Build
+        - Deploy_Staging

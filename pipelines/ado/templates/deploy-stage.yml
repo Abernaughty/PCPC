@@ -1,0 +1,183 @@
+# Parameterized CD stage: deploys one environment
+# (Infra → Functions → APIM/ACA → Smoke). Used three times by
+# azure-pipelines.yml (dev/staging/prod) so the ~110-line stage body lives here
+# once instead of being copy-pasted per environment (audit findings D1/D2).
+#
+# Dev runs the infrastructure step as a plain job (auto-deploy, no gate);
+# staging/prod run it as a `deployment:` job against the pcpc-<env> Environment
+# so the approval check configured in Azure DevOps gates the whole stage. All
+# other jobs are identical across environments and differ only by parameter.
+
+parameters:
+  - name: stageName
+    type: string
+    # Stage id, e.g. Deploy_Dev. Kept explicit so existing stage ids/links are
+    # unchanged and downstream stages can reference them in dependsOn.
+  - name: displayName
+    type: string
+  - name: environment
+    type: string
+    values:
+      - dev
+      - staging
+      - prod
+  - name: azureSubscription
+    type: string
+  - name: containerAppName
+    type: string
+  - name: dependsOn
+    type: object
+    # Stage-level dependsOn list. Always include Build so the Deploy_ACA job can
+    # read the cross-stage Build_Container_Image output variable.
+  - name: requiresApproval
+    type: boolean
+    default: false
+    # true → run infra as a `deployment:` against pcpc-<env> (approval gate).
+  - name: includeSummary
+    type: boolean
+    default: false
+
+stages:
+  - stage: ${{ parameters.stageName }}
+    displayName: ${{ parameters.displayName }}
+    dependsOn: ${{ parameters.dependsOn }}
+    condition: succeeded()
+    variables:
+      - group: vg-pcpc-${{ parameters.environment }}-config
+      - group: vg-pcpc-${{ parameters.environment }}-secrets
+    jobs:
+      # --- Deploy Infrastructure -------------------------------------------
+      # Approval-gated envs run this as a `deployment:` against the pcpc-<env>
+      # Environment; dev runs it as a plain auto-deploy job.
+      - ${{ if eq(parameters.requiresApproval, true) }}:
+        - deployment: Deploy_Infrastructure
+          displayName: "Deploy Infrastructure"
+          environment: pcpc-${{ parameters.environment }} # Approval gate configured in Azure DevOps
+          pool:
+            vmImage: "ubuntu-latest"
+          container: terraform
+          strategy:
+            runOnce:
+              deploy:
+                steps:
+                  - template: deploy-infra.yml
+                    parameters:
+                      environment: ${{ parameters.environment }}
+                      azureSubscription: ${{ parameters.azureSubscription }}
+      - ${{ else }}:
+        - job: Deploy_Infrastructure
+          displayName: "Deploy Infrastructure"
+          pool:
+            vmImage: "ubuntu-latest"
+          container: terraform
+          steps:
+            - template: deploy-infra.yml
+              parameters:
+                environment: ${{ parameters.environment }}
+                azureSubscription: ${{ parameters.azureSubscription }}
+
+      # --- Deploy Backend Functions (Path B) -------------------------------
+      - job: Deploy_Functions
+        displayName: "Deploy Azure Functions"
+        dependsOn: Deploy_Infrastructure
+        condition: succeeded()
+        pool:
+          vmImage: "ubuntu-latest"
+        container: node-azure
+        steps:
+          - template: deploy-functions.yml
+            parameters:
+              environment: ${{ parameters.environment }}
+              azureSubscription: ${{ parameters.azureSubscription }}
+              functionAppName: $(FUNCTION_APP_NAME)
+              resourceGroupName: $(APIM_RESOURCE_GROUP)
+
+      # --- Deploy APIM APIs and Policies -----------------------------------
+      # dependsOn Deploy_Functions only; Functions already gates on
+      # Deploy_Infrastructure, so APIM still runs after infra. This normalizes
+      # the per-env dependsOn drift the copy-pasted stages had (D2).
+      - job: Deploy_APIM
+        displayName: "Deploy APIM APIs & Policies"
+        dependsOn:
+          - Deploy_Functions
+        condition: succeeded()
+        pool:
+          vmImage: "ubuntu-latest"
+        container: terraform
+        steps:
+          - template: deploy-apim.yml
+            parameters:
+              environment: ${{ parameters.environment }}
+              azureSubscription: ${{ parameters.azureSubscription }}
+
+      # --- Deploy Path C (ACA Container) -----------------------------------
+      # Consumes the canonical SHA-tagged image reference from the Build stage's
+      # Build_Container_Image job (cross-stage stageDependencies output) and
+      # rolls a new revision. dependsOn Deploy_Infrastructure so Terraform has
+      # provisioned the Container App first.
+      - job: Deploy_ACA
+        displayName: "Deploy Path C (ACA Container)"
+        dependsOn: Deploy_Infrastructure
+        condition: succeeded()
+        pool:
+          vmImage: "ubuntu-latest"
+        variables:
+          containerImageReference: $[ stageDependencies.Build.Build_Container_Image.outputs['discover_image.ContainerImageReference'] ]
+        steps:
+          - template: deploy-aca.yml
+            parameters:
+              environment: ${{ parameters.environment }}
+              azureSubscription: ${{ parameters.azureSubscription }}
+              containerAppName: ${{ parameters.containerAppName }}
+              resourceGroupName: $(APIM_RESOURCE_GROUP)
+              containerImageReference: $(containerImageReference)
+
+      # --- Smoke Tests -----------------------------------------------------
+      - job: Smoke_Tests
+        displayName: "Run Smoke Tests"
+        dependsOn:
+          - Deploy_Functions
+          - Deploy_APIM
+        condition: succeeded()
+        pool:
+          vmImage: "ubuntu-latest"
+        container: node-azure
+        steps:
+          - template: smoke-tests.yml
+            parameters:
+              environment: ${{ parameters.environment }}
+              azureSubscription: ${{ parameters.azureSubscription }}
+              resourceGroupName: $(APIM_RESOURCE_GROUP)
+              functionAppName: $(FUNCTION_APP_NAME)
+              apimName: $(APIM_NAME)
+
+      # --- Final Deployment Summary (opt-in; used by prod) -----------------
+      - ${{ if eq(parameters.includeSummary, true) }}:
+        - job: Deployment_Summary
+          displayName: "Deployment Summary"
+          dependsOn: Smoke_Tests
+          condition: succeeded()
+          pool:
+            vmImage: "ubuntu-latest"
+          container: node-azure
+          steps:
+            - checkout: none
+            - script: |
+                echo "=========================================="
+                echo "${{ upper(parameters.environment) }} DEPLOYMENT COMPLETE"
+                echo "=========================================="
+                echo ""
+                echo "Environment: ${{ parameters.displayName }}"
+                echo "Build ID: $(Build.BuildId)"
+                echo "Build Number: $(Build.BuildNumber)"
+                echo "Source Branch: $(Build.SourceBranch)"
+                echo "Source Version: $(Build.SourceVersion)"
+                echo ""
+                echo "Deployed Components:"
+                echo "  ✓ Infrastructure (Terraform)"
+                echo "  ✓ Path B: Azure Functions Backend + APIM"
+                echo "  ✓ Path C: Container App (ACA)"
+                echo ""
+                echo "All smoke tests passed successfully."
+                echo "=========================================="
+              displayName: "Display Deployment Summary"

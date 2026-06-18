@@ -1,0 +1,55 @@
+# Shared step-template: produce a self-contained, deployable functions/ folder.
+#
+# Runs the lockfile-faithful pnpm pipeline used by BOTH the unified-artifact
+# build (build.yml) and the ACA container image build (build-and-push-image.yml),
+# so the recipe lives here once instead of being duplicated (audit finding D5):
+#   pnpm install --frozen-lockfile
+#   → pnpm --filter pcpc-backend run build
+#   → pnpm --filter pcpc-backend deploy --prod  (flat/hoisted node_modules)
+# The output folder is self-contained — dist/ + host.json + package.json + a flat
+# PRODUCTION node_modules — and feeds both the Function App zip-deploy and the
+# container image.
+#
+# Flag rationale:
+#   --prod                                  : omit devDeps (incl. type-only @pcpc/shared)
+#   --config.inject-workspace-packages=true : pnpm 10 lockfile-FAITHFUL deploy — copies prod
+#                                             deps from the frozen-installed store (pinned to
+#                                             pnpm-lock.yaml). NOT --legacy, which re-resolves
+#                                             version ranges and could drift from the lockfile.
+#   --config.node-linker=hoisted            : flat node_modules (no .pnpm symlink farm) so the
+#                                             zip-deploy and container both resolve modules reliably
+
+parameters:
+  - name: deployDir
+    type: string
+    # Absolute path the self-contained functions/ folder is written to.
+  - name: workingDirectory
+    type: string
+    default: "$(System.DefaultWorkingDirectory)"
+    # Repo root (where pnpm-workspace.yaml + pnpm-lock.yaml live).
+  - name: condition
+    type: string
+    default: "succeeded()"
+    # Allows callers to gate the bundle (e.g. the image build skips it when the
+    # target tag already exists in ACR).
+
+steps:
+  - script: |
+      set -euo pipefail
+
+      DEPLOY_DIR='${{ parameters.deployDir }}'
+      rm -rf "$DEPLOY_DIR"
+
+      npx --yes pnpm@$(pnpmVersion) install --frozen-lockfile
+      npx --yes pnpm@$(pnpmVersion) --filter pcpc-backend run build
+      npx --yes pnpm@$(pnpmVersion) --filter pcpc-backend deploy \
+        --prod --config.inject-workspace-packages=true --config.node-linker=hoisted "$DEPLOY_DIR"
+
+      echo "Deployed functions/ contents:"
+      ls -lah "$DEPLOY_DIR"
+      test -f "$DEPLOY_DIR/dist/index.js"
+      test -d "$DEPLOY_DIR/node_modules"
+      echo "✓ Bundled functions deploy folder ready at $DEPLOY_DIR"
+    displayName: "Bundle Functions (pnpm deploy --prod)"
+    workingDirectory: ${{ parameters.workingDirectory }}
+    condition: ${{ parameters.condition }}

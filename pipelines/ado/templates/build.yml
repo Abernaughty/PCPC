@@ -12,33 +12,6 @@ parameters:
   - name: publishArtifact
     type: boolean
     default: true
-  - name: azureSubscription
-    type: string
-    default: ""
-  - name: apimName
-    type: string
-    default: ""
-  - name: apimResourceGroup
-    type: string
-    default: ""
-  - name: apimSubscriptionName
-    type: string
-    default: "master"
-  - name: apimBaseUrl
-    type: string
-    default: ""
-  - name: apimBasePath
-    type: string
-    default: "pcpc-api"
-  - name: useApiManagement
-    type: string
-    default: "true"
-  - name: functionAppName
-    type: string
-    default: ""
-  - name: functionResourceGroup
-    type: string
-    default: ""
 
 jobs:
   - job: Build
@@ -47,34 +20,15 @@ jobs:
       vmImage: "ubuntu-latest"
     container: node-azure
     steps:
-      # Install root dependencies (for Jest testing framework).
-      # Root is a pnpm workspace (pnpm-lock.yaml); there is no root
-      # package-lock.json, so install via pnpm, matching Vercel and local dev.
-      - script: |
-          npx --yes pnpm@10.32.1 install --frozen-lockfile
-        displayName: "Install Root Dependencies"
-        workingDirectory: $(System.DefaultWorkingDirectory)
-
       # ============================================================================
-      # BACKEND BUILD
+      # BACKEND BUILD + BUNDLE
       # ============================================================================
 
-      # backend/functions is a pnpm-workspace member; its deps were installed by
-      # the root `pnpm install --frozen-lockfile` above. Build via the filter.
-      - script: |
-          npx --yes pnpm@10.32.1 --filter pcpc-backend run build
-        displayName: "Build Backend (TypeScript)"
-        workingDirectory: $(System.DefaultWorkingDirectory)
-
-      - script: |
-          if [ ! -d "dist" ]; then
-            echo "##vso[task.logissue type=error]Backend build failed - dist/ directory not found"
-            exit 1
-          fi
-          echo "Backend build verification passed"
-          ls -lah dist/
-        displayName: "Verify Backend Build"
-        workingDirectory: $(System.DefaultWorkingDirectory)/backend/functions
+      # Install + build + pnpm deploy --prod into drop/functions. Shared recipe
+      # with the ACA image build — see templates/steps/bundle-functions.yml.
+      - template: steps/bundle-functions.yml
+        parameters:
+          deployDir: "$(Build.ArtifactStagingDirectory)/drop/functions"
 
       # ============================================================================
       # CREATE UNIFIED ARTIFACT
@@ -83,37 +37,13 @@ jobs:
       - script: |
           echo "Creating unified artifact structure..."
 
-          # functions/ is produced by `pnpm deploy` below (it creates the dir);
-          # only pre-create the apim/ subtree here.
+          # functions/ was produced by the bundle step above; only pre-create
+          # the apim/ subtree here.
           mkdir -p $(Build.ArtifactStagingDirectory)/drop/apim
 
-          echo "Artifact structure created:"
+          echo "Artifact structure:"
           tree -L 2 $(Build.ArtifactStagingDirectory)/drop || ls -R $(Build.ArtifactStagingDirectory)/drop
         displayName: "Create Artifact Structure"
-
-      # Produce a self-contained, deployable functions/ folder via pnpm deploy:
-      # dist + host.json + package.json + a flat PRODUCTION node_modules.
-      # The SAME folder is consumed by the Function App deploy and the ACA image.
-      #   --prod                                  : omit devDeps (incl. type-only @pcpc/shared)
-      #   --config.inject-workspace-packages=true : pnpm 10's lockfile-FAITHFUL deploy — copies prod
-      #                                             deps from the store populated by the
-      #                                             `pnpm install --frozen-lockfile` above (pinned to
-      #                                             pnpm-lock.yaml). NOT `--legacy`, which re-resolves
-      #                                             version ranges and could drift from the lockfile.
-      #   --config.node-linker=hoisted            : flat node_modules (no .pnpm symlink farm) so the
-      #                                             Function App zip-deploy resolves modules reliably
-      - script: |
-          set -euo pipefail
-          npx --yes pnpm@10.32.1 --filter pcpc-backend deploy \
-            --prod --config.inject-workspace-packages=true --config.node-linker=hoisted \
-            "$(Build.ArtifactStagingDirectory)/drop/functions"
-
-          echo "Deployed functions/ contents:"
-          ls -lah "$(Build.ArtifactStagingDirectory)/drop/functions"
-          test -f "$(Build.ArtifactStagingDirectory)/drop/functions/dist/index.js"
-          test -d "$(Build.ArtifactStagingDirectory)/drop/functions/node_modules"
-        displayName: "Bundle Backend (pnpm deploy --prod)"
-        workingDirectory: $(System.DefaultWorkingDirectory)
 
       # Copy APIM configuration
       - task: CopyFiles@2
