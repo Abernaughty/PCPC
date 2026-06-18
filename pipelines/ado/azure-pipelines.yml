@@ -76,7 +76,7 @@ stages:
       # for `docker build` and the Trivy container-scan flow.
       - job: Build_Container_Image
         displayName: "Build + Push ACA Image"
-        timeoutInMinutes: 30
+        timeoutInMinutes: 45
         pool:
           vmImage: "ubuntu-latest"
         steps:
