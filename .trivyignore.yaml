@@ -1,0 +1,22 @@
+# Trivy vulnerability ignore list (scoped, time-boxed).
+#
+# Each entry MUST have: a justification (statement) and an expired_at date so the
+# gate re-blocks and forces a re-review once the fix should be available — these
+# are NOT permanent waivers.
+#
+# Consumed by pipelines/ado/templates/build-and-push-image.yml via `--ignorefile`.
+
+vulnerabilities:
+  - id: CVE-2026-48109
+    statement: >-
+      MessagePack 2.5.192 (HIGH, fixed in 2.5.301) ships inside Microsoft's
+      Azure Functions ExtensionBundle (.NET), which is baked into the official
+      base image mcr.microsoft.com/azure-functions/node:4-node22. It is NOT a
+      dependency of the PCPC Node.js function app or its node_modules, and the
+      affected code path (MessagePack LZ4 decompression) is not reachable from
+      our code. Verified on 2026-06-17 that NO published Azure Functions base
+      image fixes it yet — even the newest build (4.1051.300-1-node22,
+      ExtensionBundle 4.36.0) still ships MessagePack 2.5.192. There is no
+      actionable upstream fix to consume. Revisit when Microsoft updates
+      MessagePack in the base image / ExtensionBundle.
+    expired_at: 2026-09-17
