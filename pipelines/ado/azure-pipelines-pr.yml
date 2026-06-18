@@ -65,15 +65,13 @@ stages:
       - ValidateBackend
       - ValidateInfrastructure
       - ValidateAPIM
-    condition: always()
-    # Surface each upstream stage's real result into the summary job. Previously
-    # the summary printed $(Agent.JobStatus) (the summary job's OWN status) and
-    # unconditionally claimed success, so a failed validation still rendered a
-    # green "ready for review" summary (audit finding B2).
-    variables:
-      backendResult: $[ dependencies.ValidateBackend.result ]
-      infraResult: $[ dependencies.ValidateInfrastructure.result ]
-      apimResult: $[ dependencies.ValidateAPIM.result ]
+    # Runs only when all three validation stages succeeded (the default
+    # succeeded() condition evaluated against dependsOn). If any validation
+    # fails, this stage is SKIPPED and that failed stage makes the PR red — so
+    # the summary can never print a false "passed". This replaces the previous
+    # version, which printed $(Agent.JobStatus) (the summary job's OWN status)
+    # and unconditionally claimed success (audit finding B2).
+    condition: succeeded()
     jobs:
       - job: Summary
         displayName: "PR Validation Summary"
@@ -83,26 +81,12 @@ stages:
               echo "PR Validation Complete"
               echo "======================================"
               echo ""
-              echo "Validation Results:"
-              echo "- Backend:        $(backendResult)"
-              echo "- Infrastructure: $(infraResult)"
-              echo "- APIM:           $(apimResult)"
+              echo "All validation stages passed:"
+              echo "  - Backend"
+              echo "  - Infrastructure"
+              echo "  - APIM"
               echo ""
               echo "Frontend (SvelteKit) is validated by Vercel preview builds — see Vercel checks on the PR."
               echo ""
-
-              all_ok=true
-              for result in "$(backendResult)" "$(infraResult)" "$(apimResult)"; do
-                case "$result" in
-                  Succeeded|SucceededWithIssues) ;;
-                  *) all_ok=false ;;
-                esac
-              done
-
-              if [ "$all_ok" = "true" ]; then
-                echo "✅ All validations passed - PR is ready for review"
-              else
-                echo "❌ One or more validations did not pass - see the stage results above"
-                exit 1
-              fi
+              echo "✅ All validations passed - PR is ready for review"
             displayName: "Display Summary"
