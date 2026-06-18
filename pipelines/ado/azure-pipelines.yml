@@ -3,6 +3,10 @@
 # Uses unified artifact strategy for consistency across environments
 
 trigger:
+  # Batch changes: while a CD run is in progress, queue subsequent pushes and
+  # coalesce them into one run when it completes. Avoids overlapping runs racing
+  # for the same Terraform state / rolling concurrent prod deploys (audit P5).
+  batch: true
   branches:
     include:
       - main
@@ -72,6 +76,7 @@ stages:
       # for `docker build` and the Trivy container-scan flow.
       - job: Build_Container_Image
         displayName: "Build + Push ACA Image"
+        timeoutInMinutes: 30
         pool:
           vmImage: "ubuntu-latest"
         steps:

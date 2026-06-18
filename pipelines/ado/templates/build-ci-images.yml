@@ -24,6 +24,7 @@ parameters:
 jobs:
   - job: BuildCIImages
     displayName: "Build CI Images and Publish Digests"
+    timeoutInMinutes: 30
     pool:
       vmImage: ubuntu-latest
     steps:

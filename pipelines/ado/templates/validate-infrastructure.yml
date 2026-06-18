@@ -5,6 +5,7 @@
 jobs:
   - job: ValidateInfrastructure
     displayName: "Infrastructure Validation"
+    timeoutInMinutes: 15
     pool:
       vmImage: "ubuntu-latest"
     container: terraform
@@ -35,14 +36,21 @@ jobs:
         displayName: "Validate Terraform Modules"
         workingDirectory: $(System.DefaultWorkingDirectory)
 
-      # Validate dev environment
+      # Validate every environment config, not just dev — a syntax/config error
+      # in the staging or prod env folder must fail the PR, not wait until
+      # deploy time (audit P2).
       - script: |
-          terraform init -backend=false
-          terraform validate
-        displayName: "Validate Dev Environment"
-        workingDirectory: $(System.DefaultWorkingDirectory)/infra/envs/dev
-        env:
-          TF_VAR_environment: dev
+          set -euo pipefail
+          for env in dev staging prod; do
+            echo "==> Validating infra/envs/$env"
+            (
+              cd "infra/envs/$env"
+              TF_VAR_environment="$env" terraform init -backend=false
+              TF_VAR_environment="$env" terraform validate
+            )
+          done
+        displayName: "Validate All Environments"
+        workingDirectory: $(System.DefaultWorkingDirectory)
 
       # Run TFLint on modules
       - script: |

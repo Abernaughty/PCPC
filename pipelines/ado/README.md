@@ -123,6 +123,46 @@ The pipeline includes multiple security checks:
    - Cloud provider-specific checks
    - Non-blocking (warnings only)
 
+## Container Registries
+
+PCPC deliberately uses **two** container registries with different lifecycles:
+
+| Registry | Holds | Built / pushed by | Referenced by |
+| --- | --- | --- | --- |
+| `maberdevcontainerregistry` (shared) | CI toolchain images: `pcpc-ci-terraform-azure`, `pcpc-ci-node22`, `pcpc-ci-node-azure` | `azure-pipelines-ci-images.yml` | `variables/ci-images.yml` (by digest) |
+| `pcpcacr*` (project-owned, in `pcpc-rg-shared`, Terraform-provisioned with a random suffix) | Application images: `pcpc/functions` (Path C ACA image) | `templates/build-and-push-image.yml` | `templates/deploy-aca.yml` (discovered at runtime) |
+
+**Rationale:** CI toolchain images are cross-project developer/CI tooling (the
+shared registry also backs the devcontainer) with their own cadence, so they
+live outside the project's infrastructure. Application images are project
+artifacts colocated with the infra that consumes them and scoped to project
+RBAC, so they live in the Terraform-managed `pcpcacr*` registry and can be torn
+down/rebuilt with the project. Keeping them separate avoids coupling CI tooling
+to app-infra lifecycle.
+
+CI-image digests in `variables/ci-images.yml` are regenerated with
+`scripts/update-ci-image-digests.sh` (do not hand-edit).
+
+## Non-Blocking Checks (Tracked Tech Debt)
+
+The following checks are intentionally **non-blocking** today (`continueOnError`
+or `|| echo` soft-fail) to avoid blocking PRs while the codebase stabilizes.
+The intent is to promote them to blocking incrementally:
+
+| Check | Template | Status |
+| --- | --- | --- |
+| ESLint (backend) | `validate-backend.yml` | non-blocking (no lint script yet) |
+| `pnpm audit` | `validate-backend.yml` | non-blocking |
+| `terraform fmt -check` | `validate-infrastructure.yml` | non-blocking |
+| TFLint (modules + envs) | `validate-infrastructure.yml` | non-blocking |
+| Checkov | `validate-infrastructure.yml` | non-blocking |
+| Spectral OpenAPI lint | `validate-apim.yml` | non-blocking |
+| Policy XML well-formedness | `validate-apim.yml` | non-blocking |
+
+For contrast, these **are** blocking: TypeScript compile, Jest tests, backend
+build, Trivy HIGH/CRITICAL CVE scan, artifact checksum verification, and the
+post-deploy smoke tests.
+
 ## Best Practices
 
 ### Pull Request Workflow

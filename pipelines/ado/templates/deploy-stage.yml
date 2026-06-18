@@ -52,6 +52,7 @@ stages:
       - ${{ if eq(parameters.requiresApproval, true) }}:
         - deployment: Deploy_Infrastructure
           displayName: "Deploy Infrastructure"
+          timeoutInMinutes: 30
           environment: pcpc-${{ parameters.environment }} # Approval gate configured in Azure DevOps
           pool:
             vmImage: "ubuntu-latest"
@@ -67,6 +68,7 @@ stages:
       - ${{ else }}:
         - job: Deploy_Infrastructure
           displayName: "Deploy Infrastructure"
+          timeoutInMinutes: 30
           pool:
             vmImage: "ubuntu-latest"
           container: terraform
@@ -81,6 +83,7 @@ stages:
         displayName: "Deploy Azure Functions"
         dependsOn: Deploy_Infrastructure
         condition: succeeded()
+        timeoutInMinutes: 20
         pool:
           vmImage: "ubuntu-latest"
         container: node-azure
@@ -101,6 +104,7 @@ stages:
         dependsOn:
           - Deploy_Functions
         condition: succeeded()
+        timeoutInMinutes: 30
         pool:
           vmImage: "ubuntu-latest"
         container: terraform
@@ -119,6 +123,7 @@ stages:
         displayName: "Deploy Path C (ACA Container)"
         dependsOn: Deploy_Infrastructure
         condition: succeeded()
+        timeoutInMinutes: 20
         pool:
           vmImage: "ubuntu-latest"
         variables:
@@ -139,6 +144,7 @@ stages:
           - Deploy_Functions
           - Deploy_APIM
         condition: succeeded()
+        timeoutInMinutes: 15
         pool:
           vmImage: "ubuntu-latest"
         container: node-azure
@@ -157,6 +163,7 @@ stages:
           displayName: "Deployment Summary"
           dependsOn: Smoke_Tests
           condition: succeeded()
+          timeoutInMinutes: 5
           pool:
             vmImage: "ubuntu-latest"
           container: node-azure
