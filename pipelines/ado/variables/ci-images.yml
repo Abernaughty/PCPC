@@ -2,15 +2,12 @@
 # This file contains references to prebuilt CI container images stored in ACR
 #
 # IMPORTANT: These image references use digest-based tags (SHA256) for immutability
-# After building new images via azure-pipelines-ci-images.yml, update these references
-# with the new digests from the published ci-images-variables.yml artifact
 #
 # Image naming convention: <acr-fqdn>/<repository>@sha256:<digest>
 #
-# To update after building new images:
-# 1. Run the azure-pipelines-ci-images.yml pipeline
-# 2. Download the ci-image-digests artifact
-# 3. Copy the contents of ci-images-variables.yml to replace this file
+# To update after building new images (azure-pipelines-ci-images.yml), run:
+#   pipelines/ado/scripts/update-ci-image-digests.sh [--acr <name>] [--tag <tag>]
+# It queries ACR and rewrites this file. Do not hand-edit the digests.
 
 variables:
   # Terraform image - for infrastructure operations

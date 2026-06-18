@@ -70,6 +70,7 @@ stages:
     jobs:
       - job: Summary
         displayName: "PR Validation Summary"
+        timeoutInMinutes: 5
         steps:
           - script: |
               echo "======================================"

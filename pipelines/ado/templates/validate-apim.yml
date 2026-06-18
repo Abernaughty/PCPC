@@ -4,6 +4,7 @@
 jobs:
   - job: ValidateAPIM
     displayName: "APIM Validation"
+    timeoutInMinutes: 10
     container: node22
     steps:
       # Checkout code

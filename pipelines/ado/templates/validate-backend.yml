@@ -5,6 +5,7 @@
 jobs:
   - job: ValidateBackend
     displayName: "Backend Validation"
+    timeoutInMinutes: 15
     pool:
       vmImage: "ubuntu-latest"
     container: node22
