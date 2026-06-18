@@ -3,10 +3,14 @@
 # Uses unified artifact strategy for consistency across environments
 
 trigger:
-  # Batch changes: while a CD run is in progress, queue subsequent pushes and
-  # coalesce them into one run when it completes. Avoids overlapping runs racing
-  # for the same Terraform state / rolling concurrent prod deploys (audit P5).
-  batch: true
+  # NOTE: trigger-level `batch: true` is deliberately NOT used. This single
+  # pipeline spans Build → dev → staging(approval) → prod(approval), so a run
+  # parked at an approval gate stays "in progress" — batching would block later
+  # main merges from even building or auto-deploying to dev until the prior
+  # release is approved/rejected. Terraform state corruption is already
+  # prevented by the backend blob-lease state lock; for stronger serialization
+  # of the gated deploys, enable an Exclusive Lock check on the pcpc-staging /
+  # pcpc-prod Environments (Azure DevOps → Environments → Approvals and checks).
   branches:
     include:
       - main
