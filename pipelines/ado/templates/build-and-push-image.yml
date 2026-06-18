@@ -240,15 +240,20 @@ steps:
       echo "Trivy:    aquasec/trivy:${{ parameters.trivyVersion }}"
       echo ""
 
+      # --ignorefile: scoped, time-boxed waivers for un-actionable upstream CVEs
+      # (see .trivyignore.yaml — each entry has a justification + expiry so the
+      # gate re-blocks for re-review). Mounted read-only into the scanner.
       docker run --rm \
         -v /var/run/docker.sock:/var/run/docker.sock \
         -v "$(Pipeline.Workspace)/.trivy-cache:/root/.cache/trivy" \
+        -v "$(Build.SourcesDirectory)/.trivyignore.yaml:/.trivyignore.yaml:ro" \
         aquasec/trivy:${{ parameters.trivyVersion }} \
         image \
           --severity '${{ parameters.trivySeverity }}' \
           --exit-code 1 \
           --no-progress \
           --ignore-unfixed \
+          --ignorefile /.trivyignore.yaml \
           --scanners vuln \
           "$(ContainerImageReference)"
 
