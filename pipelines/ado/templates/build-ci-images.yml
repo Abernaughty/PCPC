@@ -139,9 +139,9 @@ jobs:
               ACR_SERVICE_CONNECTION: ${{ parameters.acrRegistryServiceConnection }}
             VARYAML
 
-      - task: PublishBuildArtifacts@1
+      - task: PublishPipelineArtifact@1
         displayName: "Publish image manifest and variables"
         inputs:
-          PathtoPublish: $(Build.ArtifactStagingDirectory)
-          ArtifactName: ci-image-digests
-          publishLocation: Container
+          targetPath: $(Build.ArtifactStagingDirectory)
+          artifact: ci-image-digests
+          publishLocation: pipeline

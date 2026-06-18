@@ -1,10 +1,6 @@
 # Backend Validation Template
 # Validates backend code quality, tests, and TypeScript compilation
-
-parameters:
-  - name: nodeVersion
-    type: string
-    default: "22.x"
+# Node.js version is governed by the node22 CI container image, not a parameter.
 
 jobs:
   - job: ValidateBackend
@@ -21,7 +17,7 @@ jobs:
       # Root is a pnpm workspace (pnpm-lock.yaml); there is no root
       # package-lock.json, so install via pnpm, matching Vercel and local dev.
       - script: |
-          npx --yes pnpm@10.32.1 install --frozen-lockfile
+          npx --yes pnpm@$(pnpmVersion) install --frozen-lockfile
         displayName: "Install Root Dependencies"
         workingDirectory: $(System.DefaultWorkingDirectory)
 
@@ -30,21 +26,21 @@ jobs:
 
       # Run ESLint (no-op until a lint script is added; non-blocking)
       - script: |
-          npx --yes pnpm@10.32.1 --filter pcpc-backend run lint || echo "⚠️  Lint skipped/with warnings (non-blocking)"
+          npx --yes pnpm@$(pnpmVersion) --filter pcpc-backend run lint || echo "⚠️  Lint skipped/with warnings (non-blocking)"
         displayName: "Lint Backend Code"
         workingDirectory: $(System.DefaultWorkingDirectory)
         continueOnError: true
 
       # TypeScript compilation check
       - script: |
-          npx --yes pnpm@10.32.1 --filter pcpc-backend exec tsc --noEmit
+          npx --yes pnpm@$(pnpmVersion) --filter pcpc-backend exec tsc --noEmit
         displayName: "TypeScript Compilation Check"
         workingDirectory: $(System.DefaultWorkingDirectory)
 
       # Run tests with coverage (invoke jest via pnpm exec; `pnpm test -- …`
       # would forward the `--` and jest would treat the flags as path patterns).
       - script: |
-          npx --yes pnpm@10.32.1 exec jest --config=jest.config.cjs --coverage --coverageDirectory=$(System.DefaultWorkingDirectory)/coverage/backend
+          npx --yes pnpm@$(pnpmVersion) exec jest --config=jest.config.cjs --coverage --coverageDirectory=$(System.DefaultWorkingDirectory)/coverage/backend
         displayName: "Run Backend Tests"
         workingDirectory: $(System.DefaultWorkingDirectory)
         env:
@@ -52,7 +48,7 @@ jobs:
 
       # Build backend
       - script: |
-          npx --yes pnpm@10.32.1 --filter pcpc-backend run build
+          npx --yes pnpm@$(pnpmVersion) --filter pcpc-backend run build
         displayName: "Build Backend"
         workingDirectory: $(System.DefaultWorkingDirectory)
 
@@ -73,7 +69,7 @@ jobs:
       # Security audit (non-blocking). One unified pnpm audit over the whole
       # workspace (production deps) now that backend/functions is a member.
       - script: |
-          npx --yes pnpm@10.32.1 audit --prod || echo "⚠️  Security vulnerabilities found (non-blocking)"
+          npx --yes pnpm@$(pnpmVersion) audit --prod || echo "⚠️  Security vulnerabilities found (non-blocking)"
         displayName: "Security Audit (pnpm audit)"
         workingDirectory: $(System.DefaultWorkingDirectory)
         continueOnError: true

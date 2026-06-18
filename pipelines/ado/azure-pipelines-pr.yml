@@ -21,10 +21,9 @@ pool:
 variables:
   # Include container image digest variables and ACR service connection
   - template: variables/ci-images.yml
-  - name: nodeVersion
-    value: "22.x"
-  - name: terraformVersion
-    value: "1.13.3"
+  # Centralized script tool versions (pnpm). Node/Terraform versions live in the
+  # CI container images, not here — see variables/versions.yml.
+  - template: variables/versions.yml
 
 resources:
   containers:
@@ -41,16 +40,12 @@ stages:
     displayName: "Validate Backend"
     jobs:
       - template: templates/validate-backend.yml
-        parameters:
-          nodeVersion: $(nodeVersion)
 
   # Stage 2: Infrastructure Validation
   - stage: ValidateInfrastructure
     displayName: "Validate Infrastructure"
     jobs:
       - template: templates/validate-infrastructure.yml
-        parameters:
-          terraformVersion: $(terraformVersion)
 
   # Stage 3: APIM Validation
   - stage: ValidateAPIM

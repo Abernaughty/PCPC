@@ -167,31 +167,17 @@ steps:
   # Bundle the Functions app with pnpm, then build the image FROM that folder.
   #
   # This job runs in parallel with (and independent of) the unified-artifact
-  # Build job, so it produces its own deploy folder from its checkout:
-  #   pnpm install → build → `pnpm deploy --prod` (flat/hoisted node_modules).
-  # The Dockerfile then just COPYs that self-contained folder — no npm/pnpm
-  # install or tsc inside Docker, and no `file:../shared` (devDep, type-only,
-  # omitted by --prod). The host has Node/npx (no `container:` on this job).
+  # Build job, so it produces its OWN deploy folder from its checkout. The
+  # Dockerfile then just COPYs that self-contained folder — no npm/pnpm install
+  # or tsc inside Docker, and no `file:../shared` (devDep, type-only, omitted by
+  # --prod). The host has Node/npx (no `container:` on this job). Shared recipe —
+  # see templates/steps/bundle-functions.yml.
   # ---------------------------------------------------------------------------
-  - script: |
-      set -euo pipefail
-
-      DEPLOY_DIR="$(Build.ArtifactStagingDirectory)/fn-image"
-      rm -rf "$DEPLOY_DIR"
-
-      npx --yes pnpm@10.32.1 install --frozen-lockfile
-      npx --yes pnpm@10.32.1 --filter pcpc-backend run build
-      # Lockfile-faithful deploy (copies from the frozen-installed store, no
-      # range re-resolution). See build.yml for the flag rationale.
-      npx --yes pnpm@10.32.1 --filter pcpc-backend deploy \
-        --prod --config.inject-workspace-packages=true --config.node-linker=hoisted "$DEPLOY_DIR"
-
-      test -f "$DEPLOY_DIR/dist/index.js"
-      test -d "$DEPLOY_DIR/node_modules"
-      echo "Deploy folder ready at $DEPLOY_DIR"
-    displayName: "Bundle Functions (pnpm deploy) for image"
-    workingDirectory: $(Build.SourcesDirectory)
-    condition: and(succeeded(), eq(variables['ShouldBuildImage'], 'true'))
+  - template: steps/bundle-functions.yml
+    parameters:
+      deployDir: "$(Build.ArtifactStagingDirectory)/fn-image"
+      workingDirectory: $(Build.SourcesDirectory)
+      condition: and(succeeded(), eq(variables['ShouldBuildImage'], 'true'))
 
   # Build the image locally (no push yet — we scan before push). Context is the
   # pnpm-deploy output. Absolute paths anchor on $(Build.SourcesDirectory) /

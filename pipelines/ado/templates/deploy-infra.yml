@@ -10,9 +10,8 @@ parameters:
   - name: workingDirectory
     type: string
     default: "infra/envs"
-  - name: terraformVersion
-    type: string
-    default: "1.13.3"
+  # Terraform version is provided by the `terraform` CI container image, so no
+  # terraformVersion parameter is needed here.
 
 steps:
   - checkout: self
