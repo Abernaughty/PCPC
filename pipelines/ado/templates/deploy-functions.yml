@@ -18,14 +18,19 @@ parameters:
     default: true
 
 steps:
-  # Download unified artifact
-  - task: DownloadBuildArtifacts@1
+  # Download unified artifact.
+  #
+  # DownloadPipelineArtifact@2 (matches PublishPipelineArtifact in build.yml).
+  # Unlike the legacy DownloadBuildArtifacts (which nested contents under the
+  # artifact name), this task extracts contents directly to `path`, so we target
+  # $(System.ArtifactsDirectory)/<name> to preserve the existing
+  # .../<name>/functions layout every downstream step relies on.
+  - task: DownloadPipelineArtifact@2
     displayName: "Download Unified Artifact"
     inputs:
       buildType: "current"
-      downloadType: "single"
-      artifactName: "${{ parameters.artifactName }}"
-      downloadPath: "$(System.ArtifactsDirectory)"
+      artifact: "${{ parameters.artifactName }}"
+      path: "$(System.ArtifactsDirectory)/${{ parameters.artifactName }}"
 
   # Display artifact contents for verification
   - script: |

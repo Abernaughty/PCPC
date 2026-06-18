@@ -151,11 +151,17 @@ jobs:
           echo "=========================================="
         displayName: "Display Artifact Summary"
 
-      # Publish unified artifact
-      - task: PublishBuildArtifacts@1
+      # Publish unified artifact.
+      #
+      # PublishPipelineArtifact (not the legacy PublishBuildArtifacts) — the
+      # latter registers every file with the build container one-by-one over
+      # REST ("Associating files"), which took ~21 min for this artifact's
+      # ~30k bundled node_modules files. Pipeline artifacts use a dedup store +
+      # manifest (no per-file association) and are Microsoft's recommended task.
+      - task: PublishPipelineArtifact@1
         displayName: "Publish Unified Artifact"
         inputs:
-          PathtoPublish: "$(Build.ArtifactStagingDirectory)/drop"
-          ArtifactName: "drop"
-          publishLocation: "Container"
+          targetPath: "$(Build.ArtifactStagingDirectory)/drop"
+          artifact: "drop"
+          publishLocation: "pipeline"
         condition: and(succeeded(), eq('${{ parameters.publishArtifact }}', 'true'))
