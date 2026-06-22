@@ -27,7 +27,7 @@
   "license": "ISC",
   "devDependencies": {
     "@pcpc/shared": "workspace:*",
-    "@types/node": "^25.9.3",
+    "@types/node": "^26.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
   },
