@@ -27,7 +27,7 @@
   "license": "ISC",
   "devDependencies": {
     "@pcpc/shared": "workspace:*",
-    "@types/node": "^25.9.3",
+    "@types/node": "^26.0.1",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
   },
@@ -39,7 +39,7 @@
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/instrumentation": "^0.218.0",
     "@typespec/ts-http-runtime": "^0.3.5",
-    "cookie": "^0.7.0",
+    "cookie": "^2.0.0",
     "dotenv": "^17.4.2",
     "redis": "^6.0.0"
   }

@@ -20,7 +20,7 @@
     "@jest/globals": "^30.4.1",
     "@playwright/test": "^1.61.0",
     "@types/jest": "^30.0.0",
-    "@types/node": "^25.9.3",
+    "@types/node": "^26.0.1",
     "babel-jest": "^30.4.1",
     "jest": "^30.4.2",
     "jest-junit": "^17.0.0",
