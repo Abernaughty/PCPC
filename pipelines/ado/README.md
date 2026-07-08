@@ -2,126 +2,168 @@
 
 This directory contains Azure DevOps pipeline definitions for the PCPC (Pokemon Card Price Checker) project.
 
+There are three pipelines:
+
+| Pipeline | File | Trigger |
+| --- | --- | --- |
+| PR Validation | `azure-pipelines-pr.yml` | Pull requests to `main` / `develop` |
+| Multi-Stage CD | `azure-pipelines.yml` | Pushes to `main` touching `app/`, `backend/`, `infra/`, `apim/`, or `pipelines/ado/` |
+| CI Images | `azure-pipelines-ci-images.yml` | Manual only |
+
+The frontend (SvelteKit, `app/`) is deployed by **Vercel**; PR validation for it
+comes from Vercel preview builds, not these pipelines.
+
 ## Pipeline Architecture
 
 ### PR Validation Pipeline (`azure-pipelines-pr.yml`)
 
 **Purpose:** Provide fast feedback on pull requests without deploying anything.
 
-**Triggers:** Pull requests to `main` or `develop` branches
+**Triggers:** Pull requests to `main` or `develop` (doc-only changes excluded)
 
 **Stages:**
-1. **Frontend Validation**
-   - ESLint code linting
-   - Jest unit tests (17 tests)
-   - Production build verification
-   - Security audit (npm audit)
-   - Code coverage reporting
 
-2. **Backend Validation**
-   - ESLint code linting
-   - TypeScript compilation check
-   - Jest unit tests (9 tests)
-   - Production build verification
-   - Security audit (npm audit)
-   - Code coverage reporting
+1. **Backend Validation** (`templates/validate-backend.yml`)
+   - pnpm workspace install (`--frozen-lockfile`)
+   - ESLint (non-blocking — no lint script yet)
+   - TypeScript compilation check (`tsc --noEmit`)
+   - Jest unit tests with coverage
+   - Production build + build-output verification
+   - Security audit (`pnpm audit --prod`, non-blocking)
 
-3. **Infrastructure Validation**
-   - Terraform format verification
-   - Terraform module validation
-   - TFLint static analysis
-   - Checkov security scanning
-   - Dev environment validation
+2. **Infrastructure Validation** (`templates/validate-infrastructure.yml`)
+   - Terraform format check (non-blocking)
+   - Terraform module + all-environment validation
+   - TFLint static analysis (non-blocking)
+   - Checkov security scanning (non-blocking)
 
-4. **APIM Validation**
-   - OpenAPI specification validation (Spectral)
-   - Policy XML well-formedness checks
-   - API operations verification
-   - APIM structure validation
+3. **APIM Validation** (`templates/validate-apim.yml`)
+   - OpenAPI specification lint (Spectral, non-blocking)
+   - Policy XML well-formedness checks (non-blocking)
+   - APIM structure and API operations verification
 
-5. **Summary** (~1 second)
-   - Aggregated validation results
-   - Pass/fail status for all stages
+4. **Summary**
+   - Runs only when all three validation stages succeed; if any stage fails,
+     the summary is skipped and the failed stage marks the PR red, so it can
+     never print a false "passed"
 
 **Key Features:**
+
 - ✅ No deployments - validation only
-- ✅ Fast feedback loop
-- ✅ Comprehensive code quality checks
-- ✅ Security scanning (non-blocking)
-- ✅ Test coverage reporting
-- ✅ Infrastructure validation
+- ✅ Jobs run in pinned CI container images (see Container Registries below)
+- ✅ Test coverage reporting (backend)
+- ✅ Security scanning (non-blocking; see tracked tech debt below)
+
+### Multi-Stage CD Pipeline (`azure-pipelines.yml`)
+
+**Purpose:** Build once, deploy the same artifact to Dev → Staging → Prod.
+
+**Build stage** — two parallel jobs:
+
+- **Build Unified Artifact** (`templates/build.yml`): bundles the backend
+  Functions app (`pnpm deploy --prod`), snapshots APIM config, generates a
+  `release.json` manifest and SHA-256 checksums, and publishes the unified
+  `drop/` artifact
+- **Build + Push ACA Image** (`templates/build-and-push-image.yml`): builds the
+  Path C container image, Trivy-scans it (HIGH/CRITICAL CVEs are blocking), and
+  pushes it to the project ACR; all three deploy stages consume the same
+  SHA-tagged image reference
+
+**Deploy stages** — `Deploy_Dev` (automatic) → `Deploy_Staging` (approval gate)
+→ `Deploy_Prod` (approval gate). Each is one invocation of
+`templates/deploy-stage.yml` with these jobs:
+
+1. Deploy infrastructure (Terraform) — runs as a `deployment:` job against the
+   `pcpc-<env>` Environment for gated stages, so the approval check gates the
+   whole stage
+2. Deploy backend (Azure Functions, Path B) — verifies artifact checksums
+   before deploying
+3. Deploy APIM APIs & policies
+4. Deploy container app (ACA, Path C)
+5. Smoke tests (health checks against Functions and APIM)
+
+Environment variable groups (`vg-pcpc-<env>-config/secrets`) are scoped to
+their own stage — they are deliberately not loaded at pipeline scope, so prod
+secrets are never in scope for un-gated dev jobs.
+
+### CI Images Pipeline (`azure-pipelines-ci-images.yml`)
+
+**Purpose:** Build the CI toolchain container images
+(`pcpc-ci-terraform-azure`, `pcpc-ci-node22`, `pcpc-ci-node-azure`) and push
+them to the shared ACR. Run manually when the image Dockerfiles under
+`.ci/images/` change, then regenerate the pinned digests with
+`scripts/update-ci-image-digests.sh`.
 
 ## Pipeline Templates
 
 Reusable templates are located in the `templates/` directory:
 
-### Validation Templates
+### Validation Templates (PR pipeline)
 
-- **`validate-backend.yml`** - Backend code validation and testing  
+- **`validate-backend.yml`** - Backend code validation and testing
 - **`validate-infrastructure.yml`** - Terraform validation and security scanning
 - **`validate-apim.yml`** - API Management configuration validation
 
-## Usage
+### Build & Deploy Templates (CD pipeline)
 
-### PR Validation Pipeline
+- **`build.yml`** - Unified artifact build (Functions bundle + APIM config + manifest)
+- **`build-and-push-image.yml`** - ACA container image build, Trivy scan, ACR push
+- **`deploy-stage.yml`** - Parameterized per-environment stage (used 3×: dev/staging/prod)
+- **`deploy-infra.yml`** - Terraform deployment steps
+- **`deploy-functions.yml`** - Azure Functions deployment steps
+- **`deploy-apim.yml`** - APIM APIs & policies deployment steps
+- **`deploy-aca.yml`** - Container App revision rollout steps
+- **`smoke-tests.yml`** - Post-deploy health checks
+- **`steps/bundle-functions.yml`** - Shared backend bundle recipe (used by `build.yml` and the image build)
+- **`build-ci-images.yml`** - CI toolchain image builds (CI images pipeline)
 
-**Automatic Trigger:** Pipeline runs automatically when you create or update a pull request.
+### Variables
 
-**Manual Run:** Not recommended - this pipeline is designed for PR validation only.
+- **`variables/ci-images.yml`** - Pinned CI image digests + ACR service connection (regenerate with `scripts/update-ci-image-digests.sh`; do not hand-edit)
+- **`variables/versions.yml`** - Versions for tools that pipeline *scripts* invoke directly (currently pnpm; Node/Terraform versions are baked into the CI images)
 
-**Requirements:**
+### Scripts
+
+- **`scripts/health-check-functions.sh`** / **`scripts/health-check-apim.sh`** - Smoke-test health checks
+- **`scripts/update-ci-image-digests.sh`** - Regenerates `variables/ci-images.yml`
+- **`scripts/lib/apim.sh`** - Shared APIM helpers
+
+## Requirements
+
 - Azure DevOps project with repository connection
-- Node.js 22.x available on build agents
-- Terraform 1.13.3 installer task available
-- No service connections required (validation only)
+- **`pcpc-acr-service-connection`** - Docker registry service connection to the
+  shared ACR; all pipelines (including PR validation) pull their CI container
+  images through it
+- **`az-pcpc-dev` / `az-pcpc-staging` / `az-pcpc-prod`** - ARM service
+  connections used by the CD pipeline
+- **`pcpc-staging` / `pcpc-prod` Environments** with approval checks configured
+  (gates the staging/prod stages)
+- **`vg-pcpc-<env>-config` / `vg-pcpc-<env>-secrets`** variable groups per environment
 
-### Setting Up the PR Pipeline
-
-1. **Create Pipeline in Azure DevOps:**
-   - Go to Pipelines → New pipeline
-   - Select your repository
-   - Choose "Existing Azure Pipelines YAML file"
-   - Select `pipelines/ado/azure-pipelines-pr.yml`
-   - Save (do not run)
-
-2. **Configure PR Triggers:**
-   - The pipeline is already configured to trigger on PRs
-   - No manual configuration needed
-   - Pipeline will run automatically on PR creation/update
-
-3. **Review Results:**
-   - Check the pipeline run in Azure DevOps
-   - Review test results and code coverage
-   - Address any validation failures before merging
+Node.js, Terraform, TFLint, Checkov, and Spectral are provided by the CI
+container images — nothing needs to be installed on build agents.
 
 ## Test Results and Coverage
 
 The PR pipeline publishes:
 
 - **Test Results:** JUnit XML format, displayed in Azure DevOps
-- **Code Coverage:** Cobertura format with HTML reports
-- **Coverage Location:** 
-  - Frontend: `coverage/frontend/`
-  - Backend: `coverage/backend/`
+- **Code Coverage:** Cobertura format with HTML reports (backend, `coverage/backend/`)
+
+The CD pipeline publishes smoke-test results per environment.
 
 ## Security Scanning
 
-The pipeline includes multiple security checks:
+The pipelines include multiple security checks:
 
-1. **npm audit** (frontend & backend)
-   - Checks for known vulnerabilities in dependencies
-   - Runs at "high" severity level
-   - Non-blocking (warnings only)
-
-2. **Checkov** (infrastructure)
-   - Static analysis for Terraform code
-   - Checks for security misconfigurations
-   - Non-blocking (warnings only)
-
-3. **TFLint** (infrastructure)
-   - Terraform linting and best practices
-   - Cloud provider-specific checks
-   - Non-blocking (warnings only)
+1. **pnpm audit** (backend, PR pipeline) - known vulnerabilities in production
+   dependencies; non-blocking
+2. **Checkov** (infrastructure, PR pipeline) - static analysis for Terraform
+   misconfigurations; non-blocking
+3. **TFLint** (infrastructure, PR pipeline) - Terraform linting and
+   provider-specific checks; non-blocking
+4. **Trivy** (CD pipeline) - container image CVE scan; HIGH/CRITICAL findings
+   are **blocking**
 
 ## Container Registries
 
@@ -169,9 +211,9 @@ post-deploy smoke tests.
 
 1. Create feature branch from `main`
 2. Make your changes
-3. Run tests locally: `npm test`
+3. Run tests locally: `pnpm test`
 4. Create pull request
-5. Pipeline runs automatically
+5. Pipeline runs automatically (plus Vercel preview build for frontend changes)
 6. Review pipeline results
 7. Address any failures
 8. Request code review
@@ -179,54 +221,45 @@ post-deploy smoke tests.
 
 ### Troubleshooting
 
-**Pipeline fails on frontend tests:**
-- Check test output in Azure DevOps
-- Run `npm test` locally to reproduce
-- Verify all dependencies are installed
-
 **Pipeline fails on backend tests:**
+
 - Check test output in Azure DevOps
-- Run `npm test` locally to reproduce
-- Ensure TypeScript compiles: `npx tsc --noEmit`
+- Run `pnpm test` locally to reproduce
+- Ensure TypeScript compiles: `pnpm --filter pcpc-backend exec tsc --noEmit`
 
 **Pipeline fails on Terraform validation:**
+
 - Check Terraform format: `terraform fmt -check -recursive`
 - Validate locally: `terraform validate`
 - Run TFLint: `tflint`
 
 **Pipeline fails on APIM validation:**
+
 - Verify OpenAPI spec exists: `apim/specs/pcpc-api-v1.yaml`
 - Check XML syntax in policy files
 - Validate with Spectral locally: `spectral lint apim/specs/pcpc-api-v1.yaml`
+
+**Pipeline fails pulling CI images:**
+
+- Verify `pcpc-acr-service-connection` is healthy
+- Check the pinned digests in `variables/ci-images.yml` still exist in ACR
+  (re-run the CI images pipeline + `scripts/update-ci-image-digests.sh` if not)
 
 ## Performance Optimization
 
 The PR pipeline is optimized for speed:
 
 - Parallel stage execution where possible
-- Cached dependencies (npm ci)
+- Pre-baked CI container images (no per-run tool installs)
+- pnpm with frozen lockfile installs
 - Minimal infrastructure validation (no backend init)
 - Non-blocking security scans
 - Fast failure on critical errors
 
-## Next Steps
-
-After PR validation is working, implement:
-
-1. **Multi-Stage CD Pipeline** - Build and deploy to Dev → Staging → Prod
-2. **Environment-Specific Variables** - Per-environment Terraform variables
-3. **APIOps Migration** - Modern API Management deployment
-4. **Advanced Testing** - API tests, E2E tests, smoke tests
-
 ## Support
 
 For issues or questions:
+
 - Review pipeline logs in Azure DevOps
 - Check this README for troubleshooting tips
 - Consult the main project documentation in `/docs`
-
----
-
-**Version:** 1.0.0  
-**Last Updated:** October 5, 2025  
-**Status:** ✅ PR Validation Pipeline Complete
