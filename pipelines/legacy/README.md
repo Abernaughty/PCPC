@@ -33,7 +33,7 @@ The legacy pipelines had several limitations:
   - Limitations: Only deployed infrastructure, no application deployment
 
 - **`frontend-pipeline.yml`** - Frontend-only pipeline (Static Web App deployment)
-  - Replaced by: `pipelines/ado/azure-pipelines.yml` (unified multi-stage CD pipeline)
+  - Replaced by: Vercel (the SvelteKit frontend in `app/` is now built and deployed by Vercel, not Azure DevOps)
   - Limitations: Only deployed frontend, no backend or APIM deployment
 
 ### Templates
