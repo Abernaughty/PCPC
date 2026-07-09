@@ -19,4 +19,26 @@ vulnerabilities:
       ExtensionBundle 4.36.0) still ships MessagePack 2.5.192. There is no
       actionable upstream fix to consume. Revisit when Microsoft updates
       MessagePack in the base image / ExtensionBundle.
+    paths:
+      - "FuncExtensionBundles/Microsoft.Azure.Functions.ExtensionBundle/**/function.deps.json"
+    expired_at: 2026-09-17
+
+  - id: CVE-2026-48506
+    statement: >-
+      Second CVE (published Jun 2026) against the SAME component as
+      CVE-2026-48109 above: MessagePack 2.5.192 (HIGH, fixed in 2.5.301 /
+      3.1.7) inside Microsoft's Azure Functions ExtensionBundle (.NET), baked
+      into the official base image mcr.microsoft.com/azure-functions/node:4-node22.
+      It is NOT a dependency of the PCPC Node.js function app or its
+      node_modules (Trivy's node-pkg scan is clean); the vulnerable path
+      (MessagePackReader.TrySkip unbounded recursion → stack-overflow DoS) is
+      only reachable via .NET extension deserialization of untrusted
+      MessagePack payloads, which our bindings don't do. Upstream fix exists —
+      ExtensionBundle 4.37.0 (released 2026-06-24) bumps MessagePack to
+      2.5.301 — but verified on 2026-07-09 that no published base image ships
+      it yet: the current 4-node22 image still bundles ExtensionBundle 4.36.0
+      with MessagePack 2.5.192. Remove this entry (and the one above) once a
+      base image with ExtensionBundle >= 4.37.0 is published.
+    paths:
+      - "FuncExtensionBundles/Microsoft.Azure.Functions.ExtensionBundle/**/function.deps.json"
     expired_at: 2026-09-17
