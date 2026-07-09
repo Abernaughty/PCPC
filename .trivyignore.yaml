@@ -19,6 +19,8 @@ vulnerabilities:
       ExtensionBundle 4.36.0) still ships MessagePack 2.5.192. There is no
       actionable upstream fix to consume. Revisit when Microsoft updates
       MessagePack in the base image / ExtensionBundle.
+    paths:
+      - "FuncExtensionBundles/Microsoft.Azure.Functions.ExtensionBundle/**/function.deps.json"
     expired_at: 2026-09-17
 
   - id: CVE-2026-48506
@@ -37,4 +39,6 @@ vulnerabilities:
       it yet: the current 4-node22 image still bundles ExtensionBundle 4.36.0
       with MessagePack 2.5.192. Remove this entry (and the one above) once a
       base image with ExtensionBundle >= 4.37.0 is published.
+    paths:
+      - "FuncExtensionBundles/Microsoft.Azure.Functions.ExtensionBundle/**/function.deps.json"
     expired_at: 2026-09-17
