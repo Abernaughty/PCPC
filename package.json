@@ -12,13 +12,13 @@
   },
   "packageManager": "pnpm@10.32.1",
   "dependencies": {
-    "@azure/cosmos": "^4.0.0"
+    "@azure/cosmos": "^4.10.0"
   },
   "devDependencies": {
     "@babel/core": "^8.0.1",
-    "@babel/preset-env": "^8.0.1",
+    "@babel/preset-env": "^8.0.2",
     "@jest/globals": "^30.4.1",
-    "@playwright/test": "^1.61.0",
+    "@playwright/test": "^1.62.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.9.3",
     "babel-jest": "^30.4.1",
@@ -26,7 +26,7 @@
     "jest-junit": "^17.0.0",
     "jest-watch-typeahead": "^3.0.1",
     "supertest": "^7.2.2",
-    "ts-jest": "^29.4.11",
+    "ts-jest": "^29.4.12",
     "typescript": "^6.0.3"
   },
   "scripts": {
