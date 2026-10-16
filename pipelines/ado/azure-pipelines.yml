@@ -86,7 +86,7 @@ stages:
         steps:
           - template: templates/build-and-push-image.yml
             parameters:
-              azureSubscription: "pcpc-staging-wif"
+              azureSubscription: "pcpc-shared-wif"
               acrResourceGroup: "pcpc-rg-shared"
 
   # ============================================================================
@@ -104,7 +104,7 @@ stages:
       stageName: Deploy_Dev
       displayName: "Deploy to Dev"
       environment: dev
-      azureSubscription: "pcpc-staging-wif"
+      azureSubscription: "pcpc-dev-wif"
       containerAppName: "pcpc-aca-dev"
       requiresApproval: false
       dependsOn:
@@ -129,7 +129,7 @@ stages:
       stageName: Deploy_Prod
       displayName: "Deploy to Production"
       environment: prod
-      azureSubscription: "pcpc-staging-wif"
+      azureSubscription: "pcpc-prod-wif"
       containerAppName: "pcpc-aca-prod"
       requiresApproval: true
       includeSummary: true
