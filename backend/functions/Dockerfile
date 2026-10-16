@@ -22,7 +22,13 @@
 # baking environment-specific behavior into the image (the same image is
 # deployed to dev/staging/prod with only env-var differences).
 # -----------------------------------------------------------------------------
-FROM mcr.microsoft.com/azure-functions/node:4-node22
+# Base image pinned by digest for supply-chain reproducibility (SLSA L2+).
+# Resolve a newer digest when Microsoft rebuilds with .NET 8.0.32+ (see
+# .trivyignore.yaml for the current waived CVEs). To update:
+#   docker pull mcr.microsoft.com/azure-functions/node:4-node22
+#   docker inspect --format='{{index .RepoDigests 0}}' \
+#     mcr.microsoft.com/azure-functions/node:4-node22
+FROM mcr.microsoft.com/azure-functions/node:4-node22@sha256:a16b843fce5d985bd3fe970ef769c80a81d9f053576870633cd8dda70b3292cd
 
 # Pull Debian-patched OS packages. The upstream Functions base image rebuilds
 # lag CVE patches by days-to-weeks; without this layer the Trivy CVE scan in

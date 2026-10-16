@@ -7,38 +7,105 @@
 # Consumed by pipelines/ado/templates/build-and-push-image.yml via `--ignorefile`.
 
 vulnerabilities:
-  - id: CVE-2026-48109
+  # ---------------------------------------------------------------------------
+  # .NET 8.0.31 runtime CVEs — baked into Azure Functions base image.
+  # ---------------------------------------------------------------------------
+  # All 12 entries below (7 ASP.NET Core + 5 .NET Core) are patched in
+  # Microsoft .NET 8.0.32, released October 14 2026. Microsoft has NOT yet
+  # rebuilt mcr.microsoft.com/azure-functions/node:4-node22 against the new
+  # runtime (verified against digest sha256:a16b843fce5d9… pinned in
+  # backend/functions/Dockerfile on 2026-10-16).
+  #
+  # Risk accepted: the Functions host runs the Node.js worker; the .NET
+  # runtime bundled by the base image hosts the Functions host process and
+  # Extension Bundle, not application code. None of the CVE-affected code
+  # paths (ASP.NET Core request pipeline, System.* DoS surfaces) are reached
+  # by Node Function bindings in this app. Still, these are HIGH/CRITICAL,
+  # so the waiver is short — remove the entries below as soon as a rebuilt
+  # base image is published, and bump the Dockerfile digest at the same time.
+  #
+  # Owner: platform team.  Tracking: see PR fixing CVE scan 2026-10-16.
+  - id: CVE-2026-70188
     statement: >-
-      MessagePack 2.5.192 (HIGH, fixed in 2.5.301) ships inside Microsoft's
-      Azure Functions ExtensionBundle (.NET), which is baked into the official
-      base image mcr.microsoft.com/azure-functions/node:4-node22. It is NOT a
-      dependency of the PCPC Node.js function app or its node_modules, and the
-      affected code path (MessagePack LZ4 decompression) is not reachable from
-      our code. Verified on 2026-06-17 that NO published Azure Functions base
-      image fixes it yet — even the newest build (4.1051.300-1-node22,
-      ExtensionBundle 4.36.0) still ships MessagePack 2.5.192. There is no
-      actionable upstream fix to consume. Revisit when Microsoft updates
-      MessagePack in the base image / ExtensionBundle.
+      ASP.NET Core 8.0.31 Security Feature Bypass. Fixed in 8.0.32.
+      Base image not yet rebuilt by Microsoft.
     paths:
-      - "FuncExtensionBundles/Microsoft.Azure.Functions.ExtensionBundle/**/function.deps.json"
-    expired_at: 2026-09-17
-
-  - id: CVE-2026-48506
+      - "usr/share/dotnet/shared/Microsoft.AspNetCore.App/8.0.31/**"
+    expired_at: 2026-11-16
+  - id: CVE-2026-88092
     statement: >-
-      Second CVE (published Jun 2026) against the SAME component as
-      CVE-2026-48109 above: MessagePack 2.5.192 (HIGH, fixed in 2.5.301 /
-      3.1.7) inside Microsoft's Azure Functions ExtensionBundle (.NET), baked
-      into the official base image mcr.microsoft.com/azure-functions/node:4-node22.
-      It is NOT a dependency of the PCPC Node.js function app or its
-      node_modules (Trivy's node-pkg scan is clean); the vulnerable path
-      (MessagePackReader.TrySkip unbounded recursion → stack-overflow DoS) is
-      only reachable via .NET extension deserialization of untrusted
-      MessagePack payloads, which our bindings don't do. Upstream fix exists —
-      ExtensionBundle 4.37.0 (released 2026-06-24) bumps MessagePack to
-      2.5.301 — but verified on 2026-07-09 that no published base image ships
-      it yet: the current 4-node22 image still bundles ExtensionBundle 4.36.0
-      with MessagePack 2.5.192. Remove this entry (and the one above) once a
-      base image with ExtensionBundle >= 4.37.0 is published.
+      ASP.NET Core 8.0.31 Security Feature Bypass. Fixed in 8.0.32.
+      Base image not yet rebuilt by Microsoft.
     paths:
-      - "FuncExtensionBundles/Microsoft.Azure.Functions.ExtensionBundle/**/function.deps.json"
-    expired_at: 2026-09-17
+      - "usr/share/dotnet/shared/Microsoft.AspNetCore.App/8.0.31/**"
+    expired_at: 2026-11-16
+  - id: CVE-2026-70175
+    statement: >-
+      ASP.NET Core 8.0.31 Elevation of Privilege. Fixed in 8.0.32.
+      Base image not yet rebuilt by Microsoft.
+    paths:
+      - "usr/share/dotnet/shared/Microsoft.AspNetCore.App/8.0.31/**"
+    expired_at: 2026-11-16
+  - id: CVE-2026-70181
+    statement: >-
+      ASP.NET Core 8.0.31 Denial of Service. Fixed in 8.0.32.
+      Base image not yet rebuilt by Microsoft.
+    paths:
+      - "usr/share/dotnet/shared/Microsoft.AspNetCore.App/8.0.31/**"
+    expired_at: 2026-11-16
+  - id: CVE-2026-70183
+    statement: >-
+      ASP.NET Core 8.0.31 Security Feature Bypass. Fixed in 8.0.32.
+      Base image not yet rebuilt by Microsoft.
+    paths:
+      - "usr/share/dotnet/shared/Microsoft.AspNetCore.App/8.0.31/**"
+    expired_at: 2026-11-16
+  - id: CVE-2026-70186
+    statement: >-
+      ASP.NET Core 8.0.31 Denial of Service. Fixed in 8.0.32.
+      Base image not yet rebuilt by Microsoft.
+    paths:
+      - "usr/share/dotnet/shared/Microsoft.AspNetCore.App/8.0.31/**"
+    expired_at: 2026-11-16
+  - id: CVE-2026-96236
+    statement: >-
+      ASP.NET Core 8.0.31 Denial of Service. Fixed in 8.0.32.
+      Base image not yet rebuilt by Microsoft.
+    paths:
+      - "usr/share/dotnet/shared/Microsoft.AspNetCore.App/8.0.31/**"
+    expired_at: 2026-11-16
+  - id: CVE-2026-58280
+    statement: >-
+      .NET 8.0.31 runtime Denial of Service. Fixed in 8.0.32.
+      Base image not yet rebuilt by Microsoft.
+    paths:
+      - "usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.31/**"
+    expired_at: 2026-11-16
+  - id: CVE-2026-69651
+    statement: >-
+      .NET 8.0.31 runtime Denial of Service. Fixed in 8.0.32.
+      Base image not yet rebuilt by Microsoft.
+    paths:
+      - "usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.31/**"
+    expired_at: 2026-11-16
+  - id: CVE-2026-96225
+    statement: >-
+      .NET 8.0.31 runtime Elevation of Privilege. Fixed in 8.0.32.
+      Base image not yet rebuilt by Microsoft.
+    paths:
+      - "usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.31/**"
+    expired_at: 2026-11-16
+  - id: CVE-2026-96231
+    statement: >-
+      .NET 8.0.31 runtime Elevation of Privilege. Fixed in 8.0.32.
+      Base image not yet rebuilt by Microsoft.
+    paths:
+      - "usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.31/**"
+    expired_at: 2026-11-16
+  - id: CVE-2026-96233
+    statement: >-
+      .NET 8.0.31 runtime Denial of Service. Fixed in 8.0.32.
+      Base image not yet rebuilt by Microsoft.
+    paths:
+      - "usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.31/**"
+    expired_at: 2026-11-16
