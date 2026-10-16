@@ -23,8 +23,8 @@
 # deployed to dev/staging/prod with only env-var differences).
 # -----------------------------------------------------------------------------
 # Base image pinned by digest for supply-chain reproducibility (SLSA L2+).
-# Resolve a newer digest when Microsoft rebuilds with .NET 8.0.32+ (see
-# .trivyignore.yaml for the current waived CVEs). To update:
+# Refresh when Microsoft rebuilds the image (new OS patches, new .NET
+# runtime, etc). To update:
 #   docker pull mcr.microsoft.com/azure-functions/node:4-node22
 #   docker inspect --format='{{index .RepoDigests 0}}' \
 #     mcr.microsoft.com/azure-functions/node:4-node22
@@ -34,8 +34,25 @@ FROM mcr.microsoft.com/azure-functions/node:4-node22@sha256:a16b843fce5d985bd3fe
 # lag CVE patches by days-to-weeks; without this layer the Trivy CVE scan in
 # build-and-push-image.yml blocks on any HIGH CVE patched in Debian since the
 # base was last rebuilt (e.g. CVE-2026-27135 in libnghttp2-14).
+#
+# Also patches the .NET 8.0.31 runtime bundled by the base image to 8.0.32,
+# which fixes 12 HIGH/CRITICAL Kestrel + ASP.NET Core CVEs (CVE-2026-70175,
+# -70181, -70183, -70186, -70188, -88092, -96236, -58280, -69651, -96225,
+# -96231, -96233). These are REACHABLE through our public ACA ingress
+# (infra/modules/container-app/main.tf: external_enabled = true), since
+# the Azure Functions host runs a .NET Kestrel front-end that parses every
+# HTTP request before dispatch to the Node worker. .NET 8.0.X patch
+# releases are ABI-compatible and the Functions host roll-forward policy
+# (LatestPatch) picks up 8.0.32 transparently. Remove the explicit
+# version pins + the stale-directory cleanup once Microsoft rebuilds the
+# Functions base image with 8.0.32.
 RUN apt-get update && \
     apt-get upgrade -y --no-install-recommends && \
+    apt-get install -y --no-install-recommends \
+        aspnetcore-runtime-8.0=8.0.32-1 \
+        dotnet-runtime-8.0=8.0.32-1 && \
+    rm -rf /usr/share/dotnet/shared/Microsoft.AspNetCore.App/8.0.31 \
+           /usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.31 && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
 
